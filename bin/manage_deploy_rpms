@@ -58,7 +58,7 @@ def main():
         daemonize.logging.info("Received: %s" % job.body)
 
         try:
-            timestamp, id, name, version = job.body.split(' ')
+            id, name, version = job.body.split(' ')
         except ValueError:
             daemonize.logging.error('Invalid message in queue: %s' % job.body)
             job.delete()
