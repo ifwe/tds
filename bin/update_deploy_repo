@@ -1,0 +1,86 @@
+#!/usr/bin/env python2.6
+
+import ConfigParser
+import os
+import socket
+import subprocess
+
+import beanstalkc
+import daemonize
+
+from tagopsdb.exceptions import RepoException
+
+
+def update_repo():
+    """ """
+
+    host = socket.gethostname()
+
+    with open('/etc/tagops/deploy.conf') as conf_file:
+        config = ConfigParser.SafeConfigParser()
+        config.readfp(conf_file)
+
+    repo_dir = config.get('yum', 'repo_location')
+
+    try:
+        os.chdir(repo_dir)
+    except OSError, e:
+        raise RepoException('Unable to change to directory "%s" on host '
+                            '"%s": %s' % (repo_dir, host, e))
+
+    # Try to update the yum repo
+    cmd = ['make']
+    cmdline = ' '.join(cmd)
+
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+
+    stdout, stderr = proc.communicate()
+
+    if proc.returncode:
+        raise RepoException('Command "%s" failed on host "%s": %s'
+                            % (cmdline, host, stderr))
+
+
+def main():
+    """ """
+
+    # Initialize beanstalk connection, set up use and watch tubes
+    beanstalk = beanstalkc.Connection(host='tong01.tagged.com', port=14711)
+    beanstalk.use('tds.package.error')
+    beanstalk.watch('tds.package.update')
+    beanstalk.ignore('default')
+
+    while True:
+        job = beanstalk.reserve()
+        daemonize.logging.info("Received: %s" % job.body)
+
+        try:
+            id, body = job.body.split(' ')
+
+            if body != 'updaterepo':
+                raise ValueError
+        except ValueError:
+            daemonize.logging.error('Invalid message in queue '
+                                    'tds.package.update: %s' % job.body)
+            job.delete()
+            beanstalk.put('%s ERROR Invalid message in queue '
+                          'tds.package.update: %s' % (id, job.body))
+            continue
+
+        try:
+            update_repo()
+        except XXX, e:
+            daemonize.logging.error(e)
+            job.delete()
+            beanstalk.put('%s ERROR Queue tds.package.update: %s' % (id, e))
+            continue
+
+        # All good, just delete job
+        job.delete()
+
+
+pid = '/var/run/update_deploy_repo.pid'
+logfile = '/var/log/update_deploy_repo.log'
+
+daemonize.start(main, pid, logfile)
