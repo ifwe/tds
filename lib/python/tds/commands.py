@@ -91,7 +91,8 @@ class Package(object):
         beanstalk.watch('tds.package.error')
         beanstalk.ignore('default')
 
-        beanstalk.put('%s %s %s' % (self.bean_id, args.project, args.revision)
+        beanstalk.put('%s %s %s' % (self.bean_id, args.project,
+                                    args.revision))
 
         # Watch error tube for responses, react accordingly
         while True:
