@@ -62,7 +62,8 @@ def parse_command_line():
 
 if __name__ == '__main__':
     args = parse_command_line()
-    print "args are: %s" % args
+    args.user = user   # Pass user through with arguments
+    print "args are: %s" % args   # Remove once main code is written
     cmd = getattr(tds.commands, args.command_name.capitalize())()
 
     try:
@@ -70,4 +71,7 @@ if __name__ == '__main__':
     except AccessError:
         print 'Your account (%s) does not have the appropriate permissions' \
               '\nto run the requested command.' % user
+        sys.exit(1)
+    except NotImplementedException, e:
+        print e
         sys.exit(1)
