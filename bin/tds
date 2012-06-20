@@ -2,6 +2,7 @@
 
 import argparse
 import ConfigParser
+import getpass
 import os
 import pwd
 import sys
@@ -9,9 +10,10 @@ import sys
 import tds.commands
 
 from tagopsdb.database import init_session
+from tagopsdb.exceptions import PermissionsException
 from tds.authorize import get_access_level
 from tds.cmdline import parser_info
-from tds.exceptions import AccessError
+from tds.exceptions import AccessError, NotImplementedError
 
 
 def create_subparsers(parser):
@@ -58,7 +60,7 @@ def parse_command_line():
     return parser.parse_args()
 
 
-def initialize_db(user):
+def check_user_auth(user):
     """ """
 
     user_level = get_access_level()
@@ -68,16 +70,30 @@ def initialize_db(user):
               'Please refer to your manager for assistance.' % user
         sys.exit(1)
 
-    with open('/etc/tagops/dbaccess.%s.conf' % user_level) as conf_file:
-        config = ConfigParser.SafeConfigParser()
-        config.readfp(conf_file)
-
-    db_user = config.get('db', 'user')
-    db_password = config.get('db', 'password')
-
-    init_session(db_user, db_password)
-
     return user_level
+
+
+def initialize_db(args):
+    """ """
+
+    if args.dbuser:
+        db_user = args.dbuser
+        db_password = args.dbpassword
+    else:
+        dbaccess_file = '/etc/tagops/dbaccess.%s.conf' % args.user_level
+        with open(dbaccess_file) as conf_file:
+            config = ConfigParser.SafeConfigParser()
+            config.readfp(conf_file)
+
+        db_user = config.get('db', 'user')
+        db_password = config.get('db', 'password')
+
+    try:
+        init_session(db_user, db_password)
+    except PermissionsException, e:
+        print 'Access issue with database:'
+        print e
+        sys.exit(1)
 
 
 if __name__ == '__main__':
@@ -85,9 +101,13 @@ if __name__ == '__main__':
 
     # Pass user through with arguments
     args.user = pwd.getpwuid(os.getuid()).pw_name
+    args.user_level = check_user_auth(args.user)
     print "args are: %s" % args   # Remove once main code is written
 
-    args.user_level = initialize_db(args.user)
+    if args.dbuser:
+        args.dbpassword = getpass.getpass('Enter DB password: ')
+
+    initialize_db(args)
     cmd = getattr(tds.commands, args.command_name.capitalize())()
 
     try:
@@ -96,6 +116,6 @@ if __name__ == '__main__':
         print 'Your account (%s) does not have the appropriate permissions' \
               '\nto run the requested command.' % args.user
         sys.exit(1)
-    except NotImplementedException, e:
+    except NotImplementedError, e:
         print e
         sys.exit(1)
