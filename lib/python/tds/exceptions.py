@@ -10,3 +10,9 @@ class AccessError(Exception):
     """Exception for access violations (insufficient permissions)"""
 
     pass
+
+
+class NotImplementedError(Exception):
+    """Exception for unimplemented methods"""
+
+    pass

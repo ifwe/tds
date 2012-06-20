@@ -1,13 +1,27 @@
 import beanstalkc
 
 from tagopsdb.database.meta import Session
-from tagopsdb.exceptions import RepoException
+from tagopsdb.exceptions import RepoException, PackageException, \
+                                NotImplementedException
 
 import tagopsdb.deploy.repo as repo
 import tagopsdb.deploy.package as package
 #import tagopsdb.deploy.deploy as deploy
 
 from tds.authorize import verify_access
+from tds.exceptions import NotImplementedError
+
+
+def catch_exceptions(meth):
+    """Catch common database library exceptions"""
+
+    def wrapped(*args, **kwargs):
+        try:
+            meth(*args, **kwargs)
+        except NotImplementedException, e:
+            raise NotImplementedError(e)
+
+    return wrapped
 
 
 class Repository(object):
@@ -19,6 +33,7 @@ class Repository(object):
         pass
 
 
+    @catch_exceptions
     def add(self, args):
         """ """
 
@@ -28,6 +43,7 @@ class Repository(object):
         Session.commit()
 
 
+    @catch_exceptions
     def delete(self, args):
         """ """
 
@@ -42,6 +58,7 @@ class Repository(object):
         Session.commit()
 
 
+    @catch_exceptions
     def list(self, args):
         """ """
 
@@ -71,6 +88,7 @@ class Package(object):
         pass
 
 
+    @catch_exceptions
     def add(self, args):
         """ """
 
@@ -121,6 +139,7 @@ class Package(object):
             print 'Unexpected result: %s, %s' % (result, msg)
 
 
+    @catch_exceptions
     def delete(self,args):
         """ """
 
@@ -129,7 +148,7 @@ class Package(object):
         try:
             # The real 'revision' is hardcoded to 1 for now
             # This needs to be changed at some point
-            repo.delete_package(args.project, args.revision, '1')
+            package.delete_package(args.project, args.revision, '1')
         except PackageException, e:
             print e
             return
@@ -137,6 +156,7 @@ class Package(object):
         Session.commit()
 
 
+    @catch_exceptions
     def list(self, args):
         """ """
 
@@ -157,42 +177,49 @@ class Deploy(object):
         pass
 
 
+    @catch_exceptions
     def force_production(self, args):
         """ """
 
         verify_access(args.user_level, 'admin')
 
 
+    @catch_exceptions
     def force_staging(self, args):
         """ """
 
         verify_access(args.user_level, 'admin')
 
 
+    @catch_exceptions
     def promote(self, args):
         """ """
 
         verify_access(args.user_level, 'dev')
 
 
+    @catch_exceptions
     def redeploy(self, args):
         """ """
 
         verify_access(args.user_level, 'dev')
 
 
+    @catch_exceptions
     def rollback(self, args):
         """ """
 
         verify_access(args.user_level, 'dev')
 
 
+    @catch_exceptions
     def show(self, args):
         """ """
 
         verify_access(args.user_level, 'dev')
 
 
+    @catch_exceptions
     def validate(self, args):
         """ """
 
