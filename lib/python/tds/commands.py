@@ -1,6 +1,5 @@
 import beanstalkc
 
-from tagopsdb.database import init_session
 from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException
 
@@ -17,13 +16,13 @@ class Repository(object):
     def __init__(self):
         """ """
 
-        init_session()
+        pass
 
 
     def add(self, args):
         """ """
 
-        verify_access('admin')
+        verify_access(args.user_level, 'admin')
         repo.add_app_location(args.buildtype, args.pkgname, args.project,
                               args.pkgpath, args.environment)
         Session.commit()
@@ -32,7 +31,7 @@ class Repository(object):
     def delete(self, args):
         """ """
 
-        verify_access('admin')
+        verify_access(args.user_level, 'admin')
 
         try:
             repo.delete_app_location(args.project)
@@ -46,7 +45,7 @@ class Repository(object):
     def list(self, args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
 
         for app in repo.list_all_app_locations():
             print 'Project: %s' % app.app_name
@@ -69,13 +68,13 @@ class Package(object):
     def __init__(self):
         """ """
 
-        init_session()
+        pass
 
 
     def add(self, args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
 
         try:
             # The real 'revision' is hardcoded to 1 for now
@@ -125,7 +124,7 @@ class Package(object):
     def delete(self,args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
 
         try:
             # The real 'revision' is hardcoded to 1 for now
@@ -141,7 +140,7 @@ class Package(object):
     def list(self, args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
 
         for pkg in package.list_packages():
             print 'Project: %s' % pkg.pkg_name
@@ -155,46 +154,46 @@ class Deploy(object):
     def __init__(self):
         """ """
 
-        init_session()
+        pass
 
 
     def force_production(self, args):
         """ """
 
-        verify_access('admin')
+        verify_access(args.user_level, 'admin')
 
 
     def force_staging(self, args):
         """ """
 
-        verify_access('admin')
+        verify_access(args.user_level, 'admin')
 
 
     def promote(self, args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
 
 
     def redeploy(self, args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
 
 
     def rollback(self, args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
 
 
     def show(self, args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
 
 
     def validate(self, args):
         """ """
 
-        verify_access('dev')
+        verify_access(args.user_level, 'dev')
