@@ -192,6 +192,13 @@ class Deploy(object):
 
 
     @catch_exceptions
+    def invalidate(self, args):
+        """ """
+
+        verify_access(args.user_level, 'dev')
+
+
+    @catch_exceptions
     def promote(self, args):
         """ """
 

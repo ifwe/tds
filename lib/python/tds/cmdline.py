@@ -96,6 +96,15 @@ deploy_data = odict([
              ])),
          ])),
      ])),
+    ('invalidate', odict([
+        ('help', 'Mark a given deployment as not working'),
+        ('subargs', odict([
+            (('deployid',), odict([
+                ('help', 'ID number for deployment'),
+                ('type', int),
+             ])),
+         ])),
+     ])),
     ('promote', odict([
         ('help', 'Promote project to next environment'),
         ('subargs', odict([
@@ -127,6 +136,10 @@ deploy_data = odict([
     ('rollback', odict([
         ('help', 'Revert deployment'),
         ('subargs', odict([
+            (('--remain-valid',), odict([
+                ('help', 'Do not invalidate deployment'),
+                ('action', 'store_true'),
+             ])),
             (('deployid',), odict([
                 ('help', 'ID number for deployment'),
                 ('type', int),
