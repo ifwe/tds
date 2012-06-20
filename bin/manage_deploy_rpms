@@ -21,17 +21,20 @@ def copy_package_to_repo(name, version):
 
     host = socket.gethostname()
 
-    init_session()
+    with open('/etc/tagops/deploy.conf') as conf_file:
+        config = ConfigParser.SafeConfigParser()
+        config.readfp(conf_file)
+
+    db_user = config.get('db', 'user')
+    db_password = config.get('db', 'password')
+
+    init_session(db_user, db_password)
 
     try:
         app = repo.list_app_location(name)
     except sqlalchemy.orm.exc.NoResultFound:
         raise RepoException('Application "%s" to not available in '
                             'PackageLocations table' % name)
-
-    with open('/etc/tagops/deploy.conf') as conf_file:
-        config = ConfigParser.SafeConfigParser()
-        config.readfp(conf_file)
 
     build_base = config.get('repo', 'build_base')
     repo_mountpoint = config.get('repo', 'repo_mountpoint')
