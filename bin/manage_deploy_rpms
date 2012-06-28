@@ -54,7 +54,7 @@ def main():
     """ """
 
     # Initialize beanstalk connection, set up use and watch tubes
-    beanstalk = beanstalkc.Connection(host='tong01.tagged.com', port=14711)
+    beanstalk = beanstalkc.Connection(host='tong01.tagged.com', port=11300)
     beanstalk.use('tds.package.error')
     beanstalk.watch('tds.package.copy')
     beanstalk.ignore('default')

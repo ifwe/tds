@@ -103,7 +103,7 @@ class Package(object):
             return
 
         beanstalk = beanstalkc.Connection(host='tong01.tagged.com',
-                                          port=14711)
+                                          port=11300)
         beanstalk.use('tds.package.copy')
         beanstalk.watch('tds.package.error')
         beanstalk.ignore('default')
