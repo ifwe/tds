@@ -38,10 +38,10 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 BuildRequires:  %{pybase}-devel
 
-#Requires: %{tagbase}-tagopsdb
-#Requires: %{tagbase}-argparse
-#Requires: %{tagbase}-beanstalkc
-#Requires: %{tagbase}-orderreddict
+Requires: %{tagbase}-tagopsdb
+Requires: %{tagbase}-argparse
+Requires: %{tagbase}-beanstalkc
+Requires: %{tagbase}-orderreddict
 
 
 %description
@@ -72,9 +72,9 @@ rm -rf $RPM_BUILD_ROOT
 Summary: Copy package daemon for deployment
 Group: Applications/Python
 
-#Requires: %{tagbase}-tagopsdb
-#Requires: %{tagbase}-beanstalkc
-#Requires: %{tagbase}-daemonize
+Requires: %{tagbase}-tagopsdb
+Requires: %{tagbase}-beanstalkc
+Requires: %{tagbase}-daemonize
 
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -97,9 +97,9 @@ fi
 Summary: Update repository daemon for deployment
 Group: Applications/Python
 
-#Requires: %{tagbase}-tagopsdb
-#Requires: %{tagbase}-beanstalkc
-#Requires: %{tagbase}-daemonize
+Requires: %{tagbase}-tagopsdb
+Requires: %{tagbase}-beanstalkc
+Requires: %{tagbase}-daemonize
 
 Requires(post): chkconfig
 Requires(preun): chkconfig
