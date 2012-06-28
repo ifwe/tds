@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+#  Created 2012-06-27 by klareau@nominum.com
+#
+# manage_deploy_rpms    This shell script takes care of starting and stopping
+#                       the manage_deploy_rpms daemon.
+#
+# chkconfig: - 97 03
+# description: manage_deploy_rpms is a daemon for copying RPMs of \
+#              built applications to the Tagged deployment repository.
+# processname: manage_deploy_rpms
+
+
+# Source function library
+if [ -f /etc/rc.d/init.d/functions ]; then
+. /etc/rc.d/init.d/functions
+elif [ -f /etc/init.d/functions ]; then
+. /etc/init.d/functions
+elif [ -f /etc/rc.d/functions ]; then
+. /etc/rc.d/functions
+fi
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+prog=/usr/bin/manage_deploy_rpms
+PidFile=/var/run/manage_deploy_rpms.pid
+LockFile=/var/lock/subsys/manage_deploy_rpms
+
+RETVAL=0
+
+# See how we were called.
+case "$1" in
+    start)
+        # Start daemon
+        [ ${NETWORKING} = "no" ] && exit 4
+        echo -n "Starting manage_deploy_rpms: "
+        $prog
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] && touch $LockFile
+        ;;
+    stop)
+        # Stop daemon
+        echo -n "Shutting down manage_deploy_rpms: "
+        killproc -p $PidFile manage_deploy_rpms
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] && rm -f $LockFile
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    status)
+        status manage_deploy_rpms
+        RETVAL=$?
+        ;;
+    *)
+        echo "Usage: manage_deploy_rpms {start|stop|restart|status}"
+        RETVAL=2
+esac
+
+exit $RETVAL
