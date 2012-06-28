@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup_args = dict(
     name = 'TDS',
-    version = '1.0.0',
+    version = '0.1.0',
     description = 'Tagged Deployment System',
     # long_description = long_description,
     author = 'Kenneth Lareau',
@@ -13,7 +13,9 @@ setup_args = dict(
     license = 'Apache License, Version 2.0',
     packages = ['tds'],
     package_dir = {'' : 'lib/python'},
-    scripts = ['bin/tds'],
+    scripts = ['bin/tds',
+               'bin/manage_deploy_rpms',
+               'bin/update_deploy_repo',],
 )
 
 if __name__ == '__main__':
