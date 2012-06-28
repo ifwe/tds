@@ -25,7 +25,7 @@
 
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
-Name:           TAGpython-deploy
+Name:           %{tagbase}-deploy
 Version:        %(%{__python} setup.py --version)
 Release:        1%{?dist}
 Summary:        Manage deployment of Tagged applications
