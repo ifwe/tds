@@ -64,6 +64,7 @@ def main():
         daemonize.logging.info("Received: %s" % job.body)
 
         try:
+            bean_id = None
             bean_id, body = job.body.split(' ')
 
             if body != 'updaterepo':
@@ -73,7 +74,7 @@ def main():
                                     'tds.package.update: %s' % job.body)
             job.delete()
 
-            if bean_id:
+            if bean_id is not None:
                 beanstalk.put('%s ERROR Invalid message in queue '
                               'tds.package.update: %s' % (bean_id, job.body))
 
