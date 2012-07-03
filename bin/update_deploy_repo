@@ -92,7 +92,19 @@ def main():
         beanstalk.put('%s OK Operation successful' % bean_id)
 
 
+def safe_main():
+    """ """
+
+    try:
+        main()
+    except:
+        exctype, value = sys.exc_info()[:2]
+        e = "Unhandled exception: %s.  Daemon exiting." % value
+        daemonize.logging.error(e)
+        sys.exit(1)
+
+
 pid = '/var/run/update_deploy_repo.pid'
 logfile = '/var/log/update_deploy_repo.log'
 
-daemonize.start(main, pid, logfile)
+daemonize.start(safe_main, pid, logfile)
