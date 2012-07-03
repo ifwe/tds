@@ -1,3 +1,6 @@
+import os
+import socket
+
 import beanstalkc
 
 from tagopsdb.database.meta import Session
@@ -85,7 +88,7 @@ class Package(object):
     def __init__(self):
         """ """
 
-        pass
+        self.bean_id = "%s-%s" % (socket.gethostname(), os.getpid())
 
 
     @catch_exceptions

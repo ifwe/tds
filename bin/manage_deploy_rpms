@@ -64,13 +64,13 @@ def main():
         daemonize.logging.info("Received: %s" % job.body)
 
         try:
-            id, name, version = job.body.split(' ')
+            bean_id, name, version = job.body.split(' ')
         except ValueError:
             daemonize.logging.error('Invalid message in queue '
                                     'tds.package.copy: %s' % job.body)
             job.delete()
             beanstalk.put('%s ERROR Invalid message in queue '
-                          'tds.package.copy: %s' % (id, job.body))
+                          'tds.package.copy: %s' % (bean_id, job.body))
             continue
 
         try:
@@ -78,7 +78,8 @@ def main():
         except RepoException, e:
             daemonize.logging.error(e)
             job.delete()
-            beanstalk.put('%s ERROR Queue tds.package.copy: %s' % (id, e))
+            beanstalk.put('%s ERROR Queue tds.package.copy: %s'
+                          % (bean_id, e))
             continue
 
         # All good, just delete job
@@ -86,7 +87,7 @@ def main():
 
         # Send update repo request to server
         beanstalk.use('tds.package.update')
-        beanstalk.put('updaterepo')
+        beanstalk.put('%s updaterepo' % bean_id)
         beanstalk.use('tds.package.error')
 
 
