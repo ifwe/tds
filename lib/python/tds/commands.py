@@ -5,14 +5,14 @@ import beanstalkc
 
 from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException, PackageException, \
-                                NotImplementedException
+                                DeployException, NotImplementedException
 
 import tagopsdb.deploy.repo as repo
 import tagopsdb.deploy.package as package
-#import tagopsdb.deploy.deploy as deploy
+import tagopsdb.deploy.deploy as deploy
 
 from tds.authorize import verify_access
-from tds.exceptions import NotImplementedError
+from tds.exceptions import NotImplementedError, WrongEnvironmentError
 
 
 def catch_exceptions(meth):
@@ -169,15 +169,29 @@ class Package(object):
             print 'Project: %s' % pkg.pkg_name
             print 'Version: %s' % pkg.version
             print 'Revision: %s' % pkg.revision
+            print ''
 
 
 class Deploy(object):
     """ """
 
+    envs = { 'dev' : 'development',
+             'stage' : 'staging',
+             'prod' : 'production', }
+
+
     def __init__(self):
         """ """
 
         pass
+
+
+    def check_environment(self, curr_env, req_env):
+        """Verify command is being run from correct environment"""
+
+        if req_env != curr_env:
+            raise WrongEnvironmentError('This command must be run from '
+                                        'the %s deploy server.' % req_env)
 
 
     @catch_exceptions
@@ -198,28 +212,45 @@ class Deploy(object):
     def invalidate(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        verify_access(args.user_level, args.environment)
+
+        try:
+            dep = deploy.get_deployment_by_id(args.deployid)
+            self.check_environment(self.envs[args.environment],
+                                   dep.environment)
+            deploy.invalidate_deployment(dep, args.user)
+        except DeployException, e:
+            print e
+            return
+
+        Session.commit()
 
 
     @catch_exceptions
     def promote(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        verify_access(args.user_level, args.environment)
 
 
     @catch_exceptions
     def redeploy(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        verify_access(args.user_level, args.environment)
 
 
     @catch_exceptions
     def rollback(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        verify_access(args.user_level, args.environment)
+
+        # Do rollback
+
+        if not args.remain_valid:
+            # Perform invalidation
+            self.invalidate(args)
 
 
     @catch_exceptions
@@ -228,9 +259,37 @@ class Deploy(object):
 
         verify_access(args.user_level, 'dev')
 
+        for dep_info, pkg_info, app_type in deploy.list_deployment_info(
+                                                   args.project,
+                                                   args.revision):
+            rpm_name = '%s-%s-%s.noarch.rpm' % (pkg_info.pkg_name,
+                                                pkg_info.version,
+                                                pkg_info.revision)
+            dep_date = dep_info.declared.isoformat()
+
+            print 'Deployment ID: %s' % dep_info.DeploymentID
+            print 'Package name: %s' % rpm_name
+            print 'Declaration: %s' % dep_info.declaration
+            print 'Environment: %s' % dep_info.environment
+            print 'Deploy date: %s' % dep_date
+            print 'Declarer: %s' % dep_info.declarer
+            print 'App type: %s' % app_type
+            print ''
+
 
     @catch_exceptions
     def validate(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        verify_access(args.user_level, args.environment)
+
+        try:
+            dep = deploy.get_deployment_by_id(args.deployid)
+            self.check_environment(self.envs[args.environment],
+                                   dep.environment)
+            deploy.validate_deployment(dep, args.user)
+        except DeployException, e:
+            print e
+            return
+
+        Session.commit()
