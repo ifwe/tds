@@ -13,7 +13,8 @@ from tagopsdb.database import init_session
 from tagopsdb.exceptions import PermissionsException
 from tds.authorize import get_access_level
 from tds.cmdline import parser_info
-from tds.exceptions import AccessError, NotImplementedError
+from tds.exceptions import AccessError, NotImplementedError, \
+                           WrongEnvironmentError
 
 
 def create_subparsers(parser):
@@ -73,6 +74,16 @@ def check_user_auth(user):
     return user_level
 
 
+def get_environment():
+    """ """
+
+    with open('/etc/tagops/deploy.conf') as conf_file:
+        config = ConfigParser.SafeConfigParser()
+        config.readfp(conf_file)
+
+    return config.get('env', 'environment')
+
+
 def initialize_db(args):
     """ """
 
@@ -102,6 +113,7 @@ if __name__ == '__main__':
     # Pass user through with arguments
     args.user = pwd.getpwuid(os.getuid()).pw_name
     args.user_level = check_user_auth(args.user)
+    args.environment = get_environment()
     print "args are: %s" % args   # Remove once main code is written
 
     if args.dbuser:
@@ -116,6 +128,6 @@ if __name__ == '__main__':
         print 'Your account (%s) does not have the appropriate permissions' \
               '\nto run the requested command.' % args.user
         sys.exit(1)
-    except NotImplementedError, e:
+    except (NotImplementedError, WrongEnvironmentError), e:
         print e
         sys.exit(1)

@@ -16,3 +16,9 @@ class NotImplementedError(Exception):
     """Exception for unimplemented methods"""
 
     pass
+
+
+class WrongEnvironmentError(Exception):
+    """Exception for command attempts in incorrect environment"""
+
+    pass
