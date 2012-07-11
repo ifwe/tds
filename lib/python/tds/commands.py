@@ -89,7 +89,8 @@ class Package(object):
     def __init__(self):
         """ """
 
-        self.bean_id = "%s-%s" % (socket.gethostname(), os.getpid())
+        self.host = socket.gethostname()
+        self.bean_id = "%s-%s" % (host, os.getpid())
 
 
     @catch_exceptions
@@ -108,7 +109,7 @@ class Package(object):
 
         beanstalk = beanstalkc.Connection(host='tong01.tagged.com',
                                           port=11300)
-        beanstalk.use('tds.package.copy')
+        beanstalk.use('tds.package.copy.%s' % host)
         beanstalk.watch('tds.package.error')
         beanstalk.ignore('default')
 
