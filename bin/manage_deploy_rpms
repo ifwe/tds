@@ -23,12 +23,19 @@ host = socket.gethostname()
 def copy_package_to_repo(name, version):
     """ """
 
-    with open('/etc/tagops/deploy.conf') as conf_file:
-        config = ConfigParser.SafeConfigParser()
-        config.readfp(conf_file)
+    try:
+        with open('/etc/tagops/deploy.conf') as conf_file:
+            config = ConfigParser.SafeConfigParser()
+            config.readfp(conf_file)
+    except IOError, e:
+        raise RepoException('Unable to access the configuration file '
+                            '/etc/tagops/deploy.conf: %s ' % e)
 
-    db_user = config.get('db', 'user')
-    db_password = config.get('db', 'password')
+    try:
+        db_user = config.get('db', 'user')
+        db_password = config.get('db', 'password')
+    except ConfigParser.NoOptionError, e:
+        raise RepoException('Failed to get configuration information: %s' % e)
 
     init_session(db_user, db_password)
 
@@ -38,8 +45,11 @@ def copy_package_to_repo(name, version):
         raise RepoException('Application "%s" to not available in '
                             'PackageLocations table' % name)
 
-    build_base = config.get('repo', 'build_base')
-    repo_mountpoint = config.get('repo', 'repo_mountpoint')
+    try:
+        build_base = config.get('repo', 'build_base')
+        repo_mountpoint = config.get('repo', 'repo_mountpoint')
+    except ConfigParser.NoOptionError, e:
+        raise RepoException('Failed to get configuration information: %s' % e)
 
     src_rpm = os.path.join(build_base, app.path, '%s.rpm' % app.pkg_name)
     dest_dir = repo_mountpoint  # May be more complex later, keeping
@@ -96,7 +106,19 @@ def main():
         beanstalk.use(error_queue)
 
 
+def safe_main():
+    """ """
+
+    try:
+        main()
+    except:
+        exctype, value = sys.exc_info()[:2]
+        e = "Unhandled exception: %s.  Daemon exiting." % value
+        daemonize.logging.error(e)
+        sys.exit(1)
+
+
 pid = '/var/run/manage_deploy_rpms.pid'
 logfile = '/var/log/manage_deploy_rpms.log'
 
-daemonize.start(main, pid, logfile)
+daemonize.start(safe_main, pid, logfile)
