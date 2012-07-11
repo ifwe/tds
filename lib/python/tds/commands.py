@@ -42,7 +42,7 @@ class Repository(object):
 
         verify_access(args.user_level, 'admin')
         repo.add_app_location(args.buildtype, args.pkgname, args.project,
-                              args.pkgpath, args.environment)
+                              args.pkgpath, args.buildhost, args.environment)
         Session.commit()
 
 
@@ -72,6 +72,7 @@ class Repository(object):
             print 'Project type: %s' % app.pkg_type
             print 'Package name: %s' % app.pkg_name
             print 'Path: %s' % app.path
+            print 'Build host: %s' % app.build_host
 
             if app.environment:
                 is_env = 'Yes'

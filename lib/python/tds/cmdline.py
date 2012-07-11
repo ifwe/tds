@@ -17,6 +17,9 @@ repository_data = odict([
             (('pkgpath',), odict([
                 ('help', 'Path to built packages on build system'),
              ])),
+            (('buildhost',), odict([
+                ('help', 'System that packages are built on'),
+             ])),
             (('buildtype',), odict([
                 ('help', 'Type of build (hudson, jenkins, tagconfg, etc.)'),
              ])),
