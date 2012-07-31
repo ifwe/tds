@@ -90,7 +90,7 @@ class Package(object):
         """ """
 
         self.host = socket.gethostname()
-        self.bean_id = "%s-%s" % (host, os.getpid())
+        self.bean_id = "%s-%s" % (self.host, os.getpid())
 
 
     @catch_exceptions
@@ -107,9 +107,12 @@ class Package(object):
             print e
             return
 
+        # Get build server for package
+        build_host = repo.list_app_location(args.project).build_host
+
         beanstalk = beanstalkc.Connection(host='tong01.tagged.com',
                                           port=11300)
-        beanstalk.use('tds.package.copy.%s' % host)
+        beanstalk.use('tds.package.copy.%s' % build_host)
         beanstalk.watch('tds.package.error')
         beanstalk.ignore('default')
 
@@ -119,13 +122,17 @@ class Package(object):
         # Watch error tube for responses, react accordingly
         while True:
             job = beanstalk.reserve()
-            id, result, msg = job.body.split(' ', 3)
+            id, result, msg = job.body.split(' ', 2)
 
             # Make sure this is for our client
+            # print "ID: %s, Bean ID: %s" % (id, self.bean_id)
             if id == self.bean_id:
                 break
 
             job.release()
+
+        # Safe to remove job now
+        job.delete()
 
         if result == 'OK':
             Session.commit()
