@@ -2,6 +2,7 @@
 
 import ConfigParser
 import os.path
+import shutil
 import socket
 import sys
 
@@ -51,12 +52,14 @@ def copy_package_to_repo(name, version):
     except ConfigParser.NoOptionError, e:
         raise RepoException('Failed to get configuration information: %s' % e)
 
-    src_rpm = os.path.join(build_base, app.path, '%s.rpm' % app.pkg_name)
+    # Revision hardcoded for now
+    src_rpm = os.path.join(build_base, app.path, '%s-%s-1.noarch.rpm'
+                           % (app.pkg_name, version))
     dest_dir = repo_mountpoint  # May be more complex later, keeping
                                 # simple assignment
 
     try:
-        shutil.copy(src_rpm, dest_dir)
+        shutil.copy(src_rpm, os.path.join(dest_dir, 'noarch'))
     except IOError, e:
         raise RepoException('Unable to copy file "%s" to "%s" on host "%s": '
                             '%s' % (src_rpm, dest_dir, host, e))
