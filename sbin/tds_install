@@ -1,0 +1,169 @@
+#!/usr/bin/env python2.6
+#
+# Copyright (C) 2012 Tagged
+#
+# All rights reserved.
+
+"""Python application to install a given Tagged application"""
+
+import ConfigParser
+import os
+import signal
+import subprocess
+import sys
+import time
+
+
+# Make sure we're running at least Python 2.6
+# and not running Python 3
+pyvers = sys.version_info[:2]
+
+if pyvers < (2, 6):
+    raise RuntimeError('Python 2.6 is required to use this program')
+
+if pyvers[0] == 3:
+    raise RuntimeError('Python 3.x is not supported at this time, please '
+                       'use Python 2.6+')
+
+
+class ExtCommandError(Exception):
+    pass
+
+
+def run_command(cmd):
+    """Wrapper to run external command"""
+
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+
+    stdout, stderr = proc.communicate()
+
+    if proc.returncode:
+        cmdline = ' '.join(cmd)
+        raise ExtCommandError('Command "%s" failed:\n%s'
+                              % (cmdline, stderr))
+
+    return stdout
+
+
+def puppet_check():
+    """Check for a running Puppet client process"""
+
+    check_cmd = [ '/usr/bin/pgrep', '-u', 'root', 'puppetd' ]
+
+    try:
+        pids = run_command(check_cmd).rstrip().split('\n')
+    except ExtCommandError, e:
+        sys.exit('Unable to get process listing: %s' %e)
+
+    if pids:
+        return pids
+    else:
+        return None
+
+
+def app_check(app):
+    """Ensure requested application is allowed on the system"""
+
+    tds_conf = '/etc/tagops/tds.conf'
+
+    try:
+        with open(tds_conf) as conf_file:
+            config = ConfigParser.SafeConfigParser()
+            config.readfp(conf_file)
+    except IOError, e:
+        sys.exit('Unable to access the configuration file %s: %s'
+                 % (tds_conf, e))
+
+    try:
+        apps = config.get('applications', 'valid')
+    except ConfigParser.NoOptionError, e:
+        sys.exit('Failed to get configuration information: %s' % e)
+
+    valid_apps = [ x.strip() for x in apps.split(',') ]
+
+    if app not in valid_apps:
+        sys.exit('Application "%s" is not allowed on this system' % app)
+
+
+def stop_puppet():
+    """Stop the Puppet client process if it's running"""
+
+    running = puppet_check()
+
+    if running:
+        print 'Puppet process(es) running, trying to stop nicely'
+
+        for idx in xrange(0, 10):
+            for pid in running:
+                try:
+                    os.kill(pid, signal.SIGINT)
+                except OSError:
+                    # Process already gone, ignore
+                    pass
+
+            time.sleep(1)
+            running = puppet_check()
+
+            if not running:
+                break
+        else:
+            print 'Puppet process(es) still running, sending kill'
+
+            for pid in running:
+                os.kill(pid, signal.SIGKILL)
+
+
+def app_install(app, version):
+    """Install the given version of the application"""
+
+    makecache_cmd = [ '/usr/bin/yum', 'makecache' ]
+    install_cmd = [ '/usr/bin/yum', '-y', '--nogpgcheck', 'install',
+                    '%s-%s-1' % (app, version) ]
+
+    try:
+        run_command(makecache_cmd)
+    except ExtCommandError, e:
+        sys.exit('Unable to run "yum makecache": %s' % e)
+
+    try:
+        output = run_command(install_cmd)
+    except ExtCommandError, e:
+        sys.exit('Unable to install application via yum: %s' % e)
+
+
+def verify_install(app, version):
+    """Verify the installed application is the correct version"""
+
+    verify_cmd = [ '/bin/rpm', '-q', '--queryformat', '%{VERSION}', app ]
+
+    try:
+        inst_version = run_command(verify_cmd)
+    except ExtCommandError, e:
+        sys.exit('Unable to query for installed version of "%s": %s'
+                 % (app, e))
+
+    if inst_version != version:
+        sys.exit('Incorrect version of "%s" installed: %s.  Should be '
+                 '%s.' % (app, inst_version, version))
+
+
+def main():
+    """ """
+
+    if len(sys.argv) < 3:
+        sys.exit('Usage: %s <application> <version>' % sys.argv[0])
+
+    try:
+        int(sys.argv[2])
+    except ValueError:
+        sys.exit('Version passed (%s) was not a number' % sys.argv[2])
+
+    app_check(app)
+    stop_puppet()
+    app_install(app, version)
+    verify_install(app, version)
+
+
+if __name__ == '__main__':
+    main()
