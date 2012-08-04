@@ -268,22 +268,43 @@ class Deploy(object):
 
         verify_access(args.user_level, 'dev')
 
-        for dep_info, pkg_info, app_type in deploy.list_deployment_info(
-                                                   args.project,
-                                                   args.revision):
-            rpm_name = '%s-%s-%s.noarch.rpm' % (pkg_info.pkg_name,
-                                                pkg_info.version,
-                                                pkg_info.revision)
-            dep_date = dep_info.declared.isoformat()
+        # Revision hardcoded to '1' for now
+        app_deps, host_deps = deploy.list_deployment_info(args.project,
+                                                          args.version,
+                                                          '1')
 
-            print 'Deployment ID: %s' % dep_info.DeploymentID
-            print 'Package name: %s' % rpm_name
-            print 'Declaration: %s' % dep_info.declaration
-            print 'Environment: %s' % dep_info.environment
-            print 'Deploy date: %s' % dep_date
-            print 'Declarer: %s' % dep_info.declarer
-            print 'App type: %s' % app_type
-            print ''
+        print 'Deployments of %s to tiers:' % args.project
+        print '==========\n'
+
+        if not app_deps:
+            print 'No deployments to tiers for this version and revision\n'
+        else:
+            for dep, app_dep, app_type in app_deps:
+                print 'Declared: %s' % dep.declared
+                print 'Declaring user: %s' % dep.user
+                print 'Realized: %s' % app_dep.realized
+                print 'Realizing user: %s' % app_dep.user
+                print 'App type: %s' % app_type
+                print 'Environment: %s' % app_dep.environment
+                print 'Deploy state: %s' % dep.dep_type
+                print 'Install state: %s' % app_dep.status
+                print ''
+
+        print 'Deployments of %s to hosts:' % args.project
+        print '==========\n'
+
+        if not host_deps:
+            print 'No deployments to hosts for this version and revision\n'
+        else:
+            for dep, host_dep, hostname in host_deps:
+                print 'Declared: %s' % dep.declared
+                print 'Declaring user: %s' % dep.user
+                print 'Realized: %s' % host_dep.realized
+                print 'Realizing user: %s' % host_dep.user
+                print 'Hostname: %s' % hostname
+                print 'Deploy state: %s' % dep.dep_type
+                print 'Install state: %s' % host_dep.status
+                print ''
 
 
     @catch_exceptions
