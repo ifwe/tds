@@ -1,3 +1,5 @@
+import argparse
+
 from ordereddict import OrderedDict as odict
 
 repository_data = odict([
@@ -47,8 +49,8 @@ package_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('revision',), odict([
-                ('help', 'Revision number for project'),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
          ])),
      ])),
@@ -58,8 +60,8 @@ package_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('revision',), odict([
-                ('help', 'Revision number for project'),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
          ])),
      ])),
@@ -77,11 +79,12 @@ deploy_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('revision',), odict([
-                ('help', 'Revision number for project'),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
-            (('apptype',), odict([
-                ('help', 'Application type for project'),
+            (('host',), odict([
+                ('help', 'Specific host(s) for deployment'),
+                ('nargs', '*'),
              ])),
          ])),
      ])),
@@ -91,20 +94,23 @@ deploy_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('revision',), odict([
-                ('help', 'Revision number for project'),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
-            (('apptype',), odict([
-                ('help', 'Application type for project'),
+            (('host',), odict([
+                ('help', 'Specific host(s) for deployment'),
+                ('nargs', '*'),
              ])),
          ])),
      ])),
     ('invalidate', odict([
         ('help', 'Mark a given deployment as not working'),
         ('subargs', odict([
-            (('deployid',), odict([
-                ('help', 'ID number for deployment'),
-                ('type', int),
+            (('project',), odict([
+                ('help', 'Name of project in repository'),
+             ])),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
          ])),
      ])),
@@ -114,11 +120,12 @@ deploy_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('revision',), odict([
-                ('help', 'Revision number for project'),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
-            (('apptype',), odict([
-                ('help', 'Application type for project'),
+            (('host',), odict([
+                ('help', 'Specific host(s) for deployment'),
+                ('nargs', '*'),
              ])),
          ])),
      ])),
@@ -128,11 +135,12 @@ deploy_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('revision',), odict([
-                ('help', 'Revision number for project'),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
-            (('apptype',), odict([
-                ('help', 'Application type for project'),
+            (('host',), odict([
+                ('help', 'Specific host(s) for deployment'),
+                ('nargs', '*'),
              ])),
          ])),
      ])),
@@ -143,9 +151,11 @@ deploy_data = odict([
                 ('help', 'Do not invalidate deployment'),
                 ('action', 'store_true'),
              ])),
-            (('deployid',), odict([
-                ('help', 'ID number for deployment'),
-                ('type', int),
+            (('project',), odict([
+                ('help', 'Name of project in repository'),
+             ])),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
          ])),
      ])),
@@ -155,17 +165,19 @@ deploy_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('revision',), odict([
-                ('help', 'Revision number for project'),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
          ])),
      ])),
     ('validate', odict([
         ('help', 'Verify a given deployment is working'),
         ('subargs', odict([
-            (('deployid',), odict([
-                ('help', 'ID number for deployment'),
-                ('type', int),
+            (('project',), odict([
+                ('help', 'Name of project in repository'),
+             ])),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
              ])),
          ])),
      ])),
