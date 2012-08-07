@@ -41,7 +41,7 @@ BuildRequires:  %{pybase}-devel
 Requires: %{tagbase}-tagopsdb
 Requires: %{tagbase}-argparse
 Requires: %{tagbase}-beanstalkc
-Requires: %{tagbase}-orderreddict
+Requires: %{tagbase}-ordereddict
 
 
 %description
