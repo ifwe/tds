@@ -1,4 +1,5 @@
 import os
+import signal
 import socket
 
 import beanstalkc
@@ -41,8 +42,16 @@ class Repository(object):
         """ """
 
         verify_access(args.user_level, 'admin')
-        repo.add_app_location(args.buildtype, args.pkgname, args.project,
-                              args.pkgpath, args.buildhost, args.environment)
+
+        try:
+            loc_id = repo.add_app_location(args.buildtype, args.pkgname,
+                                           args.project, args.pkgpath,
+                                           args.buildhost, args.environment)
+            repo.add_app_packages_mapping(loc_id, args.apptypes)
+        except RepoException, e:
+            print e
+            return
+
         Session.commit()
 
 
@@ -74,6 +83,10 @@ class Repository(object):
             print 'Path: %s' % app.path
             print 'Build host: %s' % app.build_host
 
+            app_defs = repo.find_app_packages_mapping(app.pkgLocationID)
+            app_types = [ x.appType for x in app_defs ]
+            print 'App types: %s' % ', '.join(app_types)
+
             if app.environment:
                 is_env = 'Yes'
             else:
@@ -93,6 +106,18 @@ class Package(object):
         self.bean_id = "%s-%s" % (self.host, os.getpid())
 
 
+    def beanstalk_handler(self, signum, frame):
+        """ """
+
+        # Release any currently held job
+        if self.job:
+            self.job.release()
+
+        raise PackageException('The requested job response from the '
+                               'beanstalk server was never received.\n'
+                               'Please contact SiteOps for assistance.')
+
+
     @catch_exceptions
     def add(self, args):
         """ """
@@ -102,7 +127,7 @@ class Package(object):
         try:
             # The real 'revision' is hardcoded to 1 for now
             # This needs to be changed at some point
-            package.add_package(args.project, args.revision, '1', args.user)
+            package.add_package(args.project, args.version, '1', args.user)
         except PackageException, e:
             print e
             return
@@ -117,37 +142,45 @@ class Package(object):
         beanstalk.ignore('default')
 
         beanstalk.put('%s %s %s' % (self.bean_id, args.project,
-                                    args.revision))
+                                    args.version))
 
         # Watch error tube for responses, react accordingly
+        # A timeout will occur if no valid messages are received
+        # within specified amount of time
+
+        signal.signal(signal.SIGALRM, self.beanstalk_handler)
+        signal.alarm(20)
+
         while True:
-            job = beanstalk.reserve()
-            id, result, msg = job.body.split(' ', 2)
+            self.job = beanstalk.reserve()
+            id, result, msg = self.job.body.split(' ', 2)
 
             # Make sure this is for our client
             # print "ID: %s, Bean ID: %s" % (id, self.bean_id)
             if id == self.bean_id:
                 break
 
-            job.release()
+            self.job.release()
+
+        signal.alarm(0)
 
         # Safe to remove job now
-        job.delete()
+        self.job.delete()
 
         if result == 'OK':
             Session.commit()
             print 'Added package for project "%s", version %s' \
-                  % (args.project, args.revision)
+                  % (args.project, args.version)
         elif result == 'ERROR':
             Session.rollback()
             print 'Unable to add package for project "%s", version %s' \
-                  % (args.project, args.revision)
+                  % (args.project, args.version)
             print 'Error: %s' % msg
         else:
             # Unexpected result
             Session.rollback()
             print 'Unable to add package for project "%s", version %s' \
-                  % (args.project, args.revision)
+                  % (args.project, args.version)
             print 'Unexpected result: %s, %s' % (result, msg)
 
 
@@ -160,7 +193,7 @@ class Package(object):
         try:
             # The real 'revision' is hardcoded to 1 for now
             # This needs to be changed at some point
-            package.delete_package(args.project, args.revision, '1')
+            package.delete_package(args.project, args.version, '1')
         except PackageException, e:
             print e
             return
@@ -187,6 +220,7 @@ class Deploy(object):
     envs = { 'dev' : 'development',
              'stage' : 'staging',
              'prod' : 'production', }
+    env_order = [ 'dev', 'stage', 'prod' ]
 
 
     def __init__(self):
@@ -201,6 +235,20 @@ class Deploy(object):
         if req_env != curr_env:
             raise WrongEnvironmentError('This command must be run from '
                                         'the %s deploy server.' % req_env)
+
+    def get_previous_environment(self, curr_env):
+        """Find the previous environment to the current one"""
+
+        # Done this way since negative indexes are allowed
+        if curr_env == 'dev':
+            raise WrongEnvironmentError('There is no environment before '
+                                        'the current environment (%s)'
+                                        % curr_env)
+
+        try:
+            return self.env_order[self.env_order.index(curr_env) - 1]
+        except ValueError:
+            raise WrongEnvironmentError('Invalid environment: %s' % curr_env)
 
 
     @catch_exceptions
@@ -223,16 +271,16 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        try:
-            dep = deploy.get_deployment_by_id(args.deployid)
-            self.check_environment(self.envs[args.environment],
-                                   dep.environment)
-            deploy.invalidate_deployment(dep, args.user)
-        except DeployException, e:
-            print e
-            return
+        #try:
+        #    dep = deploy.get_deployment_by_id(args.deployid)
+        #    self.check_environment(self.envs[args.environment],
+        #                           dep.environment)
+        #    deploy.invalidate_deployment(dep, args.user)
+        #except DeployException, e:
+        #    print e
+        #    return
 
-        Session.commit()
+        #Session.commit()
 
 
     @catch_exceptions
@@ -240,6 +288,121 @@ class Deploy(object):
         """ """
 
         verify_access(args.user_level, args.environment)
+
+        # Get package ID
+        try:
+            # Revision hardcoded to '1' for now
+            pkg = package.find_package(args.project, args.version, '1')
+            if not pkg:
+                print 'Application "%s" with version "%s" not available ' \
+                      'in the repository.' % (args.project, args.version)
+                return
+        except PackageException, e:
+            print e
+            return
+
+        pkg_id = pkg.PackageID
+
+        # Determine relevant application IDs
+        app_ids = [ x.AppID for x
+                    in repo.find_app_packages_mapping(args.project) ]
+
+        if args.apptypes:
+            app_defs = [ repo.find_app_by_apptype(x) for x in args.apptypes ]
+            new_app_ids = [ x.AppID for x in app_defs ]
+
+            if set(new_app_ids).issubset(set(app_ids)):
+                app_ids = new_app_ids
+            else:
+                print 'One of the app types given is not a valid app type ' \
+                      'for the current deployment'
+                return
+
+        # Determine environment for deployment, ensure
+        # the correct deploy server is in use
+        deps = deploy.find_app_deployment(pkg_id, app_ids,
+                                          self.envs[args.environment])
+
+        if deps:
+            last_dep, last_dep_type = deps[0]
+
+            if last_dep_type == 'deploy':
+                raise WrongEnvironmentError(
+                      'Application "%s" with version "%s" already deployed '
+                      'to this environment (%s)' % (args.project,
+                      args.version, self.envs[args.environment]))
+
+        if args.environment != 'dev':
+            prev_environment = self.get_previous_environment(args.environment)
+            deps = deploy.find_app_deployment(pkg_id, app_ids,
+                                              self.envs[prev_environment])
+            last_dep, last_dep_type = deps[0]
+
+            if last_dep_type != 'deploy' or last_dep.status != 'validated':
+                print 'Application "%s" with version "%s" not properly ' \
+                      'or fully deployed to previous environment (%s)' \
+                      % (args.project, args.version, prev_environment)
+                return
+
+        # All is well, start deployment
+        dep_id = None
+        deps = deploy.find_deployment_by_pkgid(pkg_id)
+
+        if deps:
+            last_dep = deps[0]
+
+            if last_dep.dep_type == 'deploy':
+                dep_id = last_dep.DeploymentID
+
+        if dep_id is None:
+            dep = deploy.add_deployment(pkg_id, args.user, 'deploy')
+            dep_id = dep.DeploymentID
+
+        if args.apptypes:
+            for app_id in app_ids:
+                deploy.add_app_deployment(dep_id, app_id, args.user,
+                                          'incomplete',
+                                          self.envs[args.environment])
+                dep_hosts = deploy.find_hosts_for_app(app_id)
+
+                for dep_host in dep_hosts:
+                    if deploy.find_host_deployment_by_depid(dep_id,
+                                                        dep_host.hostname):
+                        continue
+
+                    # For now, just set entry in host_deployments to 'ok'
+                    deploy.add_host_deployment(dep_id, dep_host.HostID,
+                                               args.user, 'ok')
+        elif args.hosts:
+            dep_hosts = [ deploy.find_host_by_hostname(x) for x
+                          in args.hosts]
+
+            for dep_host in dep_hosts:
+                if deploy.find_host_deployment_by_depid(dep_id,
+                                                        dep_host.hostname):
+                    continue
+
+                # For now, just set entry in host_deployments to 'ok'
+                deploy.add_host_deployment(dep_id, dep_host.HostID,
+                                           args.user, 'ok')
+        else:
+            for app_id in app_ids:
+                deploy.add_app_deployment(dep_id, app_id, args.user,
+                                          'incomplete',
+                                          self.envs[args.environment])
+                dep_hosts = deploy.find_hosts_for_app(app_id,
+                                                  self.envs[args.environment])
+
+                for dep_host in dep_hosts:
+                    if deploy.find_host_deployment_by_depid(dep_id,
+                                                        dep_host.hostname):
+                        continue
+
+                    # For now, just set entry in host_deployments to 'ok'
+                    deploy.add_host_deployment(dep_id, dep_host.HostID,
+                                               args.user, 'ok')
+
+        Session.commit()
 
 
     @catch_exceptions
@@ -313,13 +476,69 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
+        # Get package ID
         try:
-            dep = deploy.get_deployment_by_id(args.deployid)
-            self.check_environment(self.envs[args.environment],
-                                   dep.environment)
-            deploy.validate_deployment(dep, args.user)
-        except DeployException, e:
+            # Revision hardcoded to '1' for now
+            pkg = package.find_package(args.project, args.version, '1')
+            if not pkg:
+                print 'Application "%s" with version "%s" not available ' \
+                      'in the repository.' % (args.project, args.version)
+                return
+        except PackageException, e:
             print e
             return
+
+        pkg_id = pkg.PackageID
+
+        # Determine relevant application IDs
+        app_ids = [ x.AppID for x
+                    in repo.find_app_packages_mapping(args.project) ]
+
+        if args.apptypes:
+            app_defs = [ repo.find_app_by_apptype(x) for x in args.apptypes ]
+            new_app_ids = [ x.AppID for x in app_defs ]
+
+            if set(new_app_ids).issubset(set(app_ids)):
+                app_ids = new_app_ids
+            else:
+                print 'One of the app types given is not a valid app type ' \
+                      'for the current deployment'
+                return
+
+        # Get relevant deployments, validate and clean host deployments
+        deps = deploy.find_app_deployment(pkg_id, app_ids,
+                                          self.envs[args.environment])
+
+        if not deps:
+            print 'No deployments to validate for application "%s" ' \
+                  'with version "%s" in %s environment' \
+                  % (args.project, args.version, self.envs[args.environment])
+            return
+
+        for dep in deps:
+            app_dep, app_type, dep_type = dep
+
+            if app_dep.status == 'validated':
+                print 'Deployment for application "%s" with version "%s" ' \
+                      'for apptype "%s" already validated in %s environment' \
+                      % (args.project, args.version, app_type,
+                         self.envs[args.environment])
+                continue
+
+            not_ok_hosts = deploy.find_host_deployments_not_ok(pkg_id,
+                                  app_dep.AppID, self.envs[args.environment])
+            hostnames = [ x[1] for x in not_ok_hosts ]
+
+            if not_ok_hosts:
+                print 'Some hosts for deployment for application "%s" ' \
+                      'with version "%s" for apptype "%s" are not in ' \
+                      'an "ok" state:' \
+                      % (args.project, args.version, app_type)
+                print '    %s' % ', '.join(hostnames)
+                continue
+
+            app_dep.status = 'validated'
+            deploy.delete_host_deployments(app_dep.AppID,
+                                           self.envs[args.environment])
 
         Session.commit()

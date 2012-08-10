@@ -25,6 +25,11 @@ repository_data = odict([
             (('buildtype',), odict([
                 ('help', 'Type of build (hudson, jenkins, tagconfg, etc.)'),
              ])),
+            (('apptypes',), odict([
+                ('help', 'Specific apptype(s) associated with project'),
+                ('metavar', 'apptype'),
+                ('nargs', '+'),
+             ])),
          ])),
      ])),
     ('delete', odict([
@@ -82,8 +87,14 @@ deploy_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
              ])),
-            (('host',), odict([
+            (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
+                ('metavar', 'HOST'),
+                ('nargs', '*'),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for deployment'),
+                ('metavar', 'APPTYPE'),
                 ('nargs', '*'),
              ])),
          ])),
@@ -97,8 +108,14 @@ deploy_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
              ])),
-            (('host',), odict([
+            (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
+                ('metavar', 'HOST'),
+                ('nargs', '*'),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for deployment'),
+                ('metavar', 'APPTYPE'),
                 ('nargs', '*'),
              ])),
          ])),
@@ -123,8 +140,14 @@ deploy_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
              ])),
-            (('host',), odict([
+            (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
+                ('metavar', 'HOST'),
+                ('nargs', '*'),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for deployment'),
+                ('metavar', 'APPTYPE'),
                 ('nargs', '*'),
              ])),
          ])),
@@ -138,8 +161,14 @@ deploy_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
              ])),
-            (('host',), odict([
+            (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
+                ('metavar', 'HOST'),
+                ('nargs', '*'),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for deployment'),
+                ('metavar', 'APPTYPE'),
                 ('nargs', '*'),
              ])),
          ])),
@@ -178,6 +207,11 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for validation'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
              ])),
          ])),
      ])),
