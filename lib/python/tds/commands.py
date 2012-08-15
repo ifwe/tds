@@ -251,6 +251,110 @@ class Deploy(object):
             raise WrongEnvironmentError('Invalid environment: %s' % curr_env)
 
 
+    def deploy_to_hosts(dep_hosts, dep_id, user, redeploy=False):
+        """Perform deployment on given set of hosts (only doing those
+           that previously failed with a redeploy)
+        """
+
+        for dep_host in dep_hosts:
+            # For now, just set entry in host_deployments to 'ok'
+            host_dep = find_host_deployment_by_depid(dep_id, dep_host)
+
+            if redeploy and host_dep and host_dep.status != 'ok':
+                host_dep.status = 'ok'
+            else:
+                deploy.add_host_deployment(dep_id, dep_host.HostID,
+                                           user, 'ok')
+
+
+    def get_app_types(self, args):
+        """Determine application IDs for deployment"""
+
+        try:
+            app_ids = [ x.AppID for x
+                        in repo.find_app_packages_mapping(args.project) ]
+        except RepoException, e:
+            print e
+            sys.exit(1)
+
+        if args.apptypes:
+            try:
+                app_defs = [ deploy.find_app_by_apptype(x)
+                             for x in args.apptypes ]
+            except DeployException, e:
+                print e
+                sys.exit(1)
+
+            new_app_ids = [ x.AppID for x in app_defs ]
+
+            if set(new_app_ids).issubset(set(app_ids)):
+                app_ids = new_app_ids
+            else:
+                print 'One of the app types given is not a valid app type ' \
+                      'for the current deployment'
+                sys.exit(1)
+
+        return app_ids
+
+
+    def get_package_id(self, args):
+        """Get the package ID for the current project and version"""
+
+        # Get package ID
+        try:
+            # Revision hardcoded to '1' for now
+            pkg = package.find_package(args.project, args.version, '1')
+            if not pkg:
+                print 'Application "%s" with version "%s" not available ' \
+                      'in the repository.' % (args.project, args.version)
+                return
+        except PackageException, e:
+            print e
+            sys.exit(1)
+
+        return pkg.PackageID
+
+
+    def validate_hosts(self, hosts, app_ids, environment):
+        """Verify given hosts are in the correct environment and of the
+        correct app IDs
+        """
+
+        valid_hostnames = {}
+        app_id_hosts_mapping = {}
+
+        for app_id in app_ids:
+            app_id_hosts_mapping[app_id] = []
+
+            try:
+                hostnames = [ x.hostname for x in 
+                              deploy.find_hosts_for_app(app_id, environment) ]
+                valid_hostnames[app_id] = hostnames
+            except DeployException:
+                print e
+                sys.exit(1)
+
+        bad_hosts = []
+        good_hosts = []
+
+        for hostname in hosts:
+            for app_id in valid_hostnames.iterkeys():
+                if hostname in valid_hostnames[app_id]:
+                    good_hosts.append(hostname)
+                    app_id_hosts_mapping[app_id].append(hostname)
+                    break
+            else:
+                bad_hosts.append(hostname)
+
+        if bad_hosts:
+            print 'The following hosts are in the wrong environment or ' \
+                  'do not belong to a matching app type: %s' \
+                  % ', '.join(bad_hosts)
+            sys.exit(1)
+
+        return (good_hosts, app_id_hosts_mapping)
+
+
     @catch_exceptions
     def force_production(self, args):
         """ """
@@ -289,118 +393,112 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        # Get package ID
-        try:
-            # Revision hardcoded to '1' for now
-            pkg = package.find_package(args.project, args.version, '1')
-            if not pkg:
-                print 'Application "%s" with version "%s" not available ' \
-                      'in the repository.' % (args.project, args.version)
-                return
-        except PackageException, e:
-            print e
-            return
+        pkg_id = self.get_package_id(args)
+        app_ids = self.get_app_types(args)
 
-        pkg_id = pkg.PackageID
+        # If hosts have been defined, verify they're in the correct
+        # environment and have a matching app type and update app ID
+        # to deployment mapping, otherwise just set up app ID to 
+        # deployment mapping
+        if args.hosts:
+            valid_hosts, app_host_map = self.validate_hosts(args.hosts,
+                                             app_ids,
+                                             self.envs[args.environment])
+            host_deps = find_host_deployment_by_pkgid(pkg_id, valid_hosts)
 
-        # Determine relevant application IDs
-        app_ids = [ x.AppID for x
-                    in repo.find_app_packages_mapping(args.project) ]
+            for host_dep, hostname, app_id, dep_type in host_deps:
+                if dep_type == 'deploy':
+                    print 'Application "%s" with version "%s" already ' \
+                          'deployed to host "%s"' \
+                          % (args.project, args.version, hostname)
+                    app_host_map[app_id].remove(hostname)
 
-        if args.apptypes:
-            app_defs = [ repo.find_app_by_apptype(x) for x in args.apptypes ]
-            new_app_ids = [ x.AppID for x in app_defs ]
+                    if not app_host_map[app_id]:
+                        del app_host_map[app_id]
 
-            if set(new_app_ids).issubset(set(app_ids)):
-                app_ids = new_app_ids
-            else:
-                print 'One of the app types given is not a valid app type ' \
-                      'for the current deployment'
-                return
+            app_ids = app_host_map.keys()
 
-        # Determine environment for deployment, ensure
-        # the correct deploy server is in use
         deps = deploy.find_app_deployment(pkg_id, app_ids,
                                           self.envs[args.environment])
+        app_dep_map = {}
 
-        if deps:
-            last_dep, last_dep_type = deps[0]
+        for app_id in app_ids:
+            app_dep_map[app_id] = None
 
-            if last_dep_type == 'deploy':
-                raise WrongEnvironmentError(
-                      'Application "%s" with version "%s" already deployed '
-                      'to this environment (%s)' % (args.project,
-                      args.version, self.envs[args.environment]))
+        for app_dep, app_type, dep_type in deps:
+            app_dep_map[app_dep.AppID] = dep
 
-        if args.environment != 'dev':
-            prev_environment = self.get_previous_environment(args.environment)
-            deps = deploy.find_app_deployment(pkg_id, app_ids,
-                                              self.envs[prev_environment])
-            last_dep, last_dep_type = deps[0]
+        for app_id in app_ids:
+           ok = True
 
-            if last_dep_type != 'deploy' or last_dep.status != 'validated':
-                print 'Application "%s" with version "%s" not properly ' \
-                      'or fully deployed to previous environment (%s)' \
-                      % (args.project, args.version, prev_environment)
-                return
+           if args.environment != 'dev':
+                prev_env = self.get_previous_environment(args.environment)
+                prev_deps = deploy.find_app_deployment(pkg_id,
+                                                  [ app_dep.AppID ],
+                                                  self.envs[prev_environment])
+                # There should only be one deployment here
+                prev_app_dep, prev_app_type, prev_dep_type = prev_deps[0]
+
+                if (prev_dep_type != 'deploy' or
+                    prev_app_dep.status != 'validated'):
+                    print 'Application "%s" with version "%s" not properly ' \
+                        'or fully deployed to previous environment (%s) ' \
+                        'for apptype "%s"' \
+                        % (args.project, args.version, prev_environment,
+                           prev_app_type)
+                    ok = False
+
+            if ok:
+                if not app_dep_map[app_id]:
+                    continue
+
+                dep = app_dep_map[app_id]
+                app_dep, app_type, dep_type = dep
+
+                if dep_type == 'deploy':
+                    print 'Application "%s" with version "%s" already ' \
+                          'deployed to this environment (%s) for ' \
+                          'apptype "%s"' \
+                          % (args.project, args.version,
+                             self.envs[args.environment], app_type)
+                    ok = False
+
+            if not ok:
+                if args.hosts:
+                    del app_host_map[app_id]
+                else:
+                    del app_dep_map[app_id]
 
         # All is well, start deployment
         dep_id = None
-        deps = deploy.find_deployment_by_pkgid(pkg_id)
+        pkg_deps = deploy.find_deployment_by_pkgid(pkg_id)
 
-        if deps:
-            last_dep = deps[0]
+        if pkg_deps:
+            last_pkg_dep = pkg_deps[0]
 
-            if last_dep.dep_type == 'deploy':
-                dep_id = last_dep.DeploymentID
+            if last_pkg_dep.dep_type == 'deploy':
+                dep_id = last_pkg_dep.DeploymentID
 
         if dep_id is None:
-            dep = deploy.add_deployment(pkg_id, args.user, 'deploy')
-            dep_id = dep.DeploymentID
+            pkg_dep = deploy.add_deployment(pkg_id, args.user, 'deploy')
+            dep_id = pkg_dep.DeploymentID
 
-        if args.apptypes:
-            for app_id in app_ids:
-                deploy.add_app_deployment(dep_id, app_id, args.user,
-                                          'incomplete',
-                                          self.envs[args.environment])
-                dep_hosts = deploy.find_hosts_for_app(app_id)
+        if args.hosts:
+            hostnames = []
 
-                for dep_host in dep_hosts:
-                    if deploy.find_host_deployment_by_depid(dep_id,
-                                                        dep_host.hostname):
-                        continue
+            for hosts in app_host_map.itervalues():
+                hostnames.extend(hosts)
 
-                    # For now, just set entry in host_deployments to 'ok'
-                    deploy.add_host_deployment(dep_id, dep_host.HostID,
-                                               args.user, 'ok')
-        elif args.hosts:
-            dep_hosts = [ deploy.find_host_by_hostname(x) for x
-                          in args.hosts]
-
-            for dep_host in dep_hosts:
-                if deploy.find_host_deployment_by_depid(dep_id,
-                                                        dep_host.hostname):
-                    continue
-
-                # For now, just set entry in host_deployments to 'ok'
-                deploy.add_host_deployment(dep_id, dep_host.HostID,
-                                           args.user, 'ok')
+            dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames]
+            self.deploy_to_hosts(dep_hosts, dep_id, args.user)
         else:
-            for app_id in app_ids:
+            for app_id in app_dep_map.iterkeys():
                 deploy.add_app_deployment(dep_id, app_id, args.user,
                                           'incomplete',
                                           self.envs[args.environment])
                 dep_hosts = deploy.find_hosts_for_app(app_id,
-                                                  self.envs[args.environment])
-
-                for dep_host in dep_hosts:
-                    if deploy.find_host_deployment_by_depid(dep_id,
-                                                        dep_host.hostname):
-                        continue
-
-                    # For now, just set entry in host_deployments to 'ok'
-                    deploy.add_host_deployment(dep_id, dep_host.HostID,
-                                               args.user, 'ok')
+                                          self.envs[args.environment])
+                self.deploy_to_hosts(dep_hosts, dep_id, args.user)
 
         Session.commit()
 
@@ -410,6 +508,80 @@ class Deploy(object):
         """ """
 
         verify_access(args.user_level, args.environment)
+
+        pkg_id = self.get_package_id(args)
+        app_ids = self.get_app_types(args)
+
+        # If hosts have been defined, verify they're in the correct
+        # environment and have a matching deploy to do the redeploy
+        # for, otherwise check each app type for a matching deploy
+        if args.hosts:
+            valid_hosts, app_host_map = self.validate_hosts(args.hosts,
+                                             app_ids,
+                                             self.envs[args.environment])
+
+            host_deps = find_host_deployment_by_pkgid(pkg_id, valid_hosts)
+            # Second element is hostname
+            host_match = [ x[1] for x in host_deps ]
+
+            app_ids = app_host_map.keys()
+            app_deps = deploy.find_app_deployment(pkg_id, app_ids,
+                                                  self.envs[args.environment])
+            # First element is app ID
+            host_match.extend([ app_host_map[x[0]] for x in app_deps ])
+
+            bad_hosts = []
+
+            for valid_host in valid_hosts:
+                if valid_host not in host_match:
+                    bad_hosts.append(valid_host)
+
+            if bad_hosts:
+                print 'Application "%s" with version "%s" has not been ' \
+                      'deployed to the following hosts yet: %s' \
+                      % ', '.join(bad_hosts)
+                return
+        else:
+            app_deps = deploy.find_app_deployment(pkg_id, app_ids,
+                                                  self.envs[args.environment])
+            # Second element is app type
+            app_match = [ x[1] for x in app_deps ]
+
+            bad_apps = []
+
+            for app_type in args.apptypes:
+                if app_type not in app_match:
+                    bad_apps.append(app_type)
+
+            if bad_apps:
+                print 'Application "%s" with version "%s" has not been ' \
+                      'deployed to the following app types yet: %s' \
+                      % ', '.join(bad_apps)
+                return
+
+        # All is well, start redeployment
+        pkg_deps = deploy.find_deployment_by_pkgid(pkg_id)
+        last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
+
+        if last_pkg_dep.dep_type == 'deploy':
+            dep_id = last_pkg_dep.DeploymentID
+        else:
+            # Deploy type is 'rollback', create new deployment table entry
+            pkg_dep = deploy.add_deployment(pkg_id, args.user, 'deploy')
+            dep_id = pkg_dep.DeploymentID
+
+        if args.hosts:
+            dep_hosts = [ deploy.find_host_by_hostname(x)
+                          for x in valid_hosts ]
+            self.deploy_to_hosts(dep_hosts, dep_id, args.user)
+        else:
+            for app_id in app_ids:
+                dep_hosts = deploy.find_hosts_for_app(app_id,
+                                          self.envs[args.environment])
+                self.deploy_to_hosts(dep_hosts, dep_id, args.user,
+                                     redeploy=True)
+
+        Session.commit()
 
 
     @catch_exceptions
@@ -476,34 +648,8 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        # Get package ID
-        try:
-            # Revision hardcoded to '1' for now
-            pkg = package.find_package(args.project, args.version, '1')
-            if not pkg:
-                print 'Application "%s" with version "%s" not available ' \
-                      'in the repository.' % (args.project, args.version)
-                return
-        except PackageException, e:
-            print e
-            return
-
-        pkg_id = pkg.PackageID
-
-        # Determine relevant application IDs
-        app_ids = [ x.AppID for x
-                    in repo.find_app_packages_mapping(args.project) ]
-
-        if args.apptypes:
-            app_defs = [ repo.find_app_by_apptype(x) for x in args.apptypes ]
-            new_app_ids = [ x.AppID for x in app_defs ]
-
-            if set(new_app_ids).issubset(set(app_ids)):
-                app_ids = new_app_ids
-            else:
-                print 'One of the app types given is not a valid app type ' \
-                      'for the current deployment'
-                return
+        pkg_id = self.get_package_id(args)
+        app_ids = self.get_app_types(args)
 
         # Get relevant deployments, validate and clean host deployments
         deps = deploy.find_app_deployment(pkg_id, app_ids,

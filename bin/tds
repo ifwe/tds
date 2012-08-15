@@ -111,6 +111,13 @@ def initialize_db(args):
 if __name__ == '__main__':
     args = parse_command_line()
 
+    # Slight hack: ensure '--hosts' and '--apptypes' aren't used
+    # at the same time
+    if args.hosts and args.apptypes:
+        print 'The "--hosts" and "--apptypes" options may not be used ' \
+              'at the same time'
+        sys.exit(1)
+
     # Pass user through with arguments
     args.user = pwd.getpwuid(os.getuid()).pw_name
     args.user_level = check_user_auth(args.user)
