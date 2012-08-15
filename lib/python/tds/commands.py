@@ -429,9 +429,9 @@ class Deploy(object):
             app_dep_map[app_dep.AppID] = dep
 
         for app_id in app_ids:
-           ok = True
+            ok = True
 
-           if args.environment != 'dev':
+            if args.environment != 'dev':
                 prev_env = self.get_previous_environment(args.environment)
                 prev_deps = deploy.find_app_deployment(pkg_id,
                                                   [ app_dep.AppID ],
