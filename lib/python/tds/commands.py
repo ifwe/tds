@@ -298,15 +298,25 @@ class Deploy(object):
 
 
     def get_package_id(self, args):
-        """Get the package ID for the current project and version"""
+        """Get the package ID for the current project and version
+           (or most recent deployed version if none is given)
+        """
 
-        # Get package ID
+        if hasattr(args, 'version'):
+            version = args.version
+        else:
+            # Must determine latest deployed version
+            # (Note: this currently only works for projects
+            #  with a single app type)
+            version = deploy.find_latest_deployed_version(args.project,
+                                                          apptier=True)
+
         try:
             # Revision hardcoded to '1' for now
-            pkg = package.find_package(args.project, args.version, '1')
+            pkg = package.find_package(args.project, version, '1')
             if not pkg:
-                print 'Application "%s" with version "%s" not available ' \
-                      'in the repository.' % (args.project, args.version)
+                print 'Application "%s" with version "%s" not ' \
+                      'available in the repository.' % (args.project, version)
                 return
         except PackageException, e:
             print e
@@ -315,7 +325,7 @@ class Deploy(object):
         return pkg.PackageID
 
 
-    def validate_hosts(self, hosts, app_ids, environment):
+    def verify_hosts(self, hosts, app_ids, environment):
         """Verify given hosts are in the correct environment and of the
         correct app IDs
         """
@@ -335,12 +345,10 @@ class Deploy(object):
                 sys.exit(1)
 
         bad_hosts = []
-        good_hosts = []
 
         for hostname in hosts:
             for app_id in valid_hostnames.iterkeys():
                 if hostname in valid_hostnames[app_id]:
-                    good_hosts.append(hostname)
                     app_id_hosts_mapping[app_id].append(hostname)
                     break
             else:
@@ -352,7 +360,40 @@ class Deploy(object):
                   % ', '.join(bad_hosts)
             sys.exit(1)
 
-        return (good_hosts, app_id_hosts_mapping)
+        return app_id_hosts_mapping
+
+
+    def verify_package(self, args):
+        """ """
+
+        if hasattr(args, 'version'):
+            version = args.version
+        else:
+            # Must determine latest deployed version
+            # (Note: this currently only works for projects
+            #  with a single app type)
+            version = deploy.find_latest_deployed_version(args.project,
+                                                          apptier=True)
+
+        try:
+            # Revision hardcoded to '1' for now
+            pkg = package.find_package(args.project, version, '1')
+            if not pkg:
+                print 'Application "%s" with version "%s" not ' \
+                      'available in the repository.' % (args.project, version)
+                return
+        except PackageException, e:
+            print e
+            sys.exit(1)
+
+        app_ids = self.get_app_types(args)
+
+        if getattr(args, 'hosts', None):
+            app_host_map = self.verify_hosts(args.hosts, app_ids,
+                                             self.envs[args.environment])
+            return (pkg.PackageID, app_host_map)
+        else:
+            return (pkg.PackageID, app_ids)
 
 
     @catch_exceptions
@@ -393,21 +434,13 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        pkg_id = self.get_package_id(args)
-        app_ids = self.get_app_types(args)
-
-        # If hosts have been defined, verify they're in the correct
-        # environment and have a matching app type and update app ID
-        # to deployment mapping, otherwise just set up app ID to 
-        # deployment mapping
         if args.hosts:
-            valid_hosts, app_host_map = self.validate_hosts(args.hosts,
-                                             app_ids,
-                                             self.envs[args.environment])
-            host_deps = find_host_deployment_by_pkgid(pkg_id, valid_hosts)
+            pkg_id, app_host_map = self.verify_package(args)
+            host_deps = find_host_deployment_by_project(args.project,
+                                                        args.hosts)
 
-            for host_dep, hostname, app_id, dep_type in host_deps:
-                if dep_type == 'deploy':
+            for host_dep, hostname, app_id, dep_version in host_deps:
+                if dep_version == args.version and host_dep.status == 'ok':
                     print 'Application "%s" with version "%s" already ' \
                           'deployed to host "%s"' \
                           % (args.project, args.version, hostname)
@@ -416,7 +449,9 @@ class Deploy(object):
                     if not app_host_map[app_id]:
                         del app_host_map[app_id]
 
-            app_ids = app_host_map.keys()
+                app_ids = app_host_map.keys()
+        else:
+            pkg_id, app_ids = self.verify_package(args)
 
         deps = deploy.find_app_deployment(pkg_id, app_ids,
                                           self.envs[args.environment])
@@ -489,7 +524,7 @@ class Deploy(object):
             for hosts in app_host_map.itervalues():
                 hostnames.extend(hosts)
 
-            dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames]
+            dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames ]
             self.deploy_to_hosts(dep_hosts, dep_id, args.user)
         else:
             for app_id in app_dep_map.iterkeys():
@@ -516,7 +551,7 @@ class Deploy(object):
         # environment and have a matching deploy to do the redeploy
         # for, otherwise check each app type for a matching deploy
         if args.hosts:
-            valid_hosts, app_host_map = self.validate_hosts(args.hosts,
+            valid_hosts, app_host_map = self.verify_hosts(args.hosts,
                                              app_ids,
                                              self.envs[args.environment])
 
@@ -590,11 +625,47 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        # Do rollback
+        pkg_id, app_ids = self.verify_package(args)
 
-        if not args.remain_valid:
-            # Perform invalidation
-            self.invalidate(args)
+        # Get relevant deployments, invalidate and deploy previous
+        # validated version
+        deps = deploy.find_app_deployment(pkg_id, app_ids,
+                                          self.envs[args.environment])
+
+        if not deps:
+            print 'No deployments to roll back for application "%s" ' \
+                  'in %s environment' \
+                  % (args.project, self.envs[args.environment])
+            return
+
+        for dep in deps:
+            app_dep, app_type, dep_type = dep
+            app_id = app_dep.AppID
+
+            app_dep.status = 'invalidated'
+            Session.flush()   # Needed to push change for status (yes, hack)
+
+            last_app_dep, pkg_id = \
+                deploy.find_latest_validated_deployment(args.project, app_id)
+
+            if pkg_id is None:
+                print 'No previous deployment to roll back to for ' \
+                      'application "%s" for app type "%s" in %s ' \
+                      'environment' % (args.project, app_id,
+                                       self.envs[args.environment])
+                continue
+
+            pkg_dep = deploy.add_deployment(pkg_id, args.user, 'deploy')
+            dep_id = pkg_dep.DeploymentID
+
+            deploy.add_app_deployment(dep_id, app_id, args.user,
+                                      'incomplete',
+                                      self.envs[args.environment])
+            dep_hosts = deploy.find_hosts_for_app(app_id,
+                                      self.envs[args.environment])
+            self.deploy_to_hosts(dep_hosts, dep_id, args.user)
+
+        Session.commit()
 
 
     @catch_exceptions
@@ -603,43 +674,66 @@ class Deploy(object):
 
         verify_access(args.user_level, 'dev')
 
-        # Revision hardcoded to '1' for now
-        app_deps, host_deps = deploy.list_deployment_info(args.project,
-                                                          args.version,
-                                                          '1')
+        if args.version is None:
+            app_version = deploy.find_latest_deployed_version(args.project,
+                                                              apptier=True)
+            host_version = deploy.find_latest_deployed_version(args.project)
+        else:
+            app_version = args.version
+            host_version = args.version
 
+        print 'App version is "%s"' % app_version
+        print 'Host version is "%s"' % host_version
         print 'Deployments of %s to tiers:' % args.project
         print '==========\n'
 
-        if not app_deps:
-            print 'No deployments to tiers for this version and revision\n'
+        if app_version is None:
+            print 'No deployments to tiers for this application yet\n'
         else:
-            for dep, app_dep, app_type in app_deps:
-                print 'Declared: %s' % dep.declared
-                print 'Declaring user: %s' % dep.user
-                print 'Realized: %s' % app_dep.realized
-                print 'Realizing user: %s' % app_dep.user
-                print 'App type: %s' % app_type
-                print 'Environment: %s' % app_dep.environment
-                print 'Deploy state: %s' % dep.dep_type
-                print 'Install state: %s' % app_dep.status
-                print ''
+            # Revision hardcoded to '1' for now
+            app_deps = deploy.list_app_deployment_info(args.project,
+                                                       app_version,
+                                                       '1')
+
+            if not app_deps:
+                print 'No deployments to tiers for this application with ' \
+                      'given version and revision\n'
+            else:
+                for dep, app_dep, app_type in app_deps:
+                    print 'Declared: %s' % dep.declared
+                    print 'Declaring user: %s' % dep.user
+                    print 'Realized: %s' % app_dep.realized
+                    print 'Realizing user: %s' % app_dep.user
+                    print 'App type: %s' % app_type
+                    print 'Environment: %s' % app_dep.environment
+                    print 'Deploy state: %s' % dep.dep_type
+                    print 'Install state: %s' % app_dep.status
+                    print ''
 
         print 'Deployments of %s to hosts:' % args.project
         print '==========\n'
 
-        if not host_deps:
-            print 'No deployments to hosts for this version and revision\n'
+        if host_version is None:
+            print 'No deployments to hosts (only) for this application yet\n'
         else:
-            for dep, host_dep, hostname in host_deps:
-                print 'Declared: %s' % dep.declared
-                print 'Declaring user: %s' % dep.user
-                print 'Realized: %s' % host_dep.realized
-                print 'Realizing user: %s' % host_dep.user
-                print 'Hostname: %s' % hostname
-                print 'Deploy state: %s' % dep.dep_type
-                print 'Install state: %s' % host_dep.status
-                print ''
+            # Revision hardcoded to '1' for now
+            host_deps = deploy.list_host_deployment_info(args.project,
+                                                         host_version,
+                                                         '1')
+
+            if not host_deps:
+                print 'No deployments to hosts for this application with ' \
+                      'given version and revision\n'
+            else:
+                for dep, host_dep, hostname in host_deps:
+                    print 'Declared: %s' % dep.declared
+                    print 'Declaring user: %s' % dep.user
+                    print 'Realized: %s' % host_dep.realized
+                    print 'Realizing user: %s' % host_dep.user
+                    print 'Hostname: %s' % hostname
+                    print 'Deploy state: %s' % dep.dep_type
+                    print 'Install state: %s' % host_dep.status
+                    print ''
 
 
     @catch_exceptions
@@ -648,8 +742,7 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        pkg_id = self.get_package_id(args)
-        app_ids = self.get_app_types(args)
+        pkg_id, app_ids = self.verify_package(args)
 
         # Get relevant deployments, validate and clean host deployments
         deps = deploy.find_app_deployment(pkg_id, app_ids,
@@ -657,29 +750,27 @@ class Deploy(object):
 
         if not deps:
             print 'No deployments to validate for application "%s" ' \
-                  'with version "%s" in %s environment' \
-                  % (args.project, args.version, self.envs[args.environment])
+                  'in %s environment' \
+                  % (args.project, self.envs[args.environment])
             return
 
         for dep in deps:
             app_dep, app_type, dep_type = dep
 
             if app_dep.status == 'validated':
-                print 'Deployment for application "%s" with version "%s" ' \
-                      'for apptype "%s" already validated in %s environment' \
-                      % (args.project, args.version, app_type,
-                         self.envs[args.environment])
+                print 'Deployment for application "%s" for apptype "%s" ' \
+                      'already validated in %s environment' \
+                      % (args.project, app_type, self.envs[args.environment])
                 continue
 
             not_ok_hosts = deploy.find_host_deployments_not_ok(pkg_id,
                                   app_dep.AppID, self.envs[args.environment])
             hostnames = [ x[1] for x in not_ok_hosts ]
 
-            if not_ok_hosts:
+            if not_ok_hosts and not args.force:
                 print 'Some hosts for deployment for application "%s" ' \
-                      'with version "%s" for apptype "%s" are not in ' \
-                      'an "ok" state:' \
-                      % (args.project, args.version, app_type)
+                      'for apptype "%s" are not in an "ok" state:' \
+                      % (args.project, app_type)
                 print '    %s' % ', '.join(hostnames)
                 continue
 

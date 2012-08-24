@@ -129,6 +129,11 @@ deploy_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
              ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for deployment'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
+             ])),
          ])),
      ])),
     ('promote', odict([
@@ -176,15 +181,13 @@ deploy_data = odict([
     ('rollback', odict([
         ('help', 'Revert deployment'),
         ('subargs', odict([
-            (('--remain-valid',), odict([
-                ('help', 'Do not invalidate deployment'),
-                ('action', 'store_true'),
-             ])),
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('version',), odict([
-                ('help', 'Release version number for project'),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for validation'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
              ])),
          ])),
      ])),
@@ -196,6 +199,7 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('nargs', '?'),
              ])),
          ])),
      ])),
@@ -205,8 +209,9 @@ deploy_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('version',), odict([
-                ('help', 'Release version number for project'),
+            (('--force',), odict([
+                ('help', 'Do validation even when there are bad hosts'),
+                ('action', 'store_true'),
              ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for validation'),
