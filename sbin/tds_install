@@ -13,6 +13,8 @@ import subprocess
 import sys
 import time
 
+import psutil
+
 
 # Make sure we're running at least Python 2.6
 # and not running Python 3
@@ -49,12 +51,11 @@ def run_command(cmd):
 def puppet_check():
     """Check for a running Puppet client process"""
 
-    check_cmd = [ '/usr/bin/pgrep', '-u', 'root', 'puppetd' ]
+    pids = []
 
-    try:
-        pids = run_command(check_cmd).rstrip().split('\n')
-    except ExtCommandError, e:
-        sys.exit('Unable to get process listing: %s' %e)
+    for proc in psutil.process_iter():
+        if proc.name == 'puppetd':
+            pids.append(proc.pid)
 
     if pids:
         return pids
