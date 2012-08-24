@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
     # Slight hack: ensure '--hosts' and '--apptypes' aren't used
     # at the same time
-    if args.hosts and args.apptypes:
+    if getattr(args, 'hosts', None) and getattr(args, 'apptypes', None):
         print 'The "--hosts" and "--apptypes" options may not be used ' \
               'at the same time'
         sys.exit(1)
