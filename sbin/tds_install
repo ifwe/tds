@@ -115,6 +115,18 @@ def stop_puppet():
                 os.kill(pid, signal.SIGKILL)
 
 
+def manage_service(service, action):
+    """Manage a given OS service with a given action"""
+
+    svc_cmd = [ '/sbin/service', service, action ]
+
+    try:
+        run_command(svc_cmd)
+    except ExtCommandError, e:
+        sys.exit('Failed to perform action "%s" on service "%s": %s'
+                 % (action, service, e))
+
+
 def app_install(app, version):
     """Install the given version of the application"""
 
@@ -127,10 +139,15 @@ def app_install(app, version):
     except ExtCommandError, e:
         sys.exit('Unable to run "yum makecache": %s' % e)
 
+    # Stop tomcat before install, then restart it after install
+    manage_service('tomcat', 'stop')
+
     try:
         output = run_command(install_cmd)
     except ExtCommandError, e:
         sys.exit('Unable to install application via yum: %s' % e)
+
+    manage_service('tomcat', 'start')
 
 
 def verify_install(app, version):
