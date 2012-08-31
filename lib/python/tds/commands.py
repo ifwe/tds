@@ -1,8 +1,11 @@
 import os
+import re
 import signal
 import socket
+import subprocess
 
 import beanstalkc
+import json
 
 from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException, PackageException, \
@@ -251,20 +254,86 @@ class Deploy(object):
             raise WrongEnvironmentError('Invalid environment: %s' % curr_env)
 
 
-    def deploy_to_hosts(dep_hosts, dep_id, user, redeploy=False):
+    def deploy_to_host(self, dep_host, app, version):
+        """Deploy specified package to a given host"""
+
+        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '10',
+                    '--timeout', '10', '-W', 'hostname=%s' % dep_host,
+                    app, version ]
+
+        proc = subprocess.Popen(mco_cmd, stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+
+        if proc.returncode:
+            return (False, 'The mco process failed to run successfully, '
+                           'return code is %s' % proc.returncode)
+
+        mc_output = None
+        summary = None
+
+        # Extract the JSON output and summary line
+        for line in stdout.split('\n'):
+            if line == '':
+                continue
+
+            if line.startswith('{'):
+                mc_output = json.loads(line)
+
+            if line.startswith('Finished'):
+                summary = line.strip()
+
+        # Ensure valid response and extract information
+        if mc_output is None or summary is None:
+            return (False, 'No output or summary information returned '
+                           'from mco process')
+
+        for host, hostinfo in mc_output.iteritems():
+            if hostinfo['exitcode'] != 0:
+                return (False, hostinfo['stderr'].strip())
+            else:
+                return (True, 'Deploy successful')
+
+
+    def deploy_to_hosts(self, dep_hosts, dep_id, user, redeploy=False):
         """Perform deployment on given set of hosts (only doing those
            that previously failed with a redeploy)
         """
 
+        failed_hosts = []
+
         for dep_host in dep_hosts:
-            # For now, just set entry in host_deployments to 'ok'
+            pkg = deploy.find_app_by_depid(dep_id)
+            app, version = pkg.pkg_name, pkg.version
+
             host_dep = find_host_deployment_by_depid(dep_id, dep_host)
 
             if redeploy and host_dep and host_dep.status != 'ok':
-                host_dep.status = 'ok'
+                success, info = self.deploy_to_host(dep_host, app, version)
+
+                if success:
+                    host_dep.status = 'ok'
+                else:
+                    failed_hosts.append((dep_host, info))
             else:
-                deploy.add_host_deployment(dep_id, dep_host.HostID,
-                                           user, 'ok')
+                host_dep = deploy.add_host_deployment(dep_id, dep_host.HostID,
+                                                      user, 'incomplete')
+                success, info = self.deploy_to_host(dep_host, app, version)
+
+                if success:
+                    host_dep.status = 'ok'
+                else:
+                    host_dep.status = 'failed'
+                    failed_hosts.append((dep_host, info))
+
+        # If any hosts failed, show failure information for each
+        if failed_hosts:
+            print 'Some hosts had failures:\n'
+
+            for failed_host, reason in failed_hosts:
+                print '-----'
+                print 'Hostname: %s' % failed_host
+                print 'Reason: %s' % reason
 
 
     def get_app_types(self, args):
@@ -402,12 +471,18 @@ class Deploy(object):
 
         verify_access(args.user_level, 'admin')
 
+        raise NotImplementedError('This subcommand is currently not '
+                                  'implemented')
+
 
     @catch_exceptions
     def force_staging(self, args):
         """ """
 
         verify_access(args.user_level, 'admin')
+
+        raise NotImplementedError('This subcommand is currently not '
+                                  'implemented')
 
 
     @catch_exceptions
@@ -416,16 +491,32 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        #try:
-        #    dep = deploy.get_deployment_by_id(args.deployid)
-        #    self.check_environment(self.envs[args.environment],
-        #                           dep.environment)
-        #    deploy.invalidate_deployment(dep, args.user)
-        #except DeployException, e:
-        #    print e
-        #    return
+        pkg_id, app_ids = self.verify_package(args)
 
-        #Session.commit()
+        # Get relevant deployments, ensure each was validated
+        # then invalidate
+        deps = deploy.find_app_deployment(pkg_id, app_ids,
+                                          self.envs[args.environment])
+
+        if not deps:
+            print 'No deployments to invalidate for application "%s" ' \
+                  'with version "%s" in %s environment' \
+                  % (args.project, args.version, self.envs[args.environment])
+            return
+
+        for dep in deps:
+            app_dep, app_type, dep_type = dep
+
+            if app_dep.status != 'validated':
+                print 'Deployment for application "%s" with version "%s" ' \
+                      'for apptype "%s" has not been validated in %s ' \
+                      'environment' % (args.project, args.version,
+                                       app_type, self.envs[args.environment])
+                continue
+
+            app_dep.status = 'invalidated'
+
+        Session.commit()
 
 
     @catch_exceptions
@@ -543,6 +634,9 @@ class Deploy(object):
         """ """
 
         verify_access(args.user_level, args.environment)
+
+        raise NotImplementedError('This subcommand is currently not '
+                                  'implemented')
 
         pkg_id = self.get_package_id(args)
         app_ids = self.get_app_types(args)
