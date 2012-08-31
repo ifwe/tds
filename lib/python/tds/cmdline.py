@@ -6,7 +6,7 @@ repository_data = odict([
     ('add', odict([
         ('help', 'Add new project to the repository information'),
         ('subargs', odict([
-            (('-e', '--environment'), odict([
+            (('-e', '--env-specific'), odict([
                 ('help', 'Project\'s packages are environment-specific'),
                 ('action', 'store_true'),
              ])),
