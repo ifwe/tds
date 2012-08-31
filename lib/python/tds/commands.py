@@ -49,7 +49,7 @@ class Repository(object):
         try:
             loc_id = repo.add_app_location(args.buildtype, args.pkgname,
                                            args.project, args.pkgpath,
-                                           args.buildhost, args.environment)
+                                           args.buildhost, args.env_specific)
             repo.add_app_packages_mapping(loc_id, args.apptypes)
         except RepoException, e:
             print e
@@ -86,7 +86,7 @@ class Repository(object):
             print 'Path: %s' % app.path
             print 'Build host: %s' % app.build_host
 
-            app_defs = repo.find_app_packages_mapping(app.pkgLocationID)
+            app_defs = repo.find_app_packages_mapping(app.app_name)
             app_types = [ x.appType for x in app_defs ]
             print 'App types: %s' % ', '.join(app_types)
 
