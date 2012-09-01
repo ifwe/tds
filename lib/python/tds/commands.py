@@ -107,6 +107,7 @@ class Package(object):
 
         self.host = socket.gethostname()
         self.bean_id = "%s-%s" % (self.host, os.getpid())
+        self.job = None
 
 
     def beanstalk_handler(self, signum, frame):
