@@ -258,8 +258,8 @@ class Deploy(object):
     def deploy_to_host(self, dep_host, app, version):
         """Deploy specified package to a given host"""
 
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '10',
-                    '--timeout', '10', '-W', 'hostname=%s' % dep_host,
+        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '2',
+                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                     app, version ]
         print "running mcollective command:"
         print " ".join(mco_cmd)
