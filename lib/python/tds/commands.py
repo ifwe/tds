@@ -307,7 +307,7 @@ class Deploy(object):
             pkg = deploy.find_app_by_depid(dep_id)
             app, version = pkg.pkg_name, pkg.version
 
-            host_dep = find_host_deployment_by_depid(dep_id, dep_host)
+            host_dep = deploy.find_host_deployment_by_depid(dep_id, dep_host)
 
             if redeploy and host_dep and host_dep.status != 'ok':
                 success, info = self.deploy_to_host(dep_host, app, version)
