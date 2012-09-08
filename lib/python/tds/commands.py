@@ -307,7 +307,7 @@ class Deploy(object):
             pkg = deploy.find_app_by_depid(dep_id)
             app, version = pkg.pkg_name, pkg.version
 
-            host_dep = deploy.find_host_deployment_by_depid(dep_id, dep_host)
+            host_dep = deploy.find_host_deployment_by_depid(dep_id, dep_host.hostname)
 
             if redeploy and host_dep and host_dep.status != 'ok':
                 success, info = self.deploy_to_host(dep_host, app, version)
@@ -319,13 +319,13 @@ class Deploy(object):
             else:
                 host_dep = deploy.add_host_deployment(dep_id, dep_host.HostID,
                                                       user, 'incomplete')
-                success, info = self.deploy_to_host(dep_host, app, version)
+                success, info = self.deploy_to_host(dep_host.hostname, app, version)
 
                 if success:
                     host_dep.status = 'ok'
                 else:
                     host_dep.status = 'failed'
-                    failed_hosts.append((dep_host, info))
+                    failed_hosts.append((dep_host.hostname, info))
 
         # If any hosts failed, show failure information for each
         if failed_hosts:
