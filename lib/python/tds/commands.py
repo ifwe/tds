@@ -261,6 +261,8 @@ class Deploy(object):
         mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '10',
                     '--timeout', '10', '-W', 'hostname=%s' % dep_host,
                     app, version ]
+        print "running mcollective command:"
+        print " ".join(mco_cmd)
 
         proc = subprocess.Popen(mco_cmd, stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE)
