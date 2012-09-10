@@ -148,6 +148,7 @@ class Package(object):
         beanstalk.put('%s %s %s' % (self.bean_id, args.project,
                                     args.version))
 
+        print "Sent job to %s, waiting for response..." % build_host
         # Watch error tube for responses, react accordingly
         # A timeout will occur if no valid messages are received
         # within specified amount of time
