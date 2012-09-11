@@ -439,34 +439,16 @@ class Deploy(object):
     def verify_package(self, args):
         """ """
 
-        if hasattr(args, 'version'):
-            version = args.version
-        else:
-            # Must determine latest deployed version
-            # (Note: this currently only works for projects
-            #  with a single app type)
-            version = deploy.find_latest_deployed_version(args.project,
-                                                          apptier=True)
-
-        try:
-            # Revision hardcoded to '1' for now
-            pkg = package.find_package(args.project, version, '1')
-            if not pkg:
-                print 'Application "%s" with version "%s" not ' \
-                      'available in the repository.' % (args.project, version)
-                return
-        except PackageException, e:
-            print e
-            sys.exit(1)
+        pkg_id = self.get_package_id(args)
 
         app_ids = self.get_app_types(args)
 
         if getattr(args, 'hosts', None):
             app_host_map = self.verify_hosts(args.hosts, app_ids,
                                              self.envs[args.environment])
-            return (pkg.PackageID, app_host_map)
+            return (pkg_id, app_host_map)
         else:
-            return (pkg.PackageID, app_ids)
+            return (pkg_id, app_ids)
 
 
     @catch_exceptions
