@@ -127,13 +127,15 @@ def manage_service(service, action):
                  % (action, service, e))
 
 
-def app_install(app, version):
+def app_install(app, version, inst_version):
     """Install the given version of the application"""
 
-    makecache_cmd = [ '/usr/bin/yum', 'makecache' ]
-    install_cmd = [ '/usr/bin/yum', '-y', '--nogpgcheck', 'install',
-                    '%s-%s-1' % (app, version) ]
+    if inst_version is None or inst_version < version:
+        yum_op = "install"
+    else:
+        yum_op = "downgrade"
 
+    makecache_cmd = [ '/usr/bin/yum', 'makecache' ]
     try:
         run_command(makecache_cmd)
     except ExtCommandError, e:
@@ -142,6 +144,8 @@ def app_install(app, version):
     # Stop tomcat before install, then restart it after install
     manage_service('tomcat', 'stop')
 
+    install_cmd = [ '/usr/bin/yum', '-y', '--nogpgcheck', yum_op,
+                    '%s-%s-1' % (app, version) ]
     try:
         output = run_command(install_cmd)
     except ExtCommandError, e:
@@ -150,13 +154,19 @@ def app_install(app, version):
     manage_service('tomcat', 'start')
 
 
+def get_version(app):
+    """Return current version of app"""
+
+    vers_cmd = [ '/bin/rpm', '-q', '--queryformat', '%{VERSION}', app ]
+
+    return run_command(vers_cmd)
+
+
 def verify_install(app, version):
     """Verify the installed application is the correct version"""
 
-    verify_cmd = [ '/bin/rpm', '-q', '--queryformat', '%{VERSION}', app ]
-
     try:
-        inst_version = run_command(verify_cmd)
+        inst_version = get_version(app)
     except ExtCommandError, e:
         sys.exit('Unable to query for installed version of "%s": %s'
                  % (app, e))
@@ -179,8 +189,16 @@ def main():
 
     app, version = sys.argv[1:]
     app_check(app)
+
+    try:
+        inst_version = get_version(app)
+    except ExtCommandError:
+        inst_version = None # assume app not installed
+    if inst_version == version:
+        return # nothing to do
+
     stop_puppet()
-    app_install(app, version)
+    app_install(app, version, inst_version)
     verify_install(app, version)
 
 
