@@ -556,7 +556,7 @@ class Deploy(object):
             app_dep_map[app_id] = None
 
         for app_dep, app_type, dep_type in deps:
-            app_dep_map[app_dep.AppID] = dep
+            app_dep_map[app_dep.AppID] = (app_dep, app_type, dep_type)
 
         for app_id in app_ids:
             ok = True
