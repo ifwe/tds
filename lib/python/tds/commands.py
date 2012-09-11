@@ -840,7 +840,11 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        pkg_id, app_ids = self.verify_package(args)
+        pkg_info = self.verify_package(args)
+        if pkg_info is None:
+            return # already printed error in verify_package()
+
+        pkg_id, app_ids = pkg_info
 
         # Get relevant deployments, validate and clean host deployments
         deps = deploy.find_app_deployment(pkg_id, app_ids,
