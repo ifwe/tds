@@ -707,7 +707,7 @@ class Deploy(object):
 
         pkg_id, app_ids = self.verify_package(args)
 
-        # Get relevant deployment, invalidate, and deploy previous
+        # Get relevant deployments, invalidate, and deploy previous
         # validated version
         deps = deploy.find_app_deployment(pkg_id, app_ids,
                                           self.envs[args.environment])
