@@ -491,7 +491,7 @@ class Deploy(object):
             return
 
         for dep in deps:
-            app_dep, app_type, dep_type = dep
+            app_dep, app_type, dep_type, pkg = dep
 
             if app_dep.status != 'validated':
                 print 'Deployment for application "%s" with version "%s" ' \
@@ -537,8 +537,8 @@ class Deploy(object):
         for app_id in app_ids:
             app_dep_map[app_id] = None
 
-        for app_dep, app_type, dep_type in deps:
-            app_dep_map[app_dep.AppID] = (app_dep, app_type, dep_type)
+        for app_dep, app_type, dep_type, pkg in deps:
+            app_dep_map[app_dep.AppID] = (app_dep, app_type, dep_type, pkg)
 
         for app_id in app_ids:
             ok = True
@@ -549,7 +549,7 @@ class Deploy(object):
                                                   [ app_dep.AppID ],
                                                   self.envs[prev_environment])
                 # There should only be one deployment here
-                prev_app_dep, prev_app_type, prev_dep_type = prev_deps[0]
+                prev_app_dep, prev_app_type, prev_dep_type, prev_pkg = prev_deps[0]
 
                 if (prev_dep_type != 'deploy' or
                     prev_app_dep.status != 'validated'):
@@ -565,9 +565,11 @@ class Deploy(object):
                     continue
 
                 dep = app_dep_map[app_id]
-                app_dep, app_type, dep_type = dep
+                app_dep, app_type, dep_type, pkg = dep
+                print app_dep.status, app_type, dep_type, pkg
 
-                if dep_type == 'deploy':
+                if (app_dep.status != 'invalidated' and
+                        dep_type == 'deploy' and pkg.version == args.version):
                     print 'Application "%s" with version "%s" already ' \
                           'deployed to this environment (%s) for ' \
                           'apptype "%s"' \
@@ -719,7 +721,7 @@ class Deploy(object):
             return
 
         for dep in deps:
-            app_dep, app_type, dep_type = dep
+            app_dep, app_type, dep_type, pkg = dep
             app_id = app_dep.AppID
 
             app_dep.status = 'invalidated'
@@ -834,7 +836,7 @@ class Deploy(object):
             return
 
         for dep in deps:
-            app_dep, app_type, dep_type = dep
+            app_dep, app_type, dep_type, pkg = dep
 
             if app_dep.status == 'validated':
                 print 'Deployment for application "%s" for apptype "%s" ' \
