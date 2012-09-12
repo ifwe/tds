@@ -741,6 +741,8 @@ class Deploy(object):
             deploy.add_app_deployment(dep_id, app_id, args.user,
                                       'incomplete',
                                       self.envs[args.environment])
+            deploy.delete_host_deployments(app_id,
+                                           self.envs[args.environment])
             dep_hosts = deploy.find_hosts_for_app(app_id,
                                       self.envs[args.environment])
             self.deploy_to_hosts(dep_hosts, dep_id, args.user)
