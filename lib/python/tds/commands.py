@@ -757,13 +757,10 @@ class Deploy(object):
         if args.version is None:
             app_version = deploy.find_latest_deployed_version(args.project,
                                                               apptier=True)
-            host_version = deploy.find_latest_deployed_version(args.project)
         else:
             app_version = args.version
-            host_version = args.version
 
         print 'App version is "%s"' % app_version
-        print 'Host version is "%s"' % host_version
         print 'Deployments of %s to tiers:' % args.project
         print '==========\n'
 
@@ -793,27 +790,23 @@ class Deploy(object):
         print 'Deployments of %s to hosts:' % args.project
         print '==========\n'
 
-        if host_version is None:
-            print 'No deployments to hosts (only) for this application yet\n'
-        else:
-            # Revision hardcoded to '1' for now
-            host_deps = deploy.list_host_deployment_info(args.project,
-                                                         host_version,
-                                                         '1')
+        host_deps = deploy.list_host_deployment_info(args.project,
+                version = args.version)
 
-            if not host_deps:
-                print 'No deployments to hosts for this application with ' \
-                      'given version and revision\n'
-            else:
-                for dep, host_dep, hostname in host_deps:
-                    print 'Declared: %s' % dep.declared
-                    print 'Declaring user: %s' % dep.user
-                    print 'Realized: %s' % host_dep.realized
-                    print 'Realizing user: %s' % host_dep.user
-                    print 'Hostname: %s' % hostname
-                    print 'Deploy state: %s' % dep.dep_type
-                    print 'Install state: %s' % host_dep.status
-                    print ''
+        if not host_deps:
+            print 'No deployments to hosts for this application with ' \
+                  'given version and revision\n'
+        else:
+            for dep, host_dep, hostname, pkg in host_deps:
+                print 'Version: %s-%s' % (pkg.version, pkg.revision)
+                print 'Declared: %s' % dep.declared
+                print 'Declaring user: %s' % dep.user
+                print 'Realized: %s' % host_dep.realized
+                print 'Realizing user: %s' % host_dep.user
+                print 'Hostname: %s' % hostname
+                print 'Deploy state: %s' % dep.dep_type
+                print 'Install state: %s' % host_dep.status
+                print ''
 
 
     @catch_exceptions
