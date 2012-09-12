@@ -298,6 +298,9 @@ class Deploy(object):
             else:
                 return (True, 'Deploy successful')
 
+        return (False, "Unknown/unparseable mcollective output: %s" %
+                stdout)
+
 
     def deploy_to_hosts(self, dep_hosts, dep_id, user, redeploy=False):
         """Perform deployment on given set of hosts (only doing those
