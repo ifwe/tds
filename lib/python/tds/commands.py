@@ -569,7 +569,6 @@ class Deploy(object):
 
                 dep = app_dep_map[app_id]
                 app_dep, app_type, dep_type, pkg = dep
-                print app_dep.status, app_type, dep_type, pkg
 
                 if (app_dep.status != 'invalidated' and
                         dep_type == 'deploy' and pkg.version == args.version):
