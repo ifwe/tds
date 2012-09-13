@@ -3,6 +3,7 @@ import re
 import signal
 import socket
 import subprocess
+import sys
 
 import beanstalkc
 import json
@@ -532,6 +533,9 @@ class Deploy(object):
                 app_ids = app_host_map.keys()
         else:
             pkg_id, app_ids = self.verify_package(args)
+
+        if pkg_id is None:
+            sys.exit(1) # already printed an error
 
         deps = deploy.find_app_deployment(pkg_id, app_ids,
                                           self.envs[args.environment])
