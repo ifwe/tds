@@ -324,6 +324,8 @@ class Deploy(object):
                 else:
                     failed_hosts.append((dep_host, info))
             else:
+                # clear out any old deployments for this host
+                deploy.delete_host_deployment(dep_host.hostname)
                 host_dep = deploy.add_host_deployment(dep_id, dep_host.HostID,
                                                       user, 'incomplete')
                 success, info = self.deploy_to_host(dep_host.hostname, app, version)
@@ -749,8 +751,6 @@ class Deploy(object):
             deploy.add_app_deployment(dep_id, app_id, args.user,
                                       'incomplete',
                                       self.envs[args.environment])
-            deploy.delete_host_deployments(app_id,
-                                           self.envs[args.environment])
             dep_hosts = deploy.find_hosts_for_app(app_id,
                                       self.envs[args.environment])
             self.deploy_to_hosts(dep_hosts, dep_id, args.user)
