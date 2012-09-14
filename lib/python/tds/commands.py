@@ -555,8 +555,8 @@ class Deploy(object):
             if args.environment != 'dev':
                 prev_env = self.get_previous_environment(args.environment)
                 prev_deps = deploy.find_app_deployment(pkg_id,
-                                                  [ app_dep.AppID ],
-                                                  self.envs[prev_environment])
+                                                  [ app_id ],
+                                                  self.envs[prev_env])
                 # There should only be one deployment here
                 prev_app_dep, prev_app_type, prev_dep_type, prev_pkg = prev_deps[0]
 
@@ -565,8 +565,7 @@ class Deploy(object):
                     print 'Application "%s" with version "%s" not properly ' \
                         'or fully deployed to previous environment (%s) ' \
                         'for apptype "%s"' \
-                        % (args.project, args.version, prev_environment,
-                           prev_app_type)
+                        % (args.project, args.version, prev_env, prev_app_type)
                     ok = False
 
             if ok:
