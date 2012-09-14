@@ -746,7 +746,8 @@ class Deploy(object):
             Session.flush()   # Needed to push change for status (yes, hack)
 
             last_app_dep, pkg_id = \
-                deploy.find_latest_validated_deployment(args.project, app_id)
+                deploy.find_latest_validated_deployment(args.project, app_id,
+                        self.envs[args.environment])
 
             if pkg_id is None:
                 print 'No previous deployment to roll back to for ' \
