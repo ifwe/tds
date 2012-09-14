@@ -257,10 +257,10 @@ class Deploy(object):
             raise WrongEnvironmentError('Invalid environment: %s' % curr_env)
 
 
-    def deploy_to_host(self, dep_host, app, version):
+    def deploy_to_host(self, dep_host, app, version, retry=2):
         """Deploy specified package to a given host"""
 
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '5',
+        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '2',
                     '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                     app, version ]
         print "running mcollective command:"
@@ -292,6 +292,17 @@ class Deploy(object):
         if mc_output is None or summary is None:
             return (False, 'No output or summary information returned '
                            'from mco process')
+
+        print summary
+        m = re.search(r"processing (\d+) / (\d+) ", summary)
+        if m is None:
+            return (False, 'Error parsing summary line.')
+        # Virtual hosts in dev tend to time out unpredictably, probably
+        # because vmware is slow to respond when the hosts are not
+        # active. Subsequent retries after a timeout work better.
+        if m.group(2) == "0" and retry > 0:
+            print "Discovery failure, trying again."
+            return self.deploy_to_host(dep_host, app, version, retry-1)
 
         for host, hostinfo in mc_output.iteritems():
             if hostinfo['exitcode'] != 0:
