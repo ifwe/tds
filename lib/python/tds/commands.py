@@ -150,10 +150,10 @@ class Package(object):
                                     args.version))
 
         print "Sent job to %s, waiting for response..." % build_host
+
         # Watch error tube for responses, react accordingly
         # A timeout will occur if no valid messages are received
         # within specified amount of time
-
         signal.signal(signal.SIGALRM, self.beanstalk_handler)
         signal.alarm(20)
 
@@ -263,8 +263,9 @@ class Deploy(object):
         mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '2',
                     '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                     app, version ]
-        print "running mcollective command:"
-        print " ".join(mco_cmd)
+
+        print 'Running MCollective command:'
+        print '    %s' % ' '.join(mco_cmd)
 
         proc = subprocess.Popen(mco_cmd, stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE)
@@ -294,14 +295,16 @@ class Deploy(object):
                            'from mco process')
 
         print summary
-        m = re.search(r"processing (\d+) / (\d+) ", summary)
+        m = re.search(r'processing (\d+) / (\d+) ', summary)
+
         if m is None:
             return (False, 'Error parsing summary line.')
+
         # Virtual hosts in dev tend to time out unpredictably, probably
         # because vmware is slow to respond when the hosts are not
         # active. Subsequent retries after a timeout work better.
-        if m.group(2) == "0" and retry > 0:
-            print "Discovery failure, trying again."
+        if m.group(2) == '0' and retry > 0:
+            print 'Discovery failure, trying again.'
             return self.deploy_to_host(dep_host, app, version, retry-1)
 
         for host, hostinfo in mc_output.iteritems():
@@ -310,7 +313,7 @@ class Deploy(object):
             else:
                 return (True, 'Deploy successful')
 
-        return (False, "Unknown/unparseable mcollective output: %s" %
+        return (False, 'Unknown/unparseable mcollective output: %s' %
                 stdout)
 
 
@@ -325,7 +328,8 @@ class Deploy(object):
             pkg = deploy.find_app_by_depid(dep_id)
             app, version = pkg.pkg_name, pkg.version
 
-            host_dep = deploy.find_host_deployment_by_depid(dep_id, dep_host.hostname)
+            host_dep = deploy.find_host_deployment_by_depid(dep_id,
+                                                            dep_host.hostname)
 
             if redeploy and host_dep and host_dep.status != 'ok':
                 success, info = self.deploy_to_host(dep_host, app, version)
@@ -339,7 +343,8 @@ class Deploy(object):
                 deploy.delete_host_deployment(dep_host.hostname)
                 host_dep = deploy.add_host_deployment(dep_id, dep_host.HostID,
                                                       user, 'incomplete')
-                success, info = self.deploy_to_host(dep_host.hostname, app, version)
+                success, info = self.deploy_to_host(dep_host.hostname, app,
+                                                    version)
 
                 if success:
                     host_dep.status = 'ok'
@@ -548,7 +553,7 @@ class Deploy(object):
             pkg_id, app_ids = self.verify_package(args)
 
         if pkg_id is None:
-            sys.exit(1) # already printed an error
+            sys.exit(1)  # already printed an error
 
         deps = deploy.find_app_deployment(pkg_id, app_ids,
                                           self.envs[args.environment])
@@ -569,14 +574,16 @@ class Deploy(object):
                                                   [ app_id ],
                                                   self.envs[prev_env])
                 # There should only be one deployment here
-                prev_app_dep, prev_app_type, prev_dep_type, prev_pkg = prev_deps[0]
+                prev_app_dep, prev_app_type, prev_dep_type, \
+                    prev_pkg = prev_deps[0]
 
                 if (prev_dep_type != 'deploy' or
                     prev_app_dep.status != 'validated'):
                     print 'Application "%s" with version "%s" not properly ' \
-                        'or fully deployed to previous environment (%s) ' \
-                        'for apptype "%s"' \
-                        % (args.project, args.version, prev_env, prev_app_type)
+                          'or fully deployed to previous environment (%s) ' \
+                          'for apptype "%s"' \
+                          % (args.project, args.version, prev_env,
+                             prev_app_type)
                     ok = False
 
             if ok:
@@ -587,7 +594,7 @@ class Deploy(object):
                 app_dep, app_type, dep_type, pkg = dep
 
                 if (app_dep.status != 'invalidated' and
-                        dep_type == 'deploy' and pkg.version == args.version):
+                    dep_type == 'deploy' and pkg.version == args.version):
                     print 'Application "%s" with version "%s" already ' \
                           'deployed to this environment (%s) for ' \
                           'apptype "%s"' \
@@ -812,7 +819,7 @@ class Deploy(object):
         print '==========\n'
 
         host_deps = deploy.list_host_deployment_info(args.project,
-                version = args.version)
+                                                     version=args.version)
 
         if not host_deps:
             print 'No deployments to hosts for this application with ' \
@@ -837,8 +844,10 @@ class Deploy(object):
         verify_access(args.user_level, args.environment)
 
         pkg_info = self.verify_package(args)
+
         if pkg_info is None:
-            return # already printed error in verify_package()
+            # Already printed error in verify_package()
+            return
 
         pkg_id, app_ids = pkg_info
 
