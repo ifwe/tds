@@ -335,7 +335,10 @@ class Deploy(object):
                 success, info = self.deploy_to_host(dep_host, app, version)
 
                 if success:
+                    # Commit to DB immediately
+                    Session.begin_nested()
                     host_dep.status = 'ok'
+                    Session.commit()
                 else:
                     failed_hosts.append((dep_host, info))
             else:
@@ -347,9 +350,16 @@ class Deploy(object):
                                                     version)
 
                 if success:
+                    # Commit to DB immediately
+                    Session.begin_nested()
                     host_dep.status = 'ok'
+                    Session.commit()
                 else:
+                    # Commit to DB immediately
+                    Session.begin_nested()
                     host_dep.status = 'failed'
+                    Session.commit()
+
                     failed_hosts.append((dep_host.hostname, info))
 
         # If any hosts failed, show failure information for each
@@ -749,7 +759,12 @@ class Deploy(object):
             app_dep, app_type, dep_type, pkg = dep
             app_id = app_dep.AppID
 
+            # Commit to DB immediately
+            Session.begin_nested()
             app_dep.status = 'invalidated'
+            Session.commit()
+
+            # Following line may not longer be needed?
             Session.flush()   # Needed to push change for status (yes, hack)
 
             last_app_dep, pkg_id = \
@@ -881,7 +896,11 @@ class Deploy(object):
                 print '    %s' % ', '.join(hostnames)
                 continue
 
+            # Commit to DB immediately
+            Session.begin_nested()
             app_dep.status = 'validated'
+            Session.commit()
+
             deploy.delete_host_deployments(app_dep.AppID,
                                            self.envs[args.environment])
 
