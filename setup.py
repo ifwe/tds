@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup_args = dict(
     name = 'TDS',
-    version = '0.5.1',
+    version = '0.8.0',
     description = 'Tagged Deployment System',
     # long_description = long_description,
     author = 'Kenneth Lareau',
