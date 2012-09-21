@@ -75,14 +75,16 @@ def check_user_auth(user):
     return user_level
 
 
-def get_environment():
+def get_basic_config():
     """ """
 
     with open('/etc/tagops/deploy.conf') as conf_file:
         config = ConfigParser.SafeConfigParser()
         config.readfp(conf_file)
 
-    return config.get('env', 'environment')
+    return { 'env' : config.get('env', 'environment'),
+             'build_base' : config.get('repo', 'build_base'),
+             'incoming' : config.get('repo', 'incoming'), }
 
 
 def initialize_db(args):
@@ -121,8 +123,11 @@ if __name__ == '__main__':
     # Pass user through with arguments
     args.user = pwd.getpwuid(os.getuid()).pw_name
     args.user_level = check_user_auth(args.user)
-    args.environment = get_environment()
-    print "args are: %s" % args   # Remove once main code is written
+    basic_config = get_basic_config()
+    args.environment = basic_config['env']
+    args.repo = { 'build_base' : basic_config['build_base'],
+                  'incoming' : basic_config['incoming'],
+                  'processing' : basic_config['processing'], }
 
     if args.dbuser:
         args.dbpassword = getpass.getpass('Enter DB password: ')

@@ -10,7 +10,6 @@
 %define _srcrpmdir    %{_topdir}
 %define _rpmfilename  %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm
 
-%global manage_init  manage_deploy_rpms
 %global update_init  update_deploy_repo
 
 %if 0%{?rhel} >= 6
@@ -40,7 +39,6 @@ BuildRequires:  %{pybase}-devel
 
 Requires: %{tagbase}-tagopsdb
 Requires: %{tagbase}-argparse
-Requires: %{tagbase}-beanstalkc
 Requires: %{tagbase}-ordereddict
 
 
@@ -57,9 +55,7 @@ rm -rf $RPM_BUILD_ROOT
 # Note: use --install-scripts <path> for alternate location of programs
 %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/etc/init.d/
-cp etc/%{manage_init} $RPM_BUILD_ROOT/etc/init.d/%{manage_init}
 cp etc/%{update_init} $RPM_BUILD_ROOT/etc/init.d/%{update_init}
-chmod +x $RPM_BUILD_ROOT/etc/init.d/%{manage_init}
 chmod +x $RPM_BUILD_ROOT/etc/init.d/%{update_init}
  
 
@@ -68,37 +64,11 @@ chmod +x $RPM_BUILD_ROOT/etc/init.d/%{update_init}
 rm -rf $RPM_BUILD_ROOT
 
 
-%package copy-package
-Summary: Copy package daemon for deployment
-Group: Applications/Python
-
-Requires: %{tagbase}-tagopsdb
-Requires: %{tagbase}-beanstalkc
-Requires: %{tagbase}-daemonize
-
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-
-%description copy-package
-Daemon to manage copying of RPMs to repository for deployment application
-
-%post copy-package
-/sbin/chkconfig --add %{manage_init}
-
-%preun copy-package
-if [ $1 -eq 0 ] ; then
-    /sbin/service %{manage_init} stop >/dev/null 2>&1
-    /sbin/chkconfig --del %{manage_init}
-fi
-
-
 %package update-repo
 Summary: Update repository daemon for deployment
 Group: Applications/Python
 
 Requires: %{tagbase}-tagopsdb
-Requires: %{tagbase}-beanstalkc
 Requires: %{tagbase}-daemonize
 
 Requires(post): chkconfig
@@ -124,12 +94,6 @@ fi
 %{python_sitelib}/*
 /usr/bin/tds
 
-%files copy-package
-%defattr(-,root,root,-)
-%doc
-/usr/bin/manage_deploy_rpms
-/etc/init.d/%{manage_init}
-
 %files update-repo
 %defattr(-,root,root,-)
 %doc
@@ -138,5 +102,8 @@ fi
 
 
 %changelog
+* Thu Sep 20 2012 Kenneth Lareau <klareau tagged com> - 0.8.5-1
+- Initial release candidate with nearly all of the core features
+  implemented
 * Wed Jun 27 2012 Kenneth Lareau <klareau tagged com> - 0.1.0-1
 - Initial version
