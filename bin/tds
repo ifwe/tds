@@ -84,7 +84,8 @@ def get_basic_config():
 
     return { 'env' : config.get('env', 'environment'),
              'build_base' : config.get('repo', 'build_base'),
-             'incoming' : config.get('repo', 'incoming'), }
+             'incoming' : config.get('repo', 'incoming'),
+             'processing' : config.get('repo', 'processing'), }
 
 
 def initialize_db(args):
