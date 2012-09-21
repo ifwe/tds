@@ -136,7 +136,7 @@ class Package(object):
             return
 
         # Get repo information for package
-        app = repo.list_app_locations(args.project)
+        app = repo.list_app_location(args.project)
 
         # Verify required RPM exists and create hard link into
         # the incoming directory for the repository server to find,
@@ -148,11 +148,11 @@ class Package(object):
 
         # Revision hardcoded for now
         src_rpm = os.path.join(build_base, app.path, '%s-%s-1.noarch.rpm'
-                               % (app.pkg_name, version))
+                               % (app.pkg_name, args.version))
         queued_rpm = os.path.join(incoming_dir, '%s-%s-1.noarch.rpm'
-                                  % (app.pkg_name, version))
+                                  % (app.pkg_name, args.version))
         process_rpm = os.path.join(processing_dir, '%s-%s-1.noarch.rpm'
-                                   % (app.pkg_name, version))
+                                   % (app.pkg_name, args.version))
 
         print 'Checking for existance of file "%s"...' % src_rpm
 
@@ -172,7 +172,7 @@ class Package(object):
         print '  to update deploy repo...'
 
         signal.signal(signal.SIGALRM, self.processing_handler)
-        signal.alarm(20)
+        signal.alarm(30)
 
         while os.path.isfile(queued_rpm):
             time.sleep(0.5)
