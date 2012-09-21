@@ -587,9 +587,9 @@ class Deploy(object):
 
                 if (prev_dep_type != 'deploy' or
                     prev_app_dep.status != 'validated'):
-                    print 'Application "%s" with version "%s" not properly ' \
-                          'or fully deployed to previous environment (%s) ' \
-                          'for apptype "%s"' \
+                    print 'Application "%s" with version "%s" not fully ' \
+                          'deployed or validated to previous environment ' \
+                          '(%s) for apptype "%s"' \
                           % (args.project, args.version, prev_env,
                              prev_app_type)
                     ok = False
