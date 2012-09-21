@@ -39,7 +39,7 @@ def prepare_rpms(incoming_dir, process_dir, files):
         try:
             src_rpm = os.path.join(incoming_dir, rpm)
             shutil.move(src_rpm, process_dir)
-        except IOerror, e:
+        except IOError, e:
             raise RepoException('Unable to move file "%s" to "%s": %s'
                                 % (src_rpm, process_dir, e))
 
@@ -68,12 +68,12 @@ def update_repo(repo_dir, process_dir):
         try:
             dest_dir = os.path.join(repo_dir, arch_type)
             shutil.copy(rpm_to_process, dest_dir)
-        except IOerror, e:
+        except IOError, e:
             raise RepoException('Unable to copy file "%s" to "%s": %s'
                                 % (queued_rpm, dest_dir, e))
 
     try:
-        run_command([ 'make', '=C', repo_dir ])
+        run_command([ 'make', '-C', repo_dir ])
     except ExtCommandError, e:
         raise RepoException(e)
 
@@ -98,7 +98,7 @@ def main():
     try:
         repo_dir = config.get('yum', 'repo_location')
         incoming_dir = config.get('yum', 'incoming')
-        process_dir = config.get('yum', 'proccessing')
+        process_dir = config.get('yum', 'processing')
     except ConfigParser.NoOptionError, e:
         raise RepoException('Failed to get configuration information: %s' % e)
 
