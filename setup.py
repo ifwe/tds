@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup_args = dict(
     name = 'TDS',
-    version = '0.8.0',
+    version = '0.8.5',
     description = 'Tagged Deployment System',
     # long_description = long_description,
     author = 'Kenneth Lareau',
@@ -14,7 +14,6 @@ setup_args = dict(
     packages = ['tds'],
     package_dir = {'' : 'lib/python'},
     scripts = ['bin/tds',
-               'bin/manage_deploy_rpms',
                'bin/update_deploy_repo',],
 )
 
