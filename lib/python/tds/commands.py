@@ -255,10 +255,10 @@ class Deploy(object):
             raise WrongEnvironmentError('Invalid environment: %s' % curr_env)
 
 
-    def deploy_to_host(self, dep_host, app, version, retry=2):
+    def deploy_to_host(self, dep_host, app, version, retry=4):
         """Deploy specified package to a given host"""
 
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '2',
+        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '4',
                     '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                     app, version ]
 
