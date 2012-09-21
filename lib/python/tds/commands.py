@@ -1,11 +1,12 @@
 import os
+import os.path
 import re
 import signal
 import socket
 import subprocess
 import sys
+import time
 
-import beanstalkc
 import json
 
 from tagopsdb.database.meta import Session
@@ -107,19 +108,16 @@ class Package(object):
         """ """
 
         self.host = socket.gethostname()
-        self.bean_id = "%s-%s" % (self.host, os.getpid())
-        self.job = None
 
 
-    def beanstalk_handler(self, signum, frame):
-        """ """
+    def processing_handler(self, signum, frame):
+        """This handler is called if the file in the incoming or processing
+           directory is not removed in a given amount of time, meaning the
+           repository server had a failure.
+        """
 
-        # Release any currently held job
-        if self.job:
-            self.job.release()
-
-        raise PackageException('The requested job response from the '
-                               'beanstalk server was never received.\n'
+        raise PackageException('The file placed in the incoming or '
+                               'processing queue was not removed.\n'
                                'Please contact SiteOps for assistance.')
 
 
@@ -137,57 +135,57 @@ class Package(object):
             print e
             return
 
-        # Get build server for package
-        build_host = repo.list_app_location(args.project).build_host
+        # Get repo information for package
+        app = repo.list_app_locations(args.project)
 
-        beanstalk = beanstalkc.Connection(host='tong01.tagged.com',
-                                          port=11300)
-        beanstalk.use('tds.package.copy.%s' % build_host)
-        beanstalk.watch('tds.package.error')
-        beanstalk.ignore('default')
+        # Verify required RPM exists and create hard link into
+        # the incoming directory for the repository server to find,
+        # then wait until file has been removed or timeout with
+        # error (meaning repository side failed, check logs there)
+        build_base = args.repo['build_base']
+        incoming_dir = args.repo['incoming']
+        processing_dir = args.repo['processing']
 
-        beanstalk.put('%s %s %s' % (self.bean_id, args.project,
-                                    args.version))
+        # Revision hardcoded for now
+        src_rpm = os.path.join(build_base, app.path, '%s-%s-1.noarch.rpm'
+                               % (app.pkg_name, version))
+        queued_rpm = os.path.join(incoming_dir, '%s-%s-1.noarch.rpm'
+                                  % (app.pkg_name, version))
+        process_rpm = os.path.join(processing_dir, '%s-%s-1.noarch.rpm'
+                                   % (app.pkg_name, version))
 
-        print "Sent job to %s, waiting for response..." % build_host
+        print 'Checking for existance of file "%s"...' % src_rpm
 
-        # Watch error tube for responses, react accordingly
-        # A timeout will occur if no valid messages are received
-        # within specified amount of time
-        signal.signal(signal.SIGALRM, self.beanstalk_handler)
+        if not os.path.isfile(src_rpm):
+            print 'File "%s" is not found in "%s"' % (src_rpm, build_base)
+            return
+
+        try:
+            print 'Build host "%s" built RPM successfully' % app.build_host
+            print 'Linking RPM into incoming directory...'
+            os.link(src_rpm, queued_rpm)
+        except Exception, e:   # Really need to narrow the exception down
+            print e
+            return
+
+        print 'RPM successfully linked, waiting for repository server'
+        print '  to update deploy repo...'
+
+        signal.signal(signal.SIGALRM, self.processing_handler)
         signal.alarm(20)
 
-        while True:
-            self.job = beanstalk.reserve()
-            id, result, msg = self.job.body.split(' ', 2)
+        while os.path.isfile(queued_rpm):
+            time.sleep(0.5)
 
-            # Make sure this is for our client
-            # print "ID: %s, Bean ID: %s" % (id, self.bean_id)
-            if id == self.bean_id:
-                break
-
-            self.job.release()
+        while os.path.isfile(process_rpm):
+            time.sleep(0.5)
 
         signal.alarm(0)
 
-        # Safe to remove job now
-        self.job.delete()
+        Session.commit()
 
-        if result == 'OK':
-            Session.commit()
-            print 'Added package for project "%s", version %s' \
-                  % (args.project, args.version)
-        elif result == 'ERROR':
-            Session.rollback()
-            print 'Unable to add package for project "%s", version %s' \
-                  % (args.project, args.version)
-            print 'Error: %s' % msg
-        else:
-            # Unexpected result
-            Session.rollback()
-            print 'Unable to add package for project "%s", version %s' \
-                  % (args.project, args.version)
-            print 'Unexpected result: %s, %s' % (result, msg)
+        print 'Added package for project "%s", version %s' \
+              % (args.project, args.version)
 
 
     @catch_exceptions
