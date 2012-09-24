@@ -35,6 +35,9 @@ def run_command(cmd):
 def prepare_rpms(incoming_dir, process_dir, files):
     """Move RPMs in incoming directory to the processing directory"""
 
+    daemonize.logging.info('Moving files in incoming directory to '
+                           'processing directory...')
+
     for rpm in files:
         try:
             src_rpm = os.path.join(incoming_dir, rpm)
@@ -54,6 +57,9 @@ def update_repo(repo_dir, process_dir):
                         for f in os.listdir(process_dir) ]
 
     for rpm_to_process in rpms_to_process:
+        daemonize.logging.info('Verifying file %s and if valid moving to '
+                               'repository')
+
         # TODO: ensure package is valid (security purposes)
 
         cmd = [ 'rpm', '-qp', '--queryformat', '%{arch}', rpm_to_process ]
@@ -72,10 +78,14 @@ def update_repo(repo_dir, process_dir):
             raise RepoException('Unable to copy file "%s" to "%s": %s'
                                 % (queued_rpm, dest_dir, e))
 
+    daemonize.logging.info('Updating repo...')
+
     try:
         run_command([ 'make', '-C', repo_dir ])
     except ExtCommandError, e:
         raise RepoException(e)
+
+    daemonize.logging.info('Removing processed files...')
 
     for rpm_to_process in rpms_to_process:
         if rpm_to_process not in invalid_rpms:
@@ -86,6 +96,8 @@ def main():
     """Read configuration file and get relavent information, then try to
        process files in the incoming directory
     """
+
+    daemonize.logging.info('Reading configuration (deploy.conf) file')
 
     try:
         with open('/etc/tagops/deploy.conf') as conf_file:
@@ -102,10 +114,13 @@ def main():
     except ConfigParser.NoOptionError, e:
         raise RepoException('Failed to get configuration information: %s' % e)
 
+    daemonize.logging.info('Checking for incoming files...')
+
     while True:
         files = os.listdir(incoming_dir)
 
         if files:
+            daemonize.logging.info('Files found, processing them...')
             prepare_rpms(incoming_dir, process_dir, files)
             update_repo(repo_dir, process_dir)
 
