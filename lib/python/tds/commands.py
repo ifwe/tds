@@ -470,7 +470,6 @@ class Deploy(object):
         """ """
 
         pkg_id = self.get_package_id(args)
-
         app_ids = self.get_app_types(args)
 
         if getattr(args, 'hosts', None):
@@ -540,6 +539,17 @@ class Deploy(object):
         """ """
 
         verify_access(args.user_level, args.environment)
+
+        # Ensure version being deployed is more recent
+        # than the currently deployed version
+        deployed_version = deploy.find_latest_deployed_version(args.project,
+                                                               apptier=True)
+
+        if not args.version > deployed_version:
+            print 'Application "%s" already has version "%s" deployed, ' \
+                  'which is newer than the requested version "%s"' \
+                  % (args.project, deployed_version, args.version)
+            return
 
         if args.hosts:
             pkg_id, app_host_map = self.verify_package(args)
