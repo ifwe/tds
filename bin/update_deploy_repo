@@ -58,7 +58,7 @@ def update_repo(repo_dir, process_dir):
 
     for rpm_to_process in rpms_to_process:
         daemonize.logging.info('Verifying file %s and if valid moving to '
-                               'repository')
+                               'repository' % rpm_to_process)
 
         # TODO: ensure package is valid (security purposes)
 
