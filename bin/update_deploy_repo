@@ -123,6 +123,8 @@ def main():
             daemonize.logging.info('Files found, processing them...')
             prepare_rpms(incoming_dir, process_dir, files)
             update_repo(repo_dir, process_dir)
+            daemonize.logging.info('Done processing, checking for incoming '
+                                   'files...')
 
         time.sleep(1.0)
 
