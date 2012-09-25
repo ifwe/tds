@@ -1,3 +1,4 @@
+import errno
 import os
 import os.path
 import re
@@ -121,6 +122,18 @@ class Package(object):
                                'Please contact SiteOps for assistance.')
 
 
+    def wait_for_file_removal(self, path):
+        """Wait until a given file has been removed"""
+
+        while True:
+            try:
+                with open(path) as fh:
+                    time.sleep(0.5)
+            except IOError, e:
+                if e.errno == errno.ENOENT:
+                    break
+
+
     @catch_exceptions
     def add(self, args):
         """ """
@@ -172,13 +185,10 @@ class Package(object):
         print '  to update deploy repo...'
 
         signal.signal(signal.SIGALRM, self.processing_handler)
-        signal.alarm(30)
+        signal.alarm(60)
 
-        while os.path.isfile(queued_rpm):
-            time.sleep(0.5)
-
-        while os.path.isfile(process_rpm):
-            time.sleep(0.5)
+        self.wait_for_file_removal(queued_rpm)
+        self.wait_for_file_removal(process_rpm)
 
         signal.alarm(0)
 
