@@ -422,7 +422,7 @@ class Deploy(object):
             # (Note: this currently only works for projects
             #  with a single app type)
             version = deploy.find_latest_deployed_version(args.project,
-                                                          apptier=True)
+                             self.envs[args.environment], apptier=True)
 
         try:
             # Revision hardcoded to '1' for now
@@ -553,7 +553,7 @@ class Deploy(object):
         # Ensure version being deployed is more recent
         # than the currently deployed version
         deployed_version = deploy.find_latest_deployed_version(args.project,
-                                                               apptier=True)
+                                  self.envs[args.environment], apptier=True)
 
         if not args.version > deployed_version:
             print 'Application "%s" already has version "%s" deployed, ' \
@@ -817,7 +817,7 @@ class Deploy(object):
 
         if args.version is None:
             app_version = deploy.find_latest_deployed_version(args.project,
-                                                              apptier=True)
+                                 self.envs[args.environment], apptier=True)
         else:
             app_version = args.version
 
