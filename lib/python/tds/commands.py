@@ -557,7 +557,7 @@ class Deploy(object):
 
         if not args.version > deployed_version:
             print 'Application "%s" already has version "%s" deployed, ' \
-                  'which is newer than the requested version "%s"' \
+                  'which is not older than the requested version "%s"' \
                   % (args.project, deployed_version, args.version)
             return
 
