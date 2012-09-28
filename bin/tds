@@ -8,7 +8,7 @@ import pwd
 import sys
 
 import tds.commands
-import version
+import tds.version
 
 from tagopsdb.database import init_session
 from tagopsdb.exceptions import PermissionsException
@@ -45,8 +45,8 @@ def parse_command_line():
 
     parser = argparse.ArgumentParser(description='TagOps Deployment System')
 
-    parser.add_argument('--version', action='version',
-                        version='%(prog)s %s' % version.__version__)
+    parser.add_argument('-V', '--version', action='version',
+                        version='TDS %s' % tds.version.__version__)
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show more information')
     # If we want multiple verbose levels, use next line instead
