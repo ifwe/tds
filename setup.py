@@ -3,9 +3,12 @@ from setuptools import setup, find_packages
 # Let's add this later
 # long_description = open('README.txt').read()
 
+# Get version of project
+execfile('version.py')
+
 setup_args = dict(
     name = 'TDS',
-    version = '0.8.11',
+    version = __version__,
     description = 'Tagged Deployment System',
     # long_description = long_description,
     author = 'Kenneth Lareau',
