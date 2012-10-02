@@ -803,7 +803,6 @@ class Deploy(object):
         else:
             app_version = args.version
 
-        print 'App version is "%s"' % app_version
         print 'Deployments of %s to tiers:' % args.project
         print '==========\n'
 
@@ -819,7 +818,8 @@ class Deploy(object):
                 print 'No deployments to tiers for this application with ' \
                       'given version and revision\n'
             else:
-                for dep, app_dep, app_type in app_deps:
+                for dep, app_dep, app_type, pkg in app_deps:
+                    print 'Version: %s-%s' % (pkg.version, pkg.revision)
                     print 'Declared: %s' % dep.declared
                     print 'Declaring user: %s' % dep.user
                     print 'Realized: %s' % app_dep.realized
