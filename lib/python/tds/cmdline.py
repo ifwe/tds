@@ -163,9 +163,6 @@ deploy_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
-            (('version',), odict([
-                ('help', 'Release version number for project'),
-             ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
                 ('metavar', 'HOST'),
