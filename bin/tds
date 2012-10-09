@@ -117,12 +117,22 @@ def initialize_db(args):
 if __name__ == '__main__':
     args = parse_command_line()
 
-    # Slight hack: ensure '--hosts' and '--apptypes' aren't used
-    # at the same time
-    if getattr(args, 'hosts', None) and getattr(args, 'apptypes', None):
-        print 'The "--hosts" and "--apptypes" options may not be used ' \
-              'at the same time'
+    # Slight hack: ensure only one of '--hosts', '--apptypes'
+    # or '--all-apptypes' is used at a given time
+    excl = filter(None, (getattr(args, 'hosts', None),
+                         getattr(args, 'apptypes', None),
+                         getattr(args, 'all_apptypes', None)))
+
+    if len(excl) > 1:
+        print 'Only one of the "--hosts", "--apptypes" or "--all-apptypes" ' \
+              'options may be used at a given time'
         sys.exit(1)
+
+    # Set parameter to check for explicit hosts/apptypes
+    if not excl:
+        args.explicit = False
+    else:
+        args.explicit = True
 
     # Pass user through with arguments
     args.user = pwd.getpwuid(os.getuid()).pw_name

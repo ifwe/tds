@@ -351,7 +351,7 @@ class Deploy(object):
                 else:
                     failed_hosts.append((dep_host, info))
             else:
-                # clear out any old deployments for this host
+                # Clear out any old deployments for this host
                 deploy.delete_host_deployment(dep_host.hostname)
                 host_dep = deploy.add_host_deployment(dep_id, dep_host.HostID,
                                                       user, 'incomplete')
@@ -431,7 +431,7 @@ class Deploy(object):
             if not pkg:
                 print 'Application "%s" with version "%s" not ' \
                       'available in the repository.' % (args.project, version)
-                return
+                sys.exit(1)
         except PackageException, e:
             print e
             sys.exit(1)
@@ -551,17 +551,34 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        # Ensure version being deployed is more recent
-        # than the currently deployed version
-        deployed_version = deploy.find_latest_deployed_version(args.project,
-                                  self.envs[args.environment], apptier=True)
-
-        if not args.version > deployed_version:
-            print 'Application "%s" already has version "%s" deployed, ' \
-                  'which is not older than the requested version "%s"' \
-                  % (args.project, deployed_version, args.version)
+        # Make sure multiple app types are explicit
+        if not args.explicit and len(self.get_app_types(args)) > 1:
+            print 'Application "%s" has multiple corresponding app types, ' \
+                  'please use "--apptypes" or "--all-apptypes"' \
+                  % args.project
             return
 
+        # Ensure version being deployed is more recent than
+        # the currently deployed versions on requested app types
+        newer_versions = []
+        dep_versions = deploy.find_latest_deployed_version(args.project,
+                              self.envs[args.environment], apptier=True)
+
+        for dep_app_type, dep_version, dep_revision in dep_versions:
+            # Currently not using revision (always '1' at the moment)
+            if args.version < deployed_version:
+                newer_versions.append(dep_app_type)
+
+        if newer_versions:
+            app_type_list = ', '.join(['"%s"' % x for x in newer_versions])
+            print 'Application "%s" for app types %s have newer versions ' \
+                  'deployed than the requested version "%s"' \
+                  % (args.project, app_type_list, args.version)
+            return
+
+        # Verify requested package and which hosts or app tiers
+        # to install the package; for hosts a mapping is kept
+        # between them and their related app types
         if args.hosts:
             pkg_id, app_host_map = self.verify_package(args)
             host_deps = deploy.find_host_deployment_by_project(args.project,
@@ -577,13 +594,14 @@ class Deploy(object):
                     if not app_host_map[app_id]:
                         del app_host_map[app_id]
 
-                app_ids = app_host_map.keys()
+            app_ids = app_host_map.keys()
         else:
             pkg_id, app_ids = self.verify_package(args)
 
-        if pkg_id is None:
-            sys.exit(1)  # already printed an error
-
+        # Find all relevant application deployments for the requested
+        # app types and create an application/deployment mapping,
+        # keeping track of which app types have a current deployment
+        # and which don't
         deps = deploy.find_app_deployment(pkg_id, app_ids,
                                           self.envs[args.environment])
         app_dep_map = {}
@@ -594,7 +612,19 @@ class Deploy(object):
         for app_dep, app_type, dep_type, pkg in deps:
             app_dep_map[app_dep.AppID] = (app_dep, app_type, dep_type, pkg)
 
+        # For each app type, do the following:
+        #   1. If app type does haven't a current deployment, check next
+        #   2. For non-development environments, ensure the previous
+        #      environment has a validated instance of the requested
+        #      version of the application
+        #   3. If step 2 is okay, check if the requested version of
+        #      the application is already deployed and not invalidated
+        #   4. If either step 2 or 3 failed, remove host/app type from
+        #      relevant mapping to be used for deployments
         for app_id in app_ids:
+            if not app_dep_map[app_id]:
+                continue
+
             ok = True
 
             if args.environment != 'dev':
@@ -616,9 +646,6 @@ class Deploy(object):
                     ok = False
 
             if ok:
-                if not app_dep_map[app_id]:
-                    continue
-
                 dep = app_dep_map[app_id]
                 app_dep, app_type, dep_type, pkg = dep
 
@@ -637,7 +664,12 @@ class Deploy(object):
                 else:
                     del app_dep_map[app_id]
 
-        # All is well, start deployment
+        # All is well, now do the deployment
+        #   1. See if a deployment entry already exists in DB and use it,
+        #      otherwise create a new one
+        #   2. If deploying to tier, add an app deployment entry in DB
+        #   3. Determine the appropriate hosts to deploy the application
+        #   4. Do the deploy to the hosts
         dep_id = None
         pkg_deps = deploy.find_deployment_by_pkgid(pkg_id)
 
@@ -858,13 +890,8 @@ class Deploy(object):
 
         verify_access(args.user_level, args.environment)
 
-        pkg_info = self.verify_package(args)
+        pkg_id, app_ids = self.verify_package(args)
 
-        if pkg_info is None:
-            # Already printed error in verify_package()
-            return
-
-        pkg_id, app_ids = pkg_info
 
         # Get relevant deployments, validate and clean host deployments
         deps = deploy.find_app_deployment(pkg_id, app_ids,
