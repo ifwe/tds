@@ -566,7 +566,7 @@ class Deploy(object):
 
         for dep_app_type, dep_version, dep_revision in dep_versions:
             # Currently not using revision (always '1' at the moment)
-            if args.version < deployed_version:
+            if args.version < dep_version:
                 newer_versions.append(dep_app_type)
 
         if newer_versions:
