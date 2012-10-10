@@ -439,6 +439,61 @@ class Deploy(object):
         return pkg.PackageID
 
 
+    def show_app_deployments(self, project, app_versions):
+        """ """
+
+        if not app_versions:
+            print 'No deployments to tiers for this application ' \
+                  '(for possible given version) yet\n'
+            return
+
+        for app_type, version, revision in app_versions:
+            print 'Deployment of %s to %s tier:' % (project, app_type)
+            print '==========\n'
+
+            app_dep = deploy.list_app_deployment_info(project, app_type,
+                                                      version, revision)
+
+            dep, app_dep, pkg = app_dep
+
+            print 'Version: %s-%s' % (pkg.version, pkg.revision)
+            print 'Declared: %s' % dep.declared
+            print 'Declaring user: %s' % dep.user
+            print 'Realized: %s' % app_dep.realized
+            print 'Realizing user: %s' % app_dep.user
+            print 'App type: %s' % app_type
+            print 'Environment: %s' % app_dep.environment
+            print 'Deploy state: %s' % dep.dep_type
+            print 'Install state: %s' % app_dep.status
+            print ''
+
+
+    def show_host_deployments(self, project, version, revision):
+        """ """
+
+        host_deps = deploy.list_host_deployment_info(project,
+                                                     version=version,
+                                                     revision=revision)
+
+        if not host_deps:
+            print 'No deployments to hosts for this application ' \
+                  '(for possible given version)\n'
+        else:
+            print 'Deployments of %s to hosts:' % project
+            print '==========\n'
+
+            for dep, host_dep, hostname, pkg in host_deps:
+                print 'Version: %s-%s' % (pkg.version, pkg.revision)
+                print 'Declared: %s' % dep.declared
+                print 'Declaring user: %s' % dep.user
+                print 'Realized: %s' % host_dep.realized
+                print 'Realizing user: %s' % host_dep.user
+                print 'Hostname: %s' % hostname
+                print 'Deploy state: %s' % dep.dep_type
+                print 'Install state: %s' % host_dep.status
+                print ''
+
+
     def verify_hosts(self, hosts, app_ids, environment):
         """Verify given hosts are in the correct environment and of the
         correct app IDs
@@ -830,58 +885,17 @@ class Deploy(object):
         verify_access(args.user_level, 'dev')
 
         if args.version is None:
-            app_version = deploy.find_latest_deployed_version(args.project,
-                                 self.envs[args.environment], apptier=True)
+            app_versions = deploy.find_latest_deployed_version(args.project,
+                                  self.envs[args.environment], apptier=True)
         else:
-            app_version = args.version
+            app_versions = deploy.find_deployed_version(args.project,
+                                                self.envs[args.environment],
+                                                version=args.version,
+                                                apptier=True)
 
-        print 'Deployments of %s to tiers:' % args.project
-        print '==========\n'
-
-        if app_version is None:
-            print 'No deployments to tiers for this application yet\n'
-        else:
-            # Revision hardcoded to '1' for now
-            app_deps = deploy.list_app_deployment_info(args.project,
-                                                       app_version,
-                                                       '1')
-
-            if not app_deps:
-                print 'No deployments to tiers for this application with ' \
-                      'given version and revision\n'
-            else:
-                for dep, app_dep, app_type, pkg in app_deps:
-                    print 'Version: %s-%s' % (pkg.version, pkg.revision)
-                    print 'Declared: %s' % dep.declared
-                    print 'Declaring user: %s' % dep.user
-                    print 'Realized: %s' % app_dep.realized
-                    print 'Realizing user: %s' % app_dep.user
-                    print 'App type: %s' % app_type
-                    print 'Environment: %s' % app_dep.environment
-                    print 'Deploy state: %s' % dep.dep_type
-                    print 'Install state: %s' % app_dep.status
-                    print ''
-
-        print 'Deployments of %s to hosts:' % args.project
-        print '==========\n'
-
-        host_deps = deploy.list_host_deployment_info(args.project,
-                                                     version=args.version)
-
-        if not host_deps:
-            print 'No deployments to hosts for this application with ' \
-                  'given version and revision\n'
-        else:
-            for dep, host_dep, hostname, pkg in host_deps:
-                print 'Version: %s-%s' % (pkg.version, pkg.revision)
-                print 'Declared: %s' % dep.declared
-                print 'Declaring user: %s' % dep.user
-                print 'Realized: %s' % host_dep.realized
-                print 'Realizing user: %s' % host_dep.user
-                print 'Hostname: %s' % hostname
-                print 'Deploy state: %s' % dep.dep_type
-                print 'Install state: %s' % host_dep.status
-                print ''
+        self.show_app_deployments(args.project, app_versions)
+        # Revision is hardcoded to '1' for now
+        self.show_host_deployments(args.project, args.version, '1')
 
 
     @catch_exceptions
