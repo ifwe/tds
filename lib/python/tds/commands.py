@@ -443,19 +443,21 @@ class Deploy(object):
         return pkg.PackageID
 
 
-    def show_app_deployments(self, project, app_versions):
+    def show_app_deployments(self, project, app_versions, env):
         """ """
 
         if not app_versions:
             print 'No deployments to tiers for this application ' \
-                  '(for possible given version) yet\n'
+                  '(for possible given version) yet'
+            print 'in %s environment\n' % env
             return
 
         for app_type, version, revision in app_versions:
-            print 'Deployment of %s to %s tier:' % (project, app_type)
+            print 'Deployment of %s to %s tier in %s environment:' \
+                  % (project, app_type, env)
             print '==========\n'
 
-            app_dep = deploy.list_app_deployment_info(project, app_type,
+            app_dep = deploy.list_app_deployment_info(project, env, app_type,
                                                       version, revision)
 
             dep, app_dep, pkg = app_dep
@@ -472,18 +474,20 @@ class Deploy(object):
             print ''
 
 
-    def show_host_deployments(self, project, version, revision):
+    def show_host_deployments(self, project, version, revision, env):
         """ """
 
-        host_deps = deploy.list_host_deployment_info(project,
+        host_deps = deploy.list_host_deployment_info(project, env,
                                                      version=version,
                                                      revision=revision)
 
         if not host_deps:
             print 'No deployments to hosts for this application ' \
-                  '(for possible given version)\n'
+                  '(for possible given version)'
+            print 'in %s environment\n' % env
         else:
-            print 'Deployments of %s to hosts:' % project
+            print 'Deployments of %s to hosts in %s environment:' \
+                  % (project, env)
             print '==========\n'
 
             for dep, host_dep, hostname, pkg in host_deps:
@@ -897,9 +901,11 @@ class Deploy(object):
                                                 version=args.version,
                                                 apptier=True)
 
-        self.show_app_deployments(args.project, app_versions)
+        self.show_app_deployments(args.project, app_versions,
+                                  self.envs[args.environment])
         # Revision is hardcoded to '1' for now
-        self.show_host_deployments(args.project, args.version, '1')
+        self.show_host_deployments(args.project, args.version, '1',
+                                   self.envs[args.environment])
 
 
     @catch_exceptions
