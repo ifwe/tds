@@ -50,9 +50,12 @@ class Repository(object):
         verify_access(args.user_level, 'admin')
 
         try:
-            loc_id = repo.add_app_location(args.buildtype, args.pkgname,
-                                           args.project, args.pkgpath,
-                                           args.buildhost, args.env_specific)
+            # For now, project_type is 'application'
+            args.projecttype = 'application'
+            loc_id = repo.add_app_location(args.projecttype, args.buildtype,
+                                           args.pkgname, args.project,
+                                           args.pkgpath, args.buildhost,
+                                           args.env_specific)
             repo.add_app_packages_mapping(loc_id, args.apptypes)
         except RepoException, e:
             print e
@@ -84,7 +87,8 @@ class Repository(object):
 
         for app in repo.list_all_app_locations():
             print 'Project: %s' % app.app_name
-            print 'Project type: %s' % app.pkg_type
+            print 'Project type: %s' % app.project_type
+            print 'Package type: %s' % app.pkg_type
             print 'Package name: %s' % app.pkg_name
             print 'Path: %s' % app.path
             print 'Build host: %s' % app.build_host
