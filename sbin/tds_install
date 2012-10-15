@@ -131,7 +131,9 @@ def manage_service(service, action):
 def app_install(app, version, inst_version):
     """Install the given version of the application"""
 
-    if inst_version is None or inst_version < version:
+    # Compare versions as integers for now; this will need to change
+    # if we move to non-integer versions
+    if inst_version is None or int(inst_version) < int(version):
         yum_op = "install"
     else:
         yum_op = "downgrade"
