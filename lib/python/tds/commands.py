@@ -629,7 +629,10 @@ class Deploy(object):
 
         for dep_app_type, dep_version, dep_revision in dep_versions:
             # Currently not using revision (always '1' at the moment)
-            if args.version < dep_version:
+            # 'dep_version' must be typecast to an integer as well,
+            # since the DB stores it as a string - may move away from
+            # integers for versions in the future, so take note here
+            if args.version < int(dep_version):
                 newer_versions.append(dep_app_type)
 
         if newer_versions:

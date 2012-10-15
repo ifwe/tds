@@ -56,6 +56,7 @@ package_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
              ])),
          ])),
      ])),
@@ -67,6 +68,7 @@ package_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
              ])),
          ])),
      ])),
@@ -86,6 +88,7 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
              ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
@@ -111,6 +114,7 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
              ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
@@ -136,6 +140,7 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
              ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for invalidation'),
@@ -156,6 +161,7 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
              ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
@@ -220,6 +226,7 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
                 ('nargs', '?'),
              ])),
          ])),
@@ -232,6 +239,7 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
              ])),
             (('--force',), odict([
                 ('help', 'Do validation even when there are bad hosts'),
