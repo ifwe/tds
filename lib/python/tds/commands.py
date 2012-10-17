@@ -269,7 +269,7 @@ class Deploy(object):
             raise WrongEnvironmentError('Invalid environment: %s' % curr_env)
 
 
-    def check_tier_state(self, args, app_dep):
+    def check_tier_state(self, args, pkg_id, app_dep):
         """Ensure state of tier (from given app deployment) is consistent
            with state and deployment package versions
         """
@@ -1029,7 +1029,7 @@ class Deploy(object):
 
             # Ensure tier state is consistent
             result, missing, diffs, not_ok = self.check_tier_state(args,
-                                                                   app_dep)
+                                                             pkg_id, app_dep)
 
             if result != 'ok':
                 print 'Unable to validate version "%s" or application "%s" ' \
