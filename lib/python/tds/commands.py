@@ -460,6 +460,12 @@ class Deploy(object):
                                self.envs[args.environment], apptier=apptier)
             versions = [ x[1] for x in last_deps if x[0] in app_types ]
 
+            if not versions:
+                print 'Application "%s" has no current tier/host ' \
+                      'deployments to verify for the given apptypes/hosts' \
+                      % args.project
+                sys.exit(1)
+
             if not all(x == versions[0] for x in versions):
                 raise ValueError('Multiple versions not allowed')
 
@@ -891,6 +897,7 @@ class Deploy(object):
             for app_id, dep_info in app_dep_map.iteritems():
                 app_dep, app_type, dep_type, pkg = dep_info
 
+                # Don't redeploy to a validated tier
                 if app_dep.status == 'validated':
                     print 'Application "%s" with version "%s" already ' \
                           'validated on app type %s"' \
