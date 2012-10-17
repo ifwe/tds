@@ -710,8 +710,8 @@ class Deploy(object):
         # between them and their related app types
         if args.hosts:
             pkg_id, app_host_map = self.verify_package(args)
-            host_deps = deploy.find_host_deployment_by_project(args.project,
-                                                               args.hosts)
+            host_deps = deploy.find_host_deployments_by_project(args.project,
+                                                                args.hosts)
 
             for host_dep, hostname, app_id, dep_version in host_deps:
                 if dep_version == args.version and host_dep.status == 'ok':
@@ -849,8 +849,8 @@ class Deploy(object):
                 print '%s for given project and hosts' % e
                 return
 
-            host_deps = deploy.find_host_deployment_by_project(args.project,
-                                                               args.hosts)
+            host_deps = deploy.find_host_deployments_by_project(args.project,
+                                                                args.hosts)
 
             for host_dep, hostname, app_id, dep_version in host_deps:
                 if host_dep.status == 'ok':
