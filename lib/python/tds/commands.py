@@ -463,6 +463,8 @@ class Deploy(object):
             if not all(x == versions[0] for x in versions):
                 raise ValueError('Multiple versions not allowed')
 
+            version = versions[0]
+
         try:
             # Revision hardcoded to '1' for now
             pkg = package.find_package(args.project, version, '1')
