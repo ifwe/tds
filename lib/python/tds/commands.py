@@ -284,7 +284,7 @@ class Deploy(object):
 
         missing_deps = list(set(apptype_hostnames) - set(dep_hostnames))
         version_diffs = [ x.hostname for x in dep_hosts
-                          if x.version != args.version ]
+                          if int(x.version) != args.version ]
 
         not_ok_hosts = deploy.find_host_deployments_not_ok(pkg_id,
                               app_dep.AppID, self.envs[args.environment])
