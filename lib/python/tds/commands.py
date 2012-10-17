@@ -888,7 +888,15 @@ class Deploy(object):
             dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames ]
             self.deploy_to_hosts(dep_hosts, dep_id, args.user, redeploy=True)
         else:
-            for app_id in app_dep_map.iterkeys():
+            for app_id, dep_info in app_dep_map.iteritems():
+                app_dep, app_type, dep_type, pkg = dep_info
+
+                if app_dep.status == 'validated':
+                    print 'Application "%s" with version "%s" already ' \
+                          'validated on app type %s"' \
+                          % (args.project, pkg.version, app_type)
+                    continue
+
                 dep_hosts = deploy.find_hosts_for_app(app_id,
                                           self.envs[args.environment])
                 self.deploy_to_hosts(dep_hosts, dep_id, args.user,
