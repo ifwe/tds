@@ -644,7 +644,7 @@ class Deploy(object):
         curr_dep_versions = {}
 
         for app_type, version, revision in curr_deps:
-            curr_dep_versions[app_type] = version
+            curr_dep_versions[app_type] = int(version)
 
         # Check each deployment and invalidate is all is well
         for dep in deps:
