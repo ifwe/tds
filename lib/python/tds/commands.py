@@ -442,7 +442,7 @@ class Deploy(object):
         return app_ids
 
 
-    def get_package_id(self, args, app_types):
+    def get_package_id(self, args, app_types, hostonly=False):
         """Get the package ID for the current project and version
            (or most recent deployed version if none is given) for
            a given set of application types
@@ -455,8 +455,9 @@ class Deploy(object):
             # they must all use the same package version
             # (Tuple of app_type, version, revision returned
             #  with DB query)
+            apptier = not hostonly
             last_deps = deploy.find_latest_deployed_version(args.project,
-                               self.envs[args.environment], apptier=True)
+                               self.envs[args.environment], apptier=apptier)
             versions = [ x[1] for x in last_deps if x[0] in app_types ]
 
             if not all(x == versions[0] for x in versions):
@@ -573,12 +574,12 @@ class Deploy(object):
         return app_id_hosts_mapping
 
 
-    def verify_package(self, args):
+    def verify_package(self, args, hostonly=False):
         """ """
 
         app_ids = self.get_app_types(args)
         app_types = [ deploy.find_apptype_by_appid(x) for x in app_ids ]
-        pkg_id = self.get_package_id(args, app_types)
+        pkg_id = self.get_package_id(args, app_types, hostonly)
 
         if getattr(args, 'hosts', None):
             app_host_map = self.verify_hosts(args.hosts, app_ids,
@@ -834,7 +835,8 @@ class Deploy(object):
         # for, otherwise check each app type for a matching deploy
         if args.hosts:
             try:
-                pkg_id, app_host_map = self.verify_package(args)
+                pkg_id, app_host_map = self.verify_package(args,
+                                                           hostonly=True)
             except ValueError, e:
                 print '%s for given project and hosts' % e
                 return
