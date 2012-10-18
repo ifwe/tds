@@ -442,11 +442,13 @@ class Deploy(object):
         return app_ids
 
 
-    def get_package_id(self, args, app_types, hostonly=False):
+    def get_package_id(self, args, app_ids, hostonly=False):
         """Get the package ID for the current project and version
            (or most recent deployed version if none is given) for
            a given set of application types
         """
+
+        app_types = [ deploy.find_apptype_by_appid(x) for x in app_ids ]
 
         if hasattr(args, 'version'):
             version = args.version
@@ -458,7 +460,13 @@ class Deploy(object):
             apptier = not hostonly
             last_deps = deploy.find_latest_deployed_version(args.project,
                                self.envs[args.environment], apptier=apptier)
-            versions = [ x[1] for x in last_deps if x[0] in app_types ]
+
+            if hostonly:
+                versions = [ x.version for x in last_deps
+                             if x.AppID in app_ids ]
+            else:
+                versions = [ x.version for x in last_deps
+                             if x.appType in app_types ]
 
             if not versions:
                 print 'Application "%s" has no current tier/host ' \
@@ -586,8 +594,7 @@ class Deploy(object):
         """ """
 
         app_ids = self.get_app_types(args)
-        app_types = [ deploy.find_apptype_by_appid(x) for x in app_ids ]
-        pkg_id = self.get_package_id(args, app_types, hostonly)
+        pkg_id = self.get_package_id(args, app_ids, hostonly)
 
         if getattr(args, 'hosts', None):
             app_host_map = self.verify_hosts(args.hosts, app_ids,
