@@ -382,6 +382,9 @@ class Deploy(object):
                 else:
                     failed_hosts.append((dep_host, info))
             else:
+                if host_dep and host_dep.status == 'ok':
+                    continue
+
                 # Clear out any old deployments for this host
                 deploy.delete_host_deployment(dep_host.hostname)
                 host_dep = deploy.add_host_deployment(dep_id, dep_host.HostID,
