@@ -383,6 +383,9 @@ class Deploy(object):
                     failed_hosts.append((dep_host, info))
             else:
                 if host_dep and host_dep.status == 'ok':
+                    print 'Host "%s" already has version "%s" of ' \
+                          'application "%s" successfully deployed, skipping' \
+                          % (dep_host.hostname, version, app)
                     continue
 
                 # Clear out any old deployments for this host
