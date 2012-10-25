@@ -290,7 +290,7 @@ class BaseDeploy(object):
                     '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                     app, version ]
 
-        return self.process_mco_command(mco_cmd)
+        return self.process_mco_command(mco_cmd, retry)
 
 
     def deploy_to_hosts(self, args, dep_hosts, dep_id, redeploy=False):
@@ -359,7 +359,7 @@ class BaseDeploy(object):
                                  app_dep_map, redeploy=False):
         """Do the deployment to the requested hosts or application tiers"""
 
-        if args.hosts:
+        if getattr(args, 'hosts', None):
             hostnames = []
 
             for hosts in app_host_map.itervalues():
@@ -424,7 +424,7 @@ class BaseDeploy(object):
                           '%s environment' \
                           % (args.project, args.version, app_type,
                              self.envs[args.environment])
-                ok = False
+                    ok = False
 
             if not ok:
                 del app_dep_map[app_id]
@@ -464,7 +464,7 @@ class BaseDeploy(object):
                     ok = False
 
             if not ok:
-                if args.hosts:
+                if getattr(args, 'hosts', None):
                     del app_host_map[app_id]
                 else:
                     del app_dep_map[app_id]
@@ -519,7 +519,7 @@ class BaseDeploy(object):
         return (app_pkg_map, app_dep_map)
 
 
-    def determine_validations(self, args, app_ids, app_dep_map):
+    def determine_validations(self, args, pkg_id, app_ids, app_dep_map):
         """ """
 
         for app_id in app_ids:
@@ -542,11 +542,12 @@ class BaseDeploy(object):
                     self.check_tier_state(args, pkg_id, app_dep)
 
                 if result != 'ok':
-                    print 'Unable to validate version "%s" or application ' \
-                          '"%s" due to the current issues:'
+                    print 'Unable to validate version "%s" of application ' \
+                          '"%s" due to the current issues:' \
+                          % (args.version, args.project)
 
                     if missing:
-                        print '  Hosts missing deployments:'
+                        print '  Hosts missing deployments of given version:'
                         print '    %s' % ', '.join(missing)
 
                     if diffs:
@@ -630,7 +631,7 @@ class BaseDeploy(object):
         them and their related app types
         """
 
-        if args.hosts:
+        if getattr(args, 'hosts', None):
             try:
                 pkg_id, app_host_map = self.verify_package(args,
                                                            hostonly=hostonly)
@@ -813,18 +814,9 @@ class BaseDeploy(object):
 
         # Since a roll back could end up at different versions for
         # each application tier, must do each tier on its own
-        for app_id, pkg_id in app_pkg_map,iteritems():
-            # Invalidate previous deployment
+        for app_id, pkg_id in app_pkg_map.iteritems():
             app_dep, app_type, dep_type, pkg = app_dep_map[app_id]
             app_id = app_dep.AppID
-
-            # Commit to DB immediately
-            Session.begin_nested()
-            app_dep.status = 'invalidated'
-            Session.commit()
-
-            # Following line may not longer be needed?
-            Session.flush()   # Needed to push change for status (yes, hack)
 
             pkg_dep = deploy.add_deployment(pkg_id, args.user, 'deploy')
             dep_id = pkg_dep.DeploymentID
@@ -849,7 +841,7 @@ class BaseDeploy(object):
                                            self.envs[args.environment])
 
 
-    def process_mco_command(mco_cmd, retry):
+    def process_mco_command(self, mco_cmd, retry):
         """Run a given MCollective 'mco' command"""
 
         print 'Running MCollective command:'
@@ -912,7 +904,7 @@ class BaseDeploy(object):
                     '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                     app, 'restart' ]
 
-        return self.process_mco_command(mco_cmd, self.restart_host)
+        return self.process_mco_command(mco_cmd, retry)
 
 
     def restart_hosts(self, args, dep_hosts, dep_id):
@@ -944,7 +936,7 @@ class BaseDeploy(object):
            tiers
         """
 
-        if args.hosts:
+        if getattr(args, 'hosts', None):
             hostnames = []
 
             for hosts in app_host_map.itervalues():
@@ -1013,14 +1005,15 @@ class BaseDeploy(object):
         """Ensure correct command is being used for given project"""
 
         try:
-            project_type = repo.find_project_type(project)
+            # Tuple of one returned, just get the value
+            project_type = repo.find_project_type(project)[0]
         except RepoException, e:
             print e
             sys.exit(1)
 
         if project_type not in self.valid_project_types:
             raise WrongProjectTypeError('Project "%s" is not valid for '
-                                        'this command')
+                                        'this command' % project)
 
         return project_type
 
@@ -1067,7 +1060,8 @@ class BaseDeploy(object):
                   % (args.project, self.envs[args.environment])
             return
 
-        app_dep_map = self.determine_validations(args, app_ids, app_dep_map)
+        app_dep_map = self.determine_validations(args, pkg_id, app_ids,
+                                                 app_dep_map)
         self.perform_validations(args, app_dep_map)
 
         Session.commit()
@@ -1367,7 +1361,7 @@ class Deploy(BaseDeploy):
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, args)
         app_host_map, app_dep_map = \
             self.determine_new_deployments(args, pkg_id, app_ids,
-                                           app_host_map, app_dep,map)
+                                           app_host_map, app_dep_map)
         self.perform_deployments(args, pkg_id, app_host_map, app_dep_map)
 
         Session.commit()
@@ -1434,9 +1428,14 @@ class Deploy(BaseDeploy):
                   % (args.project, self.envs[args.environment])
             return
 
+        # Commit to DB immediately
+        Session.begin_nested()
+        self.perform_invalidations(app_dep_map)
+        Session.commit()
+
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
                                                             app_dep_map)
-        self.perform_rollbacks(self, args, app_pkg_map, app_dep_map)
+        self.perform_rollbacks(args, app_pkg_map, app_dep_map)
 
         Session.commit()
 
