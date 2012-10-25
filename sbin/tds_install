@@ -183,26 +183,35 @@ def main():
     """ """
 
     if len(sys.argv) != 3:
-        sys.exit('Usage: %s <application> <version>' % sys.argv[0])
+        sys.exit('Usage: %s <application> [<version>|restart]' % sys.argv[0])
 
-    try:
-        int(sys.argv[2])
-    except ValueError:
-        sys.exit('Version passed (%s) was not a number' % sys.argv[2])
+    if sys.argv[2] == 'restart':
+        restart = True
+    else:
+        try:
+            int(sys.argv[2])
+            restart = False
+        except ValueError:
+            sys.exit('Version passed (%s) was not a number' % sys.argv[2])
 
     app, version = sys.argv[1:]
     app_check(app)
 
-    try:
-        inst_version = get_version(app)
-    except ExtCommandError:
-        inst_version = None # assume app not installed
-    if inst_version == version:
-        return # nothing to do
+    if restart:
+        # In the future, this will be handled by a configuration file
+        # to allow for different types of services
+        manage_service('tomcat', 'restart')
+    else:
+        try:
+            inst_version = get_version(app)
+        except ExtCommandError:
+            inst_version = None # assume app not installed
+        if inst_version == version:
+            return # nothing to do
 
-    stop_puppet()
-    app_install(app, version, inst_version)
-    verify_install(app, version)
+        stop_puppet()
+        app_install(app, version, inst_version)
+        verify_install(app, version)
 
 
 if __name__ == '__main__':
