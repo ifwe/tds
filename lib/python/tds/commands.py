@@ -946,6 +946,8 @@ class BaseDeploy(object):
             self.restart_hosts(args, dep_hosts, dep_id)
         else:
             for app_id, dep_info in app_dep_map.iteritems():
+                dep_hosts = deploy.find_hosts_for_app(app_id,
+                                              self.envs[args.environment])
                 self.restart_hosts(args, dep_hosts, dep_id)
 
 
