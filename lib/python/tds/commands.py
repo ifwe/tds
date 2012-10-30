@@ -1232,6 +1232,11 @@ class Config(BaseDeploy):
                   % (args.project, self.envs[args.environment])
             return
 
+        # Commit to DB immediately
+        Session.begin_nested()
+        self.perform_invalidations(app_dep_map)
+        Session.commit()
+
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
                                                             app_dep_map)
         self.perform_rollbacks(self, args, app_pkg_map, app_dep_map)
