@@ -317,7 +317,7 @@ class BaseDeploy(object):
                     host_dep.status = 'ok'
                     Session.commit()
                 else:
-                    failed_hosts.append((dep_host, info))
+                    failed_hosts.append((dep_host.hostname, info))
             else:
                 if host_dep and host_dep.status == 'ok':
                     print 'Host "%s" already has version "%s" of ' \
@@ -916,10 +916,10 @@ class BaseDeploy(object):
             pkg = deploy.find_app_by_depid(dep_id)
             app = pkg.pkg_name
 
-            success, info = self.restart_host(dep_host, app)
+            success, info = self.restart_host(dep_host.hostname, app)
 
             if not success:
-                failed_hosts.append((dep_host, info))
+                failed_hosts.append((dep_host.hostname, info))
 
         # If any hosts failed, show failure information for each
         if failed_hosts:
