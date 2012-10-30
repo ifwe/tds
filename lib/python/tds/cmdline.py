@@ -137,6 +137,27 @@ config_data = odict([
              ])),
          ])),
      ])),
+    ('invalidate', odict([
+        ('help', 'Mark a given config deployment as not working'),
+        ('subargs', odict([
+            (('project',), odict([
+                ('help', 'Name of project in repository'),
+             ])),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
+                ('type', int),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for invalidation'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
+             ])),
+            (('--all-apptypes',), odict([
+                ('help', 'Handle all app types for invalidation'),
+                ('action', 'store_true'),
+             ])),
+         ])),
+     ])),
     ('push', odict([
         ('help', 'Deploy a given version of config project'),
         ('subargs', odict([
@@ -197,6 +218,31 @@ config_data = odict([
              ])),
             (('--all-apptypes',), odict([
                 ('help', 'Handle all app types for reversion'),
+                ('action', 'store_true'),
+             ])),
+         ])),
+     ])),
+    ('validate', odict([
+        ('help', 'Verify a given config deployment is working'),
+        ('subargs', odict([
+            (('project',), odict([
+                ('help', 'Name of project in repository'),
+             ])),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
+                ('type', int),
+             ])),
+            (('--force',), odict([
+                ('help', 'Do validation even when there are bad hosts'),
+                ('action', 'store_true'),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for validation'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
+             ])),
+            (('--all-apptypes',), odict([
+                ('help', 'Handle all app types for validation'),
                 ('action', 'store_true'),
              ])),
          ])),
