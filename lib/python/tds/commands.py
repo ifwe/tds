@@ -1109,6 +1109,11 @@ class Config(BaseDeploy):
 
         verify_access(args.user_level, 'admin')
 
+        # Currently project type matches the project name
+        if args.project not in self.valid_project_types:
+            raise WrongProjectTypeError('Project "%s" is not valid for '
+                                        'this command' % args.project)
+
         try:
             # Project type matches project name
             repo.add_app_location(args.project, args.buildtype,
