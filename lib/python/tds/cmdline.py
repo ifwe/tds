@@ -222,6 +222,28 @@ config_data = odict([
              ])),
          ])),
      ])),
+    ('show', odict([
+        ('help', 'Show information for a given project release'),
+        ('subargs', odict([
+            (('project',), odict([
+                ('help', 'Name of project in repository'),
+             ])),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
+                ('type', int),
+                ('nargs', '?'),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for reversion'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
+             ])),
+            (('--all-apptypes',), odict([
+                ('help', 'Handle all app types for reversion'),
+                ('action', 'store_true'),
+             ])),
+         ])),
+     ])),
     ('validate', odict([
         ('help', 'Verify a given config deployment is working'),
         ('subargs', odict([
@@ -420,6 +442,15 @@ deploy_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
                 ('nargs', '?'),
+             ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for reversion'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
+             ])),
+            (('--all-apptypes',), odict([
+                ('help', 'Handle all app types for reversion'),
+                ('action', 'store_true'),
              ])),
          ])),
      ])),
