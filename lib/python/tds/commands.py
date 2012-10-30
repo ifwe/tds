@@ -1179,7 +1179,7 @@ class Config(BaseDeploy):
 
         app_host_map, app_dep_map = \
             self.determine_new_deployments(args, pkg_id, app_ids,
-                                           app_host_map, app_dep,map)
+                                           app_host_map, app_dep_map)
         self.perform_deployments(args, pkg_id, app_host_map, app_dep_map)
 
         Session.commit()
