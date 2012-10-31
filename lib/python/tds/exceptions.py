@@ -22,3 +22,9 @@ class WrongEnvironmentError(Exception):
     """Exception for command attempts in incorrect environment"""
 
     pass
+
+
+class WrongProjectTypeError(Exception):
+    """Exception for command attempts with incorrect project type"""
+
+    pass
