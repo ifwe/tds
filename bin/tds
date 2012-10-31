@@ -15,7 +15,7 @@ from tagopsdb.exceptions import PermissionsException
 from tds.authorize import get_access_level
 from tds.cmdline import parser_info
 from tds.exceptions import AccessError, NotImplementedError, \
-                           WrongEnvironmentError
+                           WrongEnvironmentError, WrongProjectTypeError
 
 
 def create_subparsers(parser):
@@ -155,6 +155,7 @@ if __name__ == '__main__':
         print 'Your account (%s) does not have the appropriate permissions' \
               '\nto run the requested command.' % args.user
         sys.exit(1)
-    except (NotImplementedError, WrongEnvironmentError), e:
+    except (NotImplementedError, WrongEnvironmentError,
+            WrongProjectTypeError), e:
         print e
         sys.exit(1)
