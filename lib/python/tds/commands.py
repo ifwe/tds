@@ -18,7 +18,8 @@ import tagopsdb.deploy.repo as repo
 import tagopsdb.deploy.package as package
 import tagopsdb.deploy.deploy as deploy
 
-from tds.authorize import verify_access
+import tds.authorize
+
 from tds.exceptions import NotImplementedError, WrongEnvironmentError, \
                            WrongProjectTypeError
 
@@ -48,7 +49,7 @@ class Repository(object):
     def add(self, args):
         """ """
 
-        verify_access(args.user_level, 'admin')
+        tds.authorize.verify_access(args.user_level, 'admin')
 
         try:
             # For now, project_type is 'application'
@@ -77,7 +78,7 @@ class Repository(object):
     def delete(self, args):
         """ """
 
-        verify_access(args.user_level, 'admin')
+        tds.authorize.verify_access(args.user_level, 'admin')
 
         try:
             repo.delete_app_location(args.project)
@@ -92,7 +93,7 @@ class Repository(object):
     def list(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        tds.authorize.verify_access(args.user_level, 'dev')
 
         for app in repo.list_all_app_locations():
             print 'Project: %s' % app.app_name
@@ -151,7 +152,7 @@ class Package(object):
     def add(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        tds.authorize.verify_access(args.user_level, 'dev')
 
         try:
             # The real 'revision' is hardcoded to 1 for now
@@ -215,7 +216,7 @@ class Package(object):
     def delete(self,args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        tds.authorize.verify_access(args.user_level, 'dev')
 
         try:
             # The real 'revision' is hardcoded to 1 for now
@@ -232,7 +233,7 @@ class Package(object):
     def list(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        tds.authorize.verify_access(args.user_level, 'dev')
 
         for pkg in package.list_packages():
             print 'Project: %s' % pkg.pkg_name
@@ -1083,7 +1084,7 @@ class BaseDeploy(object):
     def invalidate(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
@@ -1107,7 +1108,7 @@ class BaseDeploy(object):
     def show(self, args):
         """ """
 
-        verify_access(args.user_level, 'dev')
+        tds.authorize.verify_access(args.user_level, 'dev')
 
         self.proj_type = self.verify_project_type(args.project)
 
@@ -1133,7 +1134,7 @@ class BaseDeploy(object):
     def validate(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
@@ -1176,7 +1177,7 @@ class Config(BaseDeploy):
     def add_apptype(self, args):
         """Add a specific app type to the given config project"""
 
-        verify_access(args.user_level, 'admin')
+        tds.authorize.verify_access(args.user_level, 'admin')
 
         self.proj_type = self.verify_project_type(args.project)
 
@@ -1194,7 +1195,7 @@ class Config(BaseDeploy):
     def create(self, args):
         """Add a new config project to the system"""
 
-        verify_access(args.user_level, 'admin')
+        tds.authorize.verify_access(args.user_level, 'admin')
 
         # Currently project type matches the project name
         if args.project not in self.valid_project_types:
@@ -1218,7 +1219,7 @@ class Config(BaseDeploy):
     def delete(self, args):
         """Remove a config project from the system"""
 
-        verify_access(args.user_level, 'admin')
+        tds.authorize.verify_access(args.user_level, 'admin')
 
         self.proj_type = self.verify_project_type(args.project)
 
@@ -1235,7 +1236,7 @@ class Config(BaseDeploy):
     def delete_apptype(self, args):
         """Delete a specific app type from the given config project"""
 
-        verify_access(args.user_level, 'admin')
+        tds.authorize.verify_access(args.user_level, 'admin')
 
         self.proj_type = self.verify_project_type(args.project)
 
@@ -1254,7 +1255,7 @@ class Config(BaseDeploy):
     def push(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
@@ -1281,7 +1282,7 @@ class Config(BaseDeploy):
     def repush(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
@@ -1304,7 +1305,7 @@ class Config(BaseDeploy):
     def revert(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
@@ -1367,7 +1368,7 @@ class Deploy(BaseDeploy):
     def force_production(self, args):
         """ """
 
-        verify_access(args.user_level, 'admin')
+        tds.authorize.verify_access(args.user_level, 'admin')
 
         raise NotImplementedError('This subcommand is currently not '
                                   'implemented')
@@ -1377,7 +1378,7 @@ class Deploy(BaseDeploy):
     def force_staging(self, args):
         """ """
 
-        verify_access(args.user_level, 'admin')
+        tds.authorize.verify_access(args.user_level, 'admin')
 
         raise NotImplementedError('This subcommand is currently not '
                                   'implemented')
@@ -1387,7 +1388,7 @@ class Deploy(BaseDeploy):
     def promote(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
@@ -1409,7 +1410,7 @@ class Deploy(BaseDeploy):
     def redeploy(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
@@ -1432,7 +1433,7 @@ class Deploy(BaseDeploy):
     def restart(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
@@ -1453,7 +1454,7 @@ class Deploy(BaseDeploy):
     def rollback(self, args):
         """ """
 
-        verify_access(args.user_level, args.environment)
+        tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
         self.ensure_explicit_destinations(args)
