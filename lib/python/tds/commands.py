@@ -19,6 +19,7 @@ import tagopsdb.deploy.package as package
 import tagopsdb.deploy.deploy as deploy
 
 import tds.authorize
+import tds.notifications
 
 from tds.exceptions import NotImplementedError, WrongEnvironmentError, \
                            WrongProjectTypeError
@@ -245,6 +246,12 @@ class Package(object):
 class BaseDeploy(object):
     """ """
 
+    dep_types = { 'promote' : 'Deployment',
+                  'redeploy' : 'Redeployment',
+                  'rollback' : 'Rollback',
+                  'push' : 'Push',
+                  'repush' : 'Repush',
+                  'revert' : 'Reversion', }
     envs = { 'dev' : 'development',
              'stage' : 'staging',
              'prod' : 'production', }
@@ -282,6 +289,31 @@ class BaseDeploy(object):
             return ('failed', missing_deps, version_diffs, not_ok_hostnames)
         else:
             return ('ok', [], [], [])
+
+
+    def create_notifications(self, args):
+        """Create subject and message for a notification"""
+
+        dep_type = self.dep_types[args.subcommand_name]
+
+        if getattr(args, 'hosts', None):
+            dest_type = 'hosts'
+            destinations = ', '.join(args.hosts)
+        elif getattr(args, 'apptypes', None):
+            dest_type = 'app tiers'
+            destinations = ', '.join(args.apptypes)
+        else:
+            dest_type = 'app tiers'
+            destinations = ', '.join([ x.appType for x in
+                           repo.find_app_packages_mapping(args.project) ])
+
+        msg_subject = '%s of %s on %s %s' % (dep_type, args.project,
+                                             dest_type, destinations)
+        msg_text = '%s performed a "tds %s %s" for the following %s:\n' \
+                   '    %s' % (args.user, args.command_name,
+                               args.subcommand_name, dest_type, destinations)
+
+        return msg_subject, msg_text
 
 
     def deploy_to_host(self, dep_host, app, version, retry=4):
@@ -952,6 +984,13 @@ class BaseDeploy(object):
                 self.restart_hosts(args, dep_hosts, dep_id)
 
 
+    def send_notifications(self, args):
+        """Send notifications for a given deployment"""
+
+        msg_subject, msg_text = self.create_notifications(args)
+        tds.notifications.send_notifications(msg_subject, msg_text)
+
+
     def show_app_deployments(self, project, app_versions, env):
         """ """
 
@@ -1273,6 +1312,7 @@ class Config(BaseDeploy):
         app_host_map, app_dep_map = \
             self.determine_new_deployments(args, pkg_id, app_ids,
                                            app_host_map, app_dep_map)
+        self.send_notifications(args)
         self.perform_deployments(args, pkg_id, app_host_map, app_dep_map)
 
         Session.commit()
@@ -1296,6 +1336,7 @@ class Config(BaseDeploy):
             return
 
         dep_id = self.determine_redeployments(pkg_id)
+        self.send_notifications(args)
         self.perform_redeployments(args, dep_id, app_host_map, app_dep_map)
 
         Session.commit()
@@ -1325,6 +1366,7 @@ class Config(BaseDeploy):
 
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
                                                             app_dep_map)
+        self.send_notifications(args)
         self.perform_rollbacks(self, args, app_pkg_map, app_dep_map)
 
         Session.commit()
@@ -1401,6 +1443,7 @@ class Deploy(BaseDeploy):
         app_host_map, app_dep_map = \
             self.determine_new_deployments(args, pkg_id, app_ids,
                                            app_host_map, app_dep_map)
+        self.send_notifications(args)
         self.perform_deployments(args, pkg_id, app_host_map, app_dep_map)
 
         Session.commit()
@@ -1424,6 +1467,7 @@ class Deploy(BaseDeploy):
             return
 
         dep_id = self.determine_redeployments(pkg_id)
+        self.send_notifications(args)
         self.perform_redeployments(args, dep_id, app_host_map, app_dep_map)
 
         Session.commit()
@@ -1474,6 +1518,7 @@ class Deploy(BaseDeploy):
 
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
                                                             app_dep_map)
+        self.send_notifications(args)
         self.perform_rollbacks(args, app_pkg_map, app_dep_map)
 
         Session.commit()

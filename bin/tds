@@ -57,11 +57,6 @@ def parse_command_line():
 
     create_subparsers(parser)
 
-    # Temporary reference info, not meant to be used
-    #create_subparser(parser_tagconfig,
-    #                 { 'add' : ('env', 'revision'),
-    #                   'push' : ('env', 'revision', 'apptype'), })
-
     return parser.parse_args()
 
 
