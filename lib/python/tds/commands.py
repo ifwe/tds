@@ -67,7 +67,8 @@ class Repository(object):
         if args.config:
             try:
                 config = repo.list_app_location(args.config)
-                repo.add_app_packages_mapping(config.pkgLocationID, apptypes)
+                repo.add_app_packages_mapping(config.pkgLocationID,
+                                              args.apptypes)
             except RepoException, e:
                 print e
                 return
