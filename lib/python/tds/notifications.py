@@ -27,7 +27,7 @@ class Notifications(object):
 
         try:
             self.receiver_addr = config.get('notifications', 'email_receiver')
-            self.hipcat_token = config.get('notifications', 'hipchat_token')
+            self.hipchat_token = config.get('notifications', 'hipchat_token')
             self.enabled_methods = config.get('notifications',
                                               'enabled_methods').split(',')
         except ConfigParser.NoOptionError, e:
@@ -45,7 +45,7 @@ class Notifications(object):
         msg['To'] = self.receiver_addr
 
         s = smtplib.SMTP('localhost')
-        s.sendmail(self.sender, [ self.receiver ], msg.as_string())
+        s.sendmail(self.sender, [ self.receiver_addr ], msg.as_string())
         s.quit()
 
 
@@ -57,8 +57,8 @@ class Notifications(object):
 
         payload = { 'auth_token' : self.hipchat_token,
                     'room_id' : 'Tagged Deployment System (TDS)',
-                    'from' : self.sender
-                    'message' : '<strong>%s</strong>\n%s'
+                    'from' : self.sender,
+                    'message' : '<strong>%s</strong><br />%s'
                                 % (msg_subject, msg_text), }
 
         # Content-Length must be set in header due to bug in Python 2.6

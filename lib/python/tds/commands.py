@@ -300,18 +300,20 @@ class BaseDeploy(object):
             dest_type = 'hosts'
             destinations = ', '.join(args.hosts)
         elif getattr(args, 'apptypes', None):
-            dest_type = 'app tiers'
+            dest_type = 'app tier(s)'
             destinations = ', '.join(args.apptypes)
         else:
-            dest_type = 'app tiers'
+            dest_type = 'app tier(s)'
             destinations = ', '.join([ x.appType for x in
                            repo.find_app_packages_mapping(args.project) ])
 
-        msg_subject = '%s of %s on %s %s' % (dep_type, args.project,
-                                             dest_type, destinations)
-        msg_text = '%s performed a "tds %s %s" for the following %s:\n' \
-                   '    %s' % (args.user, args.command_name,
-                               args.subcommand_name, dest_type, destinations)
+        msg_subject = '%s of %s on %s %s in %s' \
+                      % (dep_type, args.project, dest_type, destinations,
+                         self.envs[args.environment])
+        msg_text = '%s performed a "tds %s %s" for the following %s ' \
+                   'in %s:\n    %s' \
+                   % (args.user, args.command_name, args.subcommand_name,
+                      dest_type, self.envs[args.environment], destinations)
 
         return msg_subject, msg_text
 
@@ -988,7 +990,8 @@ class BaseDeploy(object):
         """Send notifications for a given deployment"""
 
         msg_subject, msg_text = self.create_notifications(args)
-        tds.notifications.send_notifications(msg_subject, msg_text)
+        notification = tds.notifications.Notifications(args.user)
+        notification.send_notifications(msg_subject, msg_text)
 
 
     def show_app_deployments(self, project, app_versions, env):
