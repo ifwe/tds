@@ -482,12 +482,12 @@ class BaseDeploy(object):
         #   4. If either step 2 or 3 failed, remove host/app type from
         #      relevant mapping to be used for deployments
         for app_id in app_ids:
-            if not app_dep_map[app_id]:
-                continue
-
             ok = self.check_previous_environment(args, pkg_id, app_id)
 
             if ok:
+                if not app_dep_map[app_id]:
+                    continue
+
                 app_dep, app_type, dep_type, pkg = app_dep_map[app_id]
 
                 if (app_dep.status != 'invalidated' and
