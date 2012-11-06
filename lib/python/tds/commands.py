@@ -609,7 +609,7 @@ class BaseDeploy(object):
             print 'Application "%s" has multiple corresponding app types, ' \
                   'please use "--apptypes" or "--all-apptypes"' \
                   % args.project
-            return
+            sys.exit(1)
 
 
     def ensure_newer_versions(self, args):
