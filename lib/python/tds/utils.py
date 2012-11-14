@@ -42,7 +42,7 @@ def verify_conf_file_section(cf_name, section, sub_cf_name=None):
     if sub_cf_name is None:
         conf_file = '%s/%s.yml' % (conf_dir, cf_name)
     else:
-        conf_file = '%s/%s.%s.yml' % (conf_dif, cf_name, sub_cf_name)
+        conf_file = '%s/%s.%s.yml' % (conf_dir, cf_name, sub_cf_name)
 
     data = load_conf_file(conf_file)
     params = conf_params[cf_name][section]
