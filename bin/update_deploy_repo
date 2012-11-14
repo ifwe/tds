@@ -1,6 +1,5 @@
 #!/usr/bin/env python.26
 
-import ConfigParser
 import os
 import os.path
 import shutil
@@ -9,6 +8,8 @@ import sys
 import time
 
 import daemonize
+
+import tds.utils
 
 from tagopsdb.exceptions import RepoException
 
@@ -99,20 +100,8 @@ def main():
 
     daemonize.logging.info('Reading configuration (deploy.conf) file')
 
-    try:
-        with open('/etc/tagops/deploy.conf') as conf_file:
-            config = ConfigParser.SafeConfigParser()
-            config.readfp(conf_file)
-    except IOError, e:
-        raise RepoException('Unable to access the configuration file '
-                            '/etc/tagops/deploy.conf: %s ' % e)
-
-    try:
-        repo_dir = config.get('yum', 'repo_location')
-        incoming_dir = config.get('yum', 'incoming')
-        process_dir = config.get('yum', 'processing')
-    except ConfigParser.NoOptionError, e:
-        raise RepoException('Failed to get configuration information: %s' % e)
+    repo_dir, incoming_dir, process_dir = \
+        tds.utils.verify_conf_file_section('deploy', 'yum')
 
     daemonize.logging.info('Checking for incoming files...')
 
