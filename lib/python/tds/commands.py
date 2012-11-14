@@ -992,7 +992,8 @@ class BaseDeploy(object):
 
         msg_subject, msg_text = self.create_notifications(args)
         notification = tds.notifications.Notifications(args.project,
-                                                       args.user)
+                                                       args.user,
+                                                       args.apptypes)
         notification.send_notifications(msg_subject, msg_text)
 
 

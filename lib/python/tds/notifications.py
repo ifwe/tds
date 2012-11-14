@@ -14,7 +14,7 @@ import tagopsdb.deploy.deploy as deploy
 class Notifications(object):
     """Manage various notification mechanisms for deployments"""
 
-    def __init__(self, project, user):
+    def __init__(self, project, user, apptypes):
         """Configure various parameters needed for notifications"""
 
         self.sender = user
@@ -25,7 +25,8 @@ class Notifications(object):
             tds.utils.verify_conf_file_section('deploy', 'notifications')
 
         # Query DB for any additional Hipchat rooms
-        self.hipchat_rooms.extend(deploy.find_hipchat_rooms_for_app(project))
+        self.hipchat_rooms.extend(deploy.find_hipchat_rooms_for_app(project,
+                                                                    apptypes))
 
 
     def send_email(self, msg_subject, msg_text):
