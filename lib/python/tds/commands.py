@@ -66,7 +66,7 @@ class Repository(object):
 
         if args.config:
             try:
-                config = repo.list_app_location(args.config)
+                config = repo.find_app_location(args.config)
                 repo.add_app_packages_mapping(config.pkgLocationID,
                                               args.apptypes)
             except RepoException, e:
@@ -97,7 +97,7 @@ class Repository(object):
 
         tds.authorize.verify_access(args.user_level, 'dev')
 
-        for app in repo.list_all_app_locations():
+        for app in repo.list_app_locations(args.projects):
             print 'Project: %s' % app.app_name
             print 'Project type: %s' % app.project_type
             print 'Package type: %s' % app.pkg_type
@@ -165,7 +165,7 @@ class Package(object):
             return
 
         # Get repo information for package
-        app = repo.list_app_location(args.project)
+        app = repo.find_app_location(args.project)
 
         # Verify required RPM exists and create hard link into
         # the incoming directory for the repository server to find,
@@ -1227,7 +1227,7 @@ class Config(BaseDeploy):
         self.proj_type = self.verify_project_type(args.project)
 
         try:
-            app = repo.list_app_location(args.project)
+            app = repo.find_app_location(args.project)
             repo.add_app_packages_mapping(app.pkgLocationID, [args.apptype])
         except RepoException, e:
             print e
@@ -1286,7 +1286,7 @@ class Config(BaseDeploy):
         self.proj_type = self.verify_project_type(args.project)
 
         try:
-            app = repo.list_app_location(args.project)
+            app = repo.find_app_location(args.project)
             repo.delete_app_packages_mapping(app.pkgLocationID,
                                              [args.apptype])
         except RepoException, e:

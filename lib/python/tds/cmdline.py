@@ -45,7 +45,12 @@ repository_data = odict([
      ])),
     ('list', odict([
         ('help', 'List all current projects in repository'),
-        ('subargs', odict([  # Currently none
+        ('subargs', odict([
+            (('--projects',), odict([
+                ('help', 'Specific projects to list'),
+                ('metavar', 'PROJECT'),
+                ('nargs', '*'),
+             ])),
          ])),
      ])),
 ])
