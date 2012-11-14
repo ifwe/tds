@@ -12,6 +12,12 @@ class AccessError(Exception):
     pass
 
 
+class ConfigurationError(Exception):
+    """Exception for invalid or incomplete configuration files"""
+
+    pass
+
+
 class NotImplementedError(Exception):
     """Exception for unimplemented methods"""
 

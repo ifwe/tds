@@ -1,4 +1,3 @@
-import ConfigParser
 import os
 import smtplib
 
@@ -7,32 +6,26 @@ from email.mime.text import MIMEText
 import json
 import requests
 
+import tds.utils
+
+import tagopsdb.deploy.deploy as deploy
+
 
 class Notifications(object):
     """Manage various notification mechanisms for deployments"""
 
-    def __init__(self, user):
+    def __init__(self, project, user):
         """Configure various parameters needed for notifications"""
 
         self.sender = user
         self.sender_addr = '%s@tagged.com' % user
 
-        try:
-            with open('/etc/tagops/deploy.conf') as conf_file:
-                config = ConfigParser.SafeConfigParser()
-                config.readfp(conf_file)
-        except IOError, e:
-            raise ConfigException('Unable to access the configuration file '
-                                  '/etc/tagops/deploy.conf: %s' %e)
+        (self.enabled_methods, self.receiver_addr,
+         self.hipchat_rooms, self.hipchat_token) = \
+            tds.utils.verify_conf_file_section('deploy', 'notifications')
 
-        try:
-            self.receiver_addr = config.get('notifications', 'email_receiver')
-            self.hipchat_token = config.get('notifications', 'hipchat_token')
-            self.enabled_methods = config.get('notifications',
-                                              'enabled_methods').split(',')
-        except ConfigParser.NoOptionError, e:
-            raise ConfigException('Failed to get configuration information: '
-                                  '%s' % e)
+        # Query DB for any additional Hipchat rooms
+        self.hipchat_rooms.extend(deploy.find_hipchat_rooms_for_app(project))
 
 
     def send_email(self, msg_subject, msg_text):
@@ -55,21 +48,22 @@ class Notifications(object):
         os.environ['HTTP_PROXY'] = 'http://10.15.11.132:80/'
         os.environ['HTTPS_PROXY'] = 'http://10.15.11.132:443/'
 
-        payload = { 'auth_token' : self.hipchat_token,
-                    'room_id' : 'Tagged Deployment System (TDS)',
-                    'from' : self.sender,
-                    'message' : '<strong>%s</strong><br />%s'
-                                % (msg_subject, msg_text), }
+        for room in self.hipchat_rooms:
+            payload = { 'auth_token' : self.hipchat_token,
+                        'room_id' : room,
+                        'from' : self.sender,
+                        'message' : '<strong>%s</strong><br />%s'
+                                    % (msg_subject, msg_text), }
 
-        # Content-Length must be set in header due to bug in Python 2.6
-        headers = { 'Content-Length' : '0' }
+            # Content-Length must be set in header due to bug in Python 2.6
+            headers = { 'Content-Length' : '0' }
 
-        r = requests.post('https://api.hipchat.com/v1/rooms/message',
-                          params=payload, headers=headers)
+            r = requests.post('https://api.hipchat.com/v1/rooms/message',
+                              params=payload, headers=headers)
 
-        if r.status_code != requests.codes.ok:
-            print 'Notification to Hipchat failed, status code is: %r' \
-                  % r.status_code
+            if r.status_code != requests.codes.ok:
+                print 'Notification to Hipchat failed, status code is: %r' \
+                      % r.status_code
 
 
     def send_notifications(self, msg_subject, msg_text):
