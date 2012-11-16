@@ -93,6 +93,7 @@ fi
 %doc
 %{python_sitelib}/*
 /usr/bin/tds
+/usr/bin/unvalidated_deploy_check
 
 %files update-repo
 %defattr(-,root,root,-)

@@ -17,6 +17,7 @@ setup_args = dict(
     packages = ['tds'],
     package_dir = {'' : 'lib/python'},
     scripts = ['bin/tds',
+               'bin/unvalidated_deploy_check',
                'bin/update_deploy_repo',],
 )
 
