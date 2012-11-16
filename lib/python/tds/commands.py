@@ -537,16 +537,17 @@ class BaseDeploy(object):
 
             ok = True
 
-            last_app_dep, last_pkg_id = \
+            last_dep_info = \
                 deploy.find_latest_validated_deployment(args.project, app_id,
                                              self.envs[args.environment])
-            if last_pkg_id is None:
+            if last_dep_info is None:
                 print 'No previous deployment to roll back to for ' \
                       'application "%s" for app type "%s" in %s ' \
                       'environment' % (args.project, app_id,
                                        self.envs[args.environment])
                 ok = False
             else:
+                last_app_dep, last_pkg_id = last_dep_info
                 app_pkg_map[app_id] = last_pkg_id
 
             if not ok:
