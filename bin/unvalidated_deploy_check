@@ -37,7 +37,7 @@ for entry in not_validated:
                                                  app_type)
 
     msg_subject = 'ATTENTION: %s in %s for %s app tier needs validation!' \
-                  (pkg_name, environment, app_type)
+                  % (pkg_name, environment, app_type)
     msg_text = 'Version %s-%s of project %s in %s app tier\n' \
                'has not been validated in at least %d hours, please ' \
                'validate it.\nWithout this, Puppet cannot manage the' \
