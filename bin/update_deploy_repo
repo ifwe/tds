@@ -97,7 +97,7 @@ def main():
        process files in the incoming directory
     """
 
-    daemonize.logging.info('Reading configuration (deploy.conf) file')
+    daemonize.logging.info('Reading configuration (deploy.yml) file')
 
     with open('/etc/tagops/deploy.yml') as conf_file:
         try:
