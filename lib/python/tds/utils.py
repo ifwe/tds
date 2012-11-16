@@ -14,7 +14,8 @@ conf_params = {
     'deploy' : {
         'env' : [ 'environment', ],
         'notifications' : [ 'enabled_methods', 'email_receiver',
-                            'hipchat_rooms', 'hipchat_token', ],
+                            'hipchat_rooms', 'hipchat_token',
+                            'validation_time', ],
         'repo' : [ 'build_base', 'incoming', 'processing', ],
     },
 }

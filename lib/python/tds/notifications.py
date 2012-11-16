@@ -20,8 +20,8 @@ class Notifications(object):
         self.sender = user
         self.sender_addr = '%s@tagged.com' % user
 
-        (self.enabled_methods, self.receiver_addr,
-         self.hipchat_rooms, self.hipchat_token) = \
+        (self.enabled_methods, self.receiver_addr, self.hipchat_rooms,
+         self.hipchat_token, self.validation_time) = \
             tds.utils.verify_conf_file_section('deploy', 'notifications')
 
         # Query DB for any additional Hipchat rooms
