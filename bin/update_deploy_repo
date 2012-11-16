@@ -8,8 +8,7 @@ import sys
 import time
 
 import daemonize
-
-import tds.utils
+import yaml
 
 from tagopsdb.exceptions import RepoException
 
@@ -100,8 +99,15 @@ def main():
 
     daemonize.logging.info('Reading configuration (deploy.conf) file')
 
-    repo_dir, incoming_dir, process_dir = \
-        tds.utils.verify_conf_file_section('deploy', 'yum')
+    with open('/etc/tagops/deploy.yml') as conf_file:
+        try:
+            data = yaml.load(conf_file.read())
+        except yaml.parser.ParserError, e:
+            raise RepoException('YAML parse error: %s' % e)
+
+    repo_dir = data['yum']['repo_location']
+    incoming_dir = data['yum']['incoming']
+    process_dir = data['yum']['processing']
 
     daemonize.logging.info('Checking for incoming files...')
 
