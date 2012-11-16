@@ -40,7 +40,7 @@ for entry in not_validated:
                   % (pkg_name, environment, app_type)
     msg_text = 'Version %s-%s of project %s in %s app tier\n' \
                'has not been validated in at least %d hours, please ' \
-               'validate it.\nWithout this, Puppet cannot manage the' \
+               'validate it.\nWithout this, Puppet cannot manage the ' \
                'tier correctly.' % (version, revision, pkg_name, app_type,
                                     int(validation_time)/3600)
 
