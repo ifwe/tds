@@ -429,13 +429,14 @@ class BaseDeploy(object):
                 self.deploy_to_hosts(args, dep_hosts, dep_id,
                                      redeploy=redeploy)
 
-        print 'Please review the following Nagios group views for ' \
-              'the deploy health status:'
+        if args.environment == 'prod':
+            print 'Please review the following Nagios group views for ' \
+                  'the deploy health status:'
 
-        for app_id in app_ids:
-            app_type = deploy.find_apptype_by_appid(app_id)
-            print '  https://nagios.tagged.com/nagios/cgi-bin/status.cgi' \
-                  '?style=detail&hostgroup=%s' % app_type
+            for app_id in app_ids:
+                app_type = deploy.find_apptype_by_appid(app_id)
+                print '  https://nagios.tagged.com/nagios/cgi-bin/' \
+                      'status.cgi?style=detail&hostgroup=app.%s' % app_type
 
 
     def determine_invalidations(self, args, app_ids, app_dep_map):
