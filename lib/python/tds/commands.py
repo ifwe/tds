@@ -395,16 +395,21 @@ class BaseDeploy(object):
                                  app_dep_map, redeploy=False):
         """Do the deployment to the requested hosts or application tiers"""
 
+        app_ids = []
+
         if getattr(args, 'hosts', None):
             hostnames = []
 
-            for hosts in app_host_map.itervalues():
+            for app_id, hosts in app_host_map.iteritems():
+                app_ids.append(app_id)
                 hostnames.extend(hosts)
 
             dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames ]
             self.deploy_to_hosts(args, dep_hosts, dep_id, redeploy=redeploy)
         else:
             for app_id, dep_info in app_dep_map.iteritems():
+                app_ids.append(app_id)
+
                 if redeploy:
                     app_dep, app_type, dep_type, pkg = dep_info
 
@@ -423,6 +428,14 @@ class BaseDeploy(object):
                                               self.envs[args.environment])
                 self.deploy_to_hosts(args, dep_hosts, dep_id,
                                      redeploy=redeploy)
+
+        print 'Please review the following Nagios group views for ' \
+              'the deploy health status:'
+
+        for app_id in app_ids:
+            app_type = deploy.find_apptype_by_appid(app_id)
+            print '  https://nagios.tagged.com/nagios/cgi-bin/status.cgi' \
+                  '?style=detail&hostgroup=%s' % app_type
 
 
     def determine_invalidations(self, args, app_ids, app_dep_map):
