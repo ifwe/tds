@@ -106,7 +106,7 @@ class Repository(object):
             print 'Build host: %s' % app.build_host
 
             app_defs = repo.find_app_packages_mapping(app.app_name)
-            app_types = [ x.appType for x in app_defs ]
+            app_types = sorted([ x.appType for x in app_defs ])
             print 'App types: %s' % ', '.join(app_types)
 
             if app.environment:
@@ -336,7 +336,7 @@ class BaseDeploy(object):
 
         failed_hosts = []
 
-        for dep_host in dep_hosts:
+        for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
             pkg = deploy.find_app_by_depid(dep_id)
             app, version = pkg.pkg_name, pkg.version
 
