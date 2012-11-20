@@ -593,8 +593,8 @@ class BaseDeploy(object):
                     self.check_tier_state(args, pkg_id, app_dep)
 
                 if result != 'ok':
-                    print 'Unable to validate version "%s" of application ' \
-                          '"%s" due to the current issues:' \
+                    print 'Encountered issues while validating version ' \
+                          '"%s" of application "%s":' \
                           % (args.version, args.project)
 
                     if missing:
@@ -610,7 +610,14 @@ class BaseDeploy(object):
                         print '  Hosts not in an "ok" state:'
                         print '    %s' % ', '.join(hostnames)
 
-                    ok = False
+                    if args.force:
+                        print 'The "--force" option was used, validating ' \
+                              'regardless'
+                        ok = True
+                    else:
+                        print 'Rejecting validation, please use "--force" ' \
+                              'if you still want to validate'
+                        ok = False
 
             if not ok:
                 del app_dep_map[app_id]
