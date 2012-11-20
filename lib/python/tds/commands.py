@@ -295,6 +295,14 @@ class BaseDeploy(object):
     def create_notifications(self, args):
         """Create subject and message for a notification"""
 
+        # Determine version
+        if hasattr(args, 'version'):
+            version = args.version
+        elif hasattr(args, 'current_version'):
+            version = args.current_version
+        else:
+            version = 'unknown'   # This should never happen
+
         dep_type = self.dep_types[args.subcommand_name]
 
         if getattr(args, 'hosts', None):
@@ -308,9 +316,9 @@ class BaseDeploy(object):
             destinations = ', '.join([ x.appType for x in
                            repo.find_app_packages_mapping(args.project) ])
 
-        msg_subject = '%s of %s on %s %s in %s' \
-                      % (dep_type, args.project, dest_type, destinations,
-                         self.envs[args.environment])
+        msg_subject = '%s of version %s of %s on %s %s in %s' \
+                      % (dep_type, version, args.project, dest_type,
+                         destinations, self.envs[args.environment])
         msg_text = '%s performed a "tds %s %s" for the following %s ' \
                    'in %s:\n    %s' \
                    % (args.user, args.command_name, args.subcommand_name,
@@ -791,6 +799,7 @@ class BaseDeploy(object):
                 raise ValueError('Multiple versions not allowed')
 
             version = versions[0]
+            args.current_version = version   # Used for notifications
 
         try:
             # Revision hardcoded to '1' for now
