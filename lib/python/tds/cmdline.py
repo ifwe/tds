@@ -82,7 +82,12 @@ package_data = odict([
      ])),
     ('list', odict([
         ('help', 'List all current package in deployment system'),
-        ('subargs', odict([   # Currently none
+        ('subargs', odict([
+            (('--projects',), odict([
+                ('help', 'Specific projects to list'),
+                ('metavar', 'PROJECT'),
+                ('nargs', '*'),
+             ])),
          ])),
      ])),
 ])
