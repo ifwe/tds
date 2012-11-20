@@ -237,7 +237,7 @@ class Package(object):
 
         tds.authorize.verify_access(args.user_level, 'dev')
 
-        for pkg in package.list_packages():
+        for pkg in package.list_packages(args.projects):
             print 'Project: %s' % pkg.pkg_name
             print 'Version: %s' % pkg.version
             print 'Revision: %s' % pkg.revision
