@@ -8,6 +8,8 @@ import subprocess
 import sys
 import time
 
+from datetime import datetime, timedelta
+
 import json
 
 from tagopsdb.database.meta import Session
@@ -265,6 +267,52 @@ class BaseDeploy(object):
         self.valid_project_types = None
 
 
+    def check_for_current_deployment(self, args, app_id, hosts=None):
+        """For the current app type, see if there are any current deployments
+           running and notify if there is
+        """
+
+        time_delta = timedelta(hours=1)  # Harcoded to an hour for now
+
+        dep_info = deploy.find_running_deployment(app_id,
+                                                  self.envs[args.environment],
+                                                  hosts=hosts)
+
+        if dep_info:
+            dep_type, data = dep_info
+
+            if dep_type == 'tier':
+                dep_user, dep_realized, dep_env, dep_apptype = data
+
+                if datetime.now() - dep_realized < time_delta:
+                    print 'User "%s" is currently running a deployment ' \
+                          'for the %s app tier in the %s environment, ' \
+                          'skipping...' \
+                          % (dep_user, dep_apptype, dep_env)
+                    return True
+            else:   # dep_type is 'host'
+                dep_hosts = []
+
+                for entry in data:
+                    dep_user, dep_realized, dep_hostname, dep_env = entry
+
+                    if datetime.now() - dep_realized < time_delta:
+                        dep_hosts.append(dep_hostname)
+
+                if dep_hosts:
+                    # Allow separate hosts to get simultaneous deployments
+                    if (hosts is None or
+                        not set(dep_hosts).isdisjoint(set(hosts))):
+                        host_list = ', '.join(dep_hosts)
+                        print 'User "%s" is currently running a deployment ' \
+                              'for the hosts "%s" in the %s environment, ' \
+                              'skipping...' \
+                              % (dep_user, host_list, dep_env)
+                        return True
+
+        return False
+
+
     def check_tier_state(self, args, pkg_id, app_dep):
         """Ensure state of tier (from given app deployment) is consistent
            with state and deployment package versions
@@ -409,6 +457,10 @@ class BaseDeploy(object):
             hostnames = []
 
             for app_id, hosts in app_host_map.iteritems():
+                if self.check_for_current_deployment(args, app_id,
+                                                     hosts=hosts):
+                    continue
+
                 app_ids.append(app_id)
                 hostnames.extend(hosts)
 
@@ -416,6 +468,9 @@ class BaseDeploy(object):
             self.deploy_to_hosts(args, dep_hosts, dep_id, redeploy=redeploy)
         else:
             for app_id, dep_info in app_dep_map.iteritems():
+                if self.check_for_current_deployment(args, app_id):
+                    continue
+
                 app_ids.append(app_id)
 
                 if redeploy:
