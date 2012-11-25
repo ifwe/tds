@@ -420,7 +420,7 @@ class BaseDeploy(object):
                 # Clear out any old deployments for this host
                 deploy.delete_host_deployment(dep_host.hostname, args.project)
                 host_dep = deploy.add_host_deployment(dep_id, dep_host.HostID,
-                                                      args.user, 'incomplete')
+                                                      args.user, 'inprogress')
                 success, info = self.deploy_to_host(dep_host.hostname, app,
                                                     version)
 
@@ -445,6 +445,10 @@ class BaseDeploy(object):
                 print '-----'
                 print 'Hostname: %s' % failed_host
                 print 'Reason: %s' % reason
+
+            return False
+        else:
+            return True
 
 
     def deploy_to_hosts_or_tiers(self, args, dep_id, app_host_map,
@@ -483,14 +487,18 @@ class BaseDeploy(object):
                               % (args.project, pkg.version, app_type)
                         continue
                 else:
-                    deploy.add_app_deployment(dep_id, app_id, args.user,
-                                              'incomplete',
-                                              self.envs[args.environment])
+                    app_dep = deploy.add_app_deployment(dep_id, app_id,
+                                             args.user, 'inprogress',
+                                             self.envs[args.environment])
 
                 dep_hosts = deploy.find_hosts_for_app(app_id,
                                               self.envs[args.environment])
-                self.deploy_to_hosts(args, dep_hosts, dep_id,
-                                     redeploy=redeploy)
+
+                if self.deploy_to_hosts(args, dep_hosts, dep_id,
+                                        redeploy=redeploy):
+                    app_dep.status = 'complete'
+                else:
+                    app_dep.status = 'incomplete'
 
         if args.environment == 'prod':
             print 'Please review the following Nagios group views for ' \
