@@ -48,6 +48,24 @@ def _extract_from_dict(dict, key, default=None):
     return value
 
 
+class MaxLevelFilter(logging.Filter):
+    """Setting a 'maximum' level to log at, allows to set a logging
+       'range' for a given handler (e.g. stdout not showing stderr
+       messages)
+    """
+
+    def __init__(self, level):
+        """Set maximum level"""
+
+        self._level = level
+
+
+    def filter(self, record):
+        """Message is filtered if it's above specified level"""
+
+        return record.levelno <= self._level
+
+
 class Formatter(logging.Formatter):
     """Formatting class used by the logging class to format entries
        similar to the way syslog generates entries
@@ -180,7 +198,8 @@ class Logger(logging.Logger):
             del self.syslog_handlers[fh_name]
 
 
-    def add_stream(self, fh_name, stream=None):
+    def add_stream(self, fh_name, stream=None, level=None, nostderr=False,
+                   syslog_format=False):
         """Set up stream (stdout and stderr) logging"""
 
         if stream is None:
@@ -188,19 +207,27 @@ class Logger(logging.Logger):
 
         handle = logging.StreamHandler(stream)
 
-        format = Formatter('%(asctime)s.%(msecs)03d: '
-                           '%(name)s[%(process)d]%(user)s%(code)s: '
-                           '%(levelname)s: %(message)s',
-                           '%H:%M:%S', user=self.user, code=self.code)
+        if syslog_format:
+            format = Formatter('%(asctime)s.%(msecs)03d: '
+                               '%(name)s[%(process)d]%(user)s%(code)s: '
+                               '%(levelname)s: %(message)s',
+                               '%H:%M:%S', user=self.user, code=self.code)
+        else:
+            format = Formatter('%(message)s', user=self.user, code=self.code)
 
         handle.setFormatter(format)
 
-        if stream == sys.stderr:
-            level = logging.ERROR
-        else:
-            level = logging.INFO
+        if level is None:
+            if stream == sys.stderr:
+                level = logging.ERROR
+            else:
+                level = logging.INFO
 
         handle.setLevel(level)
+
+        if nostderr:
+            filter = MaxLevelFilter(logging.WARNING)
+            handle.addFilter(filter)
 
         self.addHandler(handle)
         self.stream_handlers[fh_name] = handle
@@ -289,10 +316,6 @@ class Logger(logging.Logger):
         self._invoke(logging.Logger.info, args, kwargs)
 
 
-    def notice(self, *args, **kwargs):
-        self._invoke(logging.Logger.notice, args, kwargs)
-
-
     def warning(self, *args, **kwargs):
         self._invoke(logging.Logger.warning, args, kwargs)
 
@@ -329,7 +352,7 @@ if __name__ == "__main__":
     logger = Logger('log_testing')
     logger.add_syslog('syslog_info', facility=LOG_LOCAL3)
     logger.add_syslog('syslog_err', facility=LOG_LOCAL3, priority=LOG_ERR)
-    logger.add_stream('stdout', stream=sys.stdout)
+    logger.add_stream('stdout', stream=sys.stdout, nostderr=True)
     logger.add_stream('stderr', stream=sys.stderr)
 
     logger.info('This is a test for the info level of logging.')
