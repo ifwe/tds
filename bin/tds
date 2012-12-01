@@ -7,6 +7,7 @@ import pwd
 import sys
 
 import tds.commands
+import tds.logging_wrapper as log_wrap
 import tds.utils
 import tds.version
 
@@ -48,10 +49,12 @@ def parse_command_line():
 
     parser.add_argument('-V', '--version', action='version',
                         version='TDS %s' % tds.version.__version__)
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Show more information')
+    #parser.add_argument('-v', '--verbose', action='store_true',
+    #                    help='Show more information')
     # If we want multiple verbose levels, use next line instead
-    #parser.add_argument('-v', '--verbose', action='count')
+    parser.add_argument('-v', '--verbose', action='count',
+                        help='Show more information (more used shows greater '
+                             'information)')
     parser.add_argument('--dbuser', help='Specify user to use to connect '
                                          'to TagOpsDB',
                                     default=None)
@@ -59,6 +62,32 @@ def parse_command_line():
     create_subparsers(parser)
 
     return parser.parse_args()
+
+
+def configure_logging(verbosity):
+    """Configure logging for the application; set up both syslog and
+       console handlers
+    """
+
+    if verbosity is None:
+        level = None
+    elif verbosity == 1:
+        level = 10
+    elif verbosity == 2:
+        level = 5
+    else:
+        level = 1
+
+    syslog_facility, syslog_priority = \
+        tds.utils.verify_conf_file_section('deploy', 'logging')
+
+    logger = log_wrap.Logger('tds')
+    logger.add_syslog('syslog', facility=log_wrap.facilities[syslog_facility],
+                                priority=log_wrap.priorities[syslog_priority])
+    logger.add_stream('stdout', stream=sys.stdout, level=level, nostderr=True)
+    logger.add_stream('stderr', stream=sys.stderr)
+
+    return (logger, level)
 
 
 def check_user_auth(user):
@@ -85,7 +114,7 @@ def get_basic_config():
              'incoming' : incoming, 'processing' : processing, }
 
 
-def initialize_db(args):
+def initialize_db(args, logger, stdout_level):
     """ """
 
     if args.dbuser:
@@ -97,7 +126,7 @@ def initialize_db(args):
                                                sub_cf_name=args.user_level)
 
     try:
-        init_session(db_user, db_password, echo=args.verbose)
+        init_session(db_user, db_password, log=logger, level=stdout_level)
     except PermissionsException, e:
         print 'Access issue with database:'
         print e
@@ -106,6 +135,7 @@ def initialize_db(args):
 
 if __name__ == '__main__':
     args = parse_command_line()
+    logger, stdout_level = configure_logging(args.verbose)
 
     # Slight hack: ensure only one of '--hosts', '--apptypes'
     # or '--all-apptypes' is used at a given time
@@ -136,8 +166,8 @@ if __name__ == '__main__':
     if args.dbuser:
         args.dbpassword = getpass.getpass('Enter DB password: ')
 
-    initialize_db(args)
-    cmd = getattr(tds.commands, args.command_name.capitalize())()
+    initialize_db(args, logger, stdout_level)
+    cmd = getattr(tds.commands, args.command_name.capitalize())(logger)
 
     try:
         getattr(cmd, args.subcommand_name.replace('-', '_'))(args)

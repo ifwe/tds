@@ -13,6 +13,7 @@ conf_params = {
     },
     'deploy' : {
         'env' : [ 'environment', ],
+        'logging' : [ 'syslog_facility', 'syslog_priority', ],
         'notifications' : [ 'enabled_methods', 'email_receiver',
                             'hipchat_rooms', 'hipchat_token',
                             'validation_time', ],

@@ -21,15 +21,16 @@ for priority in sysloghandler.priority_names.keys():
     if getattr(sysloghandler, 'LOG_%s' % priority.upper(), None) != None:
         priorities[priority] = sysloghandler.priority_names[priority]
 
-reversePriority = {}
-for i in priorities:
-    reversePriority[priorities[i]] = i
-
+# Extend DEBUG settings for level
+for idx in xrange(1, 11):
+    logging.addLevelName(idx, 'DEBUG')
 
 # Common settings to use in following code
 LOG_DAEMON = facilities['daemon']
 LOG_LOCAL3 = facilities['local3']
+LOG_LOCAL4 = facilities['local4']
 
+LOG_DEBUG = priorities['debug']
 LOG_INFO = priorities['info']
 LOG_ERR  = priorities['err']
 
@@ -290,7 +291,7 @@ class Logger(logging.Logger):
         self._update_formatters()
 
 
-    def _invoke(self, f, args, kwargs):
+    def log(self, *args, **kwargs):
         """Call the method passed with the current values for user and code,
            returning them to their previous state once the call is completed
         """
@@ -301,35 +302,21 @@ class Logger(logging.Logger):
         self.push(user, code)
 
         try:
-            f(self, *args, **kwargs)
+            logging.Logger.log(self, *args, **kwargs)
         finally:
             self.pop()
 
 
-    # Overrides for the various logging methods
+    # Allow for multiple debug levels
+    def debug(self, level, *args, **kwargs):
+        try:
+            int(level)
+        except ValueError:
+            # This allows 'level' to be optional
+            args = (level,) + args
+            level = 0
 
-    def debug(self, *args, **kwargs):
-        self._invoke(logging.Logger.debug, args, kwargs)
-
-
-    def info(self, *args, **kwargs):
-        self._invoke(logging.Logger.info, args, kwargs)
-
-
-    def warning(self, *args, **kwargs):
-        self._invoke(logging.Logger.warning, args, kwargs)
-
-
-    def error(self, *args, **kwargs):
-        self._invoke(logging.Logger.error, args, kwargs)
-
-
-    def exception(self, *args, **kwargs):
-        self._invoke(logging.Logger.exception, args, kwargs)
-
-
-    def critical(self, *args, **kwargs):
-        self._invoke(logging.Logger.critical, args, kwargs)
+        self.log(logging.DEBUG - level, *args, **kwargs)
 
 
 def create_object(name, user=None, code=None):
@@ -357,3 +344,9 @@ if __name__ == "__main__":
 
     logger.info('This is a test for the info level of logging.')
     logger.error('This is a test for the error level of logging.')
+
+    # Uncomment below to test multiple log levels
+    #logger.add_syslog('syslog_err', facility=LOG_LOCAL4, priority=LOG_DEBUG)
+
+    #for idx in xrange(0, 10):
+    #    logger.debug(idx, 'This is log level %d', logging.DEBUG - idx)
