@@ -42,10 +42,10 @@ def catch_exceptions(meth):
 class Repository(object):
     """ """
 
-    def __init__(self):
+    def __init__(self, logger):
         """ """
 
-        pass
+        self.log = logger
 
 
     @catch_exceptions
@@ -123,10 +123,11 @@ class Repository(object):
 class Package(object):
     """ """
 
-    def __init__(self):
+    def __init__(self, logger):
         """ """
 
         self.host = socket.gethostname()
+        self.log = logger
 
 
     def processing_handler(self, signum, frame):
@@ -261,10 +262,11 @@ class BaseDeploy(object):
     env_order = [ 'dev', 'stage', 'prod' ]
 
 
-    def __init__(self):
+    def __init__(self, logger):
         """ """
 
         self.valid_project_types = None
+        self.log = logger
 
 
     def check_for_current_deployment(self, args, app_id, hosts=None):
