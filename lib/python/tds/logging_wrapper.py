@@ -122,43 +122,28 @@ class Formatter(logging.Formatter):
 
 
 class Logger(logging.Logger):
-    """Logging class which is implemented as a singleton in order
-       to allow the data/methods to be used in multiple modules without
-       having to pass down arbitrary attributes to all the modules.
-    """
+    user = None
+    code = None
 
-    singleton_object = None
+    syslog_handlers  = {}
+    syslog_formatter = None
+    stream_handlers  = {}
+    stream_formatter = None
+
+    saved_state = []
 
 
     def __init__(self, name, user=None, code=None):
-        """Create singleton Logger object"""
-
-        if self.__class__.singleton_object is not None:
-            raise AttributeError('Attempting to create duplicate '
-                                 'singleton object')
-
         logging.Logger.__init__(self, name)
 
-        self.syslog_handlers  = {}
-        self.syslog_formatter = None
-        self.stream_handlers  = {}
-        self.stream_formatter = None
+        if user is None:
+            user = self.user
 
-        self.saved_state = []
+        if code is None:
+            user = self.code
+
         self.set_user(user)
         self.set_code(code)
-
-        self.__class__.singleton_object = self
-
-
-    @classmethod
-    def get_object(cls):
-        """Class method to return the singleton object"""
-
-        if cls.singleton_object is None:
-            raise AttributeError('Singleton object does not yet exist')
-
-        return cls.singleton_object
 
 
     def add_syslog(self, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
@@ -187,8 +172,9 @@ class Logger(logging.Logger):
         self.addHandler(handle)
         self.syslog_handlers[fh_name] = handle
 
-        if self.syslog_formatter is None:
-            self.syslog_formatter = format
+        cls = type(self)
+        if cls.syslog_formatter is None:
+            cls.syslog_formatter = format
 
 
     def delete_syslog(self, fh_name):
@@ -233,8 +219,9 @@ class Logger(logging.Logger):
         self.addHandler(handle)
         self.stream_handlers[fh_name] = handle
 
-        if self.stream_formatter is None:
-            self.stream_formatter = format
+        cls = type(self)
+        if cls.stream_formatter is None:
+            cls.stream_formatter = format
 
 
     def delete_stream(self, fh_name):
@@ -257,14 +244,16 @@ class Logger(logging.Logger):
     def set_user(self, user=None):
         """Set user in formatter"""
 
-        self.user = user
+        cls = type(self)
+        cls.user = user
         self._update_formatters()
 
 
     def set_code(self, code=None):
         """Set code in formatter"""
 
-        self.code = code
+        cls = type(self)
+        cls.code = code
         self._update_formatters()
 
 
@@ -317,22 +306,6 @@ class Logger(logging.Logger):
             level = 0
 
         self.log(logging.DEBUG - level, *args, **kwargs)
-
-
-def create_object(name, user=None, code=None):
-    """Create the singleton Support object and return a reference to it.
-       Raises an exception if the singleton Support object already exists.
-    """
-
-    return Logger(name, user=user, code=code)
-
-
-def get_object():
-    """Get the singleton Support object.  Raises an exception if the
-       singleton Support object does not yet exist.
-    """
-
-    return Logger.get_object()
 
 
 if __name__ == "__main__":
