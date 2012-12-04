@@ -126,9 +126,7 @@ class Logger(logging.Logger):
     code = None
 
     syslog_handlers  = {}
-    syslog_formatter = None
     stream_handlers  = {}
-    stream_formatter = None
 
     saved_state = []
 
@@ -171,10 +169,6 @@ class Logger(logging.Logger):
 
         self.addHandler(handle)
         self.syslog_handlers[fh_name] = handle
-
-        cls = type(self)
-        if cls.syslog_formatter is None:
-            cls.syslog_formatter = format
 
 
     def delete_syslog(self, fh_name):
@@ -219,10 +213,6 @@ class Logger(logging.Logger):
         self.addHandler(handle)
         self.stream_handlers[fh_name] = handle
 
-        cls = type(self)
-        if cls.stream_formatter is None:
-            cls.stream_formatter = format
-
 
     def delete_stream(self, fh_name):
         """Remove entry from stream (stdout and stderr) logging"""
@@ -235,7 +225,8 @@ class Logger(logging.Logger):
     def _update_formatters(self):
         """Update the user and code entries for the formatters"""
 
-        for f in [self.stream_formatter, self.syslog_formatter]:
+        for handler in self.stream_handlers.values() + self.syslog_handlers.values():
+            f = handler.formatter
             if f is not None:
                 f.set_user(self.user)
                 f.set_code(self.code)
