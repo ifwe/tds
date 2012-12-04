@@ -80,7 +80,7 @@ def configure_logging(verbosity):
         level = 5
     else:
         level = 1
-        sqla_level = logging.NOTSET
+        sqla_level = 1
 
     syslog_facility, syslog_priority = \
         tds.utils.verify_conf_file_section('deploy', 'logging')
@@ -88,19 +88,21 @@ def configure_logging(verbosity):
     logging.setLoggerClass(log_wrap.Logger)
 
     logger = logging.getLogger()
-    logger.add_syslog('syslog', facility=log_wrap.facilities[syslog_facility],
-                                priority=log_wrap.priorities[syslog_priority])
-    logger.add_stream('stdout', stream=sys.stdout, level=level, nostderr=True)
-    logger.add_stream('stderr', stream=sys.stderr)
+    log_wrap.add_syslog(logger, 'syslog',
+                        facility=log_wrap.facilities[syslog_facility],
+                        priority=log_wrap.priorities[syslog_priority])
+    log_wrap.add_stream(logger, 'stderr', stream=sys.stderr)
 
     tds_logger = logging.getLogger('tds')
+    log_wrap.add_stream(tds_logger, 'stdout', stream=sys.stdout,
+                        level=level, nostderr=True)
 
     sqla_logger = logging.getLogger('sqlalchemy.engine')
     sqla_logger.setLevel(1)
-    sqla_logger.add_stream('stdout', stream=sys.stdout, level=sqla_level,
-                           nostderr=True)
+    log_wrap.add_stream(sqla_logger, 'stdout', stream=sys.stdout,
+                        level=sqla_level, nostderr=True)
 
-    return logger
+    return tds_logger
 
 
 def check_user_auth(user):
@@ -148,7 +150,7 @@ def initialize_db(args):
 
 if __name__ == '__main__':
     args = parse_command_line()
-    logger = configure_logging(args.verbose)
+    tds_logger = configure_logging(args.verbose)
 
     # Slight hack: ensure only one of '--hosts', '--apptypes'
     # or '--all-apptypes' is used at a given time
@@ -180,7 +182,7 @@ if __name__ == '__main__':
         args.dbpassword = getpass.getpass('Enter DB password: ')
 
     initialize_db(args)
-    cmd = getattr(tds.commands, args.command_name.capitalize())(logger)
+    cmd = getattr(tds.commands, args.command_name.capitalize())(tds_logger)
 
     try:
         getattr(cmd, args.subcommand_name.replace('-', '_'))(args)
