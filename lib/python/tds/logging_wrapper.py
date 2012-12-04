@@ -125,9 +125,6 @@ class Logger(logging.Logger):
     user = None
     code = None
 
-    syslog_handlers  = {}
-    stream_handlers  = {}
-
     saved_state = []
 
 
@@ -144,88 +141,11 @@ class Logger(logging.Logger):
         self.set_code(code)
 
 
-    def add_syslog(self, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
-        """Set up syslog logging"""
-
-        dev_log = '/dev/log'
-
-        try:
-            mode = os.stat(dev_log)[stat.ST_MODE]
-        except OSError:
-            mode = 0
-
-        # Use /dev/log socket on platforms that have one
-        if stat.S_ISSOCK(mode):
-            handle = logging.handlers.SysLogHandler(dev_log, facility)
-        else:
-            handle = logging.handlers.SysLogHandler(facility=facility)
-
-        format = Formatter('%(name)s[%(process)d]%(user)s%(code)s: '
-                           '%(levelname)s: %(message)s',
-                           user=self.user, code=self.code)
-
-        handle.setFormatter(format)
-        handle.encodePriority(facility, priority)
-
-        self.addHandler(handle)
-        self.syslog_handlers[fh_name] = handle
-
-
-    def delete_syslog(self, fh_name):
-        """Remove entry from syslog logging"""
-
-        if fh_name in self.syslog_handlers:
-            self.removeHandler(self.syslog_handlers[fh_name])
-            del self.syslog_handlers[fh_name]
-
-
-    def add_stream(self, fh_name, stream=None, level=None, nostderr=False,
-                   syslog_format=False):
-        """Set up stream (stdout and stderr) logging"""
-
-        if stream is None:
-            stream = sys.stderr
-
-        handle = logging.StreamHandler(stream)
-
-        if syslog_format:
-            format = Formatter('%(asctime)s.%(msecs)03d: '
-                               '%(name)s[%(process)d]%(user)s%(code)s: '
-                               '%(levelname)s: %(message)s',
-                               '%H:%M:%S', user=self.user, code=self.code)
-        else:
-            format = Formatter('%(message)s', user=self.user, code=self.code)
-
-        handle.setFormatter(format)
-
-        if level is None:
-            if stream == sys.stderr:
-                level = logging.ERROR
-            else:
-                level = logging.INFO
-
-        handle.setLevel(level)
-
-        if nostderr:
-            filter = MaxLevelFilter(logging.WARNING)
-            handle.addFilter(filter)
-
-        self.addHandler(handle)
-        self.stream_handlers[fh_name] = handle
-
-
-    def delete_stream(self, fh_name):
-        """Remove entry from stream (stdout and stderr) logging"""
-
-        if fh_name in self.stream_handlers:
-            self.removeHandler(self.stream_handlers[fh_name])
-            del self.stream_handlers[fh_name]
-
-
     def _update_formatters(self):
         """Update the user and code entries for the formatters"""
 
-        for handler in self.stream_handlers.values() + self.syslog_handlers.values():
+        for handler in (getattr(self, 'stream_handlers', {}).values() +
+                        getattr(self, 'syslog_handlers', {}).values()):
             f = handler.formatter
             if f is not None:
                 f.set_user(self.user)
@@ -297,6 +217,99 @@ class Logger(logging.Logger):
             level = 0
 
         self.log(logging.DEBUG - level, *args, **kwargs)
+
+
+def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
+    """Set up syslog logging"""
+
+    dev_log = '/dev/log'
+
+    try:
+        mode = os.stat(dev_log)[stat.ST_MODE]
+    except OSError:
+        mode = 0
+
+    # Use /dev/log socket on platforms that have one
+    if stat.S_ISSOCK(mode):
+        handle = logging.handlers.SysLogHandler(dev_log, facility)
+    else:
+        handle = logging.handlers.SysLogHandler(facility=facility)
+
+    format = Formatter('%(name)s[%(process)d]%(user)s%(code)s: '
+                       '%(levelname)s: %(message)s',
+                       user=getattr(logger, 'user', 'unknown-user'),
+                       code=getattr(logger, 'code', 'unknown-code'))
+
+    handle.setFormatter(format)
+    handle.encodePriority(facility, priority)
+
+    logger.addHandler(handle)
+    if getattr(logger, 'syslog_handlers', None) is None:
+        logger.syslog_handlers = {}
+
+    logger.syslog_handlers[fh_name] = handle
+
+
+def delete_syslog(logger, fh_name):
+    """Remove entry from syslog logging"""
+    if getattr(logger, 'syslog_handlers', None) is None:
+        return
+
+    if fh_name in logger.syslog_handlers:
+        logger.removeHandler(logger.syslog_handlers[fh_name])
+        logger.syslog_handlers.pop(fh_name, None)
+
+
+def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
+               syslog_format=False):
+    """Set up stream (stdout and stderr) logging"""
+
+    if stream is None:
+        stream = sys.stderr
+
+    handle = logging.StreamHandler(stream)
+
+    if syslog_format:
+        format = Formatter('%(asctime)s.%(msecs)03d: '
+                           '%(name)s[%(process)d]%(user)s %(code)s: '
+                           '%(levelname)s: %(message)s',
+                           '%H:%M:%S',
+                           user=getattr(logger, 'user', 'unknown-user'),
+                           code=getattr(logger, 'code', 'unknown-code'))
+    else:
+        format = Formatter('%(message)s',
+                           user=getattr(logger, 'user', 'unknown-user'),
+                           code=getattr(logger, 'code', 'unknown-code'))
+
+    handle.setFormatter(format)
+
+    if level is None:
+        if stream == sys.stderr:
+            level = logging.ERROR
+        else:
+            level = logging.INFO
+
+    handle.setLevel(level)
+
+    if nostderr:
+        filter = MaxLevelFilter(logging.WARNING)
+        handle.addFilter(filter)
+
+    logger.addHandler(handle)
+    if getattr(logger, 'stream_handlers', None) is None:
+        logger.stream_handlers = {}
+
+    logger.stream_handlers[fh_name] = handle
+
+
+def delete_stream(logger, fh_name):
+    """Remove entry from stream (stdout and stderr) logging"""
+    if getattr(logger, 'stream_handlers', None) is None:
+        return
+
+    if fh_name in logger.stream_handlers:
+        logger.removeHandler(logger.stream_handlers[fh_name])
+        logger.stream_handlers.pop(fh_name, None)
 
 
 if __name__ == "__main__":
