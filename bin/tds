@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import logging
 import argparse
 import getpass
+import logging
 import os
 import pwd
 import sys
@@ -70,6 +70,8 @@ def configure_logging(verbosity):
        console handlers
     """
 
+    sqla_level = logging.WARNING
+
     if verbosity is None:
         level = None
     elif verbosity == 1:
@@ -78,18 +80,27 @@ def configure_logging(verbosity):
         level = 5
     else:
         level = 1
+        sqla_level = logging.NOTSET
 
     syslog_facility, syslog_priority = \
         tds.utils.verify_conf_file_section('deploy', 'logging')
 
     logging.setLoggerClass(log_wrap.Logger)
-    logger = logging.getLogger('tds')
+
+    logger = logging.getLogger()
     logger.add_syslog('syslog', facility=log_wrap.facilities[syslog_facility],
                                 priority=log_wrap.priorities[syslog_priority])
     logger.add_stream('stdout', stream=sys.stdout, level=level, nostderr=True)
     logger.add_stream('stderr', stream=sys.stderr)
 
-    return (logger, level)
+    tds_logger = logging.getLogger('tds')
+
+    sqla_logger = logging.getLogger('sqlalchemy.engine')
+    sqla_logger.setLevel(1)
+    sqla_logger.add_stream('stdout', stream=sys.stdout, level=sqla_level,
+                           nostderr=True)
+
+    return logger
 
 
 def check_user_auth(user):
@@ -116,7 +127,7 @@ def get_basic_config():
              'incoming' : incoming, 'processing' : processing, }
 
 
-def initialize_db(args, logger, stdout_level):
+def initialize_db(args):
     """ """
 
     if args.dbuser:
@@ -128,7 +139,7 @@ def initialize_db(args, logger, stdout_level):
                                                sub_cf_name=args.user_level)
 
     try:
-        init_session(db_user, db_password, log=logger, level=stdout_level)
+        init_session(db_user, db_password)
     except PermissionsException, e:
         print 'Access issue with database:'
         print e
@@ -137,7 +148,7 @@ def initialize_db(args, logger, stdout_level):
 
 if __name__ == '__main__':
     args = parse_command_line()
-    logger, stdout_level = configure_logging(args.verbose)
+    logger = configure_logging(args.verbose)
 
     # Slight hack: ensure only one of '--hosts', '--apptypes'
     # or '--all-apptypes' is used at a given time
@@ -168,7 +179,7 @@ if __name__ == '__main__':
     if args.dbuser:
         args.dbpassword = getpass.getpass('Enter DB password: ')
 
-    initialize_db(args, logger, stdout_level)
+    initialize_db(args)
     cmd = getattr(tds.commands, args.command_name.capitalize())(logger)
 
     try:
