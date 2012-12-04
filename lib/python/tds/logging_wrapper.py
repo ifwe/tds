@@ -121,14 +121,17 @@ class Formatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-class Logger(logging.Logger):
+class Logger(logging.Logger, object):
+    """Customized Logger object for the logging module"""
+
     user = None
     code = None
-
     saved_state = []
 
 
     def __init__(self, name, user=None, code=None):
+        """Basic configuration"""
+
         logging.Logger.__init__(self, name)
 
         if user is None:
@@ -147,6 +150,7 @@ class Logger(logging.Logger):
         for handler in (getattr(self, 'stream_handlers', {}).values() +
                         getattr(self, 'syslog_handlers', {}).values()):
             f = handler.formatter
+
             if f is not None:
                 f.set_user(self.user)
                 f.set_code(self.code)
@@ -219,6 +223,14 @@ class Logger(logging.Logger):
         self.log(logging.DEBUG - level, *args, **kwargs)
 
 
+    #def filter(self, record):
+    #    should_filter = logging.Logger.filter(self, record)
+    #    if should_filter:
+    #        print "Filtering from %s at level %d" % (record.name,
+    #                                                 record.levelno)
+    #    return should_filter
+
+
 def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
     """Set up syslog logging"""
 
@@ -238,7 +250,7 @@ def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
     format = Formatter('%(name)s[%(process)d]%(user)s%(code)s: '
                        '%(levelname)s: %(message)s',
                        user=getattr(logger, 'user', 'unknown-user'),
-                       code=getattr(logger, 'code', 'unknown-code'))
+                       code=getattr(logger, 'code', 0))
 
     handle.setFormatter(format)
     handle.encodePriority(facility, priority)
@@ -252,6 +264,7 @@ def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
 
 def delete_syslog(logger, fh_name):
     """Remove entry from syslog logging"""
+
     if getattr(logger, 'syslog_handlers', None) is None:
         return
 
@@ -275,11 +288,11 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
                            '%(levelname)s: %(message)s',
                            '%H:%M:%S',
                            user=getattr(logger, 'user', 'unknown-user'),
-                           code=getattr(logger, 'code', 'unknown-code'))
+                           code=getattr(logger, 'code', 0))
     else:
         format = Formatter('%(message)s',
                            user=getattr(logger, 'user', 'unknown-user'),
-                           code=getattr(logger, 'code', 'unknown-code'))
+                           code=getattr(logger, 'code', 0))
 
     handle.setFormatter(format)
 
@@ -304,6 +317,7 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
 
 def delete_stream(logger, fh_name):
     """Remove entry from stream (stdout and stderr) logging"""
+
     if getattr(logger, 'stream_handlers', None) is None:
         return
 
