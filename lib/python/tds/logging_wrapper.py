@@ -7,6 +7,7 @@ import pwd
 import stat
 import sys
 
+from tds.UTFFixedSysLogHandler import UTFFixedSysLogHandler
 
 sysloghandler = logging.handlers.SysLogHandler
 
@@ -243,9 +244,9 @@ def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
 
     # Use /dev/log socket on platforms that have one
     if stat.S_ISSOCK(mode):
-        handle = logging.handlers.SysLogHandler(dev_log, facility)
+        handle = UTFFixedSysLogHandler(dev_log, facility)
     else:
-        handle = logging.handlers.SysLogHandler(facility=facility)
+        handle = UTFFixedSysLogHandler(facility=facility)
 
     format = Formatter('%(name)s[%(process)d]%(user)s%(code)s: '
                        '%(levelname)s: %(message)s',
