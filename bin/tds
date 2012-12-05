@@ -7,6 +7,8 @@ import os
 import pwd
 import sys
 
+import tds.authorize
+import tds.cmdline
 import tds.commands
 import tds.logging_wrapper as log_wrap
 import tds.utils
@@ -14,17 +16,15 @@ import tds.version
 
 from tagopsdb.database import init_session
 from tagopsdb.exceptions import PermissionsException
-from tds.authorize import get_access_level
-from tds.cmdline import parser_info
 from tds.exceptions import AccessError, ConfigurationError, \
                            NotImplementedError, WrongEnvironmentError, \
                            WrongProjectTypeError
 
 
 def create_subparsers(parser):
-    """ """
+    """Generate the subparsers to use for the command line"""
 
-    data = parser_info()
+    data = tds.cmdline.parser_info()
 
     cmd_parsers = parser.add_subparsers(dest='command_name',
                                         help='command help')
@@ -44,15 +44,12 @@ def create_subparsers(parser):
 
 
 def parse_command_line():
-    """ """
+    """Parse the command line and return the parser to the main program"""
 
     parser = argparse.ArgumentParser(description='TagOps Deployment System')
 
     parser.add_argument('-V', '--version', action='version',
                         version='TDS %s' % tds.version.__version__)
-    #parser.add_argument('-v', '--verbose', action='store_true',
-    #                    help='Show more information')
-    # If we want multiple verbose levels, use next line instead
     parser.add_argument('-v', '--verbose', action='count',
                         help='Show more information (more used shows greater '
                              'information)')
@@ -65,132 +62,158 @@ def parse_command_line():
     return parser.parse_args()
 
 
-def configure_logging(verbosity):
-    """Configure logging for the application; set up both syslog and
-       console handlers
-    """
-
-    sqla_level = logging.WARNING
-
-    if verbosity is None:
-        level = None
-    elif verbosity == 1:
-        level = 10
-    elif verbosity == 2:
-        level = 5
-    else:
-        level = 1
-        sqla_level = 1
-
-    syslog_facility, syslog_priority = \
-        tds.utils.verify_conf_file_section('deploy', 'logging')
-
-    logging.setLoggerClass(log_wrap.Logger)
-
-    logger = logging.getLogger()
-    log_wrap.add_syslog(logger, 'syslog',
-                        facility=log_wrap.facilities[syslog_facility],
-                        priority=log_wrap.priorities[syslog_priority])
-    log_wrap.add_stream(logger, 'stderr', stream=sys.stderr)
-
-    tds_logger = logging.getLogger('tds')
-    log_wrap.add_stream(tds_logger, 'stdout', stream=sys.stdout,
-                        level=level, nostderr=True)
-
-    sqla_logger = logging.getLogger('sqlalchemy.engine')
-    sqla_logger.setLevel(1)
-    log_wrap.add_stream(sqla_logger, 'stdout', stream=sys.stdout,
-                        level=sqla_level, nostderr=True)
-
-    return tds_logger
-
-
-def check_user_auth(user):
+class TDS(object):
     """ """
 
-    user_level = get_access_level()
+    def __init__(self, args):
+        """Basic initialization"""
 
-    if user_level is None:
-        print 'Your account (%s) is not allowed to run this application.\n' \
-              'Please refer to your manager for assistance.' % user
-        sys.exit(1)
-
-    return user_level
+        self.args = args
+        self.log = None
 
 
-def get_basic_config():
-    """ """
+    def configure_logging(self):
+        """Configure logging for the application; set up both syslog and
+           console handlers
+        """
 
-    env = tds.utils.verify_conf_file_section('deploy', 'env')
-    build_base, incoming, processing = \
-        tds.utils.verify_conf_file_section('deploy', 'repo')
+        verbosity = self.args.verbose
+        sqla_level = logging.WARNING
+        log_prefix = True
 
-    return { 'env' : env, 'build_base' : build_base,
-             'incoming' : incoming, 'processing' : processing, }
+        if verbosity is None:
+            level = None
+            log_prefix = False   # Don't prefix for normal use
+        elif verbosity == 1:
+            level = 10
+        elif verbosity == 2:
+            level = 5
+        else:
+            level = 1
+            sqla_level = 1   # Ensure SQLAlchemy gives full log info
+
+        syslog_facility, syslog_priority = \
+            tds.utils.verify_conf_file_section('deploy', 'logging')
+
+        logging.setLoggerClass(log_wrap.Logger)
+
+        logger = logging.getLogger()
+        log_wrap.add_syslog(logger, 'syslog',
+                            facility=log_wrap.facilities[syslog_facility],
+                            priority=log_wrap.priorities[syslog_priority])
+        log_wrap.add_stream(logger, 'stderr', stream=sys.stderr,
+                            prefix=log_prefix)
+
+        tds_logger = logging.getLogger('tds')
+        log_wrap.add_stream(tds_logger, 'stdout', stream=sys.stdout,
+                            level=level, nostderr=True, prefix=log_prefix)
+
+        sqla_logger = logging.getLogger('sqlalchemy.engine')
+        sqla_logger.setLevel(1)
+        log_wrap.add_stream(sqla_logger, 'stdout', stream=sys.stdout,
+                            level=sqla_level, nostderr=True,
+                            prefix=log_prefix)
+
+        self.log = tds_logger
 
 
-def initialize_db(args):
-    """ """
+    def check_user_auth(self):
+        """Verify the user is authorized to run the application"""
 
-    if args.dbuser:
-        db_user = args.dbuser
-        db_password = args.dbpassword
-    else:
-        db_user, db_password = \
-            tds.utils.verify_conf_file_section('dbaccess', 'db',
-                                               sub_cf_name=args.user_level)
+        self.args.user_level = tds.authorize.get_access_level()
 
-    try:
-        init_session(db_user, db_password)
-    except PermissionsException, e:
-        print 'Access issue with database:'
-        print e
-        sys.exit(1)
+        if self.args.user_level is None:
+            self.log.error('Your account (%s) is not allowed to run this '
+                           'application.\nPlease refer to your manager '
+                           'for assistance.' % self.args.user)
+            sys.exit(1)
+
+
+    def check_exclusive_options(self):
+        """Ensure certain options are exclusive and set parameter
+           to check for explicit hosts or application types
+        """
+
+        # Slight hack: ensure only one of '--hosts', '--apptypes'
+        # or '--all-apptypes' is used at a given time
+        excl = filter(None, (getattr(self.args, 'hosts', None),
+                             getattr(self.args, 'apptypes', None),
+                             getattr(self.args, 'all_apptypes', None)))
+
+        if len(excl) > 1:
+            self.log.error('Only one of the "--hosts", "--apptypes" or '
+                           '"--all-apptypes" options may be used at '
+                           'a given time')
+            sys.exit(1)
+
+        if not excl:
+            self.args.explicit = False
+        else:
+            self.args.explicit = True
+
+
+    def update_program_parameters(self):
+        """Set some additional program parameters"""
+
+        self.args.user = pwd.getpwuid(os.getuid()).pw_name
+        self.check_user_auth()
+
+        self.args.environment = \
+            tds.utils.verify_conf_file_section('deploy', 'env')
+        build_base, incoming, processing = \
+            tds.utils.verify_conf_file_section('deploy', 'repo')
+
+        self.args.repo = { 'build_base' : build_base,
+                           'incoming' : incoming,
+                           'processing' : processing, }
+
+
+    def initialize_db(self):
+        """Get user/password information for the database and connect
+           to the database
+        """
+
+        if self.args.dbuser:
+            db_user = self.args.dbuser
+            db_password = getpass.getpass('Enter DB password: ')
+        else:
+            db_user, db_password = \
+                tds.utils.verify_conf_file_section('dbaccess', 'db',
+                                           sub_cf_name=self.args.user_level)
+
+        try:
+            init_session(db_user, db_password)
+        except PermissionsException, e:
+            self.log.error('Access issue with database:\n%s' % e)
+            sys.exit(1)
+
+
+    def execute_command(self):
+        """Run the requested command for TDS"""
+
+        cmd = getattr(tds.commands,
+                      self.args.command_name.capitalize())(self.log)
+
+        try:
+            getattr(cmd,
+                    self.args.subcommand_name.replace('-', '_'))(self.args)
+        except AccessError:
+            self.log.error('Your account (%s) does not have the appropriate '
+                           'permissions\nto run the requested command.'
+                           % args.user)
+            sys.exit(1)
+        except (ConfigurationError, NotImplementedError,
+                WrongEnvironmentError, WrongProjectTypeError), e:
+            self.log.error(e)
+            sys.exit(1)
 
 
 if __name__ == '__main__':
     args = parse_command_line()
-    tds_logger = configure_logging(args.verbose)
 
-    # Slight hack: ensure only one of '--hosts', '--apptypes'
-    # or '--all-apptypes' is used at a given time
-    excl = filter(None, (getattr(args, 'hosts', None),
-                         getattr(args, 'apptypes', None),
-                         getattr(args, 'all_apptypes', None)))
-
-    if len(excl) > 1:
-        print 'Only one of the "--hosts", "--apptypes" or "--all-apptypes" ' \
-              'options may be used at a given time'
-        sys.exit(1)
-
-    # Set parameter to check for explicit hosts/apptypes
-    if not excl:
-        args.explicit = False
-    else:
-        args.explicit = True
-
-    # Pass user through with arguments
-    args.user = pwd.getpwuid(os.getuid()).pw_name
-    args.user_level = check_user_auth(args.user)
-    basic_config = get_basic_config()
-    args.environment = basic_config['env']
-    args.repo = { 'build_base' : basic_config['build_base'],
-                  'incoming' : basic_config['incoming'],
-                  'processing' : basic_config['processing'], }
-
-    if args.dbuser:
-        args.dbpassword = getpass.getpass('Enter DB password: ')
-
-    initialize_db(args)
-    cmd = getattr(tds.commands, args.command_name.capitalize())(tds_logger)
-
-    try:
-        getattr(cmd, args.subcommand_name.replace('-', '_'))(args)
-    except AccessError:
-        print 'Your account (%s) does not have the appropriate permissions' \
-              '\nto run the requested command.' % args.user
-        sys.exit(1)
-    except (ConfigurationError, NotImplementedError, WrongEnvironmentError,
-            WrongProjectTypeError), e:
-        print e
-        sys.exit(1)
+    prog = TDS(args)
+    prog.configure_logging()
+    prog.check_exclusive_options()
+    prog.update_program_parameters()
+    prog.initialize_db()
+    prog.execute_command()
