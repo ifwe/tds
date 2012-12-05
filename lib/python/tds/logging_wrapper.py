@@ -7,7 +7,10 @@ import pwd
 import stat
 import sys
 
-from tds.UTFFixedSysLogHandler import UTFFixedSysLogHandler
+try:
+    from tds.UTFFixedSysLogHandler import UTFFixedSysLogHandler
+except ImportError:
+    from UTFFixedSysLogHandler import UTFFixedSysLogHandler
 
 sysloghandler = logging.handlers.SysLogHandler
 
@@ -275,7 +278,7 @@ def delete_syslog(logger, fh_name):
 
 
 def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
-               syslog_format=False):
+               syslog_format=False, prefix=False):
     """Set up stream (stdout and stderr) logging"""
 
     if stream is None:
@@ -284,14 +287,17 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
     handle = logging.StreamHandler(stream)
 
     if syslog_format:
-        format = Formatter('%(asctime)s.%(msecs)03d: '
-                           '%(name)s[%(process)d]%(user)s %(code)s: '
-                           '%(levelname)s: %(message)s',
-                           '%H:%M:%S',
-                           user=getattr(logger, 'user', 'unknown-user'),
-                           code=getattr(logger, 'code', 0))
+        format_string = ('%(asctime)s.%(msecs)03d: ' 
+                         '%(name)s[%(process)d]%(user)s %(code)s: '
+                         '%(levelname)s: %(message)s',
+                         '%H:%M:%S')
     else:
-        format = Formatter('%(message)s',
+        format_string = '%(message)s'
+
+        if prefix:
+            format_string = '[%(levelname)s] ' + format_string
+
+        format = Formatter(format_string,
                            user=getattr(logger, 'user', 'unknown-user'),
                            code=getattr(logger, 'code', 0))
 
@@ -328,17 +334,20 @@ def delete_stream(logger, fh_name):
 
 
 if __name__ == "__main__":
+    prefix = False   # Set to True for streams to have log level prefix
+
     logger = Logger('log_testing')
-    logger.add_syslog('syslog_info', facility=LOG_LOCAL3)
-    logger.add_syslog('syslog_err', facility=LOG_LOCAL3, priority=LOG_ERR)
-    logger.add_stream('stdout', stream=sys.stdout, nostderr=True)
-    logger.add_stream('stderr', stream=sys.stderr)
+    add_syslog(logger, 'syslog_info', facility=LOG_LOCAL3)
+    add_syslog(logger, 'syslog_err', facility=LOG_LOCAL3, priority=LOG_ERR)
+    add_stream(logger, 'stdout', stream=sys.stdout, nostderr=True,
+               prefix=prefix)
+    add_stream(logger, 'stderr', stream=sys.stderr, prefix=prefix)
 
     logger.info('This is a test for the info level of logging.')
     logger.error('This is a test for the error level of logging.')
 
     # Uncomment below to test multiple log levels
-    #logger.add_syslog('syslog_err', facility=LOG_LOCAL4, priority=LOG_DEBUG)
+    #add_syslog(logger, 'syslog_err', facility=LOG_LOCAL3, priority=LOG_DEBUG)
 
     #for idx in xrange(0, 10):
     #    logger.debug(idx, 'This is log level %d', logging.DEBUG - idx)
