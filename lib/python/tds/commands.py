@@ -1299,9 +1299,10 @@ class BaseDeploy(object):
 class Config(BaseDeploy):
     """ """
 
-    def __init__(self):
+    def __init__(self, logger):
         """ """
 
+        super(Config, self).__init__(logger)
         self.valid_project_types = [ 'tagconfig' ]
 
 
@@ -1477,9 +1478,10 @@ class Config(BaseDeploy):
 class Deploy(BaseDeploy):
     """ """
 
-    def __init__(self):
+    def __init__(self, logger):
         """ """
 
+        super(Deploy, self).__init__(logger)
         self.valid_project_types = [ 'application' ]
 
 
