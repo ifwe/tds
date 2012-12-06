@@ -253,13 +253,14 @@ def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
 
     format = Formatter('%(name)s[%(process)d]%(user)s%(code)s: '
                        '%(levelname)s: %(message)s',
-                       user=getattr(logger, 'user', 'unknown-user'),
-                       code=getattr(logger, 'code', 0))
+                       user=getattr(logger, 'user', None),
+                       code=getattr(logger, 'code', None))
 
     handle.setFormatter(format)
     handle.encodePriority(facility, priority)
 
     logger.addHandler(handle)
+
     if getattr(logger, 'syslog_handlers', None) is None:
         logger.syslog_handlers = {}
 
@@ -298,8 +299,8 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
             format_string = '[%(levelname)s] ' + format_string
 
         format = Formatter(format_string,
-                           user=getattr(logger, 'user', 'unknown-user'),
-                           code=getattr(logger, 'code', 0))
+                           user=getattr(logger, 'user', None),
+                           code=getattr(logger, 'code', None))
 
     handle.setFormatter(format)
 
@@ -316,6 +317,7 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
         handle.addFilter(filter)
 
     logger.addHandler(handle)
+
     if getattr(logger, 'stream_handlers', None) is None:
         logger.stream_handlers = {}
 
