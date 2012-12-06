@@ -1,9 +1,17 @@
 """Common utility methods for the TDS application"""
 
+import logging
+import sys
 import yaml
 
 from tds.exceptions import ConfigurationError
 
+
+tds_log = logging.getLogger('tds')
+tds_log.info('Testing log info stuff')
+print 'tds_log handlers are: %r' % tds_log.handlers
+print '%r' % tds_log.handlers[0].stream
+print 'tds_log handler level is: %r' % tds_log.handlers[0].level
 
 # Some common basic data
 conf_dir = '/etc/tagops'
@@ -22,8 +30,46 @@ conf_params = {
 }
 
 
+def debug(f):
+    do_depth = 1
+
+    def wrapper(*a, **k):
+        name = f.func_name
+        filename = f.func_code.co_filename
+        line_number = f.func_code.co_firstlineno
+        typ = 'function'
+
+        spacer = do_depth * getattr(debug, 'depth', 0) * ' '
+
+        tds_log.log(5, '%(spacer)sEntering %(typ)s %(name)s '
+                       '(%(filename)s:%(line_number)s). args=%(a)r, '
+                       'kwargs=%(k)r' % locals())
+
+        try:
+            setattr(debug, 'depth', getattr(debug, 'depth', 0) + 1)
+            return_val = f(*a, **k)
+        except BaseException, e:
+            tds_log.log(5, '%(spacer)sLeaving %(typ)s %(name)s '
+                           '(%(filename)s:%(line_number)s). '
+                           'exception=%(e)r', locals())
+            raise
+        else:
+            tds_log.log(5, '%(spacer)sLeaving %(typ)s %(name)s '
+                           '(%(filename)s:%(line_number)s). '
+                           'returning=%(return_val)r' % locals())
+        finally:
+            setattr(debug, 'depth', getattr(debug, 'depth', 1) - 1)
+
+        return return_val
+
+    return wrapper
+
+
+@debug
 def load_conf_file(conf_file):
     """Load in the requested YAML configuration file"""
+
+    tds_log.debug(5, 'conf_file is: %s', conf_file)
 
     try:
         with open(conf_file) as fh:
@@ -33,13 +79,17 @@ def load_conf_file(conf_file):
                 raise ConfigurationError('YAML parse error: %s' % e)
     except IOError, e:
         raise ConfigurationError('Unable to access the configuration file '
-                                 '%s: e' % (conf_file, e))
+                                 '%s: %s' % (conf_file, e))
 
 
+@debug
 def verify_conf_file_section(cf_name, section, sub_cf_name=None):
     """Ensure the given section in the given configuration file
        is valid and complete and return values
     """
+
+    tds_log.debug(5, 'cf_name is: %s, section is: %s, sub_cf_name is: %s',
+                  cf_name, section, sub_cf_name)
 
     if sub_cf_name is None:
         conf_file = '%s/%s.yml' % (conf_dir, cf_name)
@@ -48,6 +98,8 @@ def verify_conf_file_section(cf_name, section, sub_cf_name=None):
 
     data = load_conf_file(conf_file)
     params = conf_params[cf_name][section]
+
+    tds_log.debug(5, 'params is: %s', params)
 
     for param in params:
         try:

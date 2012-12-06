@@ -1,24 +1,18 @@
 #!/usr/bin/env python
 
 import argparse
-import getpass
 import logging
-import os
-import pwd
+import os.path
 import sys
+import yaml
 
-import tds.authorize
 import tds.cmdline
-import tds.commands
 import tds.logging_wrapper as log_wrap
-import tds.utils
 import tds.version
 
-from tagopsdb.database import init_session
-from tagopsdb.exceptions import PermissionsException
-from tds.exceptions import AccessError, ConfigurationError, \
-                           NotImplementedError, WrongEnvironmentError, \
-                           WrongProjectTypeError
+
+conf_dir = '/etc/tagops'
+conf_log_params = [ 'syslog_facility', 'syslog_priority', ]
 
 
 def create_subparsers(parser):
@@ -62,157 +56,90 @@ def parse_command_line():
     return parser.parse_args()
 
 
-class TDS(object):
-    """ """
+def verify_logging_conf_file_info():
+    """Customized version of verify_conf_file_section() in tds.utils
+       to avoid circular dependencies with logging configuration
+    """
 
-    def __init__(self, args):
-        """Basic initialization"""
+    try:
+        with open(os.path.join(conf_dir, 'deploy.yml')) as fh:
+            try:
+                data = yaml.load(fh.read())
+            except yaml.parser.ParserError, e:
+                print 'YAML parse error: %s' % e
+                sys.exit(1)
+    except IOError, e:
+        print 'Unable to access the configuration file "deploy.yml": %s' % e
+        sys.exit(1)
 
-        self.args = args
-        self.log = None
-
-
-    def configure_logging(self):
-        """Configure logging for the application; set up both syslog and
-           console handlers
-        """
-
-        verbosity = self.args.verbose
-        sqla_level = logging.WARNING
-        log_prefix = True
-
-        if verbosity is None:
-            level = None
-            log_prefix = False   # Don't prefix for normal use
-        elif verbosity == 1:
-            level = 10
-        elif verbosity == 2:
-            level = 5
-        else:
-            level = 1
-            sqla_level = 1   # Ensure SQLAlchemy gives full log info
-
-        syslog_facility, syslog_priority = \
-            tds.utils.verify_conf_file_section('deploy', 'logging')
-
-        logging.setLoggerClass(log_wrap.Logger)
-
-        logger = logging.getLogger()
-        log_wrap.add_syslog(logger, 'syslog',
-                            facility=log_wrap.facilities[syslog_facility],
-                            priority=log_wrap.priorities[syslog_priority])
-        log_wrap.add_stream(logger, 'stderr', stream=sys.stderr,
-                            prefix=log_prefix)
-
-        tds_logger = logging.getLogger('tds')
-        log_wrap.add_stream(tds_logger, 'stdout', stream=sys.stdout,
-                            level=level, nostderr=True, prefix=log_prefix)
-
-        sqla_logger = logging.getLogger('sqlalchemy.engine')
-        sqla_logger.setLevel(1)
-        log_wrap.add_stream(sqla_logger, 'stdout', stream=sys.stdout,
-                            level=sqla_level, nostderr=True,
-                            prefix=log_prefix)
-
-        self.log = tds_logger
-
-
-    def check_user_auth(self):
-        """Verify the user is authorized to run the application"""
-
-        self.args.user_level = tds.authorize.get_access_level()
-
-        if self.args.user_level is None:
-            self.log.error('Your account (%s) is not allowed to run this '
-                           'application.\nPlease refer to your manager '
-                           'for assistance.' % self.args.user)
-            sys.exit(1)
-
-
-    def check_exclusive_options(self):
-        """Ensure certain options are exclusive and set parameter
-           to check for explicit hosts or application types
-        """
-
-        # Slight hack: ensure only one of '--hosts', '--apptypes'
-        # or '--all-apptypes' is used at a given time
-        excl = filter(None, (getattr(self.args, 'hosts', None),
-                             getattr(self.args, 'apptypes', None),
-                             getattr(self.args, 'all_apptypes', None)))
-
-        if len(excl) > 1:
-            self.log.error('Only one of the "--hosts", "--apptypes" or '
-                           '"--all-apptypes" options may be used at '
-                           'a given time')
-            sys.exit(1)
-
-        if not excl:
-            self.args.explicit = False
-        else:
-            self.args.explicit = True
-
-
-    def update_program_parameters(self):
-        """Set some additional program parameters"""
-
-        self.args.user = pwd.getpwuid(os.getuid()).pw_name
-        self.check_user_auth()
-
-        self.args.environment = \
-            tds.utils.verify_conf_file_section('deploy', 'env')
-        build_base, incoming, processing = \
-            tds.utils.verify_conf_file_section('deploy', 'repo')
-
-        self.args.repo = { 'build_base' : build_base,
-                           'incoming' : incoming,
-                           'processing' : processing, }
-
-
-    def initialize_db(self):
-        """Get user/password information for the database and connect
-           to the database
-        """
-
-        if self.args.dbuser:
-            db_user = self.args.dbuser
-            db_password = getpass.getpass('Enter DB password: ')
-        else:
-            db_user, db_password = \
-                tds.utils.verify_conf_file_section('dbaccess', 'db',
-                                           sub_cf_name=self.args.user_level)
-
+    for param in conf_log_params:
         try:
-            init_session(db_user, db_password)
-        except PermissionsException, e:
-            self.log.error('Access issue with database:\n%s' % e)
-            sys.exit(1)
+            data['logging'][param]
+        except KeyError:
+            print 'Missing entry "%s" in "logging" section of ' \
+                  'configuration file "deploy.yml"' % param
+
+    return [ data['logging'][x] for x in conf_log_params ]
 
 
-    def execute_command(self):
-        """Run the requested command for TDS"""
+def configure_logging(verbosity):
+    """Configure logging for the application; this will set up
+       the initial syslog and console loggers and handlers for
+       the application
+    """
 
-        cmd = getattr(tds.commands,
-                      self.args.command_name.capitalize())(self.log)
+    sqla_level = logging.WARNING
+    log_prefix = True
 
-        try:
-            getattr(cmd,
-                    self.args.subcommand_name.replace('-', '_'))(self.args)
-        except AccessError:
-            self.log.error('Your account (%s) does not have the appropriate '
-                           'permissions\nto run the requested command.'
-                           % args.user)
-            sys.exit(1)
-        except (ConfigurationError, NotImplementedError,
-                WrongEnvironmentError, WrongProjectTypeError), e:
-            self.log.error(e)
-            sys.exit(1)
+    if verbosity is None:
+        level = None
+        log_prefix = False   # Don't prefix for normal use
+    elif verbosity == 1:
+        level = 10
+    elif verbosity == 2:
+        level = 5
+    else:
+        level = 1
+        sqla_level = 1   # Ensure SQLAlchemy gives full log info
+
+    syslog_facility, syslog_priority = verify_logging_conf_file_info()
+
+    logging.setLoggerClass(log_wrap.Logger)
+
+    logger = logging.getLogger()
+    log_wrap.add_syslog(logger, 'syslog',
+                        facility=log_wrap.facilities[syslog_facility],
+                        priority=log_wrap.priorities[syslog_priority])
+    log_wrap.add_stream(logger, 'stderr', stream=sys.stderr,  
+                        prefix=log_prefix)
+
+    tds_logger = logging.getLogger('tds')
+    log_wrap.add_stream(tds_logger, 'stdout', stream=sys.stdout,
+                        level=level, nostderr=True, prefix=log_prefix)
+
+    sqla_logger = logging.getLogger('sqlalchemy.engine')
+    sqla_logger.setLevel(1)
+    log_wrap.add_stream(sqla_logger, 'stdout', stream=sys.stdout,
+                        level=sqla_level, nostderr=True,
+                        prefix=log_prefix)
+
+    tds_logger.log(100, 'Trying right after logging configuration')
+    print 'tds_logger handlers are: %r' % tds_logger.handlers
+    print 'tds_logger stream is: %r' % tds_logger.handlers[0].stream
+    print 'tds_logger handler level is: %r' % tds_logger.handlers[0].level
+    print 'tds_logger handler actual level is: %r' % tds_logger.getEffectiveLevel()
+    return tds_logger
 
 
 if __name__ == '__main__':
     args = parse_command_line()
+    args.log = configure_logging(args.verbose)
+    args.log.info('Testing initial log configuration')
 
-    prog = TDS(args)
-    prog.configure_logging()
+    # Must be done *after* logging is configured
+    import tds.main
+
+    prog = tds.main.TDS(args)
     prog.check_exclusive_options()
     prog.update_program_parameters()
     prog.initialize_db()

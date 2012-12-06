@@ -298,9 +298,9 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
         if prefix:
             format_string = '[%(levelname)s] ' + format_string
 
-        format = Formatter(format_string,
-                           user=getattr(logger, 'user', None),
-                           code=getattr(logger, 'code', None))
+    format = Formatter(format_string,
+                       user=getattr(logger, 'user', None),
+                       code=getattr(logger, 'code', None))
 
     handle.setFormatter(format)
 
