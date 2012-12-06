@@ -8,10 +8,6 @@ from tds.exceptions import ConfigurationError
 
 
 tds_log = logging.getLogger('tds')
-tds_log.info('Testing log info stuff')
-print 'tds_log handlers are: %r' % tds_log.handlers
-print '%r' % tds_log.handlers[0].stream
-print 'tds_log handler level is: %r' % tds_log.handlers[0].level
 
 # Some common basic data
 conf_dir = '/etc/tagops'
