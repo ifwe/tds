@@ -136,6 +136,7 @@ def configure_logging(verbosity, use_color):
 if __name__ == '__main__':
     args = parse_command_line()
     args.log = configure_logging(args.verbose, args.use_color)
+    args.log.debug(5, 'Program parameters: %r', args)
 
     # Must be done *after* logging is configured
     import tds.main

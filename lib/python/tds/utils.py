@@ -65,7 +65,7 @@ def debug(f):
 def load_conf_file(conf_file):
     """Load in the requested YAML configuration file"""
 
-    tds_log.debug(5, 'conf_file is: %s', conf_file)
+    tds_log.debug('Loading configuration file %r', conf_file)
 
     try:
         with open(conf_file) as fh:
@@ -84,21 +84,26 @@ def verify_conf_file_section(cf_name, section, sub_cf_name=None):
        is valid and complete and return values
     """
 
-    tds_log.debug(5, 'cf_name is: %s, section is: %s, sub_cf_name is: %s',
-                  cf_name, section, sub_cf_name)
+    tds_log.debug('Verifying section %r for configuration %r',
+                  section, cf_name)
 
     if sub_cf_name is None:
         conf_file = '%s/%s.yml' % (conf_dir, cf_name)
     else:
         conf_file = '%s/%s.%s.yml' % (conf_dir, cf_name, sub_cf_name)
 
-    data = load_conf_file(conf_file)
-    params = conf_params[cf_name][section]
+    tds_log.debug(5, 'Configuration file is: %s', conf_file)
 
-    tds_log.debug(5, 'params is: %s', params)
+    data = load_conf_file(conf_file)
+    tds_log.debug(5, 'Data is: %r', data)
+
+    params = conf_params[cf_name][section]
+    tds_log.debug(5, 'Params are: %s', ', '.join(params))
 
     for param in params:
         try:
+            tds_log.debug(5, 'Checking for parameter %r in section %r',
+                          param, section)
             data[section][param]
         except KeyError:
             raise ConfigurationError('Missing entry "%s" in "%s" section '
