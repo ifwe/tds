@@ -50,6 +50,9 @@ def parse_command_line():
     parser.add_argument('--dbuser', help='Specify user to use to connect '
                                          'to TagOpsDB',
                                     default=None)
+    parser.add_argument('--disable-color', dest='use_color',
+                        action='store_false',
+                        help='Disable color coding when in verbose mode(s)')
 
     create_subparsers(parser)
 
@@ -82,7 +85,7 @@ def verify_logging_conf_file_info():
     return [ data['logging'][x] for x in conf_log_params ]
 
 
-def configure_logging(verbosity):
+def configure_logging(verbosity, use_color):
     """Configure logging for the application; this will set up
        the initial syslog and console loggers and handlers for
        the application
@@ -92,8 +95,10 @@ def configure_logging(verbosity):
     log_prefix = True
 
     if verbosity is None:
+        # No prefix or color for normal runs
         level = None
-        log_prefix = False   # Don't prefix for normal use
+        log_prefix = False
+        use_color = False
     elif verbosity == 1:
         level = 10
     elif verbosity == 2:
@@ -112,24 +117,25 @@ def configure_logging(verbosity):
                         facility=log_wrap.facilities[syslog_facility],
                         priority=log_wrap.priorities[syslog_priority])
     log_wrap.add_stream(logger, 'stderr', stream=sys.stderr,  
-                        prefix=log_prefix)
+                        prefix=log_prefix, use_color=use_color)
 
     tds_logger = logging.getLogger('tds')
     log_wrap.add_stream(tds_logger, 'stdout', stream=sys.stdout,
-                        level=level, nostderr=True, prefix=log_prefix)
+                        level=level, nostderr=True, prefix=log_prefix,
+                        use_color=use_color)
 
     sqla_logger = logging.getLogger('sqlalchemy.engine')
     sqla_logger.setLevel(1)
     log_wrap.add_stream(sqla_logger, 'stdout', stream=sys.stdout,
                         level=sqla_level, nostderr=True,
-                        prefix=log_prefix)
+                        prefix=log_prefix, use_color=use_color)
 
     return tds_logger
 
 
 if __name__ == '__main__':
     args = parse_command_line()
-    args.log = configure_logging(args.verbose)
+    args.log = configure_logging(args.verbose, args.use_color)
 
     # Must be done *after* logging is configured
     import tds.main

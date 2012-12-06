@@ -53,6 +53,27 @@ def _extract_from_dict(dict, key, default=None):
     return value
 
 
+class ColorCodes(object):
+    """A simple class to help add color to the logging output (to be
+       used for stream handlers, not syslog handlers!) by setting up
+       attributes to use for setting ANSI escape sequences and mapping
+       them to the various logging levels
+    """
+
+    END = '\033[0m'   # Turn off color
+    RED = '\033[1;31m'
+    GREEN = '\033[1;32m'
+    YELLOW = '\033[1;33m'
+    PURPLE = '\033[1;35m'
+    CYAN = '\033[1;36m'
+
+    c_map = { 'DEBUG' : CYAN,
+              'INFO' : GREEN,
+              'WARNING' : YELLOW,
+              'ERROR' : RED,
+              'CRITICAL' : PURPLE, }
+
+
 class MaxLevelFilter(logging.Filter):
     """Setting a 'maximum' level to log at, allows to set a logging
        'range' for a given handler (e.g. stdout not showing stderr
@@ -79,6 +100,7 @@ class Formatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
         """Basic initialization"""
 
+        use_color = _extract_from_dict(kwargs, 'use_color')
         user = _extract_from_dict(kwargs, 'user')
         code = _extract_from_dict(kwargs, 'code')
 
@@ -86,6 +108,8 @@ class Formatter(logging.Formatter):
 
         self.set_user(user)
         self.set_code(code)
+
+        self.use_color = use_color
 
 
     def set_user(self, user):
@@ -122,7 +146,18 @@ class Formatter(logging.Formatter):
         else:
             record.code = ''
 
-        return logging.Formatter.format(self, record)
+        # Set color
+        cc = ColorCodes()
+        levelname = record.levelname
+
+        if self.use_color and levelname in cc.c_map.keys():
+            level_color = cc.c_map[levelname]
+            message = logging.Formatter.format(self, record)
+            message = level_color + message + cc.END
+        else:
+            message = logging.Formatter.format(self, record)
+
+        return message
 
 
 class Logger(logging.Logger, object):
@@ -252,7 +287,7 @@ def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
         handle = UTFFixedSysLogHandler(facility=facility)
 
     format = Formatter('%(name)s[%(process)d]%(user)s%(code)s: '
-                       '%(levelname)s: %(message)s',
+                       '%(levelname)s: %(message)s', use_color=False,
                        user=getattr(logger, 'user', None),
                        code=getattr(logger, 'code', None))
 
@@ -279,7 +314,7 @@ def delete_syslog(logger, fh_name):
 
 
 def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
-               syslog_format=False, prefix=False):
+               syslog_format=False, prefix=False, use_color=False):
     """Set up stream (stdout and stderr) logging"""
 
     if stream is None:
@@ -298,7 +333,7 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
         if prefix:
             format_string = '[%(levelname)s] ' + format_string
 
-    format = Formatter(format_string,
+    format = Formatter(format_string, use_color=use_color,
                        user=getattr(logger, 'user', None),
                        code=getattr(logger, 'code', None))
 
