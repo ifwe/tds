@@ -107,6 +107,7 @@ def configure_logging(verbosity):
     logging.setLoggerClass(log_wrap.Logger)
 
     logger = logging.getLogger()
+    logger.setLevel(1)
     log_wrap.add_syslog(logger, 'syslog',
                         facility=log_wrap.facilities[syslog_facility],
                         priority=log_wrap.priorities[syslog_priority])
@@ -123,18 +124,12 @@ def configure_logging(verbosity):
                         level=sqla_level, nostderr=True,
                         prefix=log_prefix)
 
-    tds_logger.log(100, 'Trying right after logging configuration')
-    print 'tds_logger handlers are: %r' % tds_logger.handlers
-    print 'tds_logger stream is: %r' % tds_logger.handlers[0].stream
-    print 'tds_logger handler level is: %r' % tds_logger.handlers[0].level
-    print 'tds_logger handler actual level is: %r' % tds_logger.getEffectiveLevel()
     return tds_logger
 
 
 if __name__ == '__main__':
     args = parse_command_line()
     args.log = configure_logging(args.verbose)
-    args.log.info('Testing initial log configuration')
 
     # Must be done *after* logging is configured
     import tds.main
