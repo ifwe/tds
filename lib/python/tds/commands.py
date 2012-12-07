@@ -40,10 +40,10 @@ def catch_exceptions(meth):
 
 
 class Repository(object):
-    """ """
+    """Commands to manage the deployment repository"""
 
     def __init__(self, logger):
-        """ """
+        """Basic initialization"""
 
         self.log = logger
 
@@ -51,7 +51,7 @@ class Repository(object):
     @tds.utils.debug
     @catch_exceptions
     def add(self, args):
-        """ """
+        """Add a given project to the repository"""
 
         self.log.debug('Adding application %r to repository', args.project)
 
@@ -94,7 +94,7 @@ class Repository(object):
     @tds.utils.debug
     @catch_exceptions
     def delete(self, args):
-        """ """
+        """Remove a given project from the repository"""
 
         self.log.debug('Removing application %r from repository',
                        args.project)
@@ -114,7 +114,7 @@ class Repository(object):
     @tds.utils.debug
     @catch_exceptions
     def list(self, args):
-        """ """
+        """Show information for requested projects (or all projects)"""
 
         self.log.debug('Listing information for requested application(s) '
                        'in the repository')
@@ -145,10 +145,10 @@ class Repository(object):
 
 
 class Package(object):
-    """ """
+    """Commands to manage packages for supported applications"""
 
     def __init__(self, logger):
-        """ """
+        """Basic initialization"""
 
         self.host = socket.gethostname()
         self.log = logger
@@ -180,7 +180,10 @@ class Package(object):
     @tds.utils.debug
     @catch_exceptions
     def add(self, args):
-        """ """
+        """Add a given version of a package for a given project"""
+
+        self.log.debug('Adding version %s of the package for project "%s" '
+                       'to software repository', args.version, args.project)
 
         tds.authorize.verify_access(args.user_level, 'dev')
 
@@ -189,7 +192,7 @@ class Package(object):
             # This needs to be changed at some point
             package.add_package(args.project, args.version, '1', args.user)
         except PackageException, e:
-            print e
+            self.log.error(e)
             return
 
         # Get repo information for package
@@ -206,47 +209,62 @@ class Package(object):
         # Revision hardcoded for now
         src_rpm = os.path.join(build_base, app.path, '%s-%s-1.noarch.rpm'
                                % (app.pkg_name, args.version))
+        self.log.debug(5, 'Source RPM is: %s', src_rpm)
         queued_rpm = os.path.join(incoming_dir, '%s-%s-1.noarch.rpm'
                                   % (app.pkg_name, args.version))
+        self.log.debug(5, 'Queued RPM is: %s', queued_rpm)
         process_rpm = os.path.join(processing_dir, '%s-%s-1.noarch.rpm'
                                    % (app.pkg_name, args.version))
+        self.log.debug(5, 'Processed RPM is: %s', process_rpm)
 
-        print 'Checking for existance of file "%s"...' % src_rpm
+        self.log.info('Checking for existance of file "%s"...', src_rpm)
 
         if not os.path.isfile(src_rpm):
-            print 'File "%s" is not found in "%s"' % (src_rpm, build_base)
+            self.log.info('File "%s" is not found in "%s"',
+                          src_rpm, build_base)
             return
 
         try:
-            print 'Build host "%s" built RPM successfully' % app.build_host
-            print 'Linking RPM into incoming directory...'
+            self.log.info('Build host "%s" built RPM successfully',
+                          app.build_host)
+            self.log.info('Linking RPM into incoming directory...')
             os.link(src_rpm, queued_rpm)
         except Exception, e:   # Really need to narrow the exception down
-            print e
+            self.log.error(e)
             return
 
-        print 'RPM successfully linked, waiting for repository server'
-        print '  to update deploy repo...'
+        self.log.info('RPM successfully linked, waiting for software '
+                      'repository server')
+        self.log.info('  to update deploy repo...')
 
+        self.log.debug(5, 'Setting up signal handler')
         signal.signal(signal.SIGALRM, self.processing_handler)
         signal.alarm(60)
 
+        self.log.debug(5, 'Waiting for RPM to be removed from queued '
+                       'directory')
         self.wait_for_file_removal(queued_rpm)
+        self.log.debug(5, 'Waiting for RPM to be removed from processing '
+                       'directory')
         self.wait_for_file_removal(process_rpm)
 
         signal.alarm(0)
+        self.log.info('Repository successfully updated')
 
         Session.commit()
         self.log.debug('Committed database changes')
 
-        print 'Added package for project "%s", version %s' \
-              % (args.project, args.version)
+        self.log.info('Added package for project "%s", version %s',
+                      args.project, args.version)
 
 
     @tds.utils.debug
     @catch_exceptions
     def delete(self,args):
-        """ """
+        """Delete a given version of a package for a given project"""
+
+        self.log.debug('Deleting version %s of the package for project "%s" '
+                       'from software repository', args.version, args.project)
 
         tds.authorize.verify_access(args.user_level, 'dev')
 
@@ -265,15 +283,20 @@ class Package(object):
     @tds.utils.debug
     @catch_exceptions
     def list(self, args):
-        """ """
+        """Show information for all existing packages in the software
+           repository for requested projects (or all projects)
+        """
+
+        self.log.debug('Listing information for all existing packages '
+                       'for projects: %s', ', '.join(args.projects))
 
         tds.authorize.verify_access(args.user_level, 'dev')
 
         for pkg in package.list_packages(args.projects):
-            print 'Project: %s' % pkg.pkg_name
-            print 'Version: %s' % pkg.version
-            print 'Revision: %s' % pkg.revision
-            print ''
+            self.log.info('Project: %s', pkg.pkg_name)
+            self.log.info('Version: %s', pkg.version)
+            self.log.info('Revision: %s', pkg.revision)
+            self.log.info('')
 
 
 class BaseDeploy(object):
