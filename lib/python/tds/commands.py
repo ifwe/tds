@@ -48,9 +48,12 @@ class Repository(object):
         self.log = logger
 
 
+    @tds.utils.debug
     @catch_exceptions
     def add(self, args):
         """ """
+
+        self.log.debug('Adding application %r to repository', args.project)
 
         tds.authorize.verify_access(args.user_level, 'admin')
 
@@ -61,63 +64,84 @@ class Repository(object):
                                            args.pkgname, args.project,
                                            args.pkgpath, args.buildhost,
                                            args.env_specific)
+            self.log.debug(5, 'Application\'s Location ID is: %d', loc_id)
+
+            self.log.debug('Mapping Location ID to various applications')
             repo.add_app_packages_mapping(loc_id, args.apptypes)
         except RepoException, e:
-            print e
+            self.log.error(e)
             return
 
         if args.config:
+            self.log.debug('Adding application %r to config project %r',
+                           args.project, args.config)
+
             try:
                 config = repo.find_app_location(args.config)
+
+                self.log.debug(5, 'Config project %r\'s Location ID is: %s',
+                               config.pkgLocationID)
                 repo.add_app_packages_mapping(config.pkgLocationID,
                                               args.apptypes)
             except RepoException, e:
-                print e
+                self.log.error(e)
                 return
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def delete(self, args):
         """ """
+
+        self.log.debug('Removing application %r from repository',
+                       args.project)
 
         tds.authorize.verify_access(args.user_level, 'admin')
 
         try:
             repo.delete_app_location(args.project)
         except RepoException, e:
-            print e
+            self.log.error(e)
             return
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def list(self, args):
         """ """
 
+        self.log.debug('Listing information for requested application(s) '
+                       'in the repository')
+
         tds.authorize.verify_access(args.user_level, 'dev')
 
         for app in repo.list_app_locations(args.projects):
-            print 'Project: %s' % app.app_name
-            print 'Project type: %s' % app.project_type
-            print 'Package type: %s' % app.pkg_type
-            print 'Package name: %s' % app.pkg_name
-            print 'Path: %s' % app.path
-            print 'Build host: %s' % app.build_host
+            self.log.info('Project: %s', app.app_name)
+            self.log.info('Project type: %s', app.project_type)
+            self.log.info('Package type: %s', app.pkg_type)
+            self.log.info('Package name: %s', app.pkg_name)
+            self.log.info('Path: %s', app.path)
+            self.log.info('Build host: %s', app.build_host)
 
+            self.log.debug(5, 'Finding application types for project "%s"',
+                           app.app_name)
             app_defs = repo.find_app_packages_mapping(app.app_name)
             app_types = sorted([ x.appType for x in app_defs ])
-            print 'App types: %s' % ', '.join(app_types)
+            self.log.info('App types: %s', ', '.join(app_types))
 
             if app.environment:
                 is_env = 'Yes'
             else:
                 is_env = 'No'
 
-            print 'Environment specific: %s' % is_env
-            print ''
+            self.log.info('Environment specific: %s', is_env)
+            self.log.info('')
 
 
 class Package(object):
@@ -153,6 +177,7 @@ class Package(object):
                     break
 
 
+    @tds.utils.debug
     @catch_exceptions
     def add(self, args):
         """ """
@@ -212,11 +237,13 @@ class Package(object):
         signal.alarm(0)
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
         print 'Added package for project "%s", version %s' \
               % (args.project, args.version)
 
 
+    @tds.utils.debug
     @catch_exceptions
     def delete(self,args):
         """ """
@@ -232,8 +259,10 @@ class Package(object):
             return
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def list(self, args):
         """ """
@@ -1221,6 +1250,7 @@ class BaseDeploy(object):
         return project_type
 
 
+    @tds.utils.debug
     @catch_exceptions
     def invalidate(self, args):
         """ """
@@ -1243,8 +1273,10 @@ class BaseDeploy(object):
         self.perform_invalidations(app_dep_map)
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def show(self, args):
         """ """
@@ -1271,6 +1303,7 @@ class BaseDeploy(object):
                                    self.envs[args.environment])
 
 
+    @tds.utils.debug
     @catch_exceptions
     def validate(self, args):
         """ """
@@ -1294,6 +1327,7 @@ class BaseDeploy(object):
         self.perform_validations(args, app_dep_map)
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
 class Config(BaseDeploy):
@@ -1315,6 +1349,7 @@ class Config(BaseDeploy):
         return True
 
 
+    @tds.utils.debug
     @catch_exceptions
     def add_apptype(self, args):
         """Add a specific app type to the given config project"""
@@ -1331,8 +1366,10 @@ class Config(BaseDeploy):
             return
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def create(self, args):
         """Add a new config project to the system"""
@@ -1355,8 +1392,10 @@ class Config(BaseDeploy):
             return
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def delete(self, args):
         """Remove a config project from the system"""
@@ -1372,8 +1411,10 @@ class Config(BaseDeploy):
             return
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def delete_apptype(self, args):
         """Delete a specific app type from the given config project"""
@@ -1391,8 +1432,10 @@ class Config(BaseDeploy):
             return
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def push(self, args):
         """ """
@@ -1419,8 +1462,10 @@ class Config(BaseDeploy):
         self.perform_deployments(args, pkg_id, app_host_map, app_dep_map)
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def repush(self, args):
         """ """
@@ -1443,8 +1488,10 @@ class Config(BaseDeploy):
         self.perform_redeployments(args, dep_id, app_host_map, app_dep_map)
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def revert(self, args):
         """ """
@@ -1473,6 +1520,7 @@ class Config(BaseDeploy):
         self.perform_rollbacks(self, args, app_pkg_map, app_dep_map)
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
 class Deploy(BaseDeploy):
@@ -1510,6 +1558,7 @@ class Deploy(BaseDeploy):
         return True
 
 
+    @tds.utils.debug
     @catch_exceptions
     def force_production(self, args):
         """ """
@@ -1520,6 +1569,7 @@ class Deploy(BaseDeploy):
                                   'implemented')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def force_staging(self, args):
         """ """
@@ -1530,6 +1580,7 @@ class Deploy(BaseDeploy):
                                   'implemented')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def promote(self, args):
         """ """
@@ -1551,8 +1602,10 @@ class Deploy(BaseDeploy):
         self.perform_deployments(args, pkg_id, app_host_map, app_dep_map)
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def redeploy(self, args):
         """ """
@@ -1575,8 +1628,10 @@ class Deploy(BaseDeploy):
         self.perform_redeployments(args, dep_id, app_host_map, app_dep_map)
 
         Session.commit()
+        self.log.debug('Committed database changes')
 
 
+    @tds.utils.debug
     @catch_exceptions
     def restart(self, args):
         """ """
@@ -1598,6 +1653,7 @@ class Deploy(BaseDeploy):
         self.perform_restarts(args, dep_id, app_host_map, app_dep_map)
 
 
+    @tds.utils.debug
     @catch_exceptions
     def rollback(self, args):
         """ """
@@ -1626,3 +1682,4 @@ class Deploy(BaseDeploy):
         self.perform_rollbacks(args, app_pkg_map, app_dep_map)
 
         Session.commit()
+        self.log.debug('Committed database changes')
