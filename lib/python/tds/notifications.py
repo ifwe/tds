@@ -51,14 +51,16 @@ class Notifications(object):
 
         tds_log.debug('Sending email notification(s)')
 
+        receiver_emails = [ self.sender_addr, self.receiver_addr ]
+
         msg = MIMEText(msg_text)
 
         msg['Subject'] = msg_subject
         msg['From'] = self.sender_addr
-        msg['To'] = self.receiver_addr
+        msg['To'] = ', '.join(receiver_emails)
 
         s = smtplib.SMTP('localhost')
-        s.sendmail(self.sender, [ self.receiver_addr ], msg.as_string())
+        s.sendmail(self.sender, receiver_emails, msg.as_string())
         s.quit()
 
 
