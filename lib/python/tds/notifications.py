@@ -41,7 +41,7 @@ class Notifications(object):
         self.hipchat_rooms.extend(deploy.find_hipchat_rooms_for_app(project,
                                                                     apptypes))
         tds_log.debug(5, 'HipChat rooms to notify: %s',
-                      ', '.self.hipchat_rooms)
+                      ', '.join(self.hipchat_rooms))
         tds_log.debug(5, 'HipChat token: %s', self.hipchat_token)
 
 
