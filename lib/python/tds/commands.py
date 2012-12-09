@@ -293,7 +293,10 @@ class Package(object):
 
         tds.authorize.verify_access(args.user_level, 'dev')
 
-        for pkg in package.list_packages(args.projects):
+        packages_sorted = sorted(package.list_packages(args.projects),
+                                 key=lambda pkg: int(pkg.version))
+
+        for pkg in packages_sorted:
             self.log.info('Project: %s', pkg.pkg_name)
             self.log.info('Version: %s', pkg.version)
             self.log.info('Revision: %s', pkg.revision)
@@ -1049,8 +1052,9 @@ class BaseDeploy(object):
             app_host_map = None   # No need for this for tiers
 
         self.log.debug(5, 'Package ID is: %s', pkg_id)
-        self.log.debug(5, 'Application IDs are: %s', ', '.join(app_ids))
-        self.log.debug(5, 'Deployment/application map is: %r', app_dep_map)
+        self.log.debug(5, 'Application IDs are: %s',
+                       ', '.join([ str(x) for x in app_ids ]))
+        self.log.debug(5, 'Host/application map is: %r', app_host_map)
 
         return (pkg_id, app_ids, app_host_map)
 
@@ -1065,7 +1069,7 @@ class BaseDeploy(object):
             app_ids = [ x.AppID for x
                         in repo.find_app_packages_mapping(args.project) ]
             self.log.debug(5, 'Application IDs for projects are: %s',
-                           ', '.join(app_ids))
+                           ', '.join([ str(x) for x in app_ids ]))
         except RepoException, e:
             self.log.error(e)
             sys.exit(1)
@@ -1075,14 +1079,14 @@ class BaseDeploy(object):
                 app_defs = [ deploy.find_app_by_apptype(x)
                              for x in args.apptypes ]
                 self.log.debug(5, 'Definitions for applications types are: '
-                               '%s', ', '.join(app_defs))
+                               '%s', ', '.join([ repr(x) for x in app_defs ]))
             except DeployException, e:
                 self.log.error(e)
                 sys.exit(1)
 
             new_app_ids = [ x.AppID for x in app_defs ]
             self.log.debug(5, 'Application IDs for given defintions are: %s',
-                           ', '.join(new_app_ids))
+                           ', '.join([ str(x) for x in new_app_ids ]))
 
             if set(new_app_ids).issubset(set(app_ids)):
                 app_ids = new_app_ids
@@ -1091,7 +1095,8 @@ class BaseDeploy(object):
                               'type for the current deployment')
                 sys.exit(1)
 
-        self.log.debug(5, 'Final application IDs are: %s', ', '.join(app_ids))
+        self.log.debug(5, 'Final application IDs are: %s',
+                       ', '.join([ str(x) for x in app_ids ]))
 
         return app_ids
 
@@ -1494,7 +1499,8 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    def show_host_deployments(self, project, version, revision, env):
+    def show_host_deployments(self, project, version, revision, apptypes,
+                              env):
         """Show information for current deployment for a given host
            (or hosts)
         """
@@ -1504,7 +1510,8 @@ class BaseDeploy(object):
 
         host_deps = deploy.list_host_deployment_info(project, env,
                                                      version=version,
-                                                     revision=revision)
+                                                     revision=revision,
+                                                     apptypes=apptypes)
 
         if not host_deps:
             self.log.info('No deployments to hosts for this application '
@@ -1604,7 +1611,8 @@ class BaseDeploy(object):
             return (pkg_id, app_host_map)
         else:
             self.log.debug(5, 'Verification is for application tiers...')
-            self.log.debut(5, 'Applications IDs are: %s', ', '.join(app_ids))
+            self.log.debug(5, 'Applications IDs are: %s',
+                           ', '.join([ str(x) for x in app_ids ]))
 
             return (pkg_id, app_ids)
 
@@ -1686,7 +1694,7 @@ class BaseDeploy(object):
                                   self.envs[args.environment])
         # Revision is hardcoded to '1' for now
         self.show_host_deployments(args.project, args.version, '1',
-                                   self.envs[args.environment])
+                                   args.apptypes, self.envs[args.environment])
 
 
     @tds.utils.debug
