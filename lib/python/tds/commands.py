@@ -826,7 +826,7 @@ class BaseDeploy(object):
             else:
                 last_app_dep, last_pkg_id = last_dep_info
                 self.log.debug(5, 'Last application deployment is: %r',
-                               app_dep)
+                               last_app_dep)
                 self.log.debug(5, 'Last package ID is: %s', last_pkg_id)
 
                 app_pkg_map[app_id] = last_pkg_id
@@ -1942,7 +1942,7 @@ class Config(BaseDeploy):
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
                                                             app_dep_map)
         self.send_notifications(args)
-        self.perform_rollbacks(self, args, app_pkg_map, app_dep_map)
+        self.perform_rollbacks(args, app_pkg_map, app_dep_map)
 
         Session.commit()
         self.log.debug('Committed database changes')
