@@ -177,6 +177,10 @@ config_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for config project'),
              ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each push'),
+                ('type', int),
+             ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
                 ('metavar', 'HOST'),
@@ -199,6 +203,10 @@ config_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each repush'),
+                ('type', int),
+             ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for redeployment'),
                 ('metavar', 'HOST'),
@@ -220,6 +228,10 @@ config_data = odict([
         ('subargs', odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
+             ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each revert'),
+                ('type', int),
              ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for reversion'),
@@ -292,6 +304,10 @@ deploy_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
              ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each deploy'),
+                ('type', int),
+             ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
                 ('metavar', 'HOST'),
@@ -316,6 +332,10 @@ deploy_data = odict([
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
+                ('type', int),
+             ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each deploy'),
                 ('type', int),
              ])),
             (('--hosts',), odict([
@@ -365,6 +385,10 @@ deploy_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
              ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each deploy'),
+                ('type', int),
+             ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
                 ('metavar', 'HOST'),
@@ -386,6 +410,10 @@ deploy_data = odict([
         ('subargs', odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
+             ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each redeploy'),
+                ('type', int),
              ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for redeployment'),
@@ -409,6 +437,10 @@ deploy_data = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
              ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each restart'),
+                ('type', int),
+             ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for restart'),
                 ('metavar', 'HOST'),
@@ -430,6 +462,10 @@ deploy_data = odict([
         ('subargs', odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
+             ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each rollback'),
+                ('type', int),
              ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for rollback'),
