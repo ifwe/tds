@@ -566,6 +566,10 @@ class BaseDeploy(object):
 
                 self.log.debug(5, 'Committed database (nested) change')
 
+            if args.delay:
+                self.log.debug(5, 'Sleeping for %d seconds...', args.delay)
+                time.sleep(args.delay)
+
         # If any hosts failed, show failure information for each
         if failed_hosts:
             self.log.info('Some hosts had failures:\n')
@@ -1405,6 +1409,10 @@ class BaseDeploy(object):
                 self.log.debug(5, 'Failed to restart application on host %r',
                                dep_host.hostname)
                 failed_hosts.append((dep_host.hostname, info))
+
+            if args.delay:
+                self.log.debug(5, 'Sleeping for %d seconds...', args.delay)
+                time.sleep(args.delay)
 
         # If any hosts failed, show failure information for each
         if failed_hosts:
