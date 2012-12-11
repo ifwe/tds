@@ -873,7 +873,7 @@ class BaseDeploy(object):
 
             if ok:
                 # Ensure tier state is consistent
-                result, missing, diffs, not_ok = \
+                result, missing, diffs, not_ok_hostnames = \
                     self.check_tier_state(args, pkg_id, app_dep)
 
                 if result != 'ok':
@@ -893,7 +893,7 @@ class BaseDeploy(object):
 
                     if not_ok:
                         self.log.info('  Hosts not in an "ok" state:')
-                        self.log.info('    %s', ', '.join(hostnames))
+                        self.log.info('    %s', ', '.join(not_ok_hostnames))
 
                     if args.force:
                         self.log.info('The "--force" option was used, '
