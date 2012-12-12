@@ -427,7 +427,7 @@ class BaseDeploy(object):
         not_ok_hostnames = [ x.hostname for x in not_ok_hosts ]
 
         if not_ok_hostnames:
-            self.log.debug(5, 'Hosts with failed deployments are: ',
+            self.log.debug(5, 'Hosts with failed deployments are: %s',
                            ', '.join(not_ok_hostnames))
 
         if (missing_deps or version_diffs or not_ok_hosts):
@@ -891,7 +891,7 @@ class BaseDeploy(object):
                                       'the one being validated:')
                         self.log.info('    %s', ', '.join(diffs))
 
-                    if not_ok:
+                    if not_ok_hostnames:
                         self.log.info('  Hosts not in an "ok" state:')
                         self.log.info('    %s', ', '.join(not_ok_hostnames))
 
