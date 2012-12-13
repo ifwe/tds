@@ -507,7 +507,7 @@ class BaseDeploy(object):
 
         # widgets for progress bar
         widgets = [ 'Completed: ', progressbar.Counter(),
-                    ' out of %d' % total_hosts,
+                    ' out of %d hosts' % total_hosts,
                     ' (', progressbar.Timer(), ', ', progressbar.ETA(), ')' ]
 
         pbar = progressbar.ProgressBar(widgets=widgets,
@@ -585,6 +585,8 @@ class BaseDeploy(object):
             if args.delay:
                 self.log.debug(5, 'Sleeping for %d seconds...', args.delay)
                 time.sleep(args.delay)
+
+        pbar.finish()
 
         # If any hosts failed, show failure information for each
         if failed_hosts:
