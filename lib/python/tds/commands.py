@@ -11,6 +11,7 @@ import time
 from datetime import datetime, timedelta
 
 import json
+import progressbar
 
 from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException, PackageException, \
@@ -500,7 +501,17 @@ class BaseDeploy(object):
 
         self.log.debug('Performing host deployments')
 
+        total_hosts = len(dep_hosts)
+        host_count = 1
         failed_hosts = []
+
+        # widgets for progress bar
+        widgets = [ 'Completed: ', progressbar.Counter(),
+                    ' out of %d' % total_hosts,
+                    ' (', progressbar.Timer(), ', ', progressbar.ETA(), ')' ]
+
+        pbar = progressbar.ProgressBar(widgets=widgets,
+                                       maxval=total_hosts).start()
 
         for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
             pkg = deploy.find_app_by_depid(dep_id)
@@ -565,6 +576,11 @@ class BaseDeploy(object):
                     failed_hosts.append((dep_host.hostname, info))
 
                 self.log.debug(5, 'Committed database (nested) change')
+
+            if args.verbose is None:
+                pbar.update(host_count)
+
+            host_count += 1
 
             if args.delay:
                 self.log.debug(5, 'Sleeping for %d seconds...', args.delay)
