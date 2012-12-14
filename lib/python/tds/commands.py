@@ -1668,6 +1668,51 @@ class BaseDeploy(object):
 
     @tds.utils.debug
     @catch_exceptions
+    def add_apptype(self, args):
+        """Add a specific application type to the given project"""
+
+        self.log.debug('Adding application type for project')
+
+        tds.authorize.verify_access(args.user_level, 'admin')
+
+        self.proj_type = self.verify_project_type(args.project)
+
+        try:
+            app = repo.find_app_location(args.project)
+            repo.add_app_packages_mapping(app.pkgLocationID, [args.apptype])
+        except RepoException, e:
+            self.log.error(e)
+            return
+
+        Session.commit()
+        self.log.debug('Committed database changes')
+
+
+    @tds.utils.debug
+    @catch_exceptions
+    def delete_apptype(self, args):
+        """Delete a specific application type from the given project"""
+
+        self.log.debug('Removing application type for project')
+
+        tds.authorize.verify_access(args.user_level, 'admin')
+
+        self.proj_type = self.verify_project_type(args.project)
+
+        try:
+            app = repo.find_app_location(args.project)
+            repo.delete_app_packages_mapping(app.pkgLocationID,
+                                             [args.apptype])
+        except RepoException, e:
+            self.log.error(e)
+            return
+
+        Session.commit()
+        self.log.debug('Committed database changes')
+
+
+    @tds.utils.debug
+    @catch_exceptions
     def invalidate(self, args):
         """Invalidate a given version of a given project"""
 
@@ -1779,28 +1824,6 @@ class Config(BaseDeploy):
 
     @tds.utils.debug
     @catch_exceptions
-    def add_apptype(self, args):
-        """Add a specific app type to the given config project"""
-
-        self.log.debug('Adding application type for config project')
-
-        tds.authorize.verify_access(args.user_level, 'admin')
-
-        self.proj_type = self.verify_project_type(args.project)
-
-        try:
-            app = repo.find_app_location(args.project)
-            repo.add_app_packages_mapping(app.pkgLocationID, [args.apptype])
-        except RepoException, e:
-            self.log.error(e)
-            return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-
-    @tds.utils.debug
-    @catch_exceptions
     def create(self, args):
         """Add a new config project to the system"""
 
@@ -1842,29 +1865,6 @@ class Config(BaseDeploy):
 
         try:
             repo.delete_app_location(args.project)
-        except RepoException, e:
-            self.log.error(e)
-            return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-
-    @tds.utils.debug
-    @catch_exceptions
-    def delete_apptype(self, args):
-        """Delete a specific app type from the given config project"""
-
-        self.log.debug('Removing application type for config project')
-
-        tds.authorize.verify_access(args.user_level, 'admin')
-
-        self.proj_type = self.verify_project_type(args.project)
-
-        try:
-            app = repo.find_app_location(args.project)
-            repo.delete_app_packages_mapping(app.pkgLocationID,
-                                             [args.apptype])
         except RepoException, e:
             self.log.error(e)
             return

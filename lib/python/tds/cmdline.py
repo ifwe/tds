@@ -294,6 +294,28 @@ config_data = odict([
 ])
 
 deploy_data = odict([
+    ('add-apptype', odict([
+        ('help', 'Add app type to a project'),
+        ('subargs', odict([
+            (('apptype',), odict([
+                ('help', 'App type to add to project'),
+             ])),
+            (('project',), odict([
+                ('help', 'Name of project in system'),
+             ])),
+         ])),
+     ])),
+    ('delete-apptype', odict([
+        ('help', 'Remove app type from a project'),
+        ('subargs', odict([
+            (('apptype',), odict([
+                ('help', 'App type to remove from project'),
+             ])),
+            (('project',), odict([
+                ('help', 'Name of project in system'),
+             ])),
+         ])),
+     ])),
     ('force-production', odict([
         ('help', 'Overriding deployment direct to production'),
         ('subargs', odict([
