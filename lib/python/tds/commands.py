@@ -510,8 +510,9 @@ class BaseDeploy(object):
                     ' out of %d hosts' % total_hosts,
                     ' (', progressbar.Timer(), ', ', progressbar.ETA(), ')' ]
 
-        pbar = progressbar.ProgressBar(widgets=widgets,
-                                       maxval=total_hosts).start()
+        if args.verbose is None:
+            pbar = progressbar.ProgressBar(widgets=widgets,
+                                           maxval=total_hosts).start()
 
         for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
             pkg = deploy.find_app_by_depid(dep_id)
@@ -586,7 +587,8 @@ class BaseDeploy(object):
                 self.log.debug(5, 'Sleeping for %d seconds...', args.delay)
                 time.sleep(args.delay)
 
-        pbar.finish()
+        if args.verbose is None:
+            pbar.finish()
 
         # If any hosts failed, show failure information for each
         if failed_hosts:
