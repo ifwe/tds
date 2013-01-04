@@ -289,8 +289,13 @@ class Package(object):
            repository for requested projects (or all projects)
         """
 
+        if args.project is None:
+            apps = 'ALL'
+        else:
+            apps = ', '.join(args.projects)
+
         self.log.debug('Listing information for all existing packages '
-                       'for projects: %s', ', '.join(args.projects))
+                       'for projects: %s', apps)
 
         tds.authorize.verify_access(args.user_level, 'dev')
 
@@ -533,7 +538,6 @@ class BaseDeploy(object):
                                    dep_host.hostname)
 
                     # Commit to DB immediately
-                    Session.begin_nested()
                     host_dep.status = 'ok'
                     Session.commit()
                     self.log.debug(5, 'Committed database (nested) change')
@@ -562,7 +566,6 @@ class BaseDeploy(object):
                                    dep_host.hostname)
 
                     # Commit to DB immediately
-                    Session.begin_nested()
                     host_dep.status = 'ok'
                     Session.commit()
                 else:
@@ -570,7 +573,6 @@ class BaseDeploy(object):
                                    dep_host.hostname)
 
                     # Commit to DB immediately
-                    Session.begin_nested()
                     host_dep.status = 'failed'
                     Session.commit()
 
@@ -1327,7 +1329,6 @@ class BaseDeploy(object):
             self.log.debug(5, 'Package is: %r', pkg)
 
             # Commit to DB immediately
-            Session.begin_nested()
             app_dep.status = 'validated'
             Session.commit()
             self.log.debug(5, 'Committed database (nested) change')
@@ -1962,7 +1963,6 @@ class Config(BaseDeploy):
             return
 
         # Commit to DB immediately
-        Session.begin_nested()
         self.perform_invalidations(app_dep_map)
         Session.commit()
         self.log.debug(5, 'Committed database (nested) change')
@@ -2164,7 +2164,6 @@ class Deploy(BaseDeploy):
             return
 
         # Commit to DB immediately
-        Session.begin_nested()
         self.perform_invalidations(app_dep_map)
         Session.commit()
         self.log.debug(5, 'Committed database (nested) change')
