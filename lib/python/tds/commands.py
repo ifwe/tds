@@ -289,7 +289,7 @@ class Package(object):
            repository for requested projects (or all projects)
         """
 
-        if args.project is None:
+        if args.projects is None:
             apps = 'ALL'
         else:
             apps = ', '.join(args.projects)
