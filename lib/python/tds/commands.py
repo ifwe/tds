@@ -82,7 +82,7 @@ class Repository(object):
                 config = repo.find_app_location(args.config)
 
                 self.log.debug(5, 'Config project %r\'s Location ID is: %s',
-                               config.pkgLocationID)
+                               args.config, config.pkgLocationID)
                 repo.add_app_packages_mapping(config.pkgLocationID,
                                               args.apptypes)
             except RepoException, e:
