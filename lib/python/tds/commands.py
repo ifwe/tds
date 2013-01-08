@@ -1462,7 +1462,7 @@ class BaseDeploy(object):
             for hosts in app_host_map.itervalues():
                 hostnames.extend(hosts)
 
-            self.log.debug(5, 'Hostnames are: %s', ', '.join(hostname))
+            self.log.debug(5, 'Hostnames are: %s', ', '.join(hostnames))
 
             dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames ]
             self.restart_hosts(args, dep_hosts, dep_id)
