@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import json
 import progressbar
 
-from tagopsdb.database.meta import Session
+from tagopsdb.database.meta import Session, isolated_transaction
 from tagopsdb.exceptions import RepoException, PackageException, \
                                 DeployException, NotImplementedException
 
@@ -537,9 +537,10 @@ class BaseDeploy(object):
                     self.log.debug(5, 'Deployment to host %r successful',
                                    dep_host.hostname)
 
-                    # Commit to DB immediately
-                    host_dep.status = 'ok'
-                    Session.commit()
+                    with isolated_transaction():
+                        host_dep.status = 'ok'
+                        Session.commit()
+
                     self.log.debug(5, 'Committed database (nested) change')
                 else:
                     self.log.debug(5, 'Deployment to host %r failed',
@@ -565,16 +566,16 @@ class BaseDeploy(object):
                     self.log.debug(5, 'Deployment to host %r successful',
                                    dep_host.hostname)
 
-                    # Commit to DB immediately
-                    host_dep.status = 'ok'
-                    Session.commit()
+                    with isolated_transaction():
+                        host_dep.status = 'ok'
+                        Session.commit()
                 else:
                     self.log.debug(5, 'Deployment to host %r failed',
                                    dep_host.hostname)
 
-                    # Commit to DB immediately
-                    host_dep.status = 'failed'
-                    Session.commit()
+                    with isolated_transaction():
+                        host_dep.status = 'failed'
+                        Session.commit()
 
                     failed_hosts.append((dep_host.hostname, info))
 
@@ -1328,9 +1329,10 @@ class BaseDeploy(object):
             self.log.debug(5, 'Deployment type is: %s', dep_type)
             self.log.debug(5, 'Package is: %r', pkg)
 
-            # Commit to DB immediately
-            app_dep.status = 'validated'
-            Session.commit()
+            with isolated_transaction():
+                app_dep.status = 'validated'
+                Session.commit()
+
             self.log.debug(5, 'Committed database (nested) change')
 
             self.log.debug(5, 'Clearing host deployments for application '
@@ -1962,9 +1964,11 @@ class Config(BaseDeploy):
                           self.envs[args.environment])
             return
 
-        # Commit to DB immediately
+        # The changes do not get committed to DB until
+        # the rollbacks are complete; a commit() is done
+        # at the end of the method
         self.perform_invalidations(app_dep_map)
-        Session.commit()
+
         self.log.debug(5, 'Committed database (nested) change')
 
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
@@ -2163,9 +2167,11 @@ class Deploy(BaseDeploy):
                           self.envs[args.environment])
             return
 
-        # Commit to DB immediately
+        # The changes do not get committed to DB until
+        # the rollbacks are complete; a commit() is done
+        # at the end of the method
         self.perform_invalidations(app_dep_map)
-        Session.commit()
+
         self.log.debug(5, 'Committed database (nested) change')
 
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
