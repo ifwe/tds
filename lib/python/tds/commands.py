@@ -210,7 +210,7 @@ class Package(object):
         processing_dir = args.repo['processing']
 
         # Revision hardcoded for now
-        rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, app.arch, args.version)
+        rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, args.version, app.arch)
 
         src_rpm = os.path.join(build_base, app.path, rpm_name)
         self.log.debug(5, 'Source RPM is: %s', src_rpm)
