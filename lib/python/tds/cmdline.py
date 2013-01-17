@@ -22,6 +22,9 @@ repository_data = odict([
             (('pkgpath',), odict([
                 ('help', 'Path to built packages on build system'),
              ])),
+            (('arch',), odict([
+                ('help', 'Architecture of package (x86_64 or noarch)'),
+             ])),
             (('buildhost',), odict([
                 ('help', 'System that packages are built on'),
              ])),
@@ -119,6 +122,9 @@ config_data = odict([
              ])),
             (('pkgpath',), odict([
                 ('help', 'Path to built packages on build system'),
+             ])),
+            (('arch',), odict([
+                ('help', 'Architecture of package (x86_64 or noarch)'),
              ])),
             (('buildhost',), odict([
                 ('help', 'System that packages are built on'),

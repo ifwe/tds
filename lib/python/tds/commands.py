@@ -64,8 +64,8 @@ class Repository(object):
             args.projecttype = 'application'
             loc_id = repo.add_app_location(args.projecttype, args.buildtype,
                                            args.pkgname, args.project,
-                                           args.pkgpath, args.buildhost,
-                                           args.env_specific)
+                                           args.pkgpath, args.arch,
+                                           args.buildhost, args.env_specific)
             self.log.debug(5, 'Application\'s Location ID is: %d', loc_id)
 
             self.log.debug('Mapping Location ID to various applications')
@@ -129,6 +129,7 @@ class Repository(object):
             self.log.info('Package type: %s', app.pkg_type)
             self.log.info('Package name: %s', app.pkg_name)
             self.log.info('Path: %s', app.path)
+            self.log.info('Architecture: %s', app.arch)
             self.log.info('Build host: %s', app.build_host)
 
             self.log.debug(5, 'Finding application types for project "%s"',
@@ -209,14 +210,13 @@ class Package(object):
         processing_dir = args.repo['processing']
 
         # Revision hardcoded for now
-        src_rpm = os.path.join(build_base, app.path, '%s-%s-1.noarch.rpm'
-                               % (app.pkg_name, args.version))
+        rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, app.arch, args.version)
+
+        src_rpm = os.path.join(build_base, app.path, rpm_name)
         self.log.debug(5, 'Source RPM is: %s', src_rpm)
-        queued_rpm = os.path.join(incoming_dir, '%s-%s-1.noarch.rpm'
-                                  % (app.pkg_name, args.version))
+        queued_rpm = os.path.join(incoming_dir, rpm_name)
         self.log.debug(5, 'Queued RPM is: %s', queued_rpm)
-        process_rpm = os.path.join(processing_dir, '%s-%s-1.noarch.rpm'
-                                   % (app.pkg_name, args.version))
+        process_rpm = os.path.join(processing_dir, rpm_name)
         self.log.debug(5, 'Processed RPM is: %s', process_rpm)
 
         self.log.info('Checking for existance of file "%s"...', src_rpm)
@@ -1845,8 +1845,8 @@ class Config(BaseDeploy):
             # Project type matches project name
             repo.add_app_location(args.project, args.buildtype,
                                   args.pkgname, args.project,
-                                  args.pkgpath, args.buildhost,
-                                  args.env_specific)
+                                  args.pkgpath, args.arch,
+                                  args.buildhost, args.env_specific)
         except RepoException, e:
             self.log.error(e)
             return
