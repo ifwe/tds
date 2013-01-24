@@ -121,3 +121,134 @@ revision: 1
 project: [ spambuild ]  
 created: 2012-11-12 12:06:55
 
+
+## Perform a deployment via TDS
+### Action and endpoint
+POST /project/<em>project name</em>/package/<em>version</em>/deploys
+
+#### *Example*
+POST /project/spambuild/package/142/deploys
+
+### Data
+apptypes: **list of application types**  
+**OR** hosts: **list of hosts**  
+**OR** all_apptypes: true  
+delay: **number of seconds** *(optional)*
+
+#### *Example*
+apptypes: [ spambuild ]
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+#### Data returned
+id: **number** *(database ID from deployments table)*  
+hosts: **list of hosts if hosts were sent**  
+apptypes: **list of application types if application types were sent**  
+declared: **timestamp**  
+status: **'inprogress'**  
+environment: **environment**  
+user: **user name**
+
+#### *Example*
+id: 209  
+apptypes: [ spambuild ]  
+declared: 2012-11-12 12:08:12  
+status: inprogress  
+environment: development  
+user: aneilson
+
+
+## Get current state of a deployment (or deployments) via TDS
+### Action and endpoint
+GET /project/<em>project name</em>/deploys[?<em>options</em>]
+
+#### *Examples*
+GET /project/spambuild/deploys?id=209  
+GET /project/spambuild/deploys?status=inprogress  
+GET /project/spambuild/deploys?user=aneilson  
+GET /project/spambuild/deploys?environment=staging
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+#### Data returned
+id: **number** *(database ID from deployments table)*  
+hosts: **list of hosts if hosts were sent**  
+apptypes: **list of application types if application types were sent**  
+declared: **timestamp**  
+status: **state** *(matches app deployment state or host deployment state)*
+environment: **environment**  
+user: **user name**
+
+#### *Example*
+id: 209  
+apptypes: [ spambuild ]  
+**Hmm, this is not quite right, needs to be worked on**
+
+
+## Performing a redeploy via TDS
+### Action and endpoint
+PUT /project/<em>project name</em>/deploys  *(Not sure what this should be)*
+
+#### *Example*
+PUT /project/spambuild/deploys  *(Not sure what this should be)*
+
+### Data
+**What should be here??**
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+#### Data returned
+**What should be here??**
+
+#### *Example*
+**What should be here??**
+
+
+## Performing a rollback of a deployment via TDS
+### Action and endpoint
+DELETE /project/<em>project name</em>/deploys  *(Not sure what this should be)*
+
+#### *Example*
+DELETE /project/spambuild/deploys  *(Not sure what this should be)*
+
+### Data
+**What should be here??**
+
+### Expected results
+#### HTTP code returned
+303 See other
+
+#### Data returned
+refer: **URL of previous validated deployment**  *(This could be a list?)*
+
+#### *Example*
+refer: http://deploy.tagged.com/project/spambuild/package/141/deploy  
+**The above may not quite be right**
+
+
+## Restarting an application via TDS
+### Action and endpoint
+PUT /project/<em>project name</em>/deploy?restart_only=true  *(Not sure what this should be)*
+
+#### *Example*
+PUT /project/spambuild/deploy?restart_only=true  *(Not sure what this should be)*
+
+### Data
+**What should be here??**
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+#### Data returned
+**What should be here??**
+
+#### *Example*
+**What should be here??**
+
