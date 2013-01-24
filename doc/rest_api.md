@@ -17,12 +17,25 @@ pkg_type: **'RPM'**
 pkg_name: *(does not need to be sent, same as app_name currently)*  
 path: **Relative path on build host to packages**
 
+#### Example
+
+app_name: spambuild  
+build_host: djavabuild01.tag-dev.com  
+project_type: application  
+pkg_type: RPM  
+path: spambuild  
+
 ### Expected results
 #### HTTP code returned
 200 OK
 
 #### Data returned
-id: **number** *(should this be serial, or the database ID?)*  
+id: **number** *(database ID from package_locations table)*  
 env_specific: **0 or 1**  
 packages: **[]** *(empty list)*
+
+#### Example
+id: 18  
+env_specific: 0  
+packages: []
 
