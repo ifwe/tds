@@ -62,7 +62,7 @@ packages: [ ... ]
 
 ## Adding a package for a project to TDS
 ### Action and endpoint
-POST /project/*project name*/packages
+POST /project/<em>project name</em>/packages
 
 #### *Example*
 POST /project/spambuild/packages
@@ -98,7 +98,7 @@ created: 2012-11-12 12:06:55
 
 ## Retrieving information about a package in TDS
 ### Action and endpoint
-GET /project/*project name*/package/*version*
+GET /project/<em>project name</em>/package/<em>version</em>
 
 #### *Example*
 GET /project/spambuild/package/142
