@@ -252,3 +252,56 @@ PUT /project/spambuild/deploy?restart_only=true  *(Not sure what this should be)
 #### *Example*
 **What should be here??**
 
+
+## Validate/invalidate a deployment (or deployments) in TDS
+### Action and endpoint
+PUT /project/<em>project name</em>/package/<em>version</em>/deploy/<em>:id</em>[?force=true]  
+**Should 'id' be from deployments or app_deployments table?**
+
+#### *Example*
+PUT /project/spambuild/package/142/deploy/209
+
+### Data
+apptypes: **list of application types**  
+**OR** all_apptypes: **'true'**  
+status: **'validated' or 'invalidated'**
+
+#### *Example*
+apptypes: [ spambuild ]  
+status: validated
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+#### Data returned
+**What should be here??**
+
+#### *Example*
+**What should be here??**
+
+
+## Adding or deleting an application type from a project in TDS
+### Action and endpoint
+PUT /project/<em>project name</em>
+
+#### *Example*
+PUT /project/tagconfig
+
+### Data
+apptypes: **new list of application types (add/remove entries to be added/removed)**
+
+#### *Example*
+*(Removing 'spambuild' from list that also contained 'riskbuild' and 'riskscan')*  
+apptypes: [ riskbuild, riskscan ]
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+### Data returned
+apptypes: **updated list of application types**
+
+#### *Example*
+apptypes: [ riskbuild, riskscan ]
+
