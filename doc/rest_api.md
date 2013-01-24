@@ -30,7 +30,7 @@ path: spambuild
 #### Data returned
 id: **number** *(database ID from package_locations table)*  
 env_specific: **0 or 1**  
-packages: **[]** *(empty list)*
+packages: **empty list**
 
 #### *Example*
 id: 18  
@@ -40,7 +40,7 @@ packages: []
 
 ## Retrieving information about a project in TDS
 ### Action and endpoint
-GET /project/*project name*
+GET /project/<em>project name</em>
 
 #### *Example*
 GET /project/spambuild
@@ -52,7 +52,7 @@ GET /project/spambuild
 #### Data returned
 id: **number** *(database ID from package_locations table)*  
 env_specific: **0 or 1**  
-packages: **list of existing packages**  
+packages: **list of existing packages**
 
 #### *Example*
 id: 18  
