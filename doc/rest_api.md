@@ -10,11 +10,11 @@ POST /projects
 
 ### Data
 
-app_name: **Project name**
-build_host: **FQDN of build host**
-project_type: **'application' or 'tagconfig'**
-pkg_type: **'RPM'**
-pkg_name: *(does not need to be sent, same as app_name currently)*
+app_name: **Project name**  
+build_host: **FQDN of build host**  
+project_type: **'application' or 'tagconfig'**  
+pkg_type: **'RPM'**  
+pkg_name: *(does not need to be sent, same as app_name currently)*  
 path: **Relative path on build host to packages**
 
 ### Expected results
@@ -22,7 +22,7 @@ path: **Relative path on build host to packages**
 200 OK
 
 #### Data returned
-id: **number** *(should this be serial, or the database ID?)*
-env_specific: **0 or 1**
+id: **number** *(should this be serial, or the database ID?)*  
+env_specific: **0 or 1**  
 packages: **[]** *(empty list)*
 
