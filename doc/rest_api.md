@@ -130,13 +130,13 @@ POST /project/<em>project name</em>/package/<em>version</em>/deploys
 POST /project/spambuild/package/142/deploys
 
 ### Data
-apptypes: **list of application types**  
+apptypes: **list of application type objects**  
 **OR** hosts: **list of hosts**  
 **OR** all_apptypes: true  
 delay: **number of seconds** *(optional)*
 
 #### *Example*
-apptypes: [ spambuild ]
+apptypes: [ { name: spambuild } ]
 
 ### Expected results
 #### HTTP code returned
@@ -145,7 +145,7 @@ apptypes: [ spambuild ]
 #### Data returned
 id: **number** *(database ID from deployments table)*  
 hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application types if application types were sent**  
+apptypes: **list of application type objects if any were sent**  
 declared: **timestamp**  
 status: **'inprogress'**  
 environment: **environment**  
@@ -153,7 +153,7 @@ user: **user name**
 
 #### *Example*
 id: 209  
-apptypes: [ spambuild ]  
+apptypes: [ { name: spambuild } ]  
 declared: 2012-11-12 12:08:12  
 status: inprogress  
 environment: development  
@@ -175,99 +175,144 @@ GET /project/spambuild/deploys?environment=staging
 200 OK
 
 #### Data returned
+List of objects of the following:
+
 id: **number** *(database ID from deployments table)*  
 hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application types if application types were sent**  
+apptypes: **list of application type objects if any were sent**  
 declared: **timestamp**  
-status: **state** *(matches app deployment state or host deployment state)*
+status: **state** *(matches app deployment state or host deployment state)*  
+environment: **environment**  
+user: **user name**
+
+#### *Example*
+[
+  { id: 209,  
+    apptypes: [ { name: spambuild } ],  
+    declared: 2012-11-12 12:08:12,  
+    status: inprogress,  
+    environment: development,  
+    user: aneilson  
+  },  
+  [...]  
+]
+
+## Performing a redeploy via TDS
+### Action and endpoint
+PUT /project/<em>project name</em>/package/latest/deploys
+
+#### *Example*
+PUT /project/spambuild/package/latest/deploys
+
+### Data
+apptypes: **list of application type objects**  
+**OR** hosts: **list of hosts**  
+**OR** all_apptypes: true  
+delay: **number of seconds** *(optional)*
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+#### Data returned
+id: **number** *(database ID from deployments table)*  
+hosts: **list of hosts if hosts were sent**  
+apptypes: **list of application type objects if any were sent**  
+declared: **timestamp**  
+status: **state** *(matches app deployment state or host deployment state)*  
 environment: **environment**  
 user: **user name**
 
 #### *Example*
 id: 209  
-apptypes: [ spambuild ]  
-**Hmm, this is not quite right, needs to be worked on**
-
-
-## Performing a redeploy via TDS
-### Action and endpoint
-PUT /project/<em>project name</em>/deploys  *(Not sure what this should be)*
-
-#### *Example*
-PUT /project/spambuild/deploys  *(Not sure what this should be)*
-
-### Data
-**What should be here??**
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-**What should be here??**
-
-#### *Example*
-**What should be here??**
+apptypes: [ { name: spambuild } ]  
+declared: 2012-11-12 12:08:12  
+status: inprogress  
+environment: development  
+user: aneilson
 
 
 ## Performing a rollback of a deployment via TDS
 ### Action and endpoint
-DELETE /project/<em>project name</em>/deploys  *(Not sure what this should be)*
+DELETE /project/<em>project name</em>/package/latest/deploys
 
 #### *Example*
-DELETE /project/spambuild/deploys  *(Not sure what this should be)*
+DELETE /project/spambuild/package/latest/deploys
 
 ### Data
-**What should be here??**
+apptypes: **list of application type objects**  
+**OR** hosts: **list of hosts**  
+**OR** all_apptypes: true  
+delay: **number of seconds** *(optional)*
 
 ### Expected results
 #### HTTP code returned
-303 See other
+If a single apptype or host:  
+  303 See other  
+Else:  
+  200 OK
 
 #### Data returned
-refer: **URL of previous validated deployment**  *(This could be a list?)*
+If HTTP code 303:  
+  refer: **URL of previous validated deployment**  
+Else:  
+  **None**
 
 #### *Example*
-refer: http://deploy.tagged.com/project/spambuild/package/141/deploy  
-**The above may not quite be right**
+If HTTP code 303:  
+  refer: http://deploy.tagged.com/project/spambuild/package/141/deploy  
 
 
 ## Restarting an application via TDS
 ### Action and endpoint
-PUT /project/<em>project name</em>/deploy?restart_only=true  *(Not sure what this should be)*
+PUT /project/<em>project name</em>/package/latest/deploy?restart_only=true
 
 #### *Example*
-PUT /project/spambuild/deploy?restart_only=true  *(Not sure what this should be)*
+PUT /project/spambuild/package/latest/deploy?restart_only=true
 
 ### Data
-**What should be here??**
+apptypes: **list of application type objects**  
+**OR** hosts: **list of hosts**  
+**OR** all_apptypes: true  
+delay: **number of seconds** *(optional)*
 
 ### Expected results
 #### HTTP code returned
 200 OK
 
 #### Data returned
-**What should be here??**
+id: **number** *(database ID from deployments table)*  
+hosts: **list of hosts if hosts were sent**  
+apptypes: **list of application type objects if any were sent**  
+declared: **timestamp**  
+status: **state** *(matches app deployment state or host deployment state)*  
+environment: **environment**  
+user: **user name**
 
 #### *Example*
-**What should be here??**
+id: 209  
+apptypes: [ { name: spambuild } ]  
+declared: 2012-11-12 12:08:12  
+status: inprogress  
+environment: development  
+user: aneilson
 
 
 ## Validate/invalidate a deployment (or deployments) in TDS
 ### Action and endpoint
 PUT /project/<em>project name</em>/package/<em>version</em>/deploy/<em>:id</em>[?force=true]  
-**Should 'id' be from deployments or app_deployments table?**
+*':id' is from deployments table*
 
 #### *Example*
 PUT /project/spambuild/package/142/deploy/209
 
 ### Data
-apptypes: **list of application types**  
+apptypes: **list of application type objects**  
 **OR** all_apptypes: **'true'**  
 status: **'validated' or 'invalidated'**
 
 #### *Example*
-apptypes: [ spambuild ]  
+apptypes: [ { name: spambuild } ]  
 status: validated
 
 ### Expected results
@@ -275,33 +320,82 @@ status: validated
 200 OK
 
 #### Data returned
-**What should be here??**
+id: **number** *(database ID from deployments table)*  
+hosts: **list of hosts if hosts were sent**  
+apptypes: **list of application type objects if any were sent**  
+declared: **timestamp**  
+status: **'validated' or 'invalidated'**  
+environment: **environment**  
+user: **user name**
 
 #### *Example*
-**What should be here??**
+id: 209  
+apptypes: [ { name: spambuild } ]  
+declared: 2012-11-12 12:08:12  
+status: validated  
+environment: development  
+user: aneilson
 
 
-## Adding or deleting an application type from a project in TDS
+## Adding an application type from a project in TDS
 ### Action and endpoint
-PUT /project/<em>project name</em>
+POST /project/<em>project name</em>/apptypes
 
 #### *Example*
-PUT /project/tagconfig
+POST /project/tagconfig/apptypes
 
 ### Data
-apptypes: **new list of application types (add/remove entries to be added/removed)**
+apptypes: **list of application type objects to be added**
 
 #### *Example*
-*(Removing 'spambuild' from list that also contained 'riskbuild' and 'riskscan')*  
-apptypes: [ riskbuild, riskscan ]
+apptypes: [ { name: spambuild } ]
 
 ### Expected results
 #### HTTP code returned
 200 OK
 
 ### Data returned
-apptypes: **updated list of application types**
+apptypes: **list of application type objects just added**
 
 #### *Example*
-apptypes: [ riskbuild, riskscan ]
+apptypes: [ { name: spambuild } ]
+
+
+## Deleting an application type from a project in TDS
+### Action and endpoint
+DELETE /project/<em>project name</em>/apptypes
+
+#### *Example*
+DELETE /project/tagconfig/apptypes
+
+### Data
+apptypes: **list of application type objects to be removed**
+
+#### *Example*
+apptypes: [ { name: spambuild } ]
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+### Data returned
+**None**
+
+
+## Getting all application types for a project in TDS
+### Action and endpoint
+GET /project/<em>project name</em>/apptypes
+
+#### *Example*
+GET /project/tagconfig/apptypes
+
+### Expected results
+#### HTTP code returned
+200 OK
+
+### Data returned
+apptypes: **list of application type objects**
+
+#### *Example*
+apptypes: [ { name: spambuild }, { name: riskbuild }, { name: riskscan } ]
 
