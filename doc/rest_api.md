@@ -186,15 +186,15 @@ environment: **environment**
 user: **user name**
 
 #### *Example*
-[
-  { id: 209,  
-    apptypes: [ { name: spambuild } ],  
-    declared: 2012-11-12 12:08:12,  
-    status: inprogress,  
-    environment: development,  
-    user: aneilson  
-  },  
-  [...]  
+[  
+&nbsp;&nbsp;{ id: 209,  
+&nbsp;&nbsp;&nbsp;&nbsp;  apptypes: [ { name: spambuild } ],  
+&nbsp;&nbsp;&nbsp;&nbsp;  declared: 2012-11-12 12:08:12,  
+&nbsp;&nbsp;&nbsp;&nbsp;  status: inprogress,  
+&nbsp;&nbsp;&nbsp;&nbsp;  environment: development,  
+&nbsp;&nbsp;&nbsp;&nbsp;  user: aneilson  
+&nbsp;&nbsp;},  
+&nbsp;&nbsp;[...]  
 ]
 
 ## Performing a redeploy via TDS
@@ -248,19 +248,19 @@ delay: **number of seconds** *(optional)*
 ### Expected results
 #### HTTP code returned
 If a single apptype or host:  
-  303 See other  
+&nbsp;&nbsp;&nbsp;&nbsp;303 See other  
 Else:  
-  200 OK
+&nbsp;&nbsp;&nbsp;&nbsp;200 OK
 
 #### Data returned
 If HTTP code 303:  
-  refer: **URL of previous validated deployment**  
+&nbsp;&nbsp;&nbsp;&nbsp;refer: **URL of previous validated deployment**  
 Else:  
-  **None**
+&nbsp;&nbsp;&nbsp;&nbsp;**None**
 
 #### *Example*
 If HTTP code 303:  
-  refer: http://deploy.tagged.com/project/spambuild/package/141/deploy  
+&nbsp;&nbsp;&nbsp;&nbsp;refer: http://deploy.tagged.com/project/spambuild/package/141/deploy  
 
 
 ## Restarting an application via TDS
