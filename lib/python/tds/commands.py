@@ -841,22 +841,22 @@ class BaseDeploy(object):
 
             ok = True
 
-            last_dep_info = \
-                deploy.find_latest_validated_deployment(args.project, app_id,
-                                             self.envs[args.environment])
-            if last_dep_info is None:
+            prev_dep_info = \
+                deploy.find_next_latest_validated_deployment(args.project,
+                                        app_id, self.envs[args.environment])
+            if prev_dep_info is None:
                 self.log.info('No previous deployment to roll back to for '
                               'application "%s" for app type "%s" in %s '
                               'environment', args.project, app_id,
                               self.envs[args.environment])
                 ok = False
             else:
-                last_app_dep, last_pkg_id = last_dep_info
-                self.log.debug(5, 'Last application deployment is: %r',
-                               last_app_dep)
-                self.log.debug(5, 'Last package ID is: %s', last_pkg_id)
+                prev_app_dep, prev_pkg_id = prev_dep_info
+                self.log.debug(5, 'Previous application deployment is: %r',
+                               prev_app_dep)
+                self.log.debug(5, 'Previous package ID is: %s', prev_pkg_id)
 
-                app_pkg_map[app_id] = last_pkg_id
+                app_pkg_map[app_id] = prev_pkg_id
 
             if not ok:
                 self.log.debug(5, 'Deleting application ID %r from '
@@ -1971,18 +1971,18 @@ class Config(BaseDeploy):
                           self.envs[args.environment])
             return
 
-        # The changes do not get committed to DB until
-        # the rollbacks are complete; a commit() is done
-        # at the end of the method
-        self.perform_invalidations(app_dep_map)
-
-        self.log.debug(5, 'Committed database (nested) change')
+        # Save verison of application/deployment map for invalidation
+        # at the end of the run
+        self.log.debug(5, 'Saving current application/deployment map')
+        orig_app_dep_map = app_dep_map
 
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
                                                             app_dep_map)
         self.send_notifications(args)
         self.perform_rollbacks(args, app_pkg_map, app_dep_map)
 
+        # Now perform invalidations, commit immediately follows
+        self.perform_invalidations(orig_app_dep_map)
         Session.commit()
         self.log.debug('Committed database changes')
 
@@ -2177,17 +2177,17 @@ class Deploy(BaseDeploy):
                           self.envs[args.environment])
             return
 
-        # The changes do not get committed to DB until
-        # the rollbacks are complete; a commit() is done
-        # at the end of the method
-        self.perform_invalidations(app_dep_map)
-
-        self.log.debug(5, 'Committed database (nested) change')
+        # Save verison of application/deployment map for invalidation
+        # at the end of the run
+        self.log.debug(5, 'Saving current application/deployment map')
+        orig_app_dep_map = app_dep_map
 
         app_pkg_map, app_dep_map = self.determine_rollbacks(args, app_ids,
                                                             app_dep_map)
         self.send_notifications(args)
         self.perform_rollbacks(args, app_pkg_map, app_dep_map)
 
+        # Now perform invalidations, commit immediately follows
+        self.perform_invalidations(orig_app_dep_map)
         Session.commit()
         self.log.debug('Committed database changes')
