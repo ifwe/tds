@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import json
 import progressbar
 
-from tagopsdb.database.meta import Session, isolated_transaction
+from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException, PackageException, \
                                 DeployException, NotImplementedException
 
@@ -537,9 +537,9 @@ class BaseDeploy(object):
                     self.log.debug(5, 'Deployment to host %r successful',
                                    dep_host.hostname)
 
-                    with isolated_transaction():
-                        host_dep.status = 'ok'
-                        Session.commit()
+                    # Commit to DB immediately
+                    host_dep.status = 'ok'
+                    Session.commit()
 
                     self.log.debug(5, 'Committed database (nested) change')
                 else:
@@ -566,16 +566,16 @@ class BaseDeploy(object):
                     self.log.debug(5, 'Deployment to host %r successful',
                                    dep_host.hostname)
 
-                    with isolated_transaction():
-                        host_dep.status = 'ok'
-                        Session.commit()
+                    # Commit to DB immediately
+                    host_dep.status = 'ok'
+                    Session.commit()
                 else:
                     self.log.debug(5, 'Deployment to host %r failed',
                                    dep_host.hostname)
 
-                    with isolated_transaction():
-                        host_dep.status = 'failed'
-                        Session.commit()
+                    # Commit to DB immediately
+                    host_dep.status = 'failed'
+                    Session.commit()
 
                     failed_hosts.append((dep_host.hostname, info))
 
@@ -1330,9 +1330,9 @@ class BaseDeploy(object):
             self.log.debug(5, 'Deployment type is: %s', dep_type)
             self.log.debug(5, 'Package is: %r', pkg)
 
-            with isolated_transaction():
-                app_dep.status = 'validated'
-                Session.commit()
+            # Commit to DB immediately
+            app_dep.status = 'validated'
+            Session.commit()
 
             self.log.debug(5, 'Committed database (nested) change')
 
