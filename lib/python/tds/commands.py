@@ -1054,7 +1054,8 @@ class BaseDeploy(object):
                 curr_version = getattr(args, 'version', dep_version)
                 self.log.debug(5, 'Current version is: %s', curr_version)
 
-                if dep_version == curr_version and host_dep.status == 'ok':
+                if (dep_version == curr_version and host_dep.status == 'ok'
+                    and args.deployment):
                     self.log.info('Application %r with version %r already '
                                   'deployed to host %r', args.project,
                                   curr_version, hostname)
@@ -1721,6 +1722,9 @@ class BaseDeploy(object):
 
         self.log.debug('Invalidating for given project')
 
+        # Not a deployment
+        args.deployment = False
+
         tds.authorize.verify_access(args.user_level, args.environment)
 
         self.proj_type = self.verify_project_type(args.project)
@@ -1779,6 +1783,9 @@ class BaseDeploy(object):
         """Validate a given version of a given project"""
 
         self.log.debug('Validating for given project')
+
+        # Not a deployment
+        args.deployment = False
 
         tds.authorize.verify_access(args.user_level, args.environment)
 
@@ -2125,6 +2132,9 @@ class Deploy(BaseDeploy):
         """Restart given project on requested application tiers or hosts"""
 
         self.log.debug('Restarting application for project')
+
+        # Not a deployment
+        args.deployment = False
 
         tds.authorize.verify_access(args.user_level, args.environment)
 
