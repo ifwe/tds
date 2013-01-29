@@ -21,6 +21,7 @@ class TDS(object):
         """Basic initialization"""
 
         self.args = args
+        self.args.deployment = True
         self.log = args.log
 
 
