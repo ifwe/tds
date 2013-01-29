@@ -55,7 +55,7 @@ class Notifications(object):
 
         msg = MIMEText(msg_text)
 
-        msg['Subject'] = msg_subject
+        msg['Subject'] = '[TDS] %s' % msg_subject
         msg['From'] = self.sender_addr
         msg['To'] = ', '.join(receiver_emails)
 
