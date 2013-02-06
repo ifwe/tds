@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.6
 #
-# Copyright (C) 2012 Tagged
+# Copyright (C) 2012-2013 Tagged
 #
 # All rights reserved.
 
@@ -157,8 +157,22 @@ def app_install(app, version, inst_version):
     manage_service('tomcat', 'start')
 
 
+def app_uninstall(app):
+    """Uninstall the application"""
+
+    # Stop tomcat before uninstall, no need to restart
+    manage_service('tomcat', 'stop')
+
+    uninstall_cmd = [ '/usr/bin/yum', '-y', '--nogpgcheck', 'remove', app ]
+
+    try:
+        output = run_command(uninstall_cmd)
+    except ExtCommandError, e:
+        sys.exit('Unable to uninstall application via yum: %s' % e)
+
+
 def get_version(app):
-    """Return current version of app"""
+    """Return current version of application"""
 
     vers_cmd = [ '/bin/rpm', '-q', '--queryformat', '%{VERSION}', app ]
 
@@ -185,12 +199,16 @@ def main():
     if len(sys.argv) != 3:
         sys.exit('Usage: %s <application> [<version>|restart]' % sys.argv[0])
 
+    restart = False
+    uninstall = False
+
     if sys.argv[2] == 'restart':
         restart = True
+    elif sys.argv[2] == 'uninstall':
+        uninstall = True
     else:
         try:
             int(sys.argv[2])
-            restart = False
         except ValueError:
             sys.exit('Version passed (%s) was not a number' % sys.argv[2])
 
@@ -201,13 +219,16 @@ def main():
         # In the future, this will be handled by a configuration file
         # to allow for different types of services
         manage_service('tomcat', 'restart')
+    elif uninstall:
+        stop_puppet()
+        app_uninstall(app)
     else:
         try:
             inst_version = get_version(app)
         except ExtCommandError:
-            inst_version = None # assume app not installed
+            inst_version = None   # Assume app not installed
         if inst_version == version:
-            return # nothing to do
+            return   # Nothing to do
 
         stop_puppet()
         app_install(app, version, inst_version)
