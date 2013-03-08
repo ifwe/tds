@@ -6,6 +6,8 @@ import os.path
 import sys
 import yaml
 
+import argcomplete
+
 import tds.cmdline
 import tds.logging_wrapper as log_wrap
 import tds.version
@@ -55,6 +57,7 @@ def parse_command_line():
                         help='Disable color coding when in verbose mode(s)')
 
     create_subparsers(parser)
+    argcomplete.autocomplete(parser)
 
     return parser.parse_args()
 
