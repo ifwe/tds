@@ -966,6 +966,9 @@ class BaseDeploy(object):
                               self.envs[args.environment], apptier=True)
 
         for dep_app_type, dep_version, dep_revision in dep_versions:
+            if args.apptypes and dep_app_type not in args.apptypes:
+                continue
+
             self.log.debug(5, 'Deployment application type is: %s',
                            dep_app_type)
             self.log.debug(5, 'Deployment version is: %s', dep_version)
