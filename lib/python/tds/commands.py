@@ -1423,7 +1423,7 @@ class BaseDeploy(object):
 
         failed_hosts = []
 
-        for dep_host in dep_hosts:
+        for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
             self.log.debug(5, 'Hostname is: %s', dep_host.hostname)
 
             pkg = deploy.find_app_by_depid(dep_id)
@@ -1584,8 +1584,6 @@ class BaseDeploy(object):
         for app_id in app_ids:
             self.log.debug(5, 'Application ID is: %s', app_id)
 
-            app_id_hosts_mapping[app_id] = []
-
             try:
                 hostnames = [ x.hostname for x in 
                               deploy.find_hosts_for_app(app_id, environment) ]
@@ -1608,7 +1606,9 @@ class BaseDeploy(object):
 
                 if hostname in valid_hostnames[app_id]:
                     self.log.debug(5, 'Hostname %r is valid', hostname)
-                    app_id_hosts_mapping[app_id].append(hostname)
+                    host_map_list = \
+                        app_id_hosts_mapping.setdefault(app_id, [])
+                    host_map_list.append(hostname)
                     break
             else:
                 self.log.debug(5, 'Hostname %r was invalid', hostname)
