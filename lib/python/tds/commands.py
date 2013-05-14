@@ -631,7 +631,7 @@ class BaseDeploy(object):
                 app_ids.append(app_id)
                 hostnames.extend(hosts)
 
-            self.log.debug(5, 'Hosts being deployed to are: ',
+            self.log.debug(5, 'Hosts being deployed to are: %s',
                            ', '.join(hostnames))
             dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames ]
             self.deploy_to_hosts(args, dep_hosts, dep_id, redeploy=redeploy)
