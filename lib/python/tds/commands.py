@@ -1592,9 +1592,10 @@ class BaseDeploy(object):
                                ', '.join(hostnames))
 
                 valid_hostnames[app_id] = hostnames
-            except DeployException:
-                self.log.error(e)
-                sys.exit(1)
+            except DeployException, e:
+                # Currently we should NOT fail on this; it will
+                # be caught when checking the hosts involved
+                self.log.notice(e)
 
         bad_hosts = []
 
