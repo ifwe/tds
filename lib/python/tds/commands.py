@@ -1595,7 +1595,7 @@ class BaseDeploy(object):
             except DeployException, e:
                 # Currently we should NOT fail on this; it will
                 # be caught when checking the hosts involved
-                self.log.notice(e)
+                self.log.warning(e)
 
         bad_hosts = []
 
