@@ -116,16 +116,16 @@ def stop_puppet():
                 os.kill(pid, signal.SIGKILL)
 
 
-def manage_service(service, action):
-    """Manage a given OS service with a given action"""
+def manage_services(action):
+    """Manage a defined application services with a given action"""
 
-    svc_cmd = [ '/sbin/service', service, action ]
+    svc_cmd = [ '/usr/local/tagops/sbin/services', action ]
 
     try:
         run_command(svc_cmd)
     except ExtCommandError, e:
-        sys.exit('Failed to perform action "%s" on service "%s": %s'
-                 % (action, service, e))
+        sys.exit('Failed to perform action "%s" on defined services: %s'
+                 % (action, e))
 
 
 def app_install(app, version, inst_version):
@@ -144,8 +144,8 @@ def app_install(app, version, inst_version):
     except ExtCommandError, e:
         sys.exit('Unable to run "yum makecache": %s' % e)
 
-    # Stop tomcat before install, then restart it after install
-    manage_service('tomcat', 'stop')
+    # Stop services before install, then restart them after install
+    manage_services('stop')
 
     install_cmd = [ '/usr/bin/yum', '-y', '--nogpgcheck', yum_op,
                     '%s-%s-1' % (app, version) ]
@@ -154,14 +154,14 @@ def app_install(app, version, inst_version):
     except ExtCommandError, e:
         sys.exit('Unable to install application via yum: %s' % e)
 
-    manage_service('tomcat', 'start')
+    manage_services('start')
 
 
 def app_uninstall(app):
     """Uninstall the application"""
 
-    # Stop tomcat before uninstall, no need to restart
-    manage_service('tomcat', 'stop')
+    # Stop service before uninstall, no need to restart
+    manage_services('stop')
 
     uninstall_cmd = [ '/usr/bin/yum', '-y', '--nogpgcheck', 'remove', app ]
 
@@ -216,9 +216,7 @@ def main():
     app_check(app)
 
     if restart:
-        # In the future, this will be handled by a configuration file
-        # to allow for different types of services
-        manage_service('tomcat', 'restart')
+        manage_services('restart')
     elif uninstall:
         stop_puppet()
         app_uninstall(app)
