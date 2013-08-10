@@ -179,6 +179,30 @@ class Package(object):
                 if e.errno == errno.ENOENT:
                     break
 
+    def _queue_rpm(args, queued_rpm, rpm_name, app):
+        # Verify required RPM exists and create hard link into
+        # the incoming directory for the repository server to find
+        build_base = args.repo['build_base']
+        src_rpm = os.path.join(build_base, app.path, rpm_name)
+        self.log.debug(5, 'Source RPM is: %s', src_rpm)
+
+        self.log.info('Checking for existance of file "%s"...', src_rpm)
+
+        if not os.path.isfile(src_rpm):
+            self.log.info('File "%s" is not found in "%s"',
+                          src_rpm, build_base)
+            return False
+
+        try:
+            self.log.info('Build host "%s" built RPM successfully',
+                          app.build_host)
+            self.log.info('Linking RPM into incoming directory...')
+            os.link(src_rpm, queued_rpm)
+        except Exception, e:   # Really need to narrow the exception down
+            self.log.error(e)
+            return False
+        self.log.info('RPM successfully linked')
+        return True
 
     @tds.utils.debug
     @catch_exceptions
@@ -201,42 +225,23 @@ class Package(object):
         # Get repo information for package
         app = repo.find_app_location(args.project)
 
-        # Verify required RPM exists and create hard link into
-        # the incoming directory for the repository server to find,
-        # then wait until file has been removed or timeout with
-        # error (meaning repository side failed, check logs there)
-        build_base = args.repo['build_base']
+        # Revision hardcoded for now
+        rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, args.version, app.arch)
         incoming_dir = args.repo['incoming']
         processing_dir = args.repo['processing']
 
-        # Revision hardcoded for now
-        rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, args.version, app.arch)
-
-        src_rpm = os.path.join(build_base, app.path, rpm_name)
-        self.log.debug(5, 'Source RPM is: %s', src_rpm)
         queued_rpm = os.path.join(incoming_dir, rpm_name)
         self.log.debug(5, 'Queued RPM is: %s', queued_rpm)
         process_rpm = os.path.join(processing_dir, rpm_name)
         self.log.debug(5, 'Processed RPM is: %s', process_rpm)
 
-        self.log.info('Checking for existance of file "%s"...', src_rpm)
-
-        if not os.path.isfile(src_rpm):
-            self.log.info('File "%s" is not found in "%s"',
-                          src_rpm, build_base)
+        if not self._queue_rpm(queued_rpm, rpm_name, args):
             return
 
-        try:
-            self.log.info('Build host "%s" built RPM successfully',
-                          app.build_host)
-            self.log.info('Linking RPM into incoming directory...')
-            os.link(src_rpm, queued_rpm)
-        except Exception, e:   # Really need to narrow the exception down
-            self.log.error(e)
-            return
+        # wait until file has been removed or timeout with
+        # error (meaning repository side failed, check logs there)
 
-        self.log.info('RPM successfully linked, waiting for software '
-                      'repository server')
+        self.log.info('waiting for software epository server')
         self.log.info('  to update deploy repo...')
 
         self.log.debug(5, 'Setting up signal handler')
@@ -308,6 +313,17 @@ class Package(object):
             self.log.info('Revision: %s', pkg.revision)
             self.log.info('')
 
+class Jenkinspackage(Package):
+    def _queue_rpm(self, queued_rpm, rpm_name, args):
+        buildnum = int(args.version)
+        job_name = args.job_name
+        #late import to prevent hard dependency
+        from jenkinsapi.jenkins import Jenkins
+        J = Jenkins('https://ci.tagged.com/') #TODO: use config
+        a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
+        data = a.get_data()
+        with open(queued_rpm, 'wb') as f:
+            f.write(data)
 
 class BaseDeploy(object):
     """Common methods for the config and deploy commands"""
@@ -1586,7 +1602,7 @@ class BaseDeploy(object):
             self.log.debug(5, 'Application ID is: %s', app_id)
 
             try:
-                hostnames = [ x.hostname for x in 
+                hostnames = [ x.hostname for x in
                               deploy.find_hosts_for_app(app_id, environment) ]
                 self.log.debug(5, 'Hostnames for application ID are: %s',
                                ', '.join(hostnames))
