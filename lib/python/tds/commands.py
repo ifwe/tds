@@ -324,6 +324,7 @@ class Jenkinspackage(Package):
         data = a.get_data()
         with open(queued_rpm, 'wb') as f:
             f.write(data)
+        return True
 
 class BaseDeploy(object):
     """Common methods for the config and deploy commands"""
