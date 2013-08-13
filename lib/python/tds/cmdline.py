@@ -99,11 +99,11 @@ jenkinspackage_data = odict([
     ('add', odict([
         ('help', 'Add new package to deployment system'),
         ('subargs', odict([
-            (('job_name',), odict([
-                ('help', 'Jenkins job name'),
-             ])),
             (('project',), odict([
                 ('help', 'Name of project in repository'),
+             ])),
+            (('job_name',), odict([
+                ('help', 'Jenkins job name'),
              ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
