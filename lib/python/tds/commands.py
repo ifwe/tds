@@ -322,8 +322,12 @@ class Jenkinspackage(Package):
         J = Jenkins('https://ci.tagged.com/') #TODO: use config
         a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
         data = a.get_data()
-        with open(queued_rpm, 'wb') as f:
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(data)
+            f.close()
+            os.link(f.name, queued_rpm)
+            os.unlink(f.name)
         return True
 
 class BaseDeploy(object):
