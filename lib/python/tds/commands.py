@@ -322,8 +322,8 @@ class Jenkinspackage(Package):
         J = Jenkins('https://ci.tagged.com/') #TODO: use config
         a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
         data = a.get_data()
-        import tempfile
-        with tempfile.NamedTemporaryFile(delete=False) as f:
+        tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)), 'tmp', rpm_name)
+        with open(tmpname, 'wb') as f:
             f.write(data)
             f.close()
             os.link(f.name, queued_rpm)
