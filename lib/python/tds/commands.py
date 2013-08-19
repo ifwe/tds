@@ -179,14 +179,17 @@ class Package(object):
                 if e.errno == errno.ENOENT:
                     break
 
+
     def _queue_rpm(args, queued_rpm, rpm_name, app):
+        """Move requested RPM into queue for processing"""
+
         # Verify required RPM exists and create hard link into
         # the incoming directory for the repository server to find
         build_base = args.repo['build_base']
         src_rpm = os.path.join(build_base, app.path, rpm_name)
         self.log.debug(5, 'Source RPM is: %s', src_rpm)
 
-        self.log.info('Checking for existance of file "%s"...', src_rpm)
+        self.log.info('Checking for existence of file "%s"...', src_rpm)
 
         if not os.path.isfile(src_rpm):
             self.log.info('File "%s" is not found in "%s"',
@@ -201,8 +204,10 @@ class Package(object):
         except Exception, e:   # Really need to narrow the exception down
             self.log.error(e)
             return False
+
         self.log.info('RPM successfully linked')
         return True
+
 
     @tds.utils.debug
     @catch_exceptions
@@ -313,22 +318,42 @@ class Package(object):
             self.log.info('Revision: %s', pkg.revision)
             self.log.info('')
 
+
 class Jenkinspackage(Package):
+    """Temporary class to manage packages for supported applications
+       via direct access to Jenkins build (artifactory)
+    """
+
     def _queue_rpm(self, queued_rpm, rpm_name, args):
+        """Move requested RPM into queue for processing"""
+
         buildnum = int(args.version)
         job_name = args.job_name
-        #late import to prevent hard dependency
+
+        # Late import to prevent hard dependency
         from jenkinsapi.jenkins import Jenkins
-        J = Jenkins('https://ci.tagged.com/') #TODO: use config
-        a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
-        data = a.get_data()
-        tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)), 'tmp', rpm_name)
+        from jenkinsapi.exceptions import JenkinsAPIException
+
+        J = Jenkins('https://ci.tagged.com/')   #TODO: use config
+
+        try:
+            a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
+            data = a.get_data()
+        except (JenkinsAPIException, KeyError, NotFound) as e:
+            self.log.error(e)
+            return False
+
+        tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)),
+                               'tmp', rpm_name)
+
         with open(tmpname, 'wb') as f:
             f.write(data)
             f.close()
             os.link(f.name, queued_rpm)
             os.unlink(f.name)
+
         return True
+
 
 class BaseDeploy(object):
     """Common methods for the config and deploy commands"""
