@@ -95,6 +95,24 @@ package_data = odict([
      ])),
 ])
 
+jenkinspackage_data = odict([
+    ('add', odict([
+        ('help', 'Add new package to deployment system'),
+        ('subargs', odict([
+            (('project',), odict([
+                ('help', 'Name of project in repository'),
+             ])),
+            (('job_name',), odict([
+                ('help', 'Jenkins job name'),
+             ])),
+            (('version',), odict([
+                ('help', 'Release version number for project'),
+                ('type', int),
+             ])),
+         ])),
+     ])),
+])
+
 config_data = odict([
     ('add-apptype', odict([
         ('help', 'Add app type to a config project'),
@@ -558,6 +576,7 @@ deploy_data = odict([
 parser_data = odict([
     ('repository', repository_data),
     ('package', package_data),
+    ('jenkinspackage', jenkinspackage_data),
     ('config', config_data),
     ('deploy', deploy_data),
 ])
