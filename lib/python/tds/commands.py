@@ -180,7 +180,7 @@ class Package(object):
                     break
 
 
-    def _queue_rpm(args, queued_rpm, rpm_name, app):
+    def _queue_rpm(self, args, queued_rpm, rpm_name, app):
         """Move requested RPM into queue for processing"""
 
         # Verify required RPM exists and create hard link into
@@ -240,7 +240,7 @@ class Package(object):
         process_rpm = os.path.join(processing_dir, rpm_name)
         self.log.debug(5, 'Processed RPM is: %s', process_rpm)
 
-        if not self._queue_rpm(queued_rpm, rpm_name, args):
+        if not self._queue_rpm(args, queued_rpm, rpm_name, app):
             return
 
         # wait until file has been removed or timeout with
@@ -324,7 +324,7 @@ class Jenkinspackage(Package):
        via direct access to Jenkins build (artifactory)
     """
 
-    def _queue_rpm(self, queued_rpm, rpm_name, args):
+    def _queue_rpm(self, args, queued_rpm, rpm_name, app):
         """Move requested RPM into queue for processing"""
 
         buildnum = int(args.version)
