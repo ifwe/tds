@@ -1,0 +1,23 @@
+#!/bin/bash -e
+
+if [ ! -z $VIRTUAL_ENV ] ; then
+    source $VIRTUAL_ENV/bin/activate
+    deactivate
+fi
+
+if ! [[ -d "$SITEOPS_VIRTUALENV" && -f "$SITEOPS_VIRTUALENV/bin/activate" ]] ; then
+    if ! which virtualenv ; then
+        wget http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.1.tar.gz
+        tar -xzf virtualenv-1.9.1.tar.gz
+        rm virtualenv-1.9.1.tar.gz
+        pushd virtualenv-1.9.1
+        python virtualenv.py $SITEOPS_VIRTUALENV
+        popd
+    else
+        virtualenv $SITEOPS_VIRTUALENV
+    fi
+
+    if [ -d virtualenv-1.9.1 ] ; then
+        rm -rf virtualenv-1.9.1
+    fi
+fi
