@@ -1,0 +1,7 @@
+logilab-astng==0.24.3
+logilab-common==0.59.1
+mock==1.0.1
+pyflakes==0.7.2
+pylint==0.28.0
+pytest==2.3.5
+unittest2==0.5.1

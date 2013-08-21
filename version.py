@@ -1,1 +1,1 @@
-lib/python/tds/version.py
+tds/version.py
