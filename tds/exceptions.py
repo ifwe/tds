@@ -18,6 +18,12 @@ class ConfigurationError(Exception):
     pass
 
 
+class NoCurrentDeploymentError(Exception):
+    """Exception for missing but needed current deployment"""
+
+    pass
+
+
 class NotImplementedError(Exception):
     """Exception for unimplemented methods"""
 
