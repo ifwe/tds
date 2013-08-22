@@ -51,12 +51,30 @@ GET /project/spambuild
 
 #### Data returned
 id: **number** *(database ID from package_locations table)*  
-env_specific: **0 or 1**  
+name: **project name**
+project_type: **'application' or 'tagconfig'**
+pkg_type: **'developer' or 'hudson' or 'jenkins'**
+pkg_name: **(same as app_name)**
+app_name: **project name**
+path: **relative path on build host to packages**
+arch: **'i386' or 'x64_64' or 'noarch'**
+build_host: **FQDN of build host**
+env_specific: **0 or 1**
+app_types: **application types related to project**
 packages: **list of existing packages**
 
 #### *Example*
-id: 18  
-env_specific: 0  
+id: 18
+name: spambuild
+project_type: application
+pkg_type: jenkins
+pkg_name: spambuild
+app_name: spambuild
+path: spambuild
+arch: noarch
+build_host: djavabuild01.tag-dev.com
+env_specific: 0
+app_types: [ 'spambuild' ]
 packages: [ ... ]
 
 
@@ -380,22 +398,4 @@ apptypes: [ { name: spambuild } ]
 
 ### Data returned
 **None**
-
-
-## Getting all application types for a project in TDS
-### Action and endpoint
-GET /project/<em>project name</em>/apptypes
-
-#### *Example*
-GET /project/tagconfig/apptypes
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-### Data returned
-apptypes: **list of application type objects**
-
-#### *Example*
-apptypes: [ { name: spambuild }, { name: riskbuild }, { name: riskscan } ]
 

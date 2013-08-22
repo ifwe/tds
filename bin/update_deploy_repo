@@ -76,7 +76,7 @@ def update_repo(repo_dir, process_dir):
             shutil.copy(rpm_to_process, dest_dir)
         except IOError, e:
             raise RepoException('Unable to copy file "%s" to "%s": %s'
-                                % (queued_rpm, dest_dir, e))
+                                % (rpm_to_process, dest_dir, e))
 
     daemonize.logging.info('Updating repo...')
 

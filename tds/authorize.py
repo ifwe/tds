@@ -41,4 +41,5 @@ def verify_access(user_level, access_level):
     tds_log.debug('Ensuring user has necessary access')
 
     if access_levels.index(user_level) > access_levels.index(access_level):
-        raise AccessError('Not permitted to access this command')
+        raise AccessError('Your account does not have the appropriate '
+                          'permissions\nto run the requested command.')
