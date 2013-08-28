@@ -24,9 +24,17 @@
 
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
+%define __version %(%{__python} setup.py --version)
+%define _pkg_version %(echo %{__version} | awk -F"-" '{print $1}')
+%define _pkg_release %(echo %{__version} | awk -F"-" '{print "0." $2}')
+
+%if "%{_pkg_release}" == "0."
+%define _pkg_release 1
+%endif
+
 Name:           %{tagbase}-deploy
-Version:        %(%{__python} setup.py --version)
-Release:        1%{?dist}
+Version:        %{_pkg_version}
+Release:        %{_pkg_release}%{?dist}
 Summary:        Manage deployment of Tagged applications
 
 Group:          Applications/Python
