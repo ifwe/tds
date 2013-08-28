@@ -65,15 +65,16 @@ class Repository(object):
         try:
             # For now, project_type is 'application'
             params['projecttype'] = 'application'
-            loc_id = repo.add_app_location(params['projecttype'],
-                          params['buildtype'], params['pkgname'],
-                          params['project'], params['pkgpath'],
-                          params['arch'], params['buildhost'],
-                          params['env_specific'])
-            self.log.debug(5, 'Application\'s Location ID is: %d', loc_id)
+            project = repo.add_app_location(params['projecttype'],
+                           params['buildtype'], params['pkgname'],
+                           params['project'], params['pkgpath'],
+                           params['arch'], params['buildhost'],
+                           params['env_specific'])
+            self.log.debug(5, 'Application\'s Location ID is: %d',
+                           project.id)
 
             self.log.debug('Mapping Location ID to various applications')
-            repo.add_app_packages_mapping(loc_id, params['apptypes'])
+            repo.add_app_packages_mapping(project, params['apptypes'])
         except RepoException, e:
             self.log.error(e)
             return
@@ -86,9 +87,8 @@ class Repository(object):
                 config = repo.find_app_location(params['config'])
 
                 self.log.debug(5, 'Config project %r\'s Location ID is: %s',
-                               params['config'], config.pkgLocationID)
-                repo.add_app_packages_mapping(config.pkgLocationID,
-                                              params['apptypes'])
+                               params['config'], config.id)
+                repo.add_app_packages_mapping(config, params['apptypes'])
             except RepoException, e:
                 self.log.error(e)
                 return
@@ -141,7 +141,7 @@ class Repository(object):
             self.log.debug(5, 'Finding application types for project "%s"',
                            app.app_name)
             app_defs = repo.find_app_packages_mapping(app.app_name)
-            app_types = sorted([ x.appType for x in app_defs ])
+            app_types = sorted([ x.app_type for x in app_defs ])
             self.log.info('App types: %s', ', '.join(app_types))
 
             if app.environment:
@@ -465,7 +465,7 @@ class BaseDeploy(object):
 
         self.log.debug('Checking state of tier')
 
-        apptype_hosts = deploy.find_hosts_for_app(app_dep.AppID,
+        apptype_hosts = deploy.find_hosts_for_app(app_dep.app_id,
                                           self.envs[params['environment']])
         apptype_hostnames = [ x.hostname for x in apptype_hosts ]
         self.log.debug(5, 'Tier hosts are: %s', ', '.join(apptype_hostnames))
@@ -487,7 +487,8 @@ class BaseDeploy(object):
                            ', '.join(version_diffs))
 
         not_ok_hosts = deploy.find_host_deployments_not_ok(pkg_id,
-                              app_dep.AppID, self.envs[params['environment']])
+                              app_dep.app_id,
+                              self.envs[params['environment']])
         not_ok_hostnames = [ x.hostname for x in not_ok_hosts ]
 
         if not_ok_hostnames:
@@ -526,7 +527,7 @@ class BaseDeploy(object):
             destinations = ', '.join(params['apptypes'])
         else:
             dest_type = 'app tier(s)'
-            destinations = ', '.join([ x.appType for x in
+            destinations = ', '.join([ x.app_type for x in
                 repo.find_app_packages_mapping(params['project']) ])
 
         self.log.debug(5, 'Destination type is: %s', dest_type)
@@ -617,7 +618,7 @@ class BaseDeploy(object):
                                dep_host.hostname)
                 deploy.delete_host_deployment(dep_host.hostname,
                                               params['project'])
-                host_dep = deploy.add_host_deployment(dep_id, dep_host.HostID,
+                host_dep = deploy.add_host_deployment(dep_id, dep_host.id,
                                                       params['user'],
                                                       'inprogress')
                 success, info = self.deploy_to_host(dep_host.hostname, app,
@@ -872,7 +873,7 @@ class BaseDeploy(object):
         pkg_deps = deploy.find_deployment_by_pkgid(pkg_id)
         last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
 
-        return last_pkg_dep.DeploymentID
+        return last_pkg_dep.id
 
 
     @tds.utils.debug
@@ -885,7 +886,7 @@ class BaseDeploy(object):
         pkg_deps = deploy.find_deployment_by_pkgid(pkg_id)
         last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
 
-        return last_pkg_dep.DeploymentID
+        return last_pkg_dep.id
 
 
     @tds.utils.debug
@@ -1083,7 +1084,7 @@ class BaseDeploy(object):
             self.log.debug(5, 'Deployment type is: %s', dep_type)
             self.log.debug(5, 'Package is: %r', pkg)
 
-            app_dep_map[app_dep.AppID] = (app_dep, app_type, dep_type, pkg)
+            app_dep_map[app_dep.app_id] = (app_dep, app_type, dep_type, pkg)
 
         self.log.debug(5, 'Deployment/application map is: %r', app_dep_map)
 
@@ -1162,7 +1163,7 @@ class BaseDeploy(object):
         self.log.debug('Determining the application IDs for deployment')
 
         try:
-            app_ids = [ x.AppID for x
+            app_ids = [ x.id for x
                         in repo.find_app_packages_mapping(params['project']) ]
             self.log.debug(5, 'Application IDs for projects are: %s',
                            ', '.join([ str(x) for x in app_ids ]))
@@ -1180,7 +1181,7 @@ class BaseDeploy(object):
                 self.log.error(e)
                 sys.exit(1)
 
-            new_app_ids = [ x.AppID for x in app_defs ]
+            new_app_ids = [ x.id for x in app_defs ]
             self.log.debug(5, 'Application IDs for given defintions are: %s',
                            ', '.join([ str(x) for x in new_app_ids ]))
 
@@ -1224,10 +1225,11 @@ class BaseDeploy(object):
             last_deps = deploy.find_latest_deployed_version(params['project'],
                                self.envs[params['environment']],
                                apptier=apptier)
+            self.log.debug(5, 'Latest validated deployments: %r', last_deps)
 
             if hostonly:
                 versions = [ x.version for x in last_deps
-                             if x.AppID in app_ids ]
+                             if x.id in app_ids ]
             else:
                 versions = [ x.version for x in last_deps
                              if x.appType in app_types ]
@@ -1259,9 +1261,9 @@ class BaseDeploy(object):
             self.log.error(e)
             sys.exit(1)
 
-        self.log.debug(5, 'Package ID is: %s', pkg.PackageID)
+        self.log.debug(5, 'Package ID is: %s', pkg.id)
 
-        return pkg.PackageID
+        return pkg.id
 
 
     @tds.utils.debug
@@ -1306,14 +1308,14 @@ class BaseDeploy(object):
             self.log.debug(5, 'Package deployment is: %r', last_pkg_dep)
 
             if last_pkg_dep.dep_type == 'deploy':
-                dep_id = last_pkg_dep.DeploymentID
+                dep_id = last_pkg_dep.id
                 self.log.debug(5, 'Deployment ID is: %s', dep_id)
 
         if dep_id is None:
             self.log.debug(5, 'Creating new deployment')
 
             pkg_dep = deploy.add_deployment(pkg_id, params['user'], 'deploy')
-            dep_id = pkg_dep.DeploymentID
+            dep_id = pkg_dep.id
             self.log.debug(5, 'Deployment ID is: %s', dep_id)
 
         self.deploy_to_hosts_or_tiers(params, dep_id, app_host_map,
@@ -1374,13 +1376,13 @@ class BaseDeploy(object):
             self.log.debug(5, 'Deployment type is: %s', dep_type)
             self.log.debug(5, 'Package is: %r', pkg)
 
-            app_id = app_dep.AppID
+            app_id = app_dep.app_id
             self.log.debug(5, 'Application ID is: %s', app_id)
 
             self.log.debug(5, 'Creating new deployment')
 
             pkg_dep = deploy.add_deployment(pkg_id, params['user'], 'deploy')
-            dep_id = pkg_dep.DeploymentID
+            dep_id = pkg_dep.id
             self.log.debug(5, 'Deployment ID is: %s', dep_id)
 
             single_app_dep_map = { app_id : app_dep_map[app_id] }
@@ -1409,7 +1411,7 @@ class BaseDeploy(object):
 
             self.log.debug(5, 'Clearing host deployments for application '
                            'tier')
-            deploy.delete_host_deployments(params['project'], app_dep.AppID,
+            deploy.delete_host_deployments(params['project'], app_dep.app_id,
                                            self.envs[params['environment']])
 
 
@@ -1757,8 +1759,7 @@ class BaseDeploy(object):
 
         try:
             app = repo.find_app_location(params['project'])
-            repo.add_app_packages_mapping(app.pkgLocationID,
-                                          [params['apptype']])
+            repo.add_app_packages_mapping(app, [params['apptype']])
         except RepoException, e:
             self.log.error(e)
             return
@@ -1780,8 +1781,7 @@ class BaseDeploy(object):
 
         try:
             app = repo.find_app_location(params['project'])
-            repo.delete_app_packages_mapping(app.pkgLocationID,
-                                             [params['apptype']])
+            repo.delete_app_packages_mapping(app, [params['apptype']])
         except RepoException, e:
             self.log.error(e)
             return
