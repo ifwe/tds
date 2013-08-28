@@ -108,15 +108,15 @@ class VerifyingConfig(Config):
 
         type(self)._verify(self, self.schema, logger)
 
-    @debug
     @staticmethod
+    @debug
     def _verify(data, schema, logger=None):
         """Data verification - ensure all entries are correct
         and complete
         """
 
         for key in schema:
-            schema_keys = schema.get(key, None)
+            schema_keys = schema.get(key, [])
 
             if logger:
                 logger.debug(
@@ -124,7 +124,7 @@ class VerifyingConfig(Config):
                     schema_keys, key
                 )
 
-            data_keys = schema.get(key, {}).keys()
+            data_keys = schema.get(key, [])
             noncompliant_keys = set(schema_keys) ^ set(data_keys)
 
             if len(noncompliant_keys) == 0:
@@ -136,7 +136,7 @@ class VerifyingConfig(Config):
             )
 
 
-class TDSConfig(FileConfig, VerifyingConfig):
+class TDSConfig(YAMLConfig, VerifyingConfig):
     """Base class to handle TDS configuration files"""
 
     default_conf_dir = '/etc/tagops'
