@@ -14,7 +14,7 @@ setup_args = dict(
     author = 'Kenneth Lareau',
     author_email = 'klareau@tagged.com',
     license = 'MIT',
-    packages = ['tds'],
+    packages = ['tds', 'tds.utils'],
     scripts = ['bin/tds',
                'bin/unvalidated_deploy_check',
                'bin/update_deploy_repo',],
