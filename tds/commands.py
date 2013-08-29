@@ -890,7 +890,7 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    def determine_rollbacks(self, params, app_ids, app_dep_map):
+    def determine_rollbacks(self, params, app_ids, app_host_map, app_dep_map):
         """Determine which application tiers or hosts need rollbacks"""
 
         self.log.debug('Determining rollbacks for requested application '
@@ -930,9 +930,10 @@ class BaseDeploy(object):
                 del app_dep_map[app_id]
 
         self.log.debug(5, 'Package/application map is: %r', app_pkg_map)
+        self.log.debug(5, 'Host/application map is: %r', app_host_map)
         self.log.debug(5, 'Deployment/application map is: %r', app_dep_map)
 
-        return (app_pkg_map, app_dep_map)
+        return (app_pkg_map, app_host_map, app_dep_map)
 
 
     @tds.utils.debug
@@ -1362,13 +1363,17 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    def perform_rollbacks(self, params, app_pkg_map, app_dep_map):
-        """Perform all rollbacks to the requested application tiers"""
+    def perform_rollbacks(self, params, app_pkg_map, app_host_map,
+                          app_dep_map):
+        """Perform all rollbacks to the requested application tiers
+           or hosts
+        """
 
         self.log.debug('Performing rollbacks to application tiers')
 
         # Since a roll back could end up at different versions for
-        # each application tier, must do each tier on its own
+        # each application tier, must do each tier (or host(s) in
+        # tier) on its own
         for app_id, pkg_id in app_pkg_map.iteritems():
             app_dep, app_type, dep_type, pkg = app_dep_map[app_id]
             self.log.debug(5, 'Application deployment is: %r', app_dep)
@@ -1379,14 +1384,19 @@ class BaseDeploy(object):
             app_id = app_dep.app_id
             self.log.debug(5, 'Application ID is: %s', app_id)
 
-            self.log.debug(5, 'Creating new deployment')
+            if app_host_map is None:
+                self.log.debug(5, 'Creating new deployment')
 
-            pkg_dep = deploy.add_deployment(pkg_id, params['user'], 'deploy')
-            dep_id = pkg_dep.id
-            self.log.debug(5, 'Deployment ID is: %s', dep_id)
+                pkg_dep = deploy.add_deployment(pkg_id, params['user'],
+                                                'deploy')
+                dep_id = pkg_dep.id
+                self.log.debug(5, 'Deployment ID is: %s', dep_id)
 
-            single_app_dep_map = { app_id : app_dep_map[app_id] }
-            self.deploy_to_hosts_or_tiers(params, dep_id, None,
+                single_app_dep_map = { app_id : app_dep_map[app_id] }
+            else:
+                single_app_dep_map = { app_id : app_host_map[app_id] }
+
+            self.deploy_to_hosts_or_tiers(params, dep_id, app_host_map,
                                           single_app_dep_map)
 
 
@@ -2061,10 +2071,11 @@ class Config(BaseDeploy):
         self.log.debug(5, 'Saving current application/deployment map')
         orig_app_dep_map = app_dep_map
 
-        app_pkg_map, app_dep_map = self.determine_rollbacks(params, app_ids,
-                                                            app_dep_map)
+        app_pkg_map, app_host_map, app_dep_map = \
+            self.determine_rollbacks(params, app_ids, app_host_map,
+                                     app_dep_map)
         self.send_notifications(params)
-        self.perform_rollbacks(params, app_pkg_map, app_dep_map)
+        self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
 
         # Now perform invalidations, commit immediately follows
         self.perform_invalidations(orig_app_dep_map)
@@ -2272,10 +2283,11 @@ class Deploy(BaseDeploy):
         self.log.debug(5, 'Saving current application/deployment map')
         orig_app_dep_map = app_dep_map
 
-        app_pkg_map, app_dep_map = self.determine_rollbacks(params, app_ids,
-                                                            app_dep_map)
+        app_pkg_map, app_host_map, app_dep_map = \
+            self.determine_rollbacks(params, app_ids, app_host_map,
+                                     app_dep_map)
         self.send_notifications(params)
-        self.perform_rollbacks(params, app_pkg_map, app_dep_map)
+        self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
 
         # Now perform invalidations, commit immediately follows
         self.perform_invalidations(orig_app_dep_map)
