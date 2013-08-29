@@ -344,7 +344,7 @@ class Jenkinspackage(Package):
 
         # Late import to prevent hard dependency
         from jenkinsapi.jenkins import Jenkins
-        from jenkinsapi.exceptions import JenkinsAPIException
+        from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
         J = Jenkins('https://ci.tagged.com/')   #TODO: use config
 
