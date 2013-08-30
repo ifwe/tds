@@ -906,10 +906,17 @@ class BaseDeploy(object):
 
             ok = True
 
-            prev_dep_info = \
-                deploy.find_next_latest_validated_deployment(
-                                        params['project'], app_id,
-                                        self.envs[params['environment']])
+            if params.get('hosts', None):
+                prev_dep_info = \
+                    deploy.find_latest_validated_deployment(
+                                            params['project'], app_id,
+                                            self.envs[params['environment']])
+            else:
+                prev_dep_info = \
+                    deploy.find_previous_validated_deployment(
+                                            params['project'], app_id,
+                                            self.envs[params['environment']])
+
             if prev_dep_info is None:
                 self.log.info('No previous deployment to roll back to for '
                               'application "%s" for app type "%s" in %s '
@@ -1391,10 +1398,15 @@ class BaseDeploy(object):
                                                 'deploy')
                 dep_id = pkg_dep.id
                 self.log.debug(5, 'Deployment ID is: %s', dep_id)
-
-                single_app_dep_map = { app_id : app_dep_map[app_id] }
             else:
-                single_app_dep_map = { app_id : app_host_map[app_id] }
+                # Reset app deployment to 'inprogress', will require
+                # revalidation
+                app_dep.status = 'inprogress'
+                Session.commit()
+
+                dep_id = app_dep.deployment_id
+
+            single_app_dep_map = { app_id : app_dep_map[app_id] }
 
             self.deploy_to_hosts_or_tiers(params, dep_id, app_host_map,
                                           single_app_dep_map)
@@ -2077,8 +2089,11 @@ class Config(BaseDeploy):
         self.send_notifications(params)
         self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
 
-        # Now perform invalidations, commit immediately follows
-        self.perform_invalidations(orig_app_dep_map)
+        if params.get('hosts', None):
+            # Now perform invalidations, commit immediately follows
+            # Note this is only done for tiers
+            self.perform_invalidations(orig_app_dep_map)
+
         Session.commit()
         self.log.debug('Committed database changes')
 
@@ -2289,7 +2304,10 @@ class Deploy(BaseDeploy):
         self.send_notifications(params)
         self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
 
-        # Now perform invalidations, commit immediately follows
-        self.perform_invalidations(orig_app_dep_map)
+        if params.get('hosts', None):
+            # Now perform invalidations, commit immediately follows
+            # Note this is only done for tiers
+            self.perform_invalidations(orig_app_dep_map)
+
         Session.commit()
         self.log.debug('Committed database changes')
