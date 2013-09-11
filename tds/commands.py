@@ -682,8 +682,6 @@ class BaseDeploy(object):
         if params.get('hosts', None):
             self.log.debug(5, 'Deployment is for hosts...')
 
-            hostnames = []
-
             for app_id, hosts in app_host_map.iteritems():
                 if self.check_for_current_deployment(params, app_id,
                                                      hosts=hosts):
@@ -692,12 +690,19 @@ class BaseDeploy(object):
                     continue
 
                 app_ids.append(app_id)
-                hostnames.extend(hosts)
 
-            self.log.debug(5, 'Hosts being deployed to are: %s',
-                           ', '.join(hostnames))
-            dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames ]
-            self.deploy_to_hosts(params, dep_hosts, dep_id, redeploy=redeploy)
+                self.log.debug(5, 'Hosts being deployed to are: %s',
+                               ', '.join(hosts))
+                dep_hosts = [ deploy.find_host_by_hostname(x) for x in hosts ]
+
+                app_dep = app_dep_map[app_id][0]
+
+                # We want the tier status updated only if doing
+                # a rollback
+                if self.deploy_to_hosts(params, dep_hosts, dep_id,
+                                        redeploy=redeploy) \
+                    and params['subcommand_name'] == 'rollback':
+                    app_dep.status = 'complete'
         else:
             self.log.debug(5, 'Deployment is for application tiers...')
 
@@ -1131,8 +1136,9 @@ class BaseDeploy(object):
                 curr_version = params.get('version', dep_version)
                 self.log.debug(5, 'Current version is: %s', curr_version)
 
-                if (dep_version == curr_version and host_dep.status == 'ok'
-                    and params['deployment']):
+                if (params['subcommand_name'] != 'rollback'
+                    and dep_version == curr_version
+                    and host_dep.status == 'ok' and params['deployment']):
                     self.log.info('Application %r with version %r already '
                                   'deployed to host %r', params['project'],
                                   curr_version, hostname)
@@ -1376,7 +1382,7 @@ class BaseDeploy(object):
            or hosts
         """
 
-        self.log.debug('Performing rollbacks to application tiers')
+        self.log.debug('Performing rollbacks to application tiers or hosts')
 
         # Since a roll back could end up at different versions for
         # each application tier, must do each tier (or host(s) in
@@ -1391,7 +1397,7 @@ class BaseDeploy(object):
             app_id = app_dep.app_id
             self.log.debug(5, 'Application ID is: %s', app_id)
 
-            if app_host_map is None:
+            if app_host_map is None or not app_host_map.get(app_id, None):
                 self.log.debug(5, 'Creating new deployment')
 
                 pkg_dep = deploy.add_deployment(pkg_id, params['user'],
@@ -1399,16 +1405,26 @@ class BaseDeploy(object):
                 dep_id = pkg_dep.id
                 self.log.debug(5, 'Deployment ID is: %s', dep_id)
             else:
-                # Reset app deployment to 'inprogress', will require
+                # Reset app deployment to 'inprogress' (if tier rollback)
+                # or 'incomplete' (if host rollback), will require
                 # revalidation
-                app_dep.status = 'inprogress'
+                if params.get('hosts', None):
+                    app_dep.status = 'incomplete'
+                else:
+                    app_dep.status = 'inprogress'
+
                 Session.commit()
 
                 dep_id = app_dep.deployment_id
 
+            if app_host_map is None:
+                single_app_host_map = None
+            else:
+                single_app_host_map = { app_id : app_host_map[app_id] }
+
             single_app_dep_map = { app_id : app_dep_map[app_id] }
 
-            self.deploy_to_hosts_or_tiers(params, dep_id, app_host_map,
+            self.deploy_to_hosts_or_tiers(params, dep_id, single_app_host_map,
                                           single_app_dep_map)
 
 
@@ -2089,7 +2105,7 @@ class Config(BaseDeploy):
         self.send_notifications(params)
         self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
 
-        if params.get('hosts', None):
+        if not params.get('hosts', None):
             # Now perform invalidations, commit immediately follows
             # Note this is only done for tiers
             self.perform_invalidations(orig_app_dep_map)
@@ -2304,7 +2320,7 @@ class Deploy(BaseDeploy):
         self.send_notifications(params)
         self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
 
-        if params.get('hosts', None):
+        if not params.get('hosts', None):
             # Now perform invalidations, commit immediately follows
             # Note this is only done for tiers
             self.perform_invalidations(orig_app_dep_map)
