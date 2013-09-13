@@ -1897,7 +1897,7 @@ class Config(BaseDeploy):
         """Basic initialization"""
 
         super(Config, self).__init__(logger)
-        self.valid_project_types = [ 'tagconfig' ]
+        self.valid_project_types = [ 'tagconfig', 'kafka-config' ]
 
 
     @tds.utils.debug
