@@ -470,8 +470,9 @@ class BaseDeploy(object):
         apptype_hostnames = [ x.hostname for x in apptype_hosts ]
         self.log.debug(5, 'Tier hosts are: %s', ', '.join(apptype_hostnames))
 
-        dep_hosts = deploy.find_host_deployments_by_project(params['project'],
-                                                    apptype_hostnames)
+        dep_hosts = \
+            deploy.find_host_deployments_by_package_name(params['project'],
+                                                         apptype_hostnames)
         dep_hostnames = [ x.hostname for x in dep_hosts ]
 
         if dep_hostnames:
@@ -1124,7 +1125,7 @@ class BaseDeploy(object):
                 self.log.error('%s for given project and hosts', e)
                 sys.exit(1)
 
-            host_deps = deploy.find_host_deployments_by_project(
+            host_deps = deploy.find_host_deployments_by_package_name(
                                          params['project'], params['hosts'])
 
             for host_dep, hostname, app_id, dep_version in host_deps:
