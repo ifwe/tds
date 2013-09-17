@@ -257,6 +257,11 @@ config_data = odict([
                 ('help', 'Time delay (in seconds) between each revert'),
                 ('type', int),
              ])),
+            (('--hosts',), odict([
+                ('help', 'Specific host(s) for reversion'),
+                ('metavar', 'HOST'),
+                ('nargs', '*'),
+             ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for reversion'),
                 ('metavar', 'APPTYPE'),
@@ -512,6 +517,11 @@ deploy_data = odict([
             (('--delay',), odict([
                 ('help', 'Time delay (in seconds) between each rollback'),
                 ('type', int),
+             ])),
+            (('--hosts',), odict([
+                ('help', 'Specific host(s) for rollback'),
+                ('metavar', 'HOST'),
+                ('nargs', '*'),
              ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for rollback'),
