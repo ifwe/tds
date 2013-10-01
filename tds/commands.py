@@ -90,7 +90,7 @@ class Repository(object):
 
                 self.log.debug(5, 'Config project %r\'s Location ID is: %s',
                                params['config'], config.id)
-                repo.add_app_packages_mapping(config, None, None,
+                repo.add_app_packages_mapping(config, project_new, pkg_def,
                                               params['apptypes'])
             except RepoException, e:
                 self.log.error(e)
@@ -1801,7 +1801,11 @@ class BaseDeploy(object):
 
         try:
             app = repo.find_app_location(params['project'])
-            repo.add_app_packages_mapping(app, None, None,
+            # Transitional code for refactoring
+            project_new = repo.find_project(params['project'])
+            pkg_def = package.find_package_definition(project_new.id)
+
+            repo.add_app_packages_mapping(app, project_new, pkg_def,
                                           [params['apptype']])
         except RepoException, e:
             self.log.error(e)
