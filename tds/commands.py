@@ -65,16 +65,18 @@ class Repository(object):
         try:
             # For now, project_type is 'application'
             params['projecttype'] = 'application'
-            project = repo.add_app_location(params['projecttype'],
-                           params['buildtype'], params['pkgname'],
-                           params['project'], params['pkgpath'],
-                           params['arch'], params['buildhost'],
-                           params['env_specific'])
+            project, project_new, pkg_def = \
+                repo.add_app_location(params['projecttype'],
+                                      params['buildtype'], params['pkgname'],
+                                      params['project'], params['pkgpath'],
+                                      params['arch'], params['buildhost'],
+                                      params['env_specific'])
             self.log.debug(5, 'Application\'s Location ID is: %d',
                            project.id)
 
             self.log.debug('Mapping Location ID to various applications')
-            repo.add_app_packages_mapping(project, params['apptypes'])
+            repo.add_app_packages_mapping(project, project_new, pkg_def,
+                                          params['apptypes'])
         except RepoException, e:
             self.log.error(e)
             return
@@ -88,7 +90,8 @@ class Repository(object):
 
                 self.log.debug(5, 'Config project %r\'s Location ID is: %s',
                                params['config'], config.id)
-                repo.add_app_packages_mapping(config, params['apptypes'])
+                repo.add_app_packages_mapping(config, project_new, pkg_def,
+                                              params['apptypes'])
             except RepoException, e:
                 self.log.error(e)
                 return
@@ -1798,7 +1801,12 @@ class BaseDeploy(object):
 
         try:
             app = repo.find_app_location(params['project'])
-            repo.add_app_packages_mapping(app, [params['apptype']])
+            # Transitional code for refactoring
+            project_new = repo.find_project(params['project'])
+            pkg_def = package.find_package_definition(project_new.id)
+
+            repo.add_app_packages_mapping(app, project_new, pkg_def,
+                                          [params['apptype']])
         except RepoException, e:
             self.log.error(e)
             return
