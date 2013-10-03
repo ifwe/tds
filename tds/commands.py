@@ -184,9 +184,13 @@ class Package(object):
 
         while True:
             try:
-                with open(path) as fh:
-                    time.sleep(0.5)
-            except IOError, e:
+                # The listdir() is necessary due to NFS cache
+                # timeouts - the stat() will trigger the exception
+                # once the file itself is gone
+                os.listdir(os.path.dirname(path))
+                os.stat(path)
+                time.sleep(0.5)
+            except OSError, e:
                 if e.errno == errno.ENOENT:
                     break
 
