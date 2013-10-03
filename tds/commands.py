@@ -265,7 +265,7 @@ class Package(object):
 
         self.log.debug(5, 'Setting up signal handler')
         signal.signal(signal.SIGALRM, self.processing_handler)
-        signal.alarm(60)
+        signal.alarm(120)
 
         self.log.debug(5, 'Waiting for RPM to be removed from queued '
                        'directory')
