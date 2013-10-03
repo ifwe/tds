@@ -81,7 +81,9 @@ def update_repo(repo_dir, process_dir):
     daemonize.logging.info('Updating repo...')
 
     try:
+        old_umask = os.umask(0002)
         run_command([ 'make', '-C', repo_dir ])
+        os.umask(old_umask)
     except ExtCommandError, e:
         raise RepoException(e)
 
