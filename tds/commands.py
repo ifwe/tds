@@ -87,10 +87,13 @@ class Repository(object):
 
             try:
                 config = repo.find_app_location(params['config'])
+                # Transitional code for refactoring
+                config_new = repo.find_project(params['config'])
+                config_def = package.find_package_definition(config_new.id)
 
                 self.log.debug(5, 'Config project %r\'s Location ID is: %s',
                                params['config'], config.id)
-                repo.add_app_packages_mapping(config, project_new, pkg_def,
+                repo.add_app_packages_mapping(config, config_new, config_def,
                                               params['apptypes'])
             except RepoException, e:
                 self.log.error(e)
