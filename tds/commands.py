@@ -706,13 +706,12 @@ class BaseDeploy(object):
                                ', '.join(hosts))
                 dep_hosts = [ deploy.find_host_by_hostname(x) for x in hosts ]
 
-                app_dep = app_dep_map[app_id][0]
-
                 # We want the tier status updated only if doing
                 # a rollback
                 if self.deploy_to_hosts(params, dep_hosts, dep_id,
                                         redeploy=redeploy) \
                     and params['subcommand_name'] == 'rollback':
+                    app_dep = app_dep_map[app_id][0]
                     app_dep.status = 'complete'
         else:
             self.log.debug(5, 'Deployment is for application tiers...')
