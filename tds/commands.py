@@ -2154,7 +2154,15 @@ class Deploy(BaseDeploy):
 
             prev_deps = deploy.find_app_deployment(pkg_id, [ app_id ],
                                                    self.envs[prev_env])
-            # There should only be one deployment here
+            # There might be no deployment available; otherwise
+            # there should only be one deployment here
+            if not prev_deps:
+                self.log.info('Application %r with version %r never '
+                              'deployed to previous environment (%s) '
+                              'for current apptype', params['project'],
+                              params['version'], prev_env)
+                return False
+
             prev_app_dep, prev_app_type, prev_dep_type, \
                 prev_pkg = prev_deps[0]
             self.log.debug(5, 'Previous application deployment is: %r',
