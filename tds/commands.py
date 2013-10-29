@@ -1253,7 +1253,7 @@ class BaseDeploy(object):
 
             if hostonly:
                 versions = [ x.version for x in last_deps
-                             if x.id in app_ids ]
+                             if x.app_id in app_ids ]
             else:
                 versions = [ x.version for x in last_deps
                              if x.appType in app_types ]
