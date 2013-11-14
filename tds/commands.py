@@ -739,8 +739,21 @@ class BaseDeploy(object):
                                              params['user'], 'inprogress',
                                              self.envs[params['environment']])
 
-                dep_hosts = deploy.find_hosts_for_app(app_id,
-                                        self.envs[params['environment']])
+                try:
+                    dep_hosts = deploy.find_hosts_for_app(app_id,
+                                            self.envs[params['environment']])
+                except DeployException:
+                    app_type = dep_info[1]
+                    self.log.info('No hosts available for application type '
+                                  '"%s" in %s environment' % (app_type,
+                                  self.envs[params['environment']]))
+
+                    # Set the deployment status due to no hosts
+                    # being available
+                    app_dep.status = 'incomplete'
+                    self.log.debug(5, 'Setting deployment status to: %s',
+                                   app_dep.status)
+                    continue
 
                 if self.deploy_to_hosts(params, dep_hosts, dep_id,
                                         redeploy=redeploy):
