@@ -2,7 +2,9 @@
 
 import os
 import os.path
+import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -15,6 +17,58 @@ from tagopsdb.exceptions import RepoException
 
 class ExtCommandError(Exception):
     pass
+
+
+class Zookeeper(object):
+    """ """
+
+    from kazoo.client import KazooClient, KazooState
+
+
+    def __init__(self, hostname, servers):
+        """ """
+
+        self.zk = KazooClient('hosts=%s' % ','.join(servers))
+        # self.zk.add_listener(self.my_listener)
+        self.election = self.zk.Election('/deployrepo', hostname)
+
+
+    def my_listener(self, state):
+        """"""
+
+        pass   # Do we need to do anything here?
+
+
+    def run(self, elect_method):
+        """"""
+
+        self.election.run(elect_method)
+
+
+def run(cmd, expect_return_code=0, env=None, shell=False):
+    """Wrapper to run external command"""
+
+    if isinstance(cmd, basestring):
+        args = shlex.split(cmd.replace('\\', '\\\\'))
+    else:
+        args = cmd
+
+    try:
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, env=env, shell=shell)
+    except OSError:
+        raise ExtCommandError('Error using Popen: args were %r' % args)
+
+    stdout, stderr = proc.communicate()
+
+    if not (expect_return_code is None or
+            expect_return_code == proc.returncode):
+        exc = subprocess.CalledProcessError(proc.returncode, args)
+        exc.stderr = stderr
+        exc.stdout = stdout
+        raise exc
+
+    return dict(stdout=stdout, stderr=stderr, return_code=proc.returncode)
 
 
 def run_command(cmd):
@@ -94,22 +148,8 @@ def update_repo(repo_dir, process_dir):
             os.unlink(rpm_to_process)
 
 
-def main():
-    """Read configuration file and get relavent information, then try to
-       process files in the incoming directory
-    """
-
-    daemonize.logging.info('Reading configuration (deploy.yml) file')
-
-    with open('/etc/tagops/deploy.yml') as conf_file:
-        try:
-            data = yaml.load(conf_file.read())
-        except yaml.parser.ParserError, e:
-            raise RepoException('YAML parse error: %s' % e)
-
-    repo_dir = data['yum']['repo_location']
-    incoming_dir = data['yum']['incoming']
-    process_dir = data['yum']['processing']
+def process_incoming_directory(repo_dir, incoming_dir, process_dir):
+    """"""
 
     daemonize.logging.info('Checking for incoming files...')
 
@@ -124,6 +164,34 @@ def main():
                                    'files...')
 
         time.sleep(1.0)
+
+
+def main():
+    """Read configuration file and get relavent information, then try to
+       process files in the incoming directory if single system or zookeeper
+       leader in multi-system configuration
+    """
+
+    daemonize.logging.info('Reading configuration (deploy.yml) file')
+
+    with open('/etc/tagops/deploy.yml') as conf_file:
+        try:
+            data = yaml.load(conf_file.read())
+        except yaml.parser.ParserError, e:
+            raise RepoException('YAML parse error: %s' % e)
+
+    repo_dir = data['yum']['repo_location']
+    incoming_dir = data['yum']['incoming']
+    process_dir = data['yum']['processing']
+
+    if 'zookeeper' in data:
+        hostname = socket.gethostname()
+
+        zk = Zookeeper(hostname, data['zookeeper'])
+        zk.run(process_incoming_directory, repo_dir, incoming_dir,
+               process_dir)
+    else:
+        process_incoming_directory(repo_dir, incoming_dir, process_dir)
 
 
 def safe_main():
