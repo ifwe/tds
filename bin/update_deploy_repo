@@ -11,6 +11,9 @@ import time
 
 import daemonize
 import yaml
+import yaml.parser
+
+from kazoo.client import KazooClient   # , KazooState
 
 from tagopsdb.exceptions import RepoException
 
@@ -22,11 +25,8 @@ class ExtCommandError(Exception):
 class Zookeeper(object):
     """ """
 
-    from kazoo.client import KazooClient, KazooState
-
-
     def __init__(self, hostname, servers):
-        """ """
+        """Set up election for Zookeeper"""
 
         self.zk = KazooClient('hosts=%s' % ','.join(servers))
         # self.zk.add_listener(self.my_listener)
@@ -34,15 +34,15 @@ class Zookeeper(object):
 
 
     def my_listener(self, state):
-        """"""
+        """Manage connection to Zookeeper"""
 
         pass   # Do we need to do anything here?
 
 
-    def run(self, elect_method):
-        """"""
+    def run(self, elect_method, *args):
+        """Run passed method with given arguments when election is won"""
 
-        self.election.run(elect_method)
+        self.election.run(elect_method, *args)
 
 
 def run(cmd, expect_return_code=0, env=None, shell=False):
@@ -56,8 +56,11 @@ def run(cmd, expect_return_code=0, env=None, shell=False):
     try:
         proc = subprocess.Popen(args, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, env=env, shell=shell)
-    except OSError:
-        raise ExtCommandError('Error using Popen: args were %r' % args)
+    except OSError as e:
+        exc = subprocess.CalledProcessError(1, args)
+        exc.stderr = 'Error using Popen: %s' % e
+        exc.stdout = None
+        raise exc
 
     stdout, stderr = proc.communicate()
 
@@ -93,8 +96,9 @@ def prepare_rpms(incoming_dir, process_dir, files):
                            'processing directory...')
 
     for rpm in files:
+        src_rpm = os.path.join(incoming_dir, rpm)
+
         try:
-            src_rpm = os.path.join(incoming_dir, rpm)
             shutil.move(src_rpm, process_dir)
         except IOError, e:
             raise RepoException('Unable to move file "%s" to "%s": %s'
@@ -125,8 +129,9 @@ def update_repo(repo_dir, process_dir):
             daemonize.logging.error(e)
             continue
 
+        dest_dir = os.path.join(repo_dir, arch_type)
+
         try:
-            dest_dir = os.path.join(repo_dir, arch_type)
             shutil.copy(rpm_to_process, dest_dir)
         except IOError, e:
             raise RepoException('Unable to copy file "%s" to "%s": %s'
@@ -172,6 +177,7 @@ def main():
        leader in multi-system configuration
     """
 
+    data = None
     daemonize.logging.info('Reading configuration (deploy.yml) file')
 
     with open('/etc/tagops/deploy.yml') as conf_file:
