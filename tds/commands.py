@@ -182,20 +182,41 @@ class Package(object):
                                'Please contact SiteOps for assistance.')
 
 
-    def wait_for_file_removal(self, path):
-        """Wait until a given file has been removed"""
+    def check_package_state(self, pkg_info):
+        """Check state of package in database"""
+
+        return package.find_package(pkg_info['project'], pkg_info['version'],
+                                    pkg_info['revision'])
+
+
+    def wait_for_state_change(self, pkg_info):
+        """Check for state change for package in database"""
+
+        # This call is just to seed previous_status
+        # for the first run of the loop
+        pkg = self.check_package_state(pkg_info)
 
         while True:
-            try:
-                # The listdir() is necessary due to NFS cache
-                # timeouts - the stat() will trigger the exception
-                # once the file itself is gone
-                os.listdir(os.path.dirname(path))
-                os.stat(path)
+            previous_status = pkg.status
+            pkg = self.check_package_state(pkg_info)
+
+            if pkg.status == 'completed':
+                self.log.info('Repository successfully updated')
+                self.log.info('Added package for project "%s", version %s',
+                              pkg_info['project'], pkg_info['version'])
+                return
+            elif pkg.status == 'failed':
+                self.log.info('Failed to update repository with package '
+                              'for project "%s", version %s',
+                              pkg_info['project'], pkg_info['version'])
+                self.log.info('Please try again')
+                return
+            else:
+                if pkg.status != previous_status:
+                    self.log.debug(5, 'State of package is now: %s',
+                                   pkg.status)
+
                 time.sleep(0.5)
-            except OSError, e:
-                if e.errno == errno.ENOENT:
-                    break
 
 
     def _queue_rpm(self, params, queued_rpm, rpm_name, app):
@@ -238,57 +259,52 @@ class Package(object):
 
         tds.authorize.verify_access(params['user_level'], 'dev')
 
-        try:
-            # The real 'revision' is hardcoded to 1 for now
-            # This needs to be changed at some point
-            package.add_package(params['project'], params['version'], '1',
-                                params['user'])
-        except PackageException, e:
-            self.log.error(e)
-            return
+        # The real 'revision' is hardcoded to 1 for now
+        # This needs to be changed at some point
+        pkg_info = { 'project': params['project'],
+                     'version': params['version'],
+                     'revision': '1', }
 
-        # Get repo information for package
-        app = repo.find_app_location(params['project'])
+        if self.check_package_state(pkg_info) is None:
+            try:
+                package.add_package(params['project'], params['version'], '1',
+                                    params['user'])
+            except PackageException, e:
+                self.log.error(e)
+                return
 
-        # Revision hardcoded for now
-        rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, params['version'],
-                                       app.arch)
-        incoming_dir = params['repo']['incoming']
-        processing_dir = params['repo']['processing']
+            Session.commit()
+            self.log.debug('Committed database changes')
 
-        queued_rpm = os.path.join(incoming_dir, rpm_name)
-        self.log.debug(5, 'Queued RPM is: %s', queued_rpm)
-        process_rpm = os.path.join(processing_dir, rpm_name)
-        self.log.debug(5, 'Processed RPM is: %s', process_rpm)
+            # Get repo information for package
+            app = repo.find_app_location(params['project'])
 
-        if not self._queue_rpm(params, queued_rpm, rpm_name, app):
-            return
+            # Revision hardcoded for now
+            rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, params['version'],
+                                           app.arch)
+            incoming_dir = params['repo']['incoming']
 
-        # wait until file has been removed or timeout with
-        # error (meaning repository side failed, check logs there)
+            pending_rpm = os.path.join(incoming_dir, rpm_name)
+            self.log.debug(5, 'Pending RPM is: %s', pending_rpm)
 
-        self.log.info('Waiting for software repository server')
-        self.log.info('  to update deploy repo...')
+            if not self._queue_rpm(params, pending_rpm, rpm_name, app):
+                self.log.info('Failed to copy RPM into incoming directory')
+                return
+
+        # Wait until status has been updated to 'failed' or 'completed',
+        # or timeout occurs (meaning repository side failed, check logs there)
+
+        self.log.info('Waiting for software repository server to update '
+                      'deploy repo...')
 
         self.log.debug(5, 'Setting up signal handler')
         signal.signal(signal.SIGALRM, self.processing_handler)
         signal.alarm(120)
 
-        self.log.debug(5, 'Waiting for RPM to be removed from queued '
-                       'directory')
-        self.wait_for_file_removal(queued_rpm)
-        self.log.debug(5, 'Waiting for RPM to be removed from processing '
-                       'directory')
-        self.wait_for_file_removal(process_rpm)
+        self.log.debug(5, 'Waiting for status update in database for package')
+        self.wait_for_state_change(pkg_info)
 
         signal.alarm(0)
-        self.log.info('Repository successfully updated')
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-        self.log.info('Added package for project "%s", version %s',
-                      params['project'], params['version'])
 
 
     @tds.utils.debug
