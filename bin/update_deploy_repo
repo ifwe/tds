@@ -138,17 +138,21 @@ def update_repo(repo_dir, process_dir, session):
         # TODO: ensure package is valid (security purposes)
 
         cmd = [ 'rpm', '-qp', '--queryformat',
-                '%{arch},%{name},%{version},%{release}', rpm_to_process ]
+                '%{arch}\n%{name}\n%{version}\n%{release}', rpm_to_process ]
 
         try:
             rpm_info = run(cmd)
         except subprocess.CalledProcessError as e:
-            email_for_invalid_rpm(rpm_to_process)
+            try:
+                email_for_invalid_rpm(rpm_to_process)
+            except Exception as e:   # Email send failed?  Tough noogies.
+                daemonize.logging.error('Email send failed: %s' % e)
+
             os.unlink(rpm_to_process)
             daemonize.logging.error('rpm command failed: %s' % e)
             continue
 
-        arch_type, name, version, release = rpm_info.stdout.split(',')
+        arch_type, name, version, release = rpm_info.stdout.split('\n')
         dest_dir = os.path.join(repo_dir, arch_type)
 
         pkg = package.find_package(name, version, release)
