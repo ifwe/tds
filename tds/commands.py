@@ -420,6 +420,57 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
+    def check_previous_environment(self, params, pkg_id, app_id):
+        """Ensure deployment for previous environment for given package
+           and apptier was validated; this is only relevant for staging
+           and production environments
+        """
+        if not self.requires_tier_progression:
+            self.log.debug('Previous environment not required for %(project)r'
+                % params
+            )
+            return True
+
+        self.log.debug('Checking for validation in previous environment')
+
+        if params['environment'] != 'dev':
+            prev_env = self.get_previous_environment(params['environment'])
+            self.log.debug(5, 'Previous environment is: %s', prev_env)
+
+            prev_deps = deploy.find_app_deployment(pkg_id, [ app_id ],
+                                                   self.envs[prev_env])
+            # There might be no deployment available; otherwise
+            # there should only be one deployment here
+            if not prev_deps:
+                self.log.info('Application %r with version %r never '
+                              'deployed to previous environment (%s) '
+                              'for current apptype', params['project'],
+                              params['version'], prev_env)
+                return False
+
+            prev_app_dep, prev_app_type, prev_dep_type, \
+                prev_pkg = prev_deps[0]
+            self.log.debug(5, 'Previous application deployment is: %r',
+                           prev_app_dep)
+            self.log.debug(5, 'Previous application type is: %s',
+                           prev_app_type)
+            self.log.debug(5, 'Previous deployment type is: %s',
+                           prev_dep_type)
+            self.log.debug(5, 'Previous package is: %r', prev_pkg)
+
+            if (prev_dep_type != 'deploy' or
+                prev_app_dep.status != 'validated'):
+                self.log.info('Application %r with version %r not fully '
+                              'deployed or validated to previous environment '
+                              '(%s) for apptype %r', params['project'],
+                              params['version'], prev_env, prev_app_type)
+                return False
+
+        self.log.debug(5, 'In development environment, nothing to check')
+
+        return True
+
+    @tds.utils.debug
     def check_for_current_deployment(self, params, app_id, hosts=None):
         """For the current app type, see if there are any current deployments
            running and notify if there is
@@ -1980,24 +2031,12 @@ class Config(BaseDeploy):
     """Commands to manage deployments for supported config applications"""
 
     valid_project_types = [ 'tagconfig', 'kafka-config' ]
+    requires_tier_progression = False
 
     def __init__(self, logger):
         """Basic initialization"""
 
         super(Config, self).__init__(logger)
-
-
-    @tds.utils.debug
-    def check_previous_environment(self, params, pkg_id, app_id):
-        """Placeholder method as config projects don't check
-           the previous environment for validation (due to
-           differences in configuration information)
-        """
-
-        self.log.debug('Previous environment not required for config '
-                       'projects')
-
-        return True
 
 
     @tds.utils.debug
@@ -2167,59 +2206,7 @@ class Deploy(BaseDeploy):
     """Commands to manage deployments for supported applications"""
 
     valid_project_types = [ 'application' ]
-
-    def __init__(self, logger):
-        """Basic initialization"""
-
-        super(Deploy, self).__init__(logger)
-
-
-    @tds.utils.debug
-    def check_previous_environment(self, params, pkg_id, app_id):
-        """Ensure deployment for previous environment for given package
-           and apptier was validated; this is only relevant for staging
-           and production environments
-        """
-
-        self.log.debug('Checking for validation in previous environment')
-
-        if params['environment'] != 'dev':
-            prev_env = self.get_previous_environment(params['environment'])
-            self.log.debug(5, 'Previous environment is: %s', prev_env)
-
-            prev_deps = deploy.find_app_deployment(pkg_id, [ app_id ],
-                                                   self.envs[prev_env])
-            # There might be no deployment available; otherwise
-            # there should only be one deployment here
-            if not prev_deps:
-                self.log.info('Application %r with version %r never '
-                              'deployed to previous environment (%s) '
-                              'for current apptype', params['project'],
-                              params['version'], prev_env)
-                return False
-
-            prev_app_dep, prev_app_type, prev_dep_type, \
-                prev_pkg = prev_deps[0]
-            self.log.debug(5, 'Previous application deployment is: %r',
-                           prev_app_dep)
-            self.log.debug(5, 'Previous application type is: %s',
-                           prev_app_type)
-            self.log.debug(5, 'Previous deployment type is: %s',
-                           prev_dep_type)
-            self.log.debug(5, 'Previous package is: %r', prev_pkg)
-
-            if (prev_dep_type != 'deploy' or
-                prev_app_dep.status != 'validated'):
-                self.log.info('Application %r with version %r not fully '
-                              'deployed or validated to previous environment '
-                              '(%s) for apptype %r', params['project'],
-                              params['version'], prev_env, prev_app_type)
-                return False
-
-        self.log.debug(5, 'In development environment, nothing to check')
-
-        return True
-
+    requires_tier_progression = True
 
     @tds.utils.debug
     @catch_exceptions
