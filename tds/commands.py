@@ -411,11 +411,11 @@ class BaseDeploy(object):
     env_order = [ 'dev', 'stage', 'prod' ]
 
     requires_tier_progression = True
+    valid_project_types = []
 
     def __init__(self, logger):
         """Basic initialization"""
 
-        self.valid_project_types = None
         self.log = logger
 
 
@@ -1979,11 +1979,12 @@ class BaseDeploy(object):
 class Config(BaseDeploy):
     """Commands to manage deployments for supported config applications"""
 
+    valid_project_types = [ 'tagconfig', 'kafka-config' ]
+
     def __init__(self, logger):
         """Basic initialization"""
 
         super(Config, self).__init__(logger)
-        self.valid_project_types = [ 'tagconfig', 'kafka-config' ]
 
 
     @tds.utils.debug
@@ -2165,11 +2166,12 @@ class Config(BaseDeploy):
 class Deploy(BaseDeploy):
     """Commands to manage deployments for supported applications"""
 
+    valid_project_types = [ 'application' ]
+
     def __init__(self, logger):
         """Basic initialization"""
 
         super(Deploy, self).__init__(logger)
-        self.valid_project_types = [ 'application' ]
 
 
     @tds.utils.debug
