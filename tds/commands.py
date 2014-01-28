@@ -2004,7 +2004,7 @@ class Config(BaseDeploy):
 
         try:
             app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-        except NoCurrentDeploymentError as _e:
+        except NoCurrentDeploymentError:
             pass
 
         app_host_map, app_dep_map = \

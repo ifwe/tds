@@ -1,5 +1,3 @@
-import argparse
-
 from ordereddict import OrderedDict as odict
 
 repository_data = odict([
