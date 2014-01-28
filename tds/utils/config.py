@@ -12,6 +12,7 @@ __all__ = [
     'TDSDeployConfig'
 ]
 
+
 class DottedDict(dict):
     """Allow dictionary keys to be accessed like attributes"""
 
@@ -157,7 +158,7 @@ class TDSDatabaseConfig(TDSConfig):
 
     default_name_fragment = 'dbaccess'
     schema = {
-        'db' : [ 'user', 'password', ],
+        'db': ['user', 'password', ],
     }
 
     def __init__(self, access_level, name_fragment=default_name_fragment,
@@ -174,12 +175,12 @@ class TDSDeployConfig(TDSConfig):
 
     default_name_fragment = 'deploy'
     schema = {
-        'env' : [ 'environment', ],
-        'logging' : [ 'syslog_facility', 'syslog_priority', ],
-        'notifications' : [ 'enabled_methods', 'email_receiver',
-                            'hipchat_rooms', 'hipchat_token',
-                            'validation_time', ],
-        'repo' : [ 'build_base', 'incoming', 'processing', ],
+        'env': ['environment', ],
+        'logging': ['syslog_facility', 'syslog_priority', ],
+        'notifications': ['enabled_methods', 'email_receiver',
+                          'hipchat_rooms', 'hipchat_token',
+                          'validation_time', ],
+        'repo': ['build_base', 'incoming', 'processing', ],
     }
 
     def __init__(self, name_fragment=default_name_fragment,
@@ -208,8 +209,8 @@ def verify_conf_file_section(cf_name, section, sub_cf_name=None):
         raise Exception("Unknown config file requested: %r", cf_name)
 
     conf = conf_factory()
-    conf.load(logger = logger)
-    conf.verify(logger = logger)
+    conf.load(logger=logger)
+    conf.verify(logger=logger)
 
     logger.debug(5, 'Data is: %r', conf)
 
