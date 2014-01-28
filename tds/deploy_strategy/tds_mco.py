@@ -6,6 +6,7 @@ import tds.utils
 
 from . import DeployStrategy
 
+
 class TDSMCODeployStrategy(DeployStrategy):
     @tds.utils.debug
     def process_mco_command(self, mco_cmd, retry):
@@ -14,8 +15,11 @@ class TDSMCODeployStrategy(DeployStrategy):
         self.log.debug('Running MCollective command')
         self.log.debug(5, 'Command is: %s' % ' '.join(mco_cmd))
 
-        proc = subprocess.Popen(mco_cmd, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
+        proc = subprocess.Popen(
+            mco_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         stdout, stderr = proc.communicate()
 
         if proc.returncode:
@@ -65,16 +69,15 @@ class TDSMCODeployStrategy(DeployStrategy):
         return (False, 'Unknown/unparseable mcollective output: %s' %
                 stdout)
 
-
     @tds.utils.debug
     def restart_host(self, dep_host, app, retry=4):
         """Restart application on a given host"""
 
         self.log.debug('Restarting application on host %r', dep_host)
 
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '4',
-                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
-                    app, 'restart' ]
+        mco_cmd = ['/usr/bin/mco', 'tds', '--discovery-timeout', '4',
+                   '--timeout', '60', '-W', 'hostname=%s' % dep_host,
+                   app, 'restart']
 
         return self.process_mco_command(mco_cmd, retry)
 
@@ -82,8 +85,8 @@ class TDSMCODeployStrategy(DeployStrategy):
     def deploy_to_host(self, dep_host, app, version, retry=4):
         self.log.debug('Deploying to host %r' % dep_host)
 
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '4',
-                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
-                    app, version ]
+        mco_cmd = ['/usr/bin/mco', 'tds', '--discovery-timeout', '4',
+                   '--timeout', '60', '-W', 'hostname=%s' % dep_host,
+                   app, version]
 
         return self.process_mco_command(mco_cmd, retry)

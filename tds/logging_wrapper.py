@@ -17,12 +17,12 @@ sysloghandler = logging.handlers.SysLogHandler
 # Basic dictionary settings
 facilities = {}
 for facility in sysloghandler.facility_names.keys():
-    if getattr(sysloghandler, 'LOG_%s' % facility.upper(), None) != None:
+    if getattr(sysloghandler, 'LOG_%s' % facility.upper(), None) is not None:
         facilities[facility] = sysloghandler.facility_names[facility]
 
 priorities = {}
 for priority in sysloghandler.priority_names.keys():
-    if getattr(sysloghandler, 'LOG_%s' % priority.upper(), None) != None:
+    if getattr(sysloghandler, 'LOG_%s' % priority.upper(), None) is not None:
         priorities[priority] = sysloghandler.priority_names[priority]
 
 # Extend DEBUG settings for level
@@ -36,7 +36,7 @@ LOG_LOCAL4 = facilities['local4']
 
 LOG_DEBUG = priorities['debug']
 LOG_INFO = priorities['info']
-LOG_ERR  = priorities['err']
+LOG_ERR = priorities['err']
 
 
 def _extract_from_dict(dict, key, default=None):
@@ -67,11 +67,13 @@ class ColorCodes(object):
     PURPLE = '\033[1;35m'
     CYAN = '\033[1;36m'
 
-    c_map = { 'DEBUG' : CYAN,
-              'INFO' : GREEN,
-              'WARNING' : YELLOW,
-              'ERROR' : RED,
-              'CRITICAL' : PURPLE, }
+    c_map = {
+        'DEBUG': CYAN,
+        'INFO': GREEN,
+        'WARNING': YELLOW,
+        'ERROR': RED,
+        'CRITICAL': PURPLE,
+    }
 
 
 class MaxLevelFilter(logging.Filter):
@@ -84,7 +86,6 @@ class MaxLevelFilter(logging.Filter):
         """Set maximum level"""
 
         self._level = level
-
 
     def filter(self, record):
         """Message is filtered if it's above specified level"""
@@ -111,7 +112,6 @@ class Formatter(logging.Formatter):
 
         self.use_color = use_color
 
-
     def set_user(self, user):
         """Set current user for logging info"""
 
@@ -120,7 +120,6 @@ class Formatter(logging.Formatter):
 
         self.user = user
 
-
     def set_code(self, code):
         """Set code information for logging info"""
 
@@ -128,7 +127,6 @@ class Formatter(logging.Formatter):
             code = 0
 
         self.code = code
-
 
     def format(self, record):
         """Set format for logging info"""
@@ -167,7 +165,6 @@ class Logger(logging.Logger, object):
     code = None
     saved_state = []
 
-
     def __init__(self, name, user=None, code=None):
         """Basic configuration"""
 
@@ -182,7 +179,6 @@ class Logger(logging.Logger, object):
         self.set_user(user)
         self.set_code(code)
 
-
     def _update_formatters(self):
         """Update the user and code entries for the formatters"""
 
@@ -194,7 +190,6 @@ class Logger(logging.Logger, object):
                 f.set_user(self.user)
                 f.set_code(self.code)
 
-
     def set_user(self, user=None):
         """Set user in formatter"""
 
@@ -202,14 +197,12 @@ class Logger(logging.Logger, object):
         cls.user = user
         self._update_formatters()
 
-
     def set_code(self, code=None):
         """Set code in formatter"""
 
         cls = type(self)
         cls.code = code
         self._update_formatters()
-
 
     def push(self, user=None, code=None):
         """Set new values for user and code entries, saving the previous
@@ -226,13 +219,11 @@ class Logger(logging.Logger, object):
 
         self._update_formatters()
 
-
     def pop(self, user=None, code=None):
         """Retrieve the previous values for user and code and set them"""
 
         self.user, self.code = self.saved_state.pop()
         self._update_formatters()
-
 
     def log(self, *args, **kwargs):
         """Call the method passed with the current values for user and code,
@@ -248,7 +239,6 @@ class Logger(logging.Logger, object):
             logging.Logger.log(self, *args, **kwargs)
         finally:
             self.pop()
-
 
     # Allow for multiple debug levels
     def debug(self, level, *args, **kwargs):
@@ -323,7 +313,7 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
     handle = logging.StreamHandler(stream)
 
     if syslog_format:
-        format_string = ('%(asctime)s.%(msecs)03d: ' 
+        format_string = ('%(asctime)s.%(msecs)03d: '
                          '%(name)s[%(process)d]%(user)s %(code)s: '
                          '%(levelname)s: %(message)s',
                          '%H:%M:%S')

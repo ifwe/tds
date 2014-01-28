@@ -43,14 +43,13 @@ class Notifications(object):
                       ', '.join(self.hipchat_rooms))
         tds_log.debug(5, 'HipChat token: %s', self.hipchat_token)
 
-
     @tds.utils.debug
     def send_email(self, msg_subject, msg_text):
         """Send an email notification for a given action"""
 
         tds_log.debug('Sending email notification(s)')
 
-        receiver_emails = [ self.sender_addr, self.receiver_addr ]
+        receiver_emails = [self.sender_addr, self.receiver_addr]
 
         msg = MIMEText(msg_text)
 
@@ -62,7 +61,6 @@ class Notifications(object):
         s.sendmail(self.sender, receiver_emails, msg.as_string())
         s.quit()
 
-
     @tds.utils.debug
     def send_hipchat(self, msg_subject, msg_text):
         """Send a HipChat message for a given action"""
@@ -73,14 +71,16 @@ class Notifications(object):
         os.environ['HTTPS_PROXY'] = 'http://10.15.11.132:443/'
 
         for room in self.hipchat_rooms:
-            payload = { 'auth_token' : self.hipchat_token,
-                        'room_id' : room,
-                        'from' : self.sender,
-                        'message' : '<strong>%s</strong><br />%s'
-                                    % (msg_subject, msg_text), }
+            payload = {
+                'auth_token': self.hipchat_token,
+                'room_id': room,
+                'from': self.sender,
+                'message': ('<strong>%s</strong><br />%s'
+                            % (msg_subject, msg_text)),
+            }
 
             # Content-Length must be set in header due to bug in Python 2.6
-            headers = { 'Content-Length' : '0' }
+            headers = {'Content-Length': '0'}
 
             r = requests.post('https://api.hipchat.com/v1/rooms/message',
                               params=payload, headers=headers)
@@ -88,7 +88,6 @@ class Notifications(object):
             if r.status_code != requests.codes.ok:
                 tds_log.error('Notification to HipChat failed, status code '
                               'is: %r', r.status_code)
-
 
     @tds.utils.debug
     def send_notifications(self, msg_subject, msg_text):

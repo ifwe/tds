@@ -5,6 +5,7 @@ try:
 except ImportError:
     codecs = None
 
+
 class UTFFixedSysLogHandler(SysLogHandler):
     """
     A bug-fix sub-class of SysLogHandler that fixes the UTF-8 BOM syslog
@@ -30,8 +31,10 @@ class UTFFixedSysLogHandler(SysLogHandler):
         We need to convert record level to lowercase, maybe this will
         change in the future.
         """
-        prio = '<%d>' % self.encodePriority(self.facility,
-                    self.mapPriority(record.levelname))
+        prio = '<%d>' % self.encodePriority(
+            self.facility,
+            self.mapPriority(record.levelname)
+        )
         prio = prio.encode('utf-8')
         # Message is a string. Convert to bytes as required by RFC 5424.
         msg = msg.encode('utf-8')

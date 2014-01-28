@@ -2,6 +2,7 @@ import logging
 
 __all__ = ['debug']
 
+
 def debug(f):
     """Decorator method to handle debug-level logging of code flow
     (method entry and exit notifications)

@@ -21,7 +21,6 @@ class TDS(object):
         self.params['deployment'] = True
         self.log = params['log']
 
-
     @tds.utils.debug
     def check_user_auth(self):
         """Verify the user is authorized to run the application"""
@@ -35,7 +34,6 @@ class TDS(object):
             raise AccessError('Your account (%s) is not allowed to run this '
                               'application.\nPlease refer to your manager '
                               'for assistance.' % self.params['user'])
-
 
     @tds.utils.debug
     def check_exclusive_options(self):
@@ -64,7 +62,6 @@ class TDS(object):
         self.log.debug(5, '"explicit" parameter is: %s',
                        self.params['explicit'])
 
-
     @tds.utils.debug
     def update_program_parameters(self):
         """Set some additional program parameters"""
@@ -82,12 +79,11 @@ class TDS(object):
         build_base, incoming, processing = \
             tds.utils.verify_conf_file_section('deploy', 'repo')
 
-        self.params['repo'] = { 'build_base' : build_base,
-                                'incoming' : incoming,
-                                'processing' : processing, }
+        self.params['repo'] = {'build_base': build_base,
+                               'incoming': incoming,
+                               'processing': processing, }
         self.log.debug(5, '"repo" parameter values are: %r',
                        self.params['repo'])
-
 
     @tds.utils.debug
     def initialize_db(self):
@@ -102,8 +98,10 @@ class TDS(object):
             db_password = getpass.getpass('Enter DB password: ')
         else:
             db_user, db_password = \
-                tds.utils.verify_conf_file_section('dbaccess', 'db',
-                                      sub_cf_name=self.params['user_level'])
+                tds.utils.verify_conf_file_section(
+                    'dbaccess', 'db',
+                    sub_cf_name=self.params['user_level']
+                )
 
         self.log.debug(5, 'DB user is: %s, DB password is: %s',
                        db_user, db_password)
@@ -112,7 +110,6 @@ class TDS(object):
             init_session(db_user, db_password)
         except PermissionsException, e:
             raise AccessError('Access issue with database:\n%s' % e)
-
 
     @tds.utils.debug
     def execute_command(self):
@@ -128,7 +125,9 @@ class TDS(object):
         try:
             self.log.debug(5, 'Executing subcommand %r',
                            self.params['subcommand_name'].replace('-', '_'))
-            getattr(cmd,
-                self.params['subcommand_name'].replace('-', '_'))(self.params)
+            getattr(
+                cmd,
+                self.params['subcommand_name'].replace('-', '_')
+            )(self.params)
         except:
             raise   # Just pass error up to top level
