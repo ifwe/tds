@@ -14,7 +14,7 @@ import tds.logging_wrapper as log_wrap
 import tds.version
 
 from tds.exceptions import AccessError, ConfigurationError, \
-                           NotImplementedError, WrongEnvironmentError, \
+                           WrongEnvironmentError, \
                            WrongProjectTypeError
 
 

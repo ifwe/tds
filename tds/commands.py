@@ -1,21 +1,18 @@
 import errno
 import os
 import os.path
-import re
 import signal
 import socket
-import subprocess
 import sys
 import time
 
 from datetime import datetime, timedelta
 
-import json
 import progressbar
 
 from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException, PackageException, \
-                                DeployException, NotImplementedException
+                                DeployException
 
 import tagopsdb.deploy.repo as repo
 import tagopsdb.deploy.package as package
@@ -25,22 +22,8 @@ import tds.authorize
 import tds.notifications
 import tds.utils
 
-from tds.exceptions import NoCurrentDeploymentError, NotImplementedError, \
+from tds.exceptions import NoCurrentDeploymentError, \
                            WrongEnvironmentError, WrongProjectTypeError
-
-
-def catch_exceptions(meth):
-    """Catch common database library exceptions"""
-
-    def wrapped(*args, **kwargs):
-        try:
-            val = meth(*args, **kwargs)
-        except NotImplementedException, e:
-            raise NotImplementedError(e)
-
-        return val
-
-    return wrapped
 
 
 class Repository(object):
@@ -53,7 +36,6 @@ class Repository(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def add(self, params):
         """Add a given project to the repository"""
 
@@ -104,7 +86,6 @@ class Repository(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def delete(self, params):
         """Remove a given project from the repository"""
 
@@ -124,7 +105,6 @@ class Repository(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def list(self, params):
         """Show information for requested projects (or all projects)"""
 
@@ -252,7 +232,6 @@ class Package(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def add(self, params):
         """Add a given version of a package for a given project"""
 
@@ -311,7 +290,6 @@ class Package(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def delete(self, params):
         """Delete a given version of a package for a given project"""
 
@@ -334,7 +312,6 @@ class Package(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def list(self, params):
         """Show information for all existing packages in the software
            repository for requested projects (or all projects)
@@ -631,13 +608,12 @@ class BaseDeploy(object):
     def deploy_to_host(self, dep_host, app, version, retry=4):
         """Deploy specified package to a given host"""
 
-        self.log.debug('Deploying to host %r' % dep_host)
+        return self.deploy_strategy.deploy_to_host(dep_host, app, version, retry)
 
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '4',
-                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
-                    app, version ]
 
-        return self.process_mco_command(mco_cmd, retry)
+    @tds.utils.debug
+    def restart_host(self, dep_host, app, retry=4):
+        return self.deploy_strategy.restart_host(dep_host, app, retry)
 
 
     @tds.utils.debug
@@ -1548,76 +1524,6 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    def process_mco_command(self, mco_cmd, retry):
-        """Run a given MCollective 'mco' command"""
-
-        self.log.debug('Running MCollective command')
-        self.log.debug(5, 'Command is: %s' % ' '.join(mco_cmd))
-
-        proc = subprocess.Popen(mco_cmd, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-
-        if proc.returncode:
-            return (False, 'The mco process failed to run successfully, '
-                           'return code is %s' % proc.returncode)
-
-        mc_output = None
-        summary = None
-
-        # Extract the JSON output and summary line
-        for line in stdout.split('\n'):
-            if line == '':
-                continue
-
-            if line.startswith('{'):
-                mc_output = json.loads(line)
-
-            if line.startswith('Finished'):
-                summary = line.strip()
-
-        # Ensure valid response and extract information
-        if mc_output is None or summary is None:
-            return (False, 'No output or summary information returned '
-                           'from mco process')
-
-        self.log.debug(summary)
-        m = re.search(r'processing (\d+) / (\d+) ', summary)
-
-        if m is None:
-            return (False, 'Error parsing summary line.')
-
-        # Virtual hosts in dev tend to time out unpredictably, probably
-        # because vmware is slow to respond when the hosts are not
-        # active. Subsequent retries after a timeout work better.
-        if m.group(2) == '0' and retry > 0:
-            self.log.debug('Discovery failure, trying again.')
-            return self.process_mco_command(mco_cmd, retry-1)
-
-        for host, hostinfo in mc_output.iteritems():
-            if hostinfo['exitcode'] != 0:
-                return (False, hostinfo['stderr'].strip())
-            else:
-                return (True, 'Deploy successful')
-
-        return (False, 'Unknown/unparseable mcollective output: %s' %
-                stdout)
-
-
-    @tds.utils.debug
-    def restart_host(self, dep_host, app, retry=4):
-        """Restart application on a given host"""
-
-        self.log.debug('Restarting application on host %r', dep_host)
-
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '4',
-                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
-                    app, 'restart' ]
-
-        return self.process_mco_command(mco_cmd, retry)
-
-
-    @tds.utils.debug
     def restart_hosts(self, params, dep_hosts, dep_id):
         """Restart application on a given set of hosts"""
 
@@ -1879,7 +1785,6 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def add_apptype(self, params):
         """Add a specific application type to the given project"""
 
@@ -1906,7 +1811,6 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def delete_apptype(self, params):
         """Delete a specific application type from the given project"""
 
@@ -1928,7 +1832,6 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def invalidate(self, params):
         """Invalidate a given version of a given project"""
 
@@ -1962,7 +1865,6 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def show(self, params):
         """Show deployment information for a given project"""
 
@@ -1995,7 +1897,6 @@ class BaseDeploy(object):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def validate(self, params):
         """Validate a given version of a given project"""
 
@@ -2033,14 +1934,7 @@ class Config(BaseDeploy):
     valid_project_types = [ 'tagconfig', 'kafka-config' ]
     requires_tier_progression = False
 
-    def __init__(self, logger):
-        """Basic initialization"""
-
-        super(Config, self).__init__(logger)
-
-
     @tds.utils.debug
-    @catch_exceptions
     def create(self, params):
         """Add a new config project to the system"""
 
@@ -2070,7 +1964,6 @@ class Config(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def delete(self, params):
         """Remove a config project from the system"""
 
@@ -2091,7 +1984,6 @@ class Config(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def push(self, params):
         """Push given version of given config project to requested application
            tiers or hosts
@@ -2112,7 +2004,7 @@ class Config(BaseDeploy):
 
         try:
             app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-        except NoCurrentDeploymentError, e:
+        except NoCurrentDeploymentError as _e:
             pass
 
         app_host_map, app_dep_map = \
@@ -2126,7 +2018,6 @@ class Config(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def repush(self, params):
         """Repush given config project to requested application tiers or
            hosts
@@ -2159,7 +2050,6 @@ class Config(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def revert(self, params):
         """Revert to the previous validated deployed version of given config
            project on requested application tiers or hosts
@@ -2209,7 +2099,6 @@ class Deploy(BaseDeploy):
     requires_tier_progression = True
 
     @tds.utils.debug
-    @catch_exceptions
     def force_production(self, params):
         """Allow deployment to production of given project without the
            previous environment check
@@ -2225,7 +2114,6 @@ class Deploy(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def force_staging(self, params):
         """Allow deployment to staging of given project without the
            previous environment check
@@ -2241,7 +2129,6 @@ class Deploy(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def promote(self, params):
         """Deploy given version of given project to requested application
            tiers or hosts
@@ -2271,7 +2158,6 @@ class Deploy(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def redeploy(self, params):
         """Redeploy given project to requested application tiers or hosts"""
 
@@ -2302,7 +2188,6 @@ class Deploy(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def restart(self, params):
         """Restart given project on requested application tiers or hosts"""
 
@@ -2331,7 +2216,6 @@ class Deploy(BaseDeploy):
 
 
     @tds.utils.debug
-    @catch_exceptions
     def rollback(self, params):
         """Rollback to the previous validated deployed version of given
            project on requested application tiers or hosts
