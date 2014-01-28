@@ -1,3 +1,4 @@
+import socket
 from logging.handlers import SysLogHandler
 try:
     import codecs

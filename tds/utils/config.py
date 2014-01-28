@@ -6,6 +6,11 @@ from tds.exceptions import ConfigurationError
 
 from .debug import debug
 
+__all__ = [
+    'DottedDict', 'Config', 'FileConfig', 'YAMLConfig',
+    'VerifyingConfig', 'TDSConfig', 'TDSDatabaseConfig',
+    'TDSDeployConfig'
+]
 
 class DottedDict(dict):
     """Allow dictionary keys to be accessed like attributes"""

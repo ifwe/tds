@@ -4,11 +4,11 @@ from setuptools import setup
 # long_description = open('README.txt').read()
 
 # Get version of project
-execfile('tds/version.py')
+import tds.version
 
 setup_args = dict(
     name = 'TDS',
-    version = __version__,
+    version = tds.version.__version__,
     description = 'Tagged Deployment System',
     # long_description = long_description,
     author = 'Kenneth Lareau',
