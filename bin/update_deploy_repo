@@ -1,15 +1,28 @@
 #!/usr/bin/env python2.6
 
+import collections
 import os
 import os.path
+import shlex
 import shutil
+import smtplib
+import socket
 import subprocess
 import sys
 import time
 
+from email.mime.text import MIMEText
+
 import daemonize
 import yaml
+import yaml.parser
 
+from kazoo.client import KazooClient   # , KazooState
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+import tagopsdb.deploy.package as package
+
+from tagopsdb.database import init_session
 from tagopsdb.exceptions import RepoException
 
 
@@ -17,19 +30,59 @@ class ExtCommandError(Exception):
     pass
 
 
-def run_command(cmd):
+class Zookeeper(object):
+    """ """
+
+    def __init__(self, hostname, servers):
+        """Set up election for Zookeeper"""
+
+        self.zk = KazooClient('hosts=%s' % ','.join(servers))
+        # self.zk.add_listener(self.my_listener)
+        self.election = self.zk.Election('/deployrepo', hostname)
+
+
+    def my_listener(self, state):
+        """Manage connection to Zookeeper"""
+
+        pass   # Do we need to do anything here?
+
+
+    def run(self, elect_method, *args):
+        """Run passed method with given arguments when election is won"""
+
+        self.election.run(elect_method, *args)
+
+
+def run(cmd, expect_return_code=0, env=None, shell=False):
     """Wrapper to run external command"""
 
-    cmdline = ' '.join(cmd)
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+    if isinstance(cmd, basestring):
+        args = shlex.split(cmd.replace('\\', '\\\\'))
+    else:
+        args = cmd
+
+    try:
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, env=env, shell=shell)
+    except OSError as e:
+        exc = subprocess.CalledProcessError(1, args)
+        exc.stderr = 'Error using Popen: %s' % e
+        exc.stdout = None
+        raise exc
 
     stdout, stderr = proc.communicate()
 
-    if proc.returncode:
-        raise ExtCommandError('Command "%s" failed:\n%s' % (cmdline, stderr))
+    if not (expect_return_code is None or
+            expect_return_code == proc.returncode):
+        exc = subprocess.CalledProcessError(proc.returncode, args)
+        exc.stderr = stderr
+        exc.stdout = stdout
+        raise exc
 
-    return stdout
+    Process = collections.namedtuple('Process',
+                                     ['stdout', 'stderr', 'returncode'])
+
+    return Process(stdout=stdout, stderr=stderr, returncode=proc.returncode)
 
 
 def prepare_rpms(incoming_dir, process_dir, files):
@@ -39,20 +92,42 @@ def prepare_rpms(incoming_dir, process_dir, files):
                            'processing directory...')
 
     for rpm in files:
+        src_rpm = os.path.join(incoming_dir, rpm)
+        dst_rpm = os.path.join(process_dir, rpm)
+
         try:
-            src_rpm = os.path.join(incoming_dir, rpm)
-            shutil.move(src_rpm, process_dir)
-        except IOError, e:
+            # A rename should very rarely fail, so leaving uncaught
+            os.rename(src_rpm, dst_rpm)
+        except OSError as e:
             raise RepoException('Unable to move file "%s" to "%s": %s'
                                 % (src_rpm, process_dir, e))
 
 
-def update_repo(repo_dir, process_dir):
+def email_for_invalid_rpm(rpm_file):
+    """Send an email to engineering if a bad RPM is found"""
+
+    sender = 'siteops'
+    sender_email = '%s@tagged.com' % sender
+    receiver_emails = [ 'eng+tds@tagged.com' ]
+
+    msg = MIMEText('The RPM file "%s" is invalid, the builder of it should '
+                   'check the build process' % rpm_file)
+
+    msg['Subject'] = '[TDS] Invalid RPM file "%s"' % rpm_file
+    msg['From'] = sender_email
+    msg['To'] = ', '.join(receiver_emails)
+
+    s = smtplib.SMTP('localhost')
+    s.sendmail(sender, receiver_emails, msg.as_string())
+    s.quit()
+
+
+def update_repo(repo_dir, process_dir, session):
     """Copy RPMs in processing directory to the repository and run
        update the repo
     """
 
-    invalid_rpms = []
+    valid_rpms = []
     rpms_to_process = [ os.path.join(process_dir, f)
                         for f in os.listdir(process_dir) ]
 
@@ -62,54 +137,87 @@ def update_repo(repo_dir, process_dir):
 
         # TODO: ensure package is valid (security purposes)
 
-        cmd = [ 'rpm', '-qp', '--queryformat', '%{arch}', rpm_to_process ]
+        cmd = [ 'rpm', '-qp', '--queryformat',
+                '%{arch}\n%{name}\n%{version}\n%{release}', rpm_to_process ]
 
         try:
-            arch_type = run_command(cmd)
-        except ExtCommandError, e:
-            invalid_rpms.append(rpm_to_process)
-            daemonize.logging.error(e)
+            rpm_info = run(cmd)
+        except subprocess.CalledProcessError as e:
+            try:
+                email_for_invalid_rpm(rpm_to_process)
+            except Exception as e:   # Email send failed?  Tough noogies.
+                daemonize.logging.error('Email send failed: %s' % e)
+
+            os.unlink(rpm_to_process)
+            daemonize.logging.error('rpm command failed: %s' % e)
             continue
 
+        arch_type, name, version, release = rpm_info.stdout.split('\n')
+        dest_dir = os.path.join(repo_dir, arch_type)
+
+        pkg = package.find_package(name, version, release)
+
+        if pkg is None:
+            raise RepoException('Missing entry for package "%s", version %s, '
+                'revision %s in database' % (name, version, release))
+
         try:
-            dest_dir = os.path.join(repo_dir, arch_type)
             shutil.copy(rpm_to_process, dest_dir)
-        except IOError, e:
-            raise RepoException('Unable to copy file "%s" to "%s": %s'
-                                % (rpm_to_process, dest_dir, e))
+        except IOError as e:
+            time.sleep(2)   # Short delay before re-attempting
+
+            try:
+                shutil.copy(rpm_to_process, dest_dir)
+            except IOError as e:
+                pkg.status = 'failed'
+                session.commit()
+
+                os.unlink(rpm_to_process)
+                daemonize.logging.error('Unable to copy file "%s" to "%s": %s'
+                                        % (rpm_to_process, dest_dir, e))
+                continue
+
+        pkg.status = 'completed'
+        session.commit()
+
+        valid_rpms.append((rpm_to_process, name, version, release))
 
     daemonize.logging.info('Updating repo...')
+    old_umask = os.umask(0002)
 
     try:
-        old_umask = os.umask(0002)
-        run_command([ 'make', '-C', repo_dir ])
-        os.umask(old_umask)
-    except ExtCommandError, e:
-        raise RepoException(e)
+        run([ 'make', '-C', repo_dir ])
+    except subprocess.CalledProcessError as e:
+        daemonize.logging.error('yum database update failed, retrying: %s', e)
+        time.sleep(5)   # Short delay before re-attempting
 
-    daemonize.logging.info('Removing processed files...')
-
-    for rpm_to_process in rpms_to_process:
-        if rpm_to_process not in invalid_rpms:
-            os.unlink(rpm_to_process)
-
-
-def main():
-    """Read configuration file and get relavent information, then try to
-       process files in the incoming directory
-    """
-
-    daemonize.logging.info('Reading configuration (deploy.yml) file')
-
-    with open('/etc/tagops/deploy.yml') as conf_file:
         try:
-            data = yaml.load(conf_file.read())
-        except yaml.parser.ParserError, e:
-            raise RepoException('YAML parse error: %s' % e)
+            run([ 'make', '-C', repo_dir ])
+        except subprocess.CalledProcessError as e:
+            # Yes, making the assumption none of the package finds
+            # will fail...
+            for rpm_to_process in valid_rpms:
+                pkg = package.find_package(*rpm_to_process[1:])
+                pkg.status = 'failed'
+                session.commit()
 
-    repo_dir = data['yum']['repo_location']
-    incoming_dir = data['yum']['incoming']
-    process_dir = data['yum']['processing']
+            daemonize.logging.error('yum database update failed, aborting: '
+                                    '%s', e)
+
+    os.umask(old_umask)
+    daemonize.logging.info('Removing processed files...')
+    # Yes, making the assumption none of the package finds will fail...
+    # yet again...
+    for rpm_to_process in valid_rpms:
+        pkg = package.find_package(*rpm_to_process[1:])
+        pkg.status = 'completed'
+        session.commit()
+
+        os.unlink(rpm_to_process[0])
+
+
+def process_incoming_directory(repo_dir, incoming_dir, process_dir, session):
+    """"""
 
     daemonize.logging.info('Checking for incoming files...')
 
@@ -119,11 +227,72 @@ def main():
         if files:
             daemonize.logging.info('Files found, processing them...')
             prepare_rpms(incoming_dir, process_dir, files)
-            update_repo(repo_dir, process_dir)
+            update_repo(repo_dir, process_dir, session)
             daemonize.logging.info('Done processing, checking for incoming '
                                    'files...')
 
         time.sleep(1.0)
+
+
+def main():
+    """Read configuration file and get relevant information, then try to
+       process files in the incoming directory if single system or zookeeper
+       leader in multi-system configuration
+    """
+
+    data = None
+
+    daemonize.logging.info('Reading database access (dbaccess.admin.yml) '
+                           'file')
+
+    with open('/etc/tagops/dbaccess.admin.yml') as db_file:
+        try:
+            data = yaml.load(db_file.read())
+        except yaml.parser.ParserError as e:
+            raise RuntimeError('YAML parse error: %s' % e)
+
+    if 'db' not in data:
+        raise RuntimeError('YAML configuration missing "db" section')
+
+    try:
+        db_user = data['db']['user']
+        db_password = data['db']['password']
+    except KeyError as e:
+        raise RuntimeError('YAML configuration missing necessary parameter '
+                           'in "db" section: %s' % e)
+
+    daemonize.logging.info('Initializing database session')
+    init_session(db_user, db_password)
+    session = scoped_session(sessionmaker())
+
+    daemonize.logging.info('Reading configuration (deploy.yml) file')
+
+    with open('/etc/tagops/deploy.yml') as conf_file:
+        try:
+            data = yaml.load(conf_file.read())
+        except yaml.parser.ParserError, e:
+            raise RepoException('YAML parse error: %s' % e)
+
+    if 'yum' not in data:
+        raise RuntimeError('YAML configuration missing "yum" section')
+
+    try:
+        repo_dir = data['yum']['repo_location']
+        incoming_dir = data['yum']['incoming']
+        process_dir = data['yum']['processing']
+    except KeyError as e:
+        raise RuntimeError('YAML configuration missing necessary parameter '
+                           'in "yum" section: %s' % e)
+
+    if 'zookeeper' in data:
+        hostname = socket.gethostname()
+
+        zk = Zookeeper(hostname, data['zookeeper'])
+        zk.run(process_incoming_directory, repo_dir, incoming_dir,
+               process_dir, session)
+    else:
+        process_incoming_directory(repo_dir, incoming_dir, process_dir,
+                                   session)
 
 
 def safe_main():
@@ -134,7 +303,7 @@ def safe_main():
     try:
         main()
     except:
-        exctype, value = sys.exc_info()[:2]
+        value = sys.exc_info()[1]
         e = "Unhandled exception: %s.  Daemon exiting." % value
         daemonize.logging.error(e)
         sys.exit(1)
