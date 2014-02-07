@@ -54,7 +54,7 @@ class TestPromoteAndPush(unittest2.TestCase):
             project = 'fake_app'
         ))
 
-        assert not self.deploy.perform_deployments.called
+        assert self.deploy.perform_deployments.called
 
     def test_push_new_version(self):
         self.config.ensure_newer_versions.return_value = True
@@ -76,7 +76,7 @@ class TestPromoteAndPush(unittest2.TestCase):
             project = 'fake_app'
         ))
 
-        assert not self.config.perform_deployments.called
+        assert self.config.perform_deployments.called
 
 
 
