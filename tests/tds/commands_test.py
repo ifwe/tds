@@ -9,7 +9,7 @@ class TestPromoteAndPush(unittest2.TestCase):
     def setUp(self):
 
         self.deploy = tds.commands.Deploy(logging.getLogger(type(self).__name__ + ' Deploy'))
-        self.config = tds.commands.Config(logging.getLogger(type(self).__name__ + 'Config'))
+        self.config = tds.commands.Config(logging.getLogger(type(self).__name__ + ' Config'))
 
         deploy_methods = [
             ('get_app_info', (None, None, None)),
