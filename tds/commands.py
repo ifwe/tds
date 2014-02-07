@@ -1981,7 +1981,7 @@ class Config(BaseDeploy):
         self.ensure_explicit_destinations(params)
 
         if not self.ensure_newer_versions(params):
-            return
+            pass
 
         pkg_id, app_ids, app_host_map = self.get_app_info(params)
 
@@ -2123,7 +2123,7 @@ class Deploy(BaseDeploy):
         self.ensure_explicit_destinations(params)
 
         if not self.ensure_newer_versions(params):
-            return
+            pass
 
         pkg_id, app_ids, app_host_map = self.get_app_info(params)
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
