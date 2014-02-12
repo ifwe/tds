@@ -4,7 +4,6 @@ import logging
 
 import tds.commands
 
-#class TestPromote(unittest2.TestCase):
 class TestPromoteAndPush(unittest2.TestCase):
     def setUp(self):
 
