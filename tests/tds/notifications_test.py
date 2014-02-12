@@ -1,4 +1,5 @@
 from mock import patch
+import contextlib
 import unittest2
 
 import tds.notifications
@@ -36,8 +37,11 @@ class TestNotifications(unittest2.TestCase):
     def tearDown(self):
         patch.stopall()
 
+    def create_notification(self):
+        return tds.notifications.Notifications(self.project, self.user, self.apptypes)
+
     def test_constructor(self):
-        n = tds.notifications.Notifications(self.project, self.user, self.apptypes)
+        n = self.create_notification()
 
         assert n.sender == self.user
         assert n.sender_addr == (self.user + '@tagged.com')
@@ -47,3 +51,14 @@ class TestNotifications(unittest2.TestCase):
         assert n.hipchat_token == self.hipchat_token
         assert n.validation_time == self.validation_time
 
+    def test_send_notifications(self):
+        n = self.create_notification()
+
+        patched_methods = ['send_' + mth for mth in self.enabled_methods[:]]
+        subject, text = "fake_subj", "fake_body"
+
+        with contextlib.nested(*[patch.object(n, mth) for mth in patched_methods]):
+            n.send_notifications(subject, text)
+
+            for mth in patched_methods:
+                assert getattr(n, mth).called_with(subject, text)
