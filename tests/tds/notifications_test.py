@@ -1,5 +1,4 @@
 from mock import patch
-import contextlib
 import unittest2
 
 import tds.notifications
@@ -8,7 +7,7 @@ import tds.notifications
 class TestNotifications(unittest2.TestCase):
 
     def setUp(self):
-        self.enabled_methods = ['hipchat']
+        self.enabled_methods = ['hipchat', 'email']
         self.receiver_addr = 'someone@tagged.com'
         self.hipchat_rooms = ['fake1', 'fake2']
         self.hipchat_token = 'deadbeef'
@@ -38,7 +37,6 @@ class TestNotifications(unittest2.TestCase):
         patch.stopall()
 
     def test_constructor(self):
-
         n = tds.notifications.Notifications(self.project, self.user, self.apptypes)
 
         assert n.sender == self.user
