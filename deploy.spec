@@ -77,7 +77,7 @@ Summary: Update repository daemon for deployment
 Group: Applications/Python
 
 Requires: %{tagbase}-tagopsdb
-Requires: %{tagbase}-daemonize
+Requires: %{pybase}-daemonize
 
 Requires(post): chkconfig
 Requires(preun): chkconfig
