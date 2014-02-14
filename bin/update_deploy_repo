@@ -1,11 +1,11 @@
 #!/usr/bin/env python2.6
 
 import collections
+import logging
 import os
 import os.path
 import shlex
 import shutil
-import signal
 import smtplib
 import socket
 import subprocess
@@ -27,6 +27,7 @@ from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException
 
 
+logger = logging.getLogger('update_deploy_repo')
 daemon = None
 
 
@@ -72,7 +73,7 @@ class Zookeeper(object):
     def run(self, elect_method, *args):
         """Run passed method with given arguments when election is won"""
 
-        daemonize.logging.info('Acquiring lock for processing...')
+        logger.info('Acquiring lock for processing...')
         self.election.run(elect_method, *args)
 
 
@@ -114,8 +115,8 @@ def run(cmd, expect_return_code=0, env=None, shell=False):
 def prepare_rpms(incoming_dir, process_dir, files):
     """Move RPMs in incoming directory to the processing directory"""
 
-    daemonize.logging.info('Moving files in incoming directory to '
-                           'processing directory...')
+    logger.info('Moving files in incoming directory to processing '
+                'directory...')
 
     for rpm in files:
         src_rpm = os.path.join(incoming_dir, rpm)
@@ -158,8 +159,8 @@ def update_repo(repo_dir, process_dir):
                         for f in os.listdir(process_dir) ]
 
     for rpm_to_process in rpms_to_process:
-        daemonize.logging.info('Verifying file %s and if valid moving to '
-                               'repository' % rpm_to_process)
+        logger.info('Verifying file %s and if valid moving to repository'
+                    % rpm_to_process)
 
         # TODO: ensure package is valid (security purposes)
 
@@ -172,10 +173,10 @@ def update_repo(repo_dir, process_dir):
             try:
                 email_for_invalid_rpm(rpm_to_process)
             except Exception as e:   # Email send failed?  Tough noogies.
-                daemonize.logging.error('Email send failed: %s' % e)
+                logger.error('Email send failed: %s' % e)
 
             os.unlink(rpm_to_process)
-            daemonize.logging.error('rpm command failed: %s' % e)
+            logger.error('rpm command failed: %s' % e)
             continue
 
         arch_type, name, version, release = rpm_info.stdout.split('\n')
@@ -199,8 +200,8 @@ def update_repo(repo_dir, process_dir):
                 Session.commit()
 
                 os.unlink(rpm_to_process)
-                daemonize.logging.error('Unable to copy file "%s" to "%s": %s'
-                                        % (rpm_to_process, dest_dir, e))
+                logger.error('Unable to copy file "%s" to "%s": %s'
+                             % (rpm_to_process, dest_dir, e))
                 continue
 
         pkg.status = 'completed'
@@ -208,13 +209,13 @@ def update_repo(repo_dir, process_dir):
 
         valid_rpms.append((rpm_to_process, name, version, release))
 
-    daemonize.logging.info('Updating repo...')
+    logger.info('Updating repo...')
     old_umask = os.umask(0002)
 
     try:
         run([ 'make', '-C', repo_dir ])
     except subprocess.CalledProcessError as e:
-        daemonize.logging.error('yum database update failed, retrying: %s', e)
+        logger.error('yum database update failed, retrying: %s', e)
         time.sleep(5)   # Short delay before re-attempting
 
         try:
@@ -227,11 +228,10 @@ def update_repo(repo_dir, process_dir):
                 pkg.status = 'failed'
                 Session.commit()
 
-            daemonize.logging.error('yum database update failed, aborting: '
-                                    '%s', e)
+            logger.error('yum database update failed, aborting: %s', e)
 
     os.umask(old_umask)
-    daemonize.logging.info('Removing processed files...')
+    logger.info('Removing processed files...')
     # Yes, making the assumption none of the package finds will fail...
     # yet again...
     for rpm_to_process in valid_rpms:
@@ -245,17 +245,16 @@ def update_repo(repo_dir, process_dir):
 def process_incoming_directory(repo_dir, incoming_dir, process_dir):
     """"""
 
-    daemonize.logging.info('Checking for incoming files...')
+    logger.info('Checking for incoming files...')
 
     while True:
         files = os.listdir(incoming_dir)
 
         if files:
-            daemonize.logging.info('Files found, processing them...')
+            logger.info('Files found, processing them...')
             prepare_rpms(incoming_dir, process_dir, files)
             update_repo(repo_dir, process_dir)
-            daemonize.logging.info('Done processing, checking for incoming '
-                                   'files...')
+            logger.info('Done processing, checking for incoming files...')
 
         time.sleep(1.0)
 
@@ -268,8 +267,7 @@ def main():
 
     data = None
 
-    daemonize.logging.info('Reading database access (dbaccess.admin.yml) '
-                           'file')
+    logger.info('Reading database access (dbaccess.admin.yml) file')
 
     with open('/etc/tagops/dbaccess.admin.yml') as db_file:
         try:
@@ -287,10 +285,10 @@ def main():
         raise RuntimeError('YAML configuration missing necessary parameter '
                            'in "db" section: %s' % e)
 
-    daemonize.logging.info('Initializing database session')
+    logger.info('Initializing database session')
     init_session(db_user, db_password)
 
-    daemonize.logging.info('Reading configuration (deploy.yml) file')
+    logger.info('Reading configuration (deploy.yml) file')
 
     with open('/etc/tagops/deploy.yml') as conf_file:
         try:
@@ -332,7 +330,7 @@ def safe_main():
     except:
         value = sys.exc_info()[1]
         e = "Unhandled exception: %s.  Daemon exiting." % value
-        daemonize.logging.error(e)
+        logger.error(e)
         sys.exit(1)
 
 
@@ -340,5 +338,17 @@ if __name__ == '__main__':
     pid = '/var/run/update_deploy_repo.pid'
     logfile = '/var/log/update_deploy_repo.log'
 
-    daemon = SignalHandlerDaemon(safe_main, pid, logfile)
+    # 'logger' set at top of program
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    fh = logging.FileHandler(logfile, 'a')
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
+                                  "%b %e %H:%M:%S")
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    keep_fds = [fh.stream.fileno()]
+
+    daemon = SignalHandlerDaemon('update_deploy_repo', pid, safe_main,
+                                 keep_fds=keep_fds)
     daemon.start()
