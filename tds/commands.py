@@ -216,6 +216,9 @@ class Package(object):
                     self.log.debug(5, 'State of package is now: %s',
                                    pkg.status)
 
+                # The following line should reset the transaction
+                # so the next query is re-read from the database
+                Session.remove()
                 time.sleep(0.5)
 
 

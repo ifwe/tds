@@ -5,6 +5,7 @@ import os
 import os.path
 import shlex
 import shutil
+import signal
 import smtplib
 import socket
 import subprocess
@@ -18,12 +19,32 @@ import yaml
 import yaml.parser
 
 from kazoo.client import KazooClient   # , KazooState
-from sqlalchemy.orm import scoped_session, sessionmaker
 
 import tagopsdb.deploy.package as package
 
 from tagopsdb.database import init_session
+from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException
+
+
+daemon = None
+
+
+class SignalHandlerDaemon(daemonize.Daemonize):
+    """ """
+
+    def __init__(self, *a, **k):
+        daemonize.Daemonize.__init__(self, *a, **k)
+        self.sigterm_handlers = []
+
+    def sigterm(self, *a, **k):
+        for handler in self.sigterm_handlers:
+            handler(*a, **k)
+        return daemonize.Daemonize.sigterm(self, *a, **k)
+
+    def add_sigterm_handler(self, handler):
+        self.sigterm_handlers.append(handler)
+
 
 
 class ExtCommandError(Exception):
@@ -37,6 +58,7 @@ class Zookeeper(object):
         """Set up election for Zookeeper"""
 
         self.zk = KazooClient('hosts=%s' % ','.join(servers))
+        self.zk.start()
         # self.zk.add_listener(self.my_listener)
         self.election = self.zk.Election('/deployrepo', hostname)
 
@@ -50,7 +72,11 @@ class Zookeeper(object):
     def run(self, elect_method, *args):
         """Run passed method with given arguments when election is won"""
 
+        daemonize.logging.info('Acquiring lock for processing...')
         self.election.run(elect_method, *args)
+
+
+
 
 
 def run(cmd, expect_return_code=0, env=None, shell=False):
@@ -122,7 +148,7 @@ def email_for_invalid_rpm(rpm_file):
     s.quit()
 
 
-def update_repo(repo_dir, process_dir, session):
+def update_repo(repo_dir, process_dir):
     """Copy RPMs in processing directory to the repository and run
        update the repo
     """
@@ -170,7 +196,7 @@ def update_repo(repo_dir, process_dir, session):
                 shutil.copy(rpm_to_process, dest_dir)
             except IOError as e:
                 pkg.status = 'failed'
-                session.commit()
+                Session.commit()
 
                 os.unlink(rpm_to_process)
                 daemonize.logging.error('Unable to copy file "%s" to "%s": %s'
@@ -178,7 +204,7 @@ def update_repo(repo_dir, process_dir, session):
                 continue
 
         pkg.status = 'completed'
-        session.commit()
+        Session.commit()
 
         valid_rpms.append((rpm_to_process, name, version, release))
 
@@ -199,7 +225,7 @@ def update_repo(repo_dir, process_dir, session):
             for rpm_to_process in valid_rpms:
                 pkg = package.find_package(*rpm_to_process[1:])
                 pkg.status = 'failed'
-                session.commit()
+                Session.commit()
 
             daemonize.logging.error('yum database update failed, aborting: '
                                     '%s', e)
@@ -211,12 +237,12 @@ def update_repo(repo_dir, process_dir, session):
     for rpm_to_process in valid_rpms:
         pkg = package.find_package(*rpm_to_process[1:])
         pkg.status = 'completed'
-        session.commit()
+        Session.commit()
 
         os.unlink(rpm_to_process[0])
 
 
-def process_incoming_directory(repo_dir, incoming_dir, process_dir, session):
+def process_incoming_directory(repo_dir, incoming_dir, process_dir):
     """"""
 
     daemonize.logging.info('Checking for incoming files...')
@@ -227,7 +253,7 @@ def process_incoming_directory(repo_dir, incoming_dir, process_dir, session):
         if files:
             daemonize.logging.info('Files found, processing them...')
             prepare_rpms(incoming_dir, process_dir, files)
-            update_repo(repo_dir, process_dir, session)
+            update_repo(repo_dir, process_dir)
             daemonize.logging.info('Done processing, checking for incoming '
                                    'files...')
 
@@ -263,7 +289,6 @@ def main():
 
     daemonize.logging.info('Initializing database session')
     init_session(db_user, db_password)
-    session = scoped_session(sessionmaker())
 
     daemonize.logging.info('Reading configuration (deploy.yml) file')
 
@@ -289,10 +314,12 @@ def main():
 
         zk = Zookeeper(hostname, data['zookeeper'])
         zk.run(process_incoming_directory, repo_dir, incoming_dir,
-               process_dir, session)
+               process_dir)
+
+        if daemon is not None:
+            daemon.add_sigterm_handler(lambda *args, **kwargs: zk.stop())
     else:
-        process_incoming_directory(repo_dir, incoming_dir, process_dir,
-                                   session)
+        process_incoming_directory(repo_dir, incoming_dir, process_dir)
 
 
 def safe_main():
@@ -309,7 +336,9 @@ def safe_main():
         sys.exit(1)
 
 
-pid = '/var/run/update_deploy_repo.pid'
-logfile = '/var/log/update_deploy_repo.log'
+if __name__ == '__main__':
+    pid = '/var/run/update_deploy_repo.pid'
+    logfile = '/var/log/update_deploy_repo.log'
 
-daemonize.start(safe_main, pid, logfile)
+    daemon = SignalHandlerDaemon(safe_main, pid, logfile)
+    daemon.start()
