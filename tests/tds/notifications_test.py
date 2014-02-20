@@ -2,6 +2,7 @@ from mock import patch
 import contextlib
 import unittest2
 
+import email
 import tds.notifications
 
 
@@ -69,3 +70,29 @@ class TestNotifications(unittest2.TestCase):
 
             for mth in patched_methods:
                 assert getattr(n, mth).called_with(subject, text)
+
+    @patch('smtplib.SMTP')
+    def test_send_email(self, SMTP):
+        n = self.create_notification()
+        n.enabled_methods = ['email']
+        n.send_notifications('fake_subj', 'fake_body')
+
+        SMTP.assert_called_with('localhost')
+        (sender, recvrs, content), _kw = SMTP.return_value.sendmail.call_args
+        assert sender == self.user
+        self.assertItemsEqual(
+            recvrs,
+            [self.user+'@tagged.com', self.receiver_addr]
+        )
+
+        msg = email.message_from_string(content)
+        assert msg.get('content-type') == 'text/plain; charset="us-ascii"'
+        assert msg.get('subject') == ('[TDS] fake_subj')
+        assert msg.get('from') == (self.user+'@tagged.com')
+        self.assertItemsEqual(
+            msg.get('to').split(', '),
+            [self.user+'@tagged.com', self.receiver_addr]
+        )
+        assert msg.get_payload() == 'fake_body'
+
+        assert SMTP.return_value.quit.called
