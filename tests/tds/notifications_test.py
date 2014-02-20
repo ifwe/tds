@@ -25,7 +25,8 @@ class TestNotifications(unittest2.TestCase):
                 self.enabled_methods[:], self.receiver_addr,
                 self.hipchat_rooms[:], self.hipchat_token,
                 self.validation_time
-        )})
+            )
+        })
 
         notifications_deploy = patch('tds.notifications.deploy', **{
             'find_hipchat_rooms_for_app.return_value': self.project_rooms[:]
@@ -38,7 +39,11 @@ class TestNotifications(unittest2.TestCase):
         patch.stopall()
 
     def create_notification(self):
-        return tds.notifications.Notifications(self.project, self.user, self.apptypes)
+        return tds.notifications.Notifications(
+            self.project,
+            self.user,
+            self.apptypes
+        )
 
     def test_constructor(self):
         n = self.create_notification()
@@ -57,7 +62,9 @@ class TestNotifications(unittest2.TestCase):
         patched_methods = ['send_' + mth for mth in self.enabled_methods[:]]
         subject, text = "fake_subj", "fake_body"
 
-        with contextlib.nested(*[patch.object(n, mth) for mth in patched_methods]):
+        with contextlib.nested(
+            *[patch.object(n, mth) for mth in patched_methods]
+        ):
             n.send_notifications(subject, text)
 
             for mth in patched_methods:
