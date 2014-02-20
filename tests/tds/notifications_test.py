@@ -96,3 +96,23 @@ class TestNotifications(unittest2.TestCase):
         assert msg.get_payload() == 'fake_body'
 
         assert SMTP.return_value.quit.called
+
+    @patch('requests.api.request')
+    def test_send_hipchat(self, request):
+        n = self.create_notification()
+        n.enabled_methods = ['hipchat']
+        n.send_notifications('fake_subj', 'fake_body')
+
+        for room, call_args in zip(self.hipchat_rooms, request.call_args_list):
+            args, kwargs = call_args
+            assert args == ('post', 'https://api.hipchat.com/v1/rooms/message')
+            assert kwargs == {
+                'data': None,
+                'params': {
+                    'auth_token': self.hipchat_token,
+                    'room_id': room,
+                    'from': self.user,
+                    'message': ('<strong>fake_subj</strong><br />fake_body'),
+                },
+                'headers': {'Content-Length': '0'}
+            }
