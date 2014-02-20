@@ -14,37 +14,48 @@ envs = { 'dev' : 'development',
          'stage' : 'staging',
          'prod' : 'production', }
 
-db_user, db_password = \
-    tds.utils.verify_conf_file_section('dbaccess', 'db', sub_cf_name='admin')
 
-try:
-    init_session(db_user, db_password)
-except PermissionsException, e:
-    print 'Access issue with database:'
-    print e
-    sys.exit(1)
+def send_notifications(pkg_name, user, app_types, subject, text):
+    notification = tds.notifications.Notifications(pkg_name, user, app_types)
+    notification.send_notifications(subject, text)
 
-env = tds.utils.verify_conf_file_section('deploy', 'env')
-validation_time = tds.utils.verify_conf_file_section('deploy',
-                                                     'notifications')[-1]
 
-not_validated = deploy.find_unvalidated_versions(validation_time, envs[env])
+def main(*args):
+    db_user, db_password = \
+        tds.utils.verify_conf_file_section('dbaccess', 'db', sub_cf_name='admin')
 
-for entry in not_validated:
-    (pkg_name, version, revision, app_type, environment, realized,
-     user, status) = entry
+    try:
+        init_session(db_user, db_password)
+    except PermissionsException, e:
+        print 'Access issue with database:'
+        print e
+        return 1
 
-    print 'Sending email to %s for %s in %s environment on %s app_tier ' \
-          'being unvalidated over time limit' % (user, pkg_name, environment,
-                                                 app_type)
+    env = tds.utils.verify_conf_file_section('deploy', 'env')
+    validation_time = tds.utils.verify_conf_file_section('deploy',
+                                                         'notifications')[-1]
 
-    msg_subject = 'ATTENTION: %s in %s for %s app tier needs validation!' \
-                  % (pkg_name, environment, app_type)
-    msg_text = 'Version %s-%s of project %s in %s app tier\n' \
-               'has not been validated in at least %d hours, please ' \
-               'validate it.\nWithout this, Puppet cannot manage the ' \
-               'tier correctly.' % (version, revision, pkg_name, app_type,
-                                    int(validation_time)/3600)
+    not_validated = deploy.find_unvalidated_versions(validation_time, envs[env])
 
-    notification = tds.notifications.Notifications(pkg_name, user, [app_type])
-    notification.send_notifications(msg_subject, msg_text)
+    for entry in not_validated:
+        (pkg_name, version, revision, app_type, environment, realized,
+         user, status) = entry
+
+        print 'Sending email to %s for %s in %s environment on %s app_tier ' \
+              'being unvalidated over time limit' % (user, pkg_name, environment,
+                                                     app_type)
+
+        msg_subject = 'ATTENTION: %s in %s for %s app tier needs validation!' \
+                      % (pkg_name, environment, app_type)
+        msg_text = 'Version %s-%s of project %s in %s app tier\n' \
+                   'has not been validated in at least %d hours, please ' \
+                   'validate it.\nWithout this, Puppet cannot manage the ' \
+                   'tier correctly.' % (version, revision, pkg_name, app_type,
+                                        int(validation_time)/3600)
+
+        send_notifications(pkg_name, user, [app_type], msg_subject, msg_text)
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main(*sys.argv[1:]))
