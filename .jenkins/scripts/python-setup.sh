@@ -1,4 +1,13 @@
-#!/bin/bash -e
+#!/bin/bash
+
+if [[ -z "$WORKSPACE" ]] ; then
+    scripts=`dirname "${BASH_SOURCE-$0}"`
+    scripts=`cd "$scripts">/dev/null; pwd`
+    export WORKSPACE=`cd $scripts/../.. >/dev/null; pwd`
+fi
+
+export SITEOPS_VIRTUALENV=$WORKSPACE/jenkins-venv
+export PYTHONPATH=$PYTHONPATH:.
 
 if [ ! -z $VIRTUAL_ENV ] ; then
     source $VIRTUAL_ENV/bin/activate
@@ -20,4 +29,21 @@ if ! [[ -d "$SITEOPS_VIRTUALENV" && -f "$SITEOPS_VIRTUALENV/bin/activate" ]] ; t
     if [ -d virtualenv-1.9.1 ] ; then
         rm -rf virtualenv-1.9.1
     fi
+fi
+
+export PATH=$PATH:$SITEOPS_VIRTUALENV/bin
+source $SITEOPS_VIRTUALENV/bin/activate
+
+if [ -f requirements.txt ]; then
+   pip install -r requirements.txt
+fi
+
+if [ -f requirements-dev.txt ]; then
+   pip install -r requirements-dev.txt
+fi
+
+rm -rf reports
+
+if [ ! -d reports ]; then
+  mkdir reports
 fi
