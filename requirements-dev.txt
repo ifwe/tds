@@ -25,4 +25,5 @@ pytest-cov==1.6
 pytz==2013.9
 requests==1.2.3
 unittest2==0.5.1
+unittest-data-provider==1.0.1
 wsgiref==0.1.2
