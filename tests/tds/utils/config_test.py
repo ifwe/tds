@@ -1,28 +1,28 @@
 import mock
 import unittest2
 
+import yaml
 import tds.utils.config as config
 
-fake_config = '''\
-repo:
-  build_base: /fake/mnt/deploy/builds
-  incoming: /fake/mnt/deploy/incoming
-  processing: /fake/mnt/deploy/processing
-
-env:
-  environment: fakedev
-
-logging:
-  syslog_facility: fakelocal3
-  syslog_priority: fakedebug
-
-notifications:
-  email_receiver: fake@example.com
-  hipchat_token: deadbeef
-  hipchat_rooms: [ 'fakeroom' ]
-  enabled_methods: [ fake ]
-  validation_time: -1
-'''
+fake_config = {
+    'env': {'environment': 'fakedev'},
+    'logging': {
+        'syslog_facility': 'fakelocal3',
+        'syslog_priority': 'fakedebug'
+    },
+    'notifications': {
+        'email_receiver': 'fake@example.com',
+        'enabled_methods': ['fake'],
+        'hipchat_rooms': ['fakeroom'],
+        'hipchat_token': 'deadbeef',
+        'validation_time': -1
+    },
+    'repo': {
+        'build_base': '/fake/mnt/deploy/builds',
+        'incoming': '/fake/mnt/deploy/incoming',
+        'processing': '/fake/mnt/deploy/processing'
+    }
+}
 
 
 class TestDottedDict(unittest2.TestCase):
@@ -47,7 +47,7 @@ class TestConfig(unittest2.TestCase):
 
 class FileConfigLoader(object):
     def load_fake_config(self, c):
-        m = mock.mock_open(read_data=fake_config)
+        m = mock.mock_open(read_data=yaml.dump(fake_config))
         with mock.patch('__builtin__.open', m, create=True):
             c.load(logger=None)
 
