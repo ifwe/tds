@@ -125,11 +125,10 @@ class VerifyingConfig(Config):
         for key in schema:
             schema_keys = schema.get(key, [])
 
-            if logger:
-                logger.debug(
-                    5, 'Checking for config keys %r in section %r',
-                    schema_keys, key
-                )
+            log.debug(
+                5, 'Checking for config keys %r in section %r',
+                schema_keys, key
+            )
 
             data_keys = schema.get(key, [])
             noncompliant_keys = set(schema_keys) ^ set(data_keys)
