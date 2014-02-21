@@ -119,3 +119,50 @@ class TestVerifyingConfig(unittest2.TestCase):
             config.VerifyingConfig._verify.assert_called_with(
                 c, c.schema, None
             )
+
+    def test__verify_success_empty_schema(self):
+        config.VerifyingConfig._verify(data={}, schema={}, logger=None)
+
+    def test__verify_success_contents(self):
+        config.VerifyingConfig._verify(
+            data=dict(a=dict(b=1, c=2)),
+            schema=dict(a=['b', 'c']),
+            logger=None
+        )
+        assert True, "Everything's ok if we get here!"
+
+    def test__verify_failure_missing_toplevel_key(self):
+        self.assertRaises(
+            config.ConfigurationError,
+            config.VerifyingConfig._verify,
+            data=dict(a=dict(b=1, c=2)),
+            schema=dict(a=['b', 'c'], d=['e']),
+            logger=None
+        )
+
+    def test__verify_failure_missing_sub_key(self):
+        self.assertRaises(
+            config.ConfigurationError,
+            config.VerifyingConfig._verify,
+            data=dict(a=dict(b=1, c=2), d=dict()),
+            schema=dict(a=['b', 'c'], d=['e']),
+            logger=None
+        )
+
+    def test__verify_failure_weird_type(self):
+        self.assertRaises(
+            config.ConfigurationError,
+            config.VerifyingConfig._verify,
+            data=dict(a=dict(b=1, c=2), d=1),
+            schema=dict(a=['b', 'c'], d=['e']),
+            logger=None
+        )
+
+    def test__verify_failure_extra_sub_key(self):
+        self.assertRaises(
+            config.ConfigurationError,
+            config.VerifyingConfig._verify,
+            data=dict(a=dict(b=1, c=2), d=dict(e=3, f=4)),
+            schema=dict(a=['b', 'c'], d=['e']),
+            logger=None
+        )
