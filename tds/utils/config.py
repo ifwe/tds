@@ -12,6 +12,8 @@ __all__ = [
     'TDSDeployConfig'
 ]
 
+log = logging.getLogger('tds.util.config')
+
 
 class DottedDict(dict):
     """Allow dictionary keys to be accessed like attributes"""
@@ -60,8 +62,7 @@ class FileConfig(Config):
     def load(self, logger=None):
         """Read information from configuration file and update"""
 
-        if logger:
-            logger.debug('Loading configuration file %r', self.filename)
+        log.debug('Loading configuration file %r', self.filename)
 
         try:
             with open(self.filename) as f:
