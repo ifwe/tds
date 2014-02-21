@@ -92,7 +92,7 @@ class YAMLConfig(FileConfig):
 
             if not isinstance(parsed, dict):
                 raise TypeError
-        except yaml.parse.ParserError as e:
+        except yaml.error.YAMLError as e:
             raise ConfigurationError('YAML parse error: %s', e)
         except TypeError as e:
             raise ConfigurationError('YAML document should be an associative '
