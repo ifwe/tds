@@ -74,7 +74,6 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
             m.return_value.read.side_effect = IOError
             self.assertRaises(config.ConfigurationError, c.load, None)
 
-    @unittest2.skip("not current behavior")
     def test_load_open_failure(self):
         c = config.FileConfig('foo')
 
