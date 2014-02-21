@@ -130,8 +130,15 @@ class VerifyingConfig(Config):
                 schema_keys, key
             )
 
-            data_keys = data.get(key, [])
-            noncompliant_keys = set(schema_keys) ^ set(data_keys)
+            try:
+                data_keys = set(data.get(key, []))
+            except TypeError:
+                raise ConfigurationError(
+                    "Section %r does not contain any keys,"
+                    "only found %r", key, data.get(key, [])
+                )
+
+            noncompliant_keys = set(schema_keys) ^ data_keys
 
             if len(noncompliant_keys) == 0:
                 continue
