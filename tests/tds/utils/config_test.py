@@ -81,3 +81,7 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
         with mock.patch('__builtin__.open', m, create=True):
             m.side_effect = IOError
             self.assertRaises(config.ConfigurationError, c.load, None)
+
+    def test_parse_notimplemented(self):
+        c = config.FileConfig('foo')
+        self.assertRaises(NotImplementedError, c.parse, data=None)
