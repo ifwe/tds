@@ -130,7 +130,7 @@ class VerifyingConfig(Config):
                 schema_keys, key
             )
 
-            data_keys = schema.get(key, [])
+            data_keys = data.get(key, [])
             noncompliant_keys = set(schema_keys) ^ set(data_keys)
 
             if len(noncompliant_keys) == 0:
