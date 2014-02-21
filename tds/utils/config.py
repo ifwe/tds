@@ -63,12 +63,12 @@ class FileConfig(Config):
         if logger:
             logger.debug('Loading configuration file %r', self.filename)
 
-        with open(self.filename) as f:
-            try:
+        try:
+            with open(self.filename) as f:
                 data = f.read()
-            except IOError as e:
-                raise ConfigurationError('Unable to read configuration file '
-                                         '%r: %s', self.filename, e)
+        except IOError as e:
+            raise ConfigurationError('Unable to read configuration file '
+                                     '%r: %s', self.filename, e)
 
         self.update(self.parse(data))
 
