@@ -1,8 +1,8 @@
 import mock
 import unittest2
+from unittest_data_provider import data_provider
 
 import yaml
-import os.path
 import tds.utils.config as config
 
 fake_config = {
@@ -185,8 +185,43 @@ class TestVerifyingConfig(unittest2.TestCase):
 class TestTDSConfig(unittest2.TestCase):
     def test_constructor_with_default(self):
         c = config.TDSConfig('foo')
-        assert c.filename == os.path.join(c.default_conf_dir, 'foo')
+        assert c.filename == '%s/%s' % (c.default_conf_dir, 'foo')
 
     def test_constructor_without_default(self):
         c = config.TDSConfig('foo', '/fake/dir')
         assert c.filename == '/fake/dir/foo'
+
+
+class TestTDSDatabaseConfig(unittest2.TestCase):
+    kwargs_expected = lambda: [
+        (
+            dict(access_level='foo'),
+            '%s/%s.foo.yml' % (
+                config.TDSDatabaseConfig.default_conf_dir,
+                config.TDSDatabaseConfig.default_name_fragment
+            )
+        ),
+        (
+            dict(access_level='foo', name_fragment='whatever'),
+            '%s/whatever.foo.yml' % config.TDSDatabaseConfig.default_conf_dir
+        ),
+        (
+            dict(access_level='foo', conf_dir='/fake/dir'),
+            ('/fake/dir/%s.foo.yml' %
+                config.TDSDatabaseConfig.default_name_fragment)
+        ),
+        (
+            dict(
+                access_level='foo',
+                conf_dir='/fake/dir',
+                name_fragment='whatever'
+            ),
+            '/fake/dir/whatever.foo.yml'
+        ),
+
+    ]
+
+    @data_provider(kwargs_expected)
+    def test_constructor(self, kwargs, expected):
+        c = config.TDSDatabaseConfig(**kwargs)
+        assert c.filename == expected
