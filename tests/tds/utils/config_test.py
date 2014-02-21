@@ -106,6 +106,19 @@ class TestYAMLConfig(unittest2.TestCase):
 
 class TestVerifyingConfig(unittest2.TestCase):
 
+    def test_verify_empty(self):
+        with mock.patch.object(config.VerifyingConfig, '_verify'):
+            c = config.VerifyingConfig()
+            with mock.patch.object(c, 'load'):
+                c.load.return_value = None
+                c.verify(logger=None)
+
+                c.load.assert_called_with(None)
+
+            config.VerifyingConfig._verify.assert_called_with(
+                c, c.schema, None
+            )
+
     def test_verify_non_empty(self):
         with mock.patch.object(config.VerifyingConfig, '_verify'):
             c = config.VerifyingConfig()
