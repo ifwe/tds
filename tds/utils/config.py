@@ -27,7 +27,7 @@ class DottedDict(dict):
         while key_parts:
             part = key_parts.pop(0)
             try:
-                d = d.get(part)
+                d = dict.__getitem__(d, part)
             except KeyError as e:
                 if default is type(self).sentinel:
                     raise e
