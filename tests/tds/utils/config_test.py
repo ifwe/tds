@@ -85,3 +85,20 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
     def test_parse_notimplemented(self):
         c = config.FileConfig('foo')
         self.assertRaises(NotImplementedError, c.parse, data=None)
+
+
+class TestYAMLConfig(unittest2.TestCase):
+    def test_parse_success(self):
+        c = config.YAMLConfig('foo')
+        assert fake_config == c.parse(yaml.dump(fake_config))
+
+    def test_parse_invalid_yaml(self):
+        c = config.YAMLConfig('foo')
+        config_data = yaml.dump(fake_config)
+        config_data += 'this is some invalid yaml\nE%&*O(O*&^%E$'
+        self.assertRaises(config.ConfigurationError, c.parse, data=config_data)
+
+    def test_parse_non_dict_yaml(self):
+        c = config.YAMLConfig('foo')
+        config_data = yaml.dump([fake_config])
+        self.assertRaises(config.ConfigurationError, c.parse, data=config_data)
