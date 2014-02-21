@@ -49,7 +49,7 @@ class FileConfigLoader(object):
     def load_fake_config(self, c):
         m = mock.mock_open(read_data=fake_config)
         with mock.patch('__builtin__.open', m, create=True):
-            c.load(None)
+            c.load(logger=None)
 
         m.assert_called_once_with(c.filename)
 
@@ -72,7 +72,7 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
         m = mock.mock_open()
         with mock.patch('__builtin__.open', m, create=True):
             m.return_value.read.side_effect = IOError
-            self.assertRaises(config.ConfigurationError, c.load, None)
+            self.assertRaises(config.ConfigurationError, c.load, logger=None)
 
     def test_load_open_failure(self):
         c = config.FileConfig('foo')
