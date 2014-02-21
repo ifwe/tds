@@ -2,6 +2,7 @@ import mock
 import unittest2
 
 import yaml
+import os.path
 import tds.utils.config as config
 
 fake_config = {
@@ -179,3 +180,13 @@ class TestVerifyingConfig(unittest2.TestCase):
             schema=dict(a=['b', 'c'], d=['e']),
             logger=None
         )
+
+
+class TestTDSConfig(unittest2.TestCase):
+    def test_constructor_with_default(self):
+        c = config.TDSConfig('foo')
+        assert c.filename == os.path.join(c.default_conf_dir, 'foo')
+
+    def test_constructor_without_default(self):
+        c = config.TDSConfig('foo', '/fake/dir')
+        assert c.filename == '/fake/dir/foo'
