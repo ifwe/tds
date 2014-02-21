@@ -102,3 +102,20 @@ class TestYAMLConfig(unittest2.TestCase):
         c = config.YAMLConfig('foo')
         config_data = yaml.dump([fake_config])
         self.assertRaises(config.ConfigurationError, c.parse, data=config_data)
+
+
+class TestVerifyingConfig(unittest2.TestCase):
+
+    def test_verify_non_empty(self):
+        with mock.patch.object(config.VerifyingConfig, '_verify'):
+            c = config.VerifyingConfig()
+            with mock.patch.object(c, 'load'):
+                c['something'] = 'foo'
+                c.load.return_value = None
+                c.verify(logger=None)
+
+                assert not c.load.called
+
+            config.VerifyingConfig._verify.assert_called_with(
+                c, c.schema, None
+            )
