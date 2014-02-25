@@ -29,7 +29,7 @@ class TestNotifications(unittest2.TestCase):
             )
         })
 
-        notifications_deploy = patch('tds.notifications.deploy', **{
+        notifications_deploy = patch('tds.notifications.notifier.deploy', **{
             'find_hipchat_rooms_for_app.return_value': self.project_rooms[:]
         })
 
