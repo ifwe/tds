@@ -35,11 +35,11 @@ export PATH=$PATH:$SITEOPS_VIRTUALENV/bin
 source $SITEOPS_VIRTUALENV/bin/activate
 
 if [ -f requirements.txt ]; then
-   pip install -r requirements.txt
+   pip install -r requirements.txt --allow-all-external --allow-unverified progressbar
 fi
 
 if [ -f requirements-dev.txt ]; then
-   pip install -r requirements-dev.txt
+   pip install -r requirements-dev.txt --allow-all-external --allow-unverified progressbar
 fi
 
 rm -rf reports
