@@ -4,34 +4,7 @@ from unittest_data_provider import data_provider
 
 import yaml
 import tds.utils.config as config
-
-fake_config = {
-    'deploy': {
-        'env': {'environment': 'fakedev'},
-        'logging': {
-            'syslog_facility': 'fakelocal3',
-            'syslog_priority': 'fakedebug'
-        },
-        'notifications': {
-            'email_receiver': 'fake@example.com',
-            'enabled_methods': ['fake'],
-            'hipchat_rooms': ['fakeroom'],
-            'hipchat_token': 'deadbeef',
-            'validation_time': -1
-        },
-        'repo': {
-            'build_base': '/fake/mnt/deploy/builds',
-            'incoming': '/fake/mnt/deploy/incoming',
-            'processing': '/fake/mnt/deploy/processing'
-        }
-    },
-    'database': {
-        'db': {
-            'user': 'fakityfake',
-            'password': 'superpassword'
-        }
-    }
-}
+from tests.fixtures.config import fake_config
 
 
 class TestDottedDict(unittest2.TestCase):
@@ -234,12 +207,6 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         c = config.TDSDatabaseConfig(**kwargs)
         assert c.filename == expected
 
-    def test_schema_failure(self):
-        c = config.TDSDatabaseConfig('foo')
-        self.load_fake_config(c, 'database')
-        c['db']['hey'] = 'what'
-        self.assertRaises(config.ConfigurationError, c.verify, logger=None)
-
     def test_schema_success(self):
         c = config.TDSDatabaseConfig('foo')
         self.load_fake_config(c, 'database')
@@ -280,16 +247,25 @@ class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
         c = config.TDSDeployConfig(**kwargs)
         assert c.filename == expected
 
-    def test_schema_failure(self):
-        c = config.TDSDeployConfig('foo')
-        self.load_fake_config(c, 'deploy')
-        c['logging']['hey'] = 'what'
-        self.assertRaises(config.ConfigurationError, c.verify, logger=None)
-
     def test_schema_success(self):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
         assert c == fake_config['deploy']
+
+    def test_dotted_key_hit(self):
+        c = config.TDSDeployConfig('foo')
+        self.load_fake_config(c, 'deploy')
+        assert c['notifications.hipchat_token'] == 'deadbeef'
+
+    def test_dotted_key_miss(self):
+        c = config.TDSDeployConfig('foo')
+        self.load_fake_config(c, 'deploy')
+        self.assertRaises(KeyError, lambda: c['notifications.hipchat.missing'])
+
+    def test_dotted_key_miss_default(self):
+        c = config.TDSDeployConfig('foo')
+        self.load_fake_config(c, 'deploy')
+        assert 'default' == c.get('notifications.hipchat.missing', 'default')
 
 
 class TestVerifyConfFileSection(unittest2.TestCase):
@@ -321,7 +297,7 @@ class TestVerifyConfFileSection(unittest2.TestCase):
             result = config.verify_conf_file_section('deploy', 'notifications')
 
         assert result == [
-            ['fake'],
+            ['hipchat'],
             'fake@example.com',
             ['fakeroom'],
             'deadbeef',
