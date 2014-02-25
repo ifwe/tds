@@ -6,22 +6,30 @@ import yaml
 import tds.utils.config as config
 
 fake_config = {
-    'env': {'environment': 'fakedev'},
-    'logging': {
-        'syslog_facility': 'fakelocal3',
-        'syslog_priority': 'fakedebug'
+    'deploy': {
+        'env': {'environment': 'fakedev'},
+        'logging': {
+            'syslog_facility': 'fakelocal3',
+            'syslog_priority': 'fakedebug'
+        },
+        'notifications': {
+            'email_receiver': 'fake@example.com',
+            'enabled_methods': ['fake'],
+            'hipchat_rooms': ['fakeroom'],
+            'hipchat_token': 'deadbeef',
+            'validation_time': -1
+        },
+        'repo': {
+            'build_base': '/fake/mnt/deploy/builds',
+            'incoming': '/fake/mnt/deploy/incoming',
+            'processing': '/fake/mnt/deploy/processing'
+        }
     },
-    'notifications': {
-        'email_receiver': 'fake@example.com',
-        'enabled_methods': ['fake'],
-        'hipchat_rooms': ['fakeroom'],
-        'hipchat_token': 'deadbeef',
-        'validation_time': -1
-    },
-    'repo': {
-        'build_base': '/fake/mnt/deploy/builds',
-        'incoming': '/fake/mnt/deploy/incoming',
-        'processing': '/fake/mnt/deploy/processing'
+    'database': {
+        'db': {
+            'user': 'tds',
+            'password': 'depfortds'
+        }
     }
 }
 
@@ -47,8 +55,8 @@ class TestConfig(unittest2.TestCase):
 
 
 class FileConfigLoader(object):
-    def load_fake_config(self, c):
-        m = mock.mock_open(read_data=yaml.dump(fake_config))
+    def load_fake_config(self, c, fixture_id):
+        m = mock.mock_open(read_data=yaml.dump(fake_config[fixture_id]))
         with mock.patch('__builtin__.open', m, create=True):
             c.load(logger=None)
 
@@ -65,7 +73,7 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
 
         with mock.patch.object(c, 'parse') as mock_parse:
             mock_parse.return_value = {}
-            self.load_fake_config(c)
+            self.load_fake_config(c, 'deploy')
 
     def test_load_read_failure(self):
         c = config.FileConfig('foo')
@@ -192,8 +200,8 @@ class TestTDSConfig(unittest2.TestCase):
         assert c.filename == '/fake/dir/foo'
 
 
-class TestTDSDatabaseConfig(unittest2.TestCase):
-    kwargs_expected = lambda: [
+class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
+    constructor_kwargs_expected = lambda: [
         (
             dict(access_level='foo'),
             '%s/%s.foo.yml' % (
@@ -221,7 +229,14 @@ class TestTDSDatabaseConfig(unittest2.TestCase):
 
     ]
 
-    @data_provider(kwargs_expected)
+    @data_provider(constructor_kwargs_expected)
     def test_constructor(self, kwargs, expected):
         c = config.TDSDatabaseConfig(**kwargs)
         assert c.filename == expected
+
+    def test_schema_success(self):
+        c = config.TDSDatabaseConfig('foo')
+        self.load_fake_config(c, 'database')
+        c['hey'] = dict(foo='bar')
+        c.verify(None)
+        assert True
