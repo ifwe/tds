@@ -234,9 +234,59 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         c = config.TDSDatabaseConfig(**kwargs)
         assert c.filename == expected
 
+    def test_schema_failure(self):
+        c = config.TDSDatabaseConfig('foo')
+        self.load_fake_config(c, 'database')
+        c['db']['hey'] = 'what'
+        self.assertRaises(config.ConfigurationError, c.verify, logger=None)
+
     def test_schema_success(self):
         c = config.TDSDatabaseConfig('foo')
         self.load_fake_config(c, 'database')
-        c['hey'] = dict(foo='bar')
-        c.verify(None)
-        assert True
+        assert c['db']['user'] == fake_config['database']['db']['user']
+        assert c['db']['password'] == fake_config['database']['db']['password']
+
+
+class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
+    constructor_kwargs_expected = lambda: [
+        (
+            {},
+            '%s/%s.yml' % (
+                config.TDSDeployConfig.default_conf_dir,
+                config.TDSDeployConfig.default_name_fragment
+            )
+        ),
+        (
+            dict(name_fragment='whatever'),
+            '%s/whatever.yml' % config.TDSDeployConfig.default_conf_dir
+        ),
+        (
+            dict(conf_dir='/fake/dir'),
+            ('/fake/dir/%s.yml' %
+                config.TDSDeployConfig.default_name_fragment)
+        ),
+        (
+            dict(
+                conf_dir='/fake/dir',
+                name_fragment='whatever'
+            ),
+            '/fake/dir/whatever.yml'
+        ),
+
+    ]
+
+    @data_provider(constructor_kwargs_expected)
+    def test_constructor(self, kwargs, expected):
+        c = config.TDSDeployConfig(**kwargs)
+        assert c.filename == expected
+
+    def test_schema_failure(self):
+        c = config.TDSDeployConfig('foo')
+        self.load_fake_config(c, 'deploy')
+        c['logging']['hey'] = 'what'
+        self.assertRaises(config.ConfigurationError, c.verify, logger=None)
+
+    def test_schema_success(self):
+        c = config.TDSDeployConfig('foo')
+        self.load_fake_config(c, 'deploy')
+        assert c == fake_config['deploy']

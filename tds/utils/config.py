@@ -123,7 +123,7 @@ class VerifyingConfig(Config):
         """
 
         for key in schema:
-            schema_keys = schema.get(key, [])
+            schema_keys = set(schema.get(key, []))
 
             log.debug(
                 5, 'Checking for config keys %r in section %r',
