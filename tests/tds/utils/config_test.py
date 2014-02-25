@@ -27,8 +27,8 @@ fake_config = {
     },
     'database': {
         'db': {
-            'user': 'tds',
-            'password': 'removed'
+            'user': 'fakityfake',
+            'password': 'superpassword'
         }
     }
 }
@@ -290,3 +290,58 @@ class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
         assert c == fake_config['deploy']
+
+
+class TestVerifyConfFileSection(unittest2.TestCase):
+    def test_invalid_cf_name(self):
+        self.assertRaises(
+            Exception,
+            config.verify_conf_file_section,
+            cf_name='whatever',
+            section='doesnt matter'
+        )
+
+    def test_deploy_env(self):
+        m = mock.mock_open(read_data=yaml.dump(fake_config['deploy']))
+        with mock.patch('__builtin__.open', m, create=True):
+            result = config.verify_conf_file_section('deploy', 'env')
+
+        assert result == 'fakedev'
+
+    def test_deploy_logging(self):
+        m = mock.mock_open(read_data=yaml.dump(fake_config['deploy']))
+        with mock.patch('__builtin__.open', m, create=True):
+            result = config.verify_conf_file_section('deploy', 'logging')
+
+        assert result == ['fakelocal3', 'fakedebug']
+
+    def test_deploy_notifications(self):
+        m = mock.mock_open(read_data=yaml.dump(fake_config['deploy']))
+        with mock.patch('__builtin__.open', m, create=True):
+            result = config.verify_conf_file_section('deploy', 'notifications')
+
+        assert result == [
+            ['fake'],
+            'fake@example.com',
+            ['fakeroom'],
+            'deadbeef',
+            -1
+        ]
+
+    def test_deploy_repo(self):
+        m = mock.mock_open(read_data=yaml.dump(fake_config['deploy']))
+        with mock.patch('__builtin__.open', m, create=True):
+            result = config.verify_conf_file_section('deploy', 'repo')
+
+        assert result == [
+            '/fake/mnt/deploy/builds',
+            '/fake/mnt/deploy/incoming',
+            '/fake/mnt/deploy/processing'
+        ]
+
+    def test_database_db(self):
+        m = mock.mock_open(read_data=yaml.dump(fake_config['database']))
+        with mock.patch('__builtin__.open', m, create=True):
+            result = config.verify_conf_file_section('dbaccess', 'db')
+
+        assert result == ['fakityfake', 'superpassword']
