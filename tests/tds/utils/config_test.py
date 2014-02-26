@@ -210,8 +210,14 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
     def test_schema_success(self):
         c = config.TDSDatabaseConfig('foo')
         self.load_fake_config(c, 'database')
-        assert c['db']['user'] == fake_config['database']['db']['user']
-        assert c['db']['password'] == fake_config['database']['db']['password']
+        assert c['db.user'] == fake_config['database']['db']['user']
+        assert c['db.password'] == fake_config['database']['db']['password']
+
+    def test_schema_failure(self):
+        c = config.TDSDatabaseConfig('foo')
+        self.load_fake_config(c, 'database')
+        c['db'].pop('user')
+        self.assertRaises(config.ConfigurationError, c.verify, None)
 
 
 class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
