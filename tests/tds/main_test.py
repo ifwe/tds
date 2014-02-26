@@ -108,7 +108,6 @@ class TestTDS(unittest2.TestCase):
             tds.main.init_session.assert_called_once_with('user', 'password')
 
     def test_initialize_db_from_config(self):
-
         init_session = mock.patch.object(
             tds.main,
             'init_session',
@@ -122,6 +121,17 @@ class TestTDS(unittest2.TestCase):
                 'fakityfake',
                 'superpassword'
             )
+
+    def test_initialize_db_failure(self):
+        init_session = mock.patch.object(
+            tds.main,
+            'init_session',
+            side_effect=tds.main.PermissionsException
+        )
+
+        with contextlib.nested(init_session):
+            t = tds.main.TDS(dict(user_level='something'))
+            self.assertRaises(tds.main.AccessError, t.initialize_db)
 
     def test_execute_command(self):
         pass
