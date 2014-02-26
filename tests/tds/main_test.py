@@ -7,9 +7,33 @@ from unittest_data_provider import data_provider
 from tests.fixtures.config import fake_config
 
 import tds.main
+import tds.utils.config as tds_config
 
 
 class TestTDS(unittest2.TestCase):
+
+    def setUp(self):
+        self.config = mock.patch(
+            'tds.utils.config.TDSDeployConfig',
+            **{
+                'return_value': tds_config.DottedDict(fake_config['deploy']),
+                'return_value.load': mock.Mock(return_value=None),
+            }
+        )
+        self.dbconfig = mock.patch(
+            'tds.utils.config.TDSDatabaseConfig',
+            **{
+                'return_value': tds_config.DottedDict(fake_config['database']),
+                'return_value.load': mock.Mock(return_value=None),
+            }
+        )
+
+        for x in (self.config, self.dbconfig):
+            x.start()
+
+    def tearDown(self):
+        mock.patch.stopall()
+
     exclusive_options_fail_provider = lambda: [
         (dict(hosts=True, apptypes=True),),
         (dict(hosts=True, all_apptypes=True),),
@@ -69,7 +93,6 @@ class TestTDS(unittest2.TestCase):
             assert t.params['user_level'] == 'yay'
 
     def test_initialize_db_from_opts(self):
-        t = tds.main.TDS(dict(dbuser='user'))
 
         init_session = mock.patch.object(
             tds.main,
@@ -80,11 +103,11 @@ class TestTDS(unittest2.TestCase):
         getpass = mock.patch('getpass.getpass', return_value='password')
 
         with contextlib.nested(getpass, init_session):
+            t = tds.main.TDS(dict(dbuser='user'))
             t.initialize_db()
             tds.main.init_session.assert_called_once_with('user', 'password')
 
     def test_initialize_db_from_config(self):
-        t = tds.main.TDS(dict(user_level='something'))
 
         init_session = mock.patch.object(
             tds.main,
@@ -92,11 +115,8 @@ class TestTDS(unittest2.TestCase):
             return_value=None
         )
 
-        m = mock.mock_open(read_data=yaml.dump(fake_config['database']))
-        with contextlib.nested(
-            mock.patch('__builtin__.open', m, create=True),
-            init_session
-        ):
+        with contextlib.nested(init_session):
+            t = tds.main.TDS(dict(user_level='something'))
             t.initialize_db()
             tds.main.init_session.assert_called_once_with(
                 'fakityfake',
