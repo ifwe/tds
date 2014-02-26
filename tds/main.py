@@ -23,6 +23,12 @@ class TDS(object):
 
         self.params = params
         self.params['deployment'] = True
+        self.config = tds.utils.config.TDSDeployConfig()
+        self.dbconfig = tds.utils.config.TDSDatabaseConfig(
+            params.get('user_level')
+        )
+        self.config.load()
+        self.dbconfig.load()
 
     @tds.utils.debug
     def check_user_auth(self):
@@ -62,7 +68,7 @@ class TDS(object):
         else:
             self.params['explicit'] = True
 
-        log.debug(5, '"explicit" parameter is: %s', self.params['explicit'])
+        log.debug(5, '"explicit" parameter is: %(explicit)s', self.params)
 
     @tds.utils.debug
     def update_program_parameters(self):
@@ -74,16 +80,11 @@ class TDS(object):
         log.debug(5, 'User is: %s', self.params['user'])
         self.check_user_auth()
 
-        self.params['environment'] = \
-            tds.utils.verify_conf_file_section('deploy', 'env')
+        self.params['environment'] = self.config['env.environment']
         log.debug(5, 'Environment is: %s', self.params['environment'])
 
-        build_base, incoming, processing = \
-            tds.utils.verify_conf_file_section('deploy', 'repo')
+        self.params['repo'] = self.config['repo']
 
-        self.params['repo'] = {'build_base': build_base,
-                               'incoming': incoming,
-                               'processing': processing, }
         log.debug(5, '"repo" parameter values are: %r', self.params['repo'])
 
     @tds.utils.debug
@@ -98,11 +99,8 @@ class TDS(object):
             db_user = self.params['dbuser']
             db_password = getpass.getpass('Enter DB password: ')
         else:
-            db_user, db_password = \
-                tds.utils.verify_conf_file_section(
-                    'dbaccess', 'db',
-                    sub_cf_name=self.params['user_level']
-                )
+            db_user = self.dbconfig['db.user']
+            db_password = self.dbconfig['db.password']
 
         log.debug(5, 'DB user is: %s, DB password is: %s',
                   db_user, db_password)
