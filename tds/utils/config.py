@@ -199,33 +199,3 @@ class TDSDeployConfig(TDSConfig):
 
         super(TDSDeployConfig, self).__init__('%s.yml' % (name_fragment,),
                                               conf_dir=conf_dir)
-
-
-# deprecated
-@debug
-def verify_conf_file_section(cf_name, section, sub_cf_name=None):
-    """Ensure the given section in the given configuration file
-    is valid and complete and return values
-    """
-
-    logger = logging.getLogger('tds')
-
-    conf_factory = {
-        'deploy': lambda: TDSDeployConfig(),
-        'dbaccess': lambda: TDSDatabaseConfig(sub_cf_name),
-    }.get(cf_name, None)
-
-    if conf_factory is None:
-        raise Exception("Unknown config file requested: %r", cf_name)
-
-    conf = conf_factory()
-    conf.load(logger=logger)
-    conf.verify(logger=logger)
-
-    logger.debug(5, 'Data is: %r', conf)
-
-    values = [conf.get(section, {}).get(x) for x in conf.schema.get(section)]
-    if len(values) == 1:
-        return values[0]
-
-    return values
