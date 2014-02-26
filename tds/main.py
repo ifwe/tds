@@ -23,7 +23,6 @@ class TDS(object):
 
         self.params = params
         self.params['deployment'] = True
-        self.log = params.get('log', None)
 
     @tds.utils.debug
     def check_user_auth(self):
@@ -93,7 +92,7 @@ class TDS(object):
            to the database
         """
 
-        self.log.debug('Connecting to the database')
+        log.debug('Connecting to the database')
 
         if self.params.get('dbuser', None):
             db_user = self.params['dbuser']
@@ -105,8 +104,8 @@ class TDS(object):
                     sub_cf_name=self.params['user_level']
                 )
 
-        self.log.debug(5, 'DB user is: %s, DB password is: %s',
-                       db_user, db_password)
+        log.debug(5, 'DB user is: %s, DB password is: %s',
+                  db_user, db_password)
 
         try:
             init_session(db_user, db_password)
@@ -117,16 +116,16 @@ class TDS(object):
     def execute_command(self):
         """Run the requested command for TDS"""
 
-        self.log.debug('Running the requested command')
+        log.debug('Running the requested command')
 
-        self.log.debug(5, 'Instantiating class %r',
-                       self.params['command_name'].capitalize())
+        log.debug(5, 'Instantiating class %r',
+                  self.params['command_name'].capitalize())
         cmd = getattr(tds.commands,
-                      self.params['command_name'].capitalize())(self.log)
+                      self.params['command_name'].capitalize())(log)
 
         try:
-            self.log.debug(5, 'Executing subcommand %r',
-                           self.params['subcommand_name'].replace('-', '_'))
+            log.debug(5, 'Executing subcommand %r',
+                      self.params['subcommand_name'].replace('-', '_'))
             getattr(
                 cmd,
                 self.params['subcommand_name'].replace('-', '_')
