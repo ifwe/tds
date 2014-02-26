@@ -10,9 +10,9 @@ from tagopsdb.database import init_session
 from tagopsdb.exceptions import PermissionsException
 
 
-envs = { 'dev' : 'development',
-         'stage' : 'staging',
-         'prod' : 'production', }
+envs = {'dev': 'development',
+        'stage': 'staging',
+        'prod': 'production', }
 
 
 def send_notifications(pkg_name, user, app_types, subject, text):
@@ -21,8 +21,11 @@ def send_notifications(pkg_name, user, app_types, subject, text):
 
 
 def main(*args):
-    db_user, db_password = \
-        tds.utils.verify_conf_file_section('dbaccess', 'db', sub_cf_name='admin')
+    config = tds.utils.config.TDSDeployConfig()
+    dbconfig = tds.utils.config.TDSDatabaseConfig('admin')
+
+    db_user = dbconfig['db.user']
+    db_password = dbconfig['db.password']
 
     try:
         init_session(db_user, db_password)
@@ -31,19 +34,20 @@ def main(*args):
         print e
         return 1
 
-    env = tds.utils.verify_conf_file_section('deploy', 'env')
-    validation_time = tds.utils.verify_conf_file_section('deploy',
-                                                         'notifications')[-1]
+    env = config['env.environment']
+    validation_time = config['notifications.validation_time']
 
-    not_validated = deploy.find_unvalidated_versions(validation_time, envs[env])
+    not_validated = deploy.find_unvalidated_versions(
+        validation_time, envs[env]
+    )
 
     for entry in not_validated:
         (pkg_name, version, revision, app_type, environment, realized,
          user, status) = entry
 
         print 'Sending email to %s for %s in %s environment on %s app_tier ' \
-              'being unvalidated over time limit' % (user, pkg_name, environment,
-                                                     app_type)
+              'being unvalidated over time limit' % \
+              (user, pkg_name, environment, app_type)
 
         msg_subject = 'ATTENTION: %s in %s for %s app tier needs validation!' \
                       % (pkg_name, environment, app_type)
