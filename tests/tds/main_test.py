@@ -69,7 +69,39 @@ class TestTDS(unittest2.TestCase):
             assert t.params['user_level'] == 'yay'
 
     def test_initialize_db_from_opts(self):
-        pass
+        t = tds.main.TDS(dict(dbuser='user'))
+
+        init_session = mock.patch.object(
+            tds.main,
+            'init_session',
+            return_value=None
+        )
+
+        getpass = mock.patch('getpass.getpass', return_value='password')
+
+        with contextlib.nested(getpass, init_session):
+            t.initialize_db()
+            tds.main.init_session.assert_called_once_with('user', 'password')
+
+    def test_initialize_db_from_config(self):
+        t = tds.main.TDS(dict(user_level='something'))
+
+        init_session = mock.patch.object(
+            tds.main,
+            'init_session',
+            return_value=None
+        )
+
+        m = mock.mock_open(read_data=yaml.dump(fake_config['database']))
+        with contextlib.nested(
+            mock.patch('__builtin__.open', m, create=True),
+            init_session
+        ):
+            t.initialize_db()
+            tds.main.init_session.assert_called_once_with(
+                'fakityfake',
+                'superpassword'
+            )
 
     def test_execute_command(self):
         pass
