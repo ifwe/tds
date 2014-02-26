@@ -36,9 +36,6 @@ class DottedDict(dict):
                 else:
                     return default
 
-        if isinstance(d, dict):
-            d = DottedDict(d)
-
         return d
 
 
