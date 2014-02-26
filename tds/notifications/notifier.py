@@ -20,25 +20,27 @@ class Notifications(object):
     def __init__(self, project, user, apptypes):
         """Configure various parameters needed for notifications"""
 
+        config = tds.utils.config.TDSDeployConfig()
+
         tds_log.debug('Initializing for notifications')
 
         self.sender = user
         self.sender_addr = '%s@tagged.com' % user
         tds_log.debug(5, 'Sender\'s email address is: %s', self.sender_addr)
 
-        (self.enabled_methods, self.receiver_addr, self.hipchat_rooms,
-         self.hipchat_token, self.validation_time) = \
-            tds.utils.verify_conf_file_section('deploy', 'notifications')
+        self.__dict__.update(config['notifications'])
         tds_log.debug(5, 'Enabled notification methods: %s',
                       ', '.join(self.enabled_methods))
-        tds_log.debug(5, 'Receiver\'s email address: %s', self.receiver_addr)
+        tds_log.debug(5, 'Receiver\'s email address: %s', self.email_receiver)
         tds_log.debug(5, 'Validation timeout (in seconds): %s',
                       self.validation_time)
 
         # Query DB for any additional HipChat rooms
         tds_log.debug('Looking for additional HipChat rooms to be notified')
-        self.hipchat_rooms.extend(deploy.find_hipchat_rooms_for_app(project,
-                                                                    apptypes))
+        self.hipchat_rooms = (
+            self.hipchat_rooms +
+            deploy.find_hipchat_rooms_for_app(project, apptypes)
+        )
         tds_log.debug(5, 'HipChat rooms to notify: %s',
                       ', '.join(self.hipchat_rooms))
         tds_log.debug(5, 'HipChat token: %s', self.hipchat_token)
@@ -49,7 +51,7 @@ class Notifications(object):
 
         tds_log.debug('Sending email notification(s)')
 
-        receiver_emails = [self.sender_addr, self.receiver_addr]
+        receiver_emails = [self.sender_addr, self.email_receiver]
 
         msg = MIMEText(msg_text)
 

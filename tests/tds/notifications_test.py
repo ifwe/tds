@@ -1,19 +1,19 @@
-from mock import patch
+from mock import patch, Mock
 import contextlib
 import unittest2
 
+from tests.fixtures.config import fake_config
+
 import email
 import tds.notifications
+import tds.utils.config as tds_config
 
 
 class TestNotifications(unittest2.TestCase):
 
     def setUp(self):
-        self.enabled_methods = ['hipchat', 'email']
-        self.receiver_addr = 'someone@tagged.com'
-        self.hipchat_rooms = ['fake1', 'fake2']
-        self.hipchat_token = 'deadbeef'
-        self.validation_time = 7200
+
+        self.not_cfg = fake_config['deploy']['notifications']
 
         self.project_rooms = ['project_room1', 'project_room2']
 
@@ -21,19 +21,19 @@ class TestNotifications(unittest2.TestCase):
         self.project = 'fake_project'
         self.apptypes = ['fake_apptype']
 
-        tds_utils = patch('tds.utils', **{
-            'verify_conf_file_section.return_value': (
-                self.enabled_methods[:], self.receiver_addr,
-                self.hipchat_rooms[:], self.hipchat_token,
-                self.validation_time
-            )
-        })
-
         notifications_deploy = patch('tds.notifications.notifier.deploy', **{
             'find_hipchat_rooms_for_app.return_value': self.project_rooms[:]
         })
 
-        for ptch in [tds_utils, notifications_deploy]:
+        config = patch(
+            'tds.utils.config.TDSDeployConfig',
+            **{
+                'return_value': tds_config.DottedDict(fake_config['deploy']),
+                'return_value.load': Mock(return_value=None),
+            }
+        )
+
+        for ptch in [notifications_deploy, config]:
             ptch.start()
 
     def tearDown(self):
@@ -49,18 +49,20 @@ class TestNotifications(unittest2.TestCase):
     def test_constructor(self):
         n = self.create_notification()
 
+        rooms = self.not_cfg['hipchat_rooms'] + self.project_rooms
         assert n.sender == self.user
         assert n.sender_addr == (self.user + '@tagged.com')
-        assert n.enabled_methods == self.enabled_methods
-        assert n.receiver_addr == self.receiver_addr
-        assert n.hipchat_rooms == self.hipchat_rooms + self.project_rooms
-        assert n.hipchat_token == self.hipchat_token
-        assert n.validation_time == self.validation_time
+        assert n.enabled_methods == self.not_cfg['enabled_methods']
+        assert n.email_receiver == self.not_cfg['email_receiver']
+        assert n.hipchat_rooms == rooms
+        assert n.hipchat_token == self.not_cfg['hipchat_token']
+        assert n.validation_time == self.not_cfg['validation_time']
 
     def test_send_notifications(self):
         n = self.create_notification()
 
-        patched_methods = ['send_' + mth for mth in self.enabled_methods[:]]
+        methods = self.not_cfg['enabled_methods'][:]
+        patched_methods = ['send_' + mth for mth in methods]
         subject, text = "fake_subj", "fake_body"
 
         with contextlib.nested(
@@ -82,7 +84,7 @@ class TestNotifications(unittest2.TestCase):
         assert sender == self.user
         self.assertItemsEqual(
             recvrs,
-            [self.user+'@tagged.com', self.receiver_addr]
+            [self.user+'@tagged.com', self.not_cfg['email_receiver']]
         )
 
         msg = email.message_from_string(content)
@@ -91,7 +93,7 @@ class TestNotifications(unittest2.TestCase):
         assert msg.get('from') == (self.user+'@tagged.com')
         self.assertItemsEqual(
             msg.get('to').split(', '),
-            [self.user+'@tagged.com', self.receiver_addr]
+            [self.user+'@tagged.com', self.not_cfg['email_receiver']]
         )
         assert msg.get_payload() == 'fake_body'
 
@@ -103,13 +105,18 @@ class TestNotifications(unittest2.TestCase):
         n.enabled_methods = ['hipchat']
         n.send_notifications('fake_subj', 'fake_body')
 
-        for room, call_args in zip(self.hipchat_rooms, request.call_args_list):
+        rooms_callargs = zip(
+            self.not_cfg['hipchat_rooms'],
+            request.call_args_list
+        )
+
+        for room, call_args in rooms_callargs:
             args, kwargs = call_args
             assert args == ('post', 'https://api.hipchat.com/v1/rooms/message')
             assert kwargs == {
                 'data': None,
                 'params': {
-                    'auth_token': self.hipchat_token,
+                    'auth_token': self.not_cfg['hipchat_token'],
                     'room_id': room,
                     'from': self.user,
                     'message': ('<strong>fake_subj</strong><br />fake_body'),
