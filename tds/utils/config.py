@@ -107,6 +107,11 @@ class VerifyingConfig(Config):
     schema = {}
 
     @debug
+    def load(self, logger=None):
+        super(VerifyingConfig, self).load(logger)
+        self.verify()
+
+    @debug
     def verify(self, logger=None):
         """Verify data, loading it in first if necessary"""
 
