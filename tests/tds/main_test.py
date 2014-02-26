@@ -18,7 +18,7 @@ class TestTDS(unittest2.TestCase):
 
     @data_provider(exclusive_options_fail_provider)
     def test_check_exclusive_options_fail(self, params):
-        t = tds.main.TDS(dict(log=None))
+        t = tds.main.TDS(dict())
         t.params = dict(params)
         self.assertRaises(
             tds.main.ConfigurationError,
@@ -34,13 +34,13 @@ class TestTDS(unittest2.TestCase):
 
     @data_provider(exclusive_options_success_provider)
     def test_check_exclusive_options_success(self, params):
-        t = tds.main.TDS(dict(log=None))
+        t = tds.main.TDS(dict())
         t.params = dict(params)
         t.check_exclusive_options()
         assert t.params['explicit'] == bool(len(params))
 
     def test_update_program_parameters(self):
-        t = tds.main.TDS(dict(log=None))
+        t = tds.main.TDS(dict())
         m = mock.mock_open(read_data=yaml.dump(fake_config['deploy']))
 
         with contextlib.nested(
@@ -58,17 +58,17 @@ class TestTDS(unittest2.TestCase):
         assert t.params['repo'] == fake_config['deploy']['repo']
 
     def test_check_user_auth_failure(self):
-        t = tds.main.TDS(dict(log=None, user='someone'))
+        t = tds.main.TDS(dict(user='someone'))
         with mock.patch('tds.authorize.get_access_level', return_value=None):
             self.assertRaises(tds.main.AccessError, t.check_user_auth)
 
     def test_check_user_auth_succes(self):
-        t = tds.main.TDS(dict(log=None, user='someone'))
+        t = tds.main.TDS(dict(user='someone'))
         with mock.patch('tds.authorize.get_access_level', return_value='yay'):
             t.check_user_auth()
             assert t.params['user_level'] == 'yay'
 
-    def test_initialize_db(self):
+    def test_initialize_db_from_opts(self):
         pass
 
     def test_execute_command(self):
