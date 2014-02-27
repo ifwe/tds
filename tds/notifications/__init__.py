@@ -1,3 +1,3 @@
-from .notifier import Notifications, deploy
+from .notifier import Notifications, deploy, EmailNotifier, HipchatNotifier
 
-__all__ = ['Notifications', 'deploy']
+__all__ = ['Notifications', 'deploy', 'EmailNotifier', 'HipchatNotifier']
