@@ -124,7 +124,6 @@ class HipchatNotifier(Notifier):
 class EmailNotifier(Notifier):
     def __init__(self, config):
         self.receiver = config.get('receiver')
-        log.debug(5, 'Receiver\'s email address: %s', self.receiver)
 
     @tds.utils.debug
     def send(self, sender, project, apptypes, msg_subject, msg_text):
@@ -135,6 +134,7 @@ class EmailNotifier(Notifier):
         sender_addr = '%s@tagged.com' % sender
         receiver_emails = [sender_addr, self.receiver]
 
+        log.debug(5, 'Receiver\'s email address: %s', self.receiver)
         log.debug(5, 'Sender\'s email address is: %s', sender_addr)
 
         msg = MIMEText(msg_text)
