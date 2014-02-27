@@ -6,6 +6,7 @@ import os
 import os.path
 import shlex
 import shutil
+import signal
 import smtplib
 import socket
 import subprocess
@@ -93,22 +94,95 @@ def run(cmd, expect_return_code=0, env=None, shell=False):
 
 
 class UpdateDeployRepoDaemon(Daemon):
+    """"""
+
+    valid_rpms = None
+
+
+    def remove_file(self, rpm):
+        """"""
+
+        try:
+            os.unlink(rpm)
+        except OSError as e:
+            logger.error('Unable to remove file %s: %s', (rpm, e))
+
+
+    def check_rpm_file(self, rpm_to_process):
+        """"""
+
+        rpm_info = None
+        cmd = [ 'rpm', '-qp', '--queryformat',
+                '%{arch}\n%{name}\n%{version}\n%{release}',
+                rpm_to_process ]
+
+        try:
+            rpm_info = run(cmd)
+        except subprocess.CalledProcessError as e:
+            logger.error('rpm command failed: %s', e)
+
+            try:
+                self.email_for_invalid_rpm(rpm_to_process)
+            except Exception as e:   # Email send failed?  Tough noogies.
+                logger.error('Email send failed: %s', e)
+
+            self.remove_file(rpm_to_process)
+
+        if rpm_info is not None:
+            # Contains arch type, package name, version and release
+            rpm_info = rpm_info.stdout.split('\n')
+
+        return rpm_info
+
+
     def prepare_rpms(self, incoming_dir, process_dir, files):
         """Move RPMs in incoming directory to the processing directory"""
     
         logger.info('Moving files in incoming directory to processing '
                     'directory...')
-    
+
+        self.valid_rpms = dict()
+
         for rpm in files:
             src_rpm = os.path.join(incoming_dir, rpm)
             dst_rpm = os.path.join(process_dir, rpm)
-    
-            try:
-                # A rename should very rarely fail, so leaving uncaught
-                os.rename(src_rpm, dst_rpm)
-            except OSError as e:
-                raise RepoException('Unable to move file "%s" to "%s": %s'
-                                    % (src_rpm, process_dir, e))
+
+            if os.path.isfile(src_rpm):
+                rpm_info = self.check_rpm_file(src_rpm)
+
+                if rpm_info is None:
+                    logger.error('Unable to process RPM file')
+
+                    self.remove_file(src_rpm)
+
+                    # XXX: Unsure what to do here for the database info,
+                    # XXX: since acquiring the proper version and release
+                    # XXX: isn't easily doable from the file name (though
+                    # XXX: it is possible).
+                    continue
+
+                pkg = package.find_package(*rpm_info[1:])
+
+                if pkg is None:
+                    name, version, release = rpm_info[1:]
+                    raise RepoException('Missing entry for package "%s", '
+                                        'version %s, revision %s in database'
+                                        % (name, version, release))
+
+                self.valid_rpms[rpm] = rpm_info
+
+                try:
+                    os.rename(src_rpm, dst_rpm)
+                except OSError as e:
+                    logger.error('Unable to move file "%s" to "%s": %s',
+                                 (src_rpm, process_dir, e))
+                    pkg.status = 'failed'
+                    self.remove_file(src_rpm)
+                    del self.valid_rpms[rpm]
+                else:
+                    pkg.status = 'processing'
+                finally:
+                    Session.commit()
     
     
     def email_for_invalid_rpm(self, rpm_file):
@@ -134,42 +208,25 @@ class UpdateDeployRepoDaemon(Daemon):
         """Copy RPMs in processing directory to the repository and run
            update the repo
         """
-    
-        valid_rpms = []
-        rpms_to_process = [ os.path.join(process_dir, f)
-                            for f in os.listdir(process_dir) ]
-    
-        for rpm_to_process in rpms_to_process:
-            logger.info('Verifying file %s and if valid moving to repository'
-                        % rpm_to_process)
-    
-            # TODO: ensure package is valid (security purposes)
-    
-            cmd = [ 'rpm', '-qp', '--queryformat',
-                    '%{arch}\n%{name}\n%{version}\n%{release}',
-                    rpm_to_process ]
-    
-            try:
-                rpm_info = run(cmd)
-            except subprocess.CalledProcessError as e:
-                try:
-                    self.email_for_invalid_rpm(rpm_to_process)
-                except Exception as e:   # Email send failed?  Tough noogies.
-                    logger.error('Email send failed: %s' % e)
-    
-                os.unlink(rpm_to_process)
-                logger.error('rpm command failed: %s' % e)
-                continue
-    
-            arch_type, name, version, release = rpm_info.stdout.split('\n')
-            dest_dir = os.path.join(repo_dir, arch_type)
-    
-            pkg = package.find_package(name, version, release)
-    
+
+        for rpm in self.valid_rpms.keys():
+            rpm_to_process = os.path.join(process_dir, rpm)
+            rpm_info = self.valid_rpms[rpm]
+
+            logger.info('Verifying file %s and if valid moving to repository',
+                        rpm_to_process)
+
+            pkg = package.find_package(*rpm_info[1:])
+
             if pkg is None:
+                name, version, release = rpm_info[1:]
                 raise RepoException('Missing entry for package "%s", '
                                     'version %s, revision %s in database'
                                     % (name, version, release))
+
+            # TODO: ensure package is valid (security purposes)
+    
+            dest_dir = os.path.join(repo_dir, rpm_info[0])
     
             try:
                 shutil.copy(rpm_to_process, dest_dir)
@@ -180,18 +237,15 @@ class UpdateDeployRepoDaemon(Daemon):
                     shutil.copy(rpm_to_process, dest_dir)
                 except IOError as e:
                     pkg.status = 'failed'
-                    Session.commit()
-    
-                    os.unlink(rpm_to_process)
-                    logger.error('Unable to copy file "%s" to "%s": %s'
-                                 % (rpm_to_process, dest_dir, e))
+                    self.remove_file(rpm_to_process)
+                    del self.valid_rpms[rpm]
                     continue
+                finally:
+                    Session.commit()
     
             pkg.status = 'completed'
             Session.commit()
-    
-            valid_rpms.append((rpm_to_process, name, version, release))
-    
+
         logger.info('Updating repo...')
         old_umask = os.umask(0002)
     
@@ -206,8 +260,8 @@ class UpdateDeployRepoDaemon(Daemon):
             except subprocess.CalledProcessError as e:
                 # Yes, making the assumption none of the package finds
                 # will fail...
-                for rpm_to_process in valid_rpms:
-                    pkg = package.find_package(*rpm_to_process[1:])
+                for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
+                    pkg = package.find_package(*rpm_info[1:])
                     pkg.status = 'failed'
                     Session.commit()
     
@@ -217,12 +271,12 @@ class UpdateDeployRepoDaemon(Daemon):
         logger.info('Removing processed files...')
         # Yes, making the assumption none of the package finds will fail...
         # yet again...
-        for rpm_to_process in valid_rpms:
-            pkg = package.find_package(*rpm_to_process[1:])
+        for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
+            pkg = package.find_package(*rpm_info[1:])
             pkg.status = 'completed'
             Session.commit()
     
-            os.unlink(rpm_to_process[0])
+            self.remove_file(os.path.join(process_dir, rpm_to_process))
     
     
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
