@@ -7,4 +7,5 @@ progressbar==2.3
 PyYAML==3.10
 requests==1.2.3
 SQLAlchemy==0.8.1
-git+https://github.tagged.com/siteops/tagopsdb@master#egg=TagOpsDB-Library
+git+https://github.tagged.com/siteops/tagopsdb@v0.7.3#egg=TagOpsDB-Library
+git+https://github.tagged.com/siteops/python-daemon@master#egg=daemon
