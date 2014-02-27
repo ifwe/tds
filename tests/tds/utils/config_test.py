@@ -88,6 +88,19 @@ class TestYAMLConfig(unittest2.TestCase):
 
 class TestVerifyingConfig(unittest2.TestCase):
 
+    def test_super_load(self):
+        class LoadImplemented(config.Config):
+            def load(self, logger=None):
+                pass
+
+        class VerifyingConfigSubclass(config.VerifyingConfig, LoadImplemented):
+            pass
+
+        c = VerifyingConfigSubclass()
+        with mock.patch.object(c, 'verify'):
+            c.load(logger=None)
+            c.verify.assert_called()
+
     def test_verify_empty(self):
         with mock.patch.object(config.VerifyingConfig, '_verify'):
             c = config.VerifyingConfig()
@@ -261,7 +274,7 @@ class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
     def test_dotted_key_hit(self):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
-        assert c['notifications.hipchat_token'] == 'deadbeef'
+        assert c['notifications.hipchat.token'] == 'deadbeef'
 
     def test_dotted_key_miss(self):
         c = config.TDSDeployConfig('foo')

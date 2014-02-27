@@ -6,11 +6,13 @@ fake_config = {
             'syslog_priority': 'fakedebug'
         },
         'notifications': {
-            'enabled_methods': ['hipchat'],
+            'enabled_methods': ['email', 'hipchat'],
             'validation_time': -1,
-            'email_receiver': 'fake@example.com',
-            'hipchat_rooms': ['fakeroom'],
-            'hipchat_token': 'deadbeef'
+            'email': {'receiver': 'fake@example.com'},
+            'hipchat': {
+                'rooms': ['fakeroom'],
+                'token': 'deadbeef',
+            },
         },
         'repo': {
             'build_base': '/fake/mnt/deploy/builds',

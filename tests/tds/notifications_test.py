@@ -1,5 +1,4 @@
 from mock import patch, Mock
-import contextlib
 import unittest2
 
 from tests.fixtures.config import fake_config
@@ -49,29 +48,31 @@ class TestNotifications(unittest2.TestCase):
     def test_constructor(self):
         n = self.create_notification()
 
-        rooms = self.not_cfg['hipchat_rooms'] + self.project_rooms
         assert n.sender == self.user
-        assert n.sender_addr == (self.user + '@tagged.com')
         assert n.enabled_methods == self.not_cfg['enabled_methods']
-        assert n.email_receiver == self.not_cfg['email_receiver']
-        assert n.hipchat_rooms == rooms
-        assert n.hipchat_token == self.not_cfg['hipchat_token']
         assert n.validation_time == self.not_cfg['validation_time']
 
     def test_send_notifications(self):
         n = self.create_notification()
 
-        methods = self.not_cfg['enabled_methods'][:]
-        patched_methods = ['send_' + mth for mth in methods]
-        subject, text = "fake_subj", "fake_body"
+        notifiers = {
+            'email': Mock(spec=tds.notifications.EmailNotifier),
+            'hipchat': Mock(spec=tds.notifications.HipchatNotifier)
+        }
 
-        with contextlib.nested(
-            *[patch.object(n, mth) for mth in patched_methods]
-        ):
+        with patch.object(n, '_notifiers', notifiers):
+
+            subject, text = "fake_subj", "fake_body"
             n.send_notifications(subject, text)
 
-            for mth in patched_methods:
-                assert getattr(n, mth).called_with(subject, text)
+            for mock in notifiers.values():
+                assert mock.return_value.send.called_with(
+                    n.sender,
+                    n.project,
+                    n.apptypes,
+                    subject,
+                    text
+                )
 
     @patch('smtplib.SMTP')
     def test_send_email(self, SMTP):
@@ -84,7 +85,7 @@ class TestNotifications(unittest2.TestCase):
         assert sender == self.user
         self.assertItemsEqual(
             recvrs,
-            [self.user+'@tagged.com', self.not_cfg['email_receiver']]
+            [self.user+'@tagged.com', self.not_cfg['email']['receiver']]
         )
 
         msg = email.message_from_string(content)
@@ -93,7 +94,7 @@ class TestNotifications(unittest2.TestCase):
         assert msg.get('from') == (self.user+'@tagged.com')
         self.assertItemsEqual(
             msg.get('to').split(', '),
-            [self.user+'@tagged.com', self.not_cfg['email_receiver']]
+            [self.user+'@tagged.com', self.not_cfg['email']['receiver']]
         )
         assert msg.get_payload() == 'fake_body'
 
@@ -106,7 +107,7 @@ class TestNotifications(unittest2.TestCase):
         n.send_notifications('fake_subj', 'fake_body')
 
         rooms_callargs = zip(
-            self.not_cfg['hipchat_rooms'],
+            self.not_cfg['hipchat']['rooms'],
             request.call_args_list
         )
 
@@ -116,7 +117,7 @@ class TestNotifications(unittest2.TestCase):
             assert kwargs == {
                 'data': None,
                 'params': {
-                    'auth_token': self.not_cfg['hipchat_token'],
+                    'auth_token': self.not_cfg['hipchat']['token'],
                     'room_id': room,
                     'from': self.user,
                     'message': ('<strong>fake_subj</strong><br />fake_body'),
