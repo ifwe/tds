@@ -124,3 +124,17 @@ class TestNotifications(unittest2.TestCase):
                 },
                 'headers': {'Content-Length': '0'}
             }
+
+
+class TestNotifierClass(unittest2.TestCase):
+    def test_send(self):
+        n = tds.notifications.Notifier({})
+        self.assertRaises(
+            NotImplementedError,
+            n.send,
+            sender='string',
+            project='string',
+            apptypes=['list'],
+            msg_subject='string',
+            msg_text='string'
+        )

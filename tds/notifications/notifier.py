@@ -55,11 +55,10 @@ class Notifications(object):
         """Send out various enabled notifications for a given action"""
 
         log.debug('Sending out enabled notifications')
-        if self._notifiers is None:
-            return
+        notifiers = self._notifiers or {}
 
         for method in self.enabled_methods:
-            notifier_factory = self._notifiers.get(method)
+            notifier_factory = notifiers.get(method)
             notifier = notifier_factory(self.config.get(method, {}))
             notifier.send(
                 self.sender,
@@ -81,6 +80,7 @@ class Notifier(object):
 @Notifications.add('hipchat')
 class HipchatNotifier(Notifier):
     def __init__(self, config):
+        super(HipchatNotifier, self).__init__(config)
         self.token = config['token']
         self.rooms = config['rooms']
 
@@ -123,6 +123,7 @@ class HipchatNotifier(Notifier):
 @Notifications.add('email')
 class EmailNotifier(Notifier):
     def __init__(self, config):
+        super(EmailNotifier, self).__init__(config)
         self.receiver = config.get('receiver')
 
     @tds.utils.debug
