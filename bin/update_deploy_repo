@@ -126,8 +126,6 @@ class UpdateDeployRepoDaemon(Daemon):
             except Exception as e:   # Email send failed?  Tough noogies.
                 logger.error('Email send failed: %s', e)
 
-            self.remove_file(rpm_to_process)
-
         if rpm_info is not None:
             # Contains arch type, package name, version and release
             rpm_info = rpm_info.stdout.split('\n')
