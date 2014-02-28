@@ -147,58 +147,59 @@ class UpdateDeployRepoDaemon(Daemon):
             src_rpm = os.path.join(incoming_dir, rpm)
             dst_rpm = os.path.join(process_dir, rpm)
 
-            if os.path.isfile(src_rpm):
-                rpm_info = self.check_rpm_file(src_rpm)
+            if not os.path.isfile(src_rpm):
+                continue
 
-                if rpm_info is None:
-                    logger.error('Unable to process RPM file')
+            rpm_info = self.check_rpm_file(src_rpm)
 
-                    self.remove_file(src_rpm)
+            if rpm_info is None:
+                logger.error('Unable to process RPM file')
 
-                    # XXX: Unsure what to do here for the database info,
-                    # XXX: since acquiring the proper version and release
-                    # XXX: isn't easily doable from the file name (though
-                    # XXX: it is possible).
-                    continue
+                self.remove_file(src_rpm)
 
-                pkg = package.find_package(*rpm_info[1:])
+                # XXX: Unsure what to do here for the database info,
+                # XXX: since acquiring the proper version and release
+                # XXX: isn't easily doable from the file name (though
+                # XXX: it is possible).
+                continue
 
-                if pkg is None:
-                    name, version, release = rpm_info[1:]
-                    raise RepoException('Missing entry for package "%s", '
-                                        'version %s, revision %s in database'
-                                        % (name, version, release))
+            pkg = package.find_package(*rpm_info[1:])
 
-                self.valid_rpms[rpm] = rpm_info
+            if pkg is None:
+                name, version, release = rpm_info[1:]
+                raise RepoException('Missing entry for package "%s", '
+                                    'version %s, revision %s in database'
+                                    % (name, version, release))
 
-                try:
-                    os.rename(src_rpm, dst_rpm)
-                except OSError as e:
-                    logger.error('Unable to move file "%s" to "%s": %s',
-                                 (src_rpm, process_dir, e))
-                    pkg.status = 'failed'
-                    self.remove_file(src_rpm)
-                    del self.valid_rpms[rpm]
-                else:
-                    pkg.status = 'processing'
-                finally:
-                    Session.commit()
-    
-    
+            self.valid_rpms[rpm] = rpm_info
+
+            try:
+                os.rename(src_rpm, dst_rpm)
+            except OSError as e:
+                logger.error('Unable to move file "%s" to "%s": %s',
+                             (src_rpm, process_dir, e))
+                pkg.status = 'failed'
+                self.remove_file(src_rpm)
+                del self.valid_rpms[rpm]
+            else:
+                pkg.status = 'processing'
+            finally:
+                Session.commit()
+
     def email_for_invalid_rpm(self, rpm_file):
         """Send an email to engineering if a bad RPM is found"""
-    
+
         sender = 'siteops'
         sender_email = '%s@tagged.com' % sender
         receiver_emails = [ 'eng+tds@tagged.com' ]
     
         msg = MIMEText('The RPM file "%s" is invalid, the builder of it '
                        'should check the build process' % rpm_file)
-    
+
         msg['Subject'] = '[TDS] Invalid RPM file "%s"' % rpm_file
         msg['From'] = sender_email
         msg['To'] = ', '.join(receiver_emails)
-    
+
         s = smtplib.SMTP('localhost')
         s.sendmail(sender, receiver_emails, msg.as_string())
         s.quit()
@@ -225,14 +226,14 @@ class UpdateDeployRepoDaemon(Daemon):
                                     % (name, version, release))
 
             # TODO: ensure package is valid (security purposes)
-    
+
             dest_dir = os.path.join(repo_dir, rpm_info[0])
-    
+
             try:
                 shutil.copy(rpm_to_process, dest_dir)
             except IOError as e:
                 time.sleep(2)   # Short delay before re-attempting
-    
+
                 try:
                     shutil.copy(rpm_to_process, dest_dir)
                 except IOError as e:
@@ -264,9 +265,9 @@ class UpdateDeployRepoDaemon(Daemon):
                     pkg = package.find_package(*rpm_info[1:])
                     pkg.status = 'failed'
                     Session.commit()
-    
+
                 logger.error('yum database update failed, aborting: %s', e)
-    
+
         os.umask(old_umask)
         logger.info('Removing processed files...')
         # Yes, making the assumption none of the package finds will fail...
@@ -275,24 +276,24 @@ class UpdateDeployRepoDaemon(Daemon):
             pkg = package.find_package(*rpm_info[1:])
             pkg.status = 'completed'
             Session.commit()
-    
+
             self.remove_file(os.path.join(process_dir, rpm_to_process))
     
     
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
         """"""
-    
+
         logger.info('Checking for incoming files...')
-    
+
         while True:
             files = os.listdir(incoming_dir)
-    
+
             if files:
                 logger.info('Files found, processing them...')
                 self.prepare_rpms(incoming_dir, process_dir, files)
                 self.update_repo(repo_dir, process_dir)
                 logger.info('Done processing, checking for incoming files...')
-    
+
             time.sleep(1.0)
     
     
@@ -301,41 +302,41 @@ class UpdateDeployRepoDaemon(Daemon):
            to process files in the incoming directory if single system or
            zookeeper leader in multi-system configuration
         """
-    
+
         data = None
-    
+
         logger.info('Reading database access (dbaccess.admin.yml) file')
-    
+
         with open('/etc/tagops/dbaccess.admin.yml') as db_file:
             try:
                 data = yaml.load(db_file.read())
             except yaml.parser.ParserError as e:
                 raise RuntimeError('YAML parse error: %s' % e)
-    
+
         if 'db' not in data:
             raise RuntimeError('YAML configuration missing "db" section')
-    
+
         try:
             db_user = data['db']['user']
             db_password = data['db']['password']
         except KeyError as e:
             raise RuntimeError('YAML configuration missing necessary '
                                'parameter in "db" section: %s' % e)
-    
+
         logger.info('Initializing database session')
         init_session(db_user, db_password)
-    
+
         logger.info('Reading configuration (deploy.yml) file')
-    
+
         with open('/etc/tagops/deploy.yml') as conf_file:
             try:
                 data = yaml.load(conf_file.read())
             except yaml.parser.ParserError, e:
                 raise RepoException('YAML parse error: %s' % e)
-    
+
         if 'yum' not in data:
             raise RuntimeError('YAML configuration missing "yum" section')
-    
+
         try:
             repo_dir = data['yum']['repo_location']
             incoming_dir = data['yum']['incoming']
@@ -343,10 +344,10 @@ class UpdateDeployRepoDaemon(Daemon):
         except KeyError as e:
             raise RuntimeError('YAML configuration missing necessary '
                                'parameter in "yum" section: %s' % e)
-    
+
         if 'zookeeper' in data:
             hostname = socket.gethostname()
-    
+
             zk = Zookeeper(hostname, data['zookeeper'])
             zk.run(self.process_incoming_directory, repo_dir, incoming_dir,
                    process_dir)
@@ -359,7 +360,7 @@ class UpdateDeployRepoDaemon(Daemon):
         """A wrapper for the main process to ensure any unhandled
            exceptions are logged before the daemon exits
         """
-    
+
         try:
             self.main()
         except:
