@@ -6,7 +6,6 @@ import os
 import os.path
 import shlex
 import shutil
-import signal
 import smtplib
 import socket
 import subprocess
@@ -97,12 +96,6 @@ class UpdateDeployRepoDaemon(Daemon):
     """"""
 
     valid_rpms = None
-
-    def interrupt_handler(self, signum, frame):
-        """ """
-
-        logger.info('Interrupt caught.  Daemon exiting.')
-        self.stop()
 
 
     def remove_file(self, rpm):
@@ -307,11 +300,6 @@ class UpdateDeployRepoDaemon(Daemon):
            zookeeper leader in multi-system configuration
         """
 
-        # Catch common interrupts to cleanly shut down daemon
-        signal.signal(signal.SIGHUP, self.interrupt_handler)
-        signal.signal(signal.SIGINT, self.interrupt_handler)
-        signal.signal(signal.SIGTERM, self.interrupt_handler)
-
         data = None
 
         logger.info('Reading database access (dbaccess.admin.yml) file')
@@ -393,5 +381,27 @@ if __name__ == '__main__':
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    daemon = UpdateDeployRepoDaemon(pid, stderr='/tmp/err.out')
-    daemon.start()
+    daemon = UpdateDeployRepoDaemon(pid,
+                                    stdout='/tmp/update_deploy_repo.out',
+                                    stderr='/tmp/update_deploy_repo.err')
+
+    if len(sys.argv) == 2:
+        cmd, arg = sys.argv
+
+        if arg == 'start':
+            logger.info('Starting %s daemon' % cmd)
+            daemon.start()
+        elif arg == 'stop':
+            logger.info('Stopping %s daemon' % cmd)
+            daemon.stop()
+        elif arg == 'restart':
+            logger.info('Restarting %s daemon' % cmd)
+            daemon.restart()
+        else:
+            print 'Invalid argument'
+            sys.exit(2)
+
+        sys.exit(0)
+    else:
+        print 'Usage: %s {start|stop|restart}' % sys.argv[0]
+        sys.exit(0)
