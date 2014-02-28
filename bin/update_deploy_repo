@@ -98,9 +98,15 @@ class UpdateDeployRepoDaemon(Daemon):
 
     valid_rpms = None
 
+    def interrupt_handler(self, signum, frame):
+        """ """
+
+        logger.info('Interrupt caught.  Daemon exiting.')
+        self.stop()
+
 
     def remove_file(self, rpm):
-        """"""
+        """ """
 
         try:
             os.unlink(rpm)
@@ -109,7 +115,7 @@ class UpdateDeployRepoDaemon(Daemon):
 
 
     def check_rpm_file(self, rpm_to_process):
-        """"""
+        """ """
 
         rpm_info = None
         cmd = [ 'rpm', '-qp', '--queryformat',
@@ -300,6 +306,11 @@ class UpdateDeployRepoDaemon(Daemon):
            to process files in the incoming directory if single system or
            zookeeper leader in multi-system configuration
         """
+
+        # Catch common interrupts to cleanly shut down daemon
+        signal.signal(signal.SIGHUP, self.interrupt_handler)
+        signal.signal(signal.SIGINT, self.interrupt_handler)
+        signal.signal(signal.SIGTERM, self.interrupt_handler)
 
         data = None
 
