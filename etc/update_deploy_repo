@@ -1,6 +1,7 @@
 #!/bin/sh
 #
 #  Created 2012-06-27 by klareau@nominum.com
+#  Updated 2014-02-28 by klareau@nominum.com
 #
 # update_deploy_repo    This shell script takes care of starting and stopping
 #                       the update_deploy_repo daemon.
@@ -24,8 +25,6 @@ fi
 . /etc/sysconfig/network
 
 prog=/usr/bin/update_deploy_repo
-PidFile=/var/run/update_deploy_repo.pid
-LockFile=/var/lock/subsys/update_deploy_repo
 
 RETVAL=0
 
@@ -35,22 +34,24 @@ case "$1" in
         # Start daemon
         [ ${NETWORKING} = "no" ] && exit 4
         echo -n "Starting update_deploy_repo: "
-        $prog
+        $prog start
         RETVAL=$?
         echo
-        [ $RETVAL = 0 ] && touch $LockFile
         ;;
     stop)
         # Stop daemon
         echo -n "Shutting down update_deploy_repo: "
-        killproc -p $PidFile update_deploy_repo
+        $prog stop
         RETVAL=$?
         echo
-        [ $RETVAL = 0 ] && rm -f $LockFile
         ;;
     restart)
-        $0 stop
-        $0 start
+        # Restart daemon
+        [ ${NETWORKING} = "no" ] && exit 4
+        echo -n "Restarting update_deploy_repo: "
+        $prog restart
+        RETVAL=$?
+        echo
         ;;
     status)
         status update_deploy_repo
