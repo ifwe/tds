@@ -137,7 +137,7 @@ class UpdateDeployRepoDaemon(Daemon):
 
     def prepare_rpms(self, incoming_dir, process_dir, files):
         """Move RPMs in incoming directory to the processing directory"""
-    
+
         logger.info('Moving files in incoming directory to processing '
                     'directory...')
 
@@ -192,7 +192,7 @@ class UpdateDeployRepoDaemon(Daemon):
         sender = 'siteops'
         sender_email = '%s@tagged.com' % sender
         receiver_emails = [ 'eng+tds@tagged.com' ]
-    
+
         msg = MIMEText('The RPM file "%s" is invalid, the builder of it '
                        'should check the build process' % rpm_file)
 
@@ -203,8 +203,8 @@ class UpdateDeployRepoDaemon(Daemon):
         s = smtplib.SMTP('localhost')
         s.sendmail(sender, receiver_emails, msg.as_string())
         s.quit()
-    
-    
+
+
     def update_repo(self, repo_dir, process_dir):
         """Copy RPMs in processing directory to the repository and run
            update the repo
@@ -243,19 +243,19 @@ class UpdateDeployRepoDaemon(Daemon):
                     continue
                 finally:
                     Session.commit()
-    
+
             pkg.status = 'completed'
             Session.commit()
 
         logger.info('Updating repo...')
         old_umask = os.umask(0002)
-    
+
         try:
             run([ 'make', '-C', repo_dir ])
         except subprocess.CalledProcessError as e:
             logger.error('yum database update failed, retrying: %s', e)
             time.sleep(5)   # Short delay before re-attempting
-    
+
             try:
                 run([ 'make', '-C', repo_dir ])
             except subprocess.CalledProcessError as e:
@@ -278,8 +278,8 @@ class UpdateDeployRepoDaemon(Daemon):
             Session.commit()
 
             self.remove_file(os.path.join(process_dir, rpm_to_process))
-    
-    
+
+
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
         """"""
 
@@ -295,8 +295,8 @@ class UpdateDeployRepoDaemon(Daemon):
                 logger.info('Done processing, checking for incoming files...')
 
             time.sleep(1.0)
-    
-    
+
+
     def main(self):
         """Read configuration file and get relevant information, then try
            to process files in the incoming directory if single system or
@@ -354,8 +354,8 @@ class UpdateDeployRepoDaemon(Daemon):
         else:
             self.process_incoming_directory(repo_dir, incoming_dir,
                                             process_dir)
-    
-    
+
+
     def run(self):
         """A wrapper for the main process to ensure any unhandled
            exceptions are logged before the daemon exits
