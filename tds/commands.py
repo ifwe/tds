@@ -17,9 +17,11 @@ import tagopsdb.deploy.repo as repo
 import tagopsdb.deploy.package as package
 import tagopsdb.deploy.deploy as deploy
 
-import tds.authorize
-import tds.notifications
+import tds.model
 import tds.utils
+import tds.authorize
+import tds.utils.config
+import tds.notifications
 import tds.deploy_strategy
 
 from tds.exceptions import NoCurrentDeploymentError, \
@@ -388,6 +390,7 @@ class BaseDeploy(object):
         """Basic initialization"""
 
         self.log = logger
+        self.app_config = tds.utils.config.TDSDeployConfig()
         self.deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy()
 
     @tds.utils.debug
@@ -556,49 +559,6 @@ class BaseDeploy(object):
             return ('failed', missing_deps, version_diffs, not_ok_hostnames)
         else:
             return ('ok', [], [], [])
-
-    @tds.utils.debug
-    def create_notifications(self, params):
-        """Create subject and message for a notification"""
-
-        self.log.debug('Creating information for notifications')
-
-        # Determine version
-        if 'version' in params:
-            version = params['version']
-        elif 'current_version' in params:
-            version = params['current_version']
-        else:
-            version = 'unknown'   # This should never happen
-
-        self.log.debug(5, 'Application version is: %s', version)
-
-        dep_type = self.dep_types[params['subcommand_name']]
-
-        if params.get('hosts', None):
-            dest_type = 'hosts'
-            destinations = ', '.join(params['hosts'])
-        elif params.get('apptypes', None):
-            dest_type = 'app tier(s)'
-            destinations = ', '.join(params['apptypes'])
-        else:
-            dest_type = 'app tier(s)'
-            app_pkgs = repo.find_app_packages_mapping(params['project'])
-            destinations = ', '.join(x.app_type for x in app_pkgs)
-
-        self.log.debug(5, 'Destination type is: %s', dest_type)
-        self.log.debug(5, 'Destinations are: %s', destinations)
-
-        msg_subject = '%s of version %s of %s on %s %s in %s' \
-                      % (dep_type, version, params['project'], dest_type,
-                         destinations, self.envs[params['environment']])
-        msg_text = '%s performed a "tds %s %s" for the following %s ' \
-                   'in %s:\n    %s' \
-                   % (params['user'], params['command_name'],
-                      params['subcommand_name'], dest_type,
-                      self.envs[params['environment']], destinations)
-
-        return msg_subject, msg_text
 
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
@@ -1592,11 +1552,31 @@ class BaseDeploy(object):
 
         self.log.debug('Sending notifications for given deployment')
 
-        msg_subject, msg_text = self.create_notifications(params)
-        notification = tds.notifications.Notifications(params['project'],
-                                                       params['user'],
-                                                       params['apptypes'])
-        notification.send_notifications(msg_subject, msg_text)
+        deployment = self.create_deployment(params)
+        notification = tds.notifications.Notifications(self.app_config)
+        notification.notify(deployment)
+
+    def create_deployment(self, params):
+        return tds.model.Deployment(
+            actor=dict(
+                username=params.get('user'),
+                automated=False,
+            ),
+            action=dict(
+                command=params.get('command_name'),
+                subcommand=params.get('subcommand_name'),
+            ),
+            project=dict(
+                name=params.get('project'),
+            ),
+            package=dict(
+                name=params.get('project'),
+                version=params.get('version'),
+            ),
+            target=dict(
+                apptypes=params.get('apptypes')
+            ),
+        )
 
     @tds.utils.debug
     def show_app_deployments(self, project, app_versions, env):
