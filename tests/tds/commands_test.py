@@ -1,12 +1,24 @@
-from mock import patch
+from mock import patch, Mock
 import unittest2
 import logging
 
+from tests.fixtures.config import fake_config
+
 import tds.commands
+import tds.model
+import tds.utils.config as tds_config
 
 
 class TestPromoteAndPush(unittest2.TestCase):
     def setUp(self):
+
+        self.app_config = patch(
+            'tds.utils.config.TDSDeployConfig',
+            **{
+                'return_value': tds_config.DottedDict(fake_config['deploy']),
+                'return_value.load': Mock(return_value=None),
+            }
+        )
 
         self.deploy = tds.commands.Deploy(
             logging.getLogger(type(self).__name__ + ' Deploy')
@@ -96,17 +108,17 @@ class TestPromoteAndPush(unittest2.TestCase):
 
     @patch('tds.notifications.Notifications', autospec=True)
     def test_notifications_sent(self, Notifications):
-        send_notifications = Notifications.return_value.send_notifications
-        send_notifications.return_value = None
+        notify = Notifications.return_value.notify
+        notify.return_value = None
 
-        msg_subject = (
-            'Deployment of version unknown of fake_app on app '
-            'tier(s) whatever in development'
-        )
-        msg_text = (
-            'fake_user performed a "tds package promote" for the following app'
-            ' tier(s) in development:\n    whatever'
-        )
+        # msg_subject = (
+        #     'Deployment of version unknown of fake_app on app '
+        #     'tier(s) whatever in development'
+        # )
+        # msg_text = (
+        #     'fake_user performed a "tds package promote" for the following'
+        #     ' app tier(s) in development:\n    whatever'
+        # )
 
         params = dict(
             user_level='fake_access',
@@ -116,13 +128,32 @@ class TestPromoteAndPush(unittest2.TestCase):
             apptypes=['whatever'],
             subcommand_name='promote',  # TODO: mock BaseDeploy.dep_types
             command_name='package',
+            version='deadbeef',
         )
 
         getattr(self.deploy, params.get('subcommand_name'))(params)
 
-        Notifications.assert_called_with(
-            params['project'],
-            params['user'],
-            params['apptypes']
+        deployment = tds.model.Deployment(
+            actor=dict(
+                username='fake_user',
+                automated=False
+            ),
+            action=dict(
+                command='package',
+                subcommand='promote',
+            ),
+            project=dict(
+                name='fake_app'
+            ),
+            package=dict(
+                name='fake_app',  # TODO: make different from project name
+                version='deadbeef'
+            ),
+            target=dict(
+                apptypes=['whatever']
+            )
         )
-        send_notifications.assert_called_with(msg_subject, msg_text)
+
+        Notifications.assert_called_with(tds_config.TDSDeployConfig())
+
+        notify.assert_called_with(deployment)

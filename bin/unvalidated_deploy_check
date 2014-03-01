@@ -15,6 +15,8 @@ envs = {'dev': 'development',
         'prod': 'production', }
 
 
+#XXX: this does not use the new type of notifications yet (config + deployment
+#     arguments)
 def send_notifications(pkg_name, user, app_types, subject, text):
     notification = tds.notifications.Notifications(pkg_name, user, app_types)
     notification.send_notifications(subject, text)
