@@ -410,6 +410,7 @@ class BaseDeploy(object):
              'prod' : 'production', }
     env_order = [ 'dev', 'stage', 'prod' ]
 
+    requires_tier_progression = True
 
     def __init__(self, logger):
         """Basic initialization"""
