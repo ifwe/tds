@@ -1574,7 +1574,8 @@ class BaseDeploy(object):
                 version=params.get('version'),
             ),
             target=dict(
-                apptypes=params.get('apptypes')
+                environment=params.get('environment'),
+                apptypes=params.get('apptypes'),
             ),
         )
 

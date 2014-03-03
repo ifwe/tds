@@ -122,7 +122,7 @@ class TestPromoteAndPush(unittest2.TestCase):
 
         params = dict(
             user_level='fake_access',
-            environment='dev',  # TODO: mock BaseDeploy.envs
+            environment='test',  # TODO: mock BaseDeploy.envs
             project='fake_app',
             user='fake_user',
             apptypes=['whatever'],
@@ -150,7 +150,8 @@ class TestPromoteAndPush(unittest2.TestCase):
                 version='deadbeef'
             ),
             target=dict(
-                apptypes=['whatever']
+                environment='test',
+                apptypes=['whatever'],
             )
         )
 

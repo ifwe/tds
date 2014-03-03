@@ -32,7 +32,8 @@ class TestNotifications(unittest2.TestCase):
                 version='badf00d'
             ),
             target=dict(
-                apptypes=['fake_apptype']
+                environment='test',
+                apptypes=['fake_apptype'],
             )
         )
 

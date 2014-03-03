@@ -72,7 +72,43 @@ class Notifier(object):
         raise NotImplementedError
 
     def message_for_deployment(self, deployment):
-        """Create subject and message for a notification"""
+        '''Return message object for the deployment. Dispatches
+            on the deployment's action's "command" property, or uses the
+            default method, "message_for_default".
+        '''
+
+        method_name = 'message_for_%s' % deployment.action['command']
+        return getattr(self, method_name, self.message_for_default)(deployment)
+
+    def message_for_default(self, d):
+        '''Return message object for the deployment. Dispatches
+            on the deployment's action's "subcommand" property, or uses
+            the default method, "message_for_default_default".
+        '''
+        method_name = 'message_for_default_%s' % d.action['subcommand']
+        return getattr(self, method_name, self.message_for_default_default)(d)
+
+    def message_for_unvalidated(self, deployment):
+        subject = (
+            'ATTENTION: %s in %s for %s app tier needs validation!' % (
+                deployment.project['name'],
+                deployment.target['environment'],
+                ','.join(deployment.target['apptypes'])
+            )
+        )
+        body = (
+            'Version %s of package %s in %s app tier\n'
+            'has not been validated. Please validate it.\n'
+            'Without this, Puppet cannot manage the tier correctly.' % (
+                deployment.package['version'],
+                deployment.package['name'],
+                ', '.join(deployment.target['apptypes']),
+            )
+        )
+
+        return dict(subject=subject, body=body)
+
+    def message_for_default_default(self, deployment):
 
         log.debug('Creating information for notifications')
 
