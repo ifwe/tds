@@ -3,6 +3,7 @@ import unittest2
 
 from tests.fixtures.config import fake_config
 
+import re
 import email
 import tds.notifications
 import tds.utils.config as tds_config
@@ -92,14 +93,17 @@ class TestNotifications(unittest2.TestCase):
              self.config['email']['receiver']]
         )
 
+        unfold_header = lambda s: re.sub(r'\n(?:[ \t]+)', r' ', s)
+
         msg = email.message_from_string(content)
         sender_email = self.deployment.actor['username']+'@tagged.com'
-        assert msg.get('content-type') == 'text/plain; charset="us-ascii"'
-        assert msg.get('subject') == (
-            '[TDS] Promote of version badf00d of fake_project on app tier(s)\n'
+        ctype = 'text/plain; charset="us-ascii"'
+        assert unfold_header(msg.get('content-type')) == ctype
+        assert unfold_header(msg.get('subject')) == (
+            '[TDS] Promote of version badf00d of fake_project on app tier(s)'
             ' fake_apptype in fakedev'
         )
-        assert msg.get('from') == sender_email
+        assert unfold_header(msg.get('from')) == sender_email
         self.assertItemsEqual(
             msg.get('to').split(', '),
             [sender_email, self.config['email']['receiver']]
