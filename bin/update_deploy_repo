@@ -17,8 +17,8 @@ from email.mime.text import MIMEText
 import yaml
 import yaml.parser
 
-from daemon import Daemon
 from kazoo.client import KazooClient   # , KazooState
+from simpledaemon import Daemon
 
 import tagopsdb.deploy.package as package
 
