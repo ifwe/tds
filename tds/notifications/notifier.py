@@ -157,9 +157,6 @@ class HipchatNotifier(Notifier):
         self.token = config['token']
         self.rooms = config['rooms']
 
-    def subject_for_deployment(self, d):
-        return
-
     def notify(self, deployment):
         """Send a HipChat message for a given action"""
 
