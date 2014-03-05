@@ -165,7 +165,8 @@ class HipchatNotifier(Notifier):
         # Query DB for any additional HipChat rooms
         log.debug('Looking for additional HipChat rooms to be notified')
         extra_rooms = deploy.find_hipchat_rooms_for_app(
-            deployment.project['name']
+            deployment.project['name'],
+            deployment.target['apptypes'],
         )
         log.debug(5, 'HipChat rooms to notify: %s',
                   ', '.join(self.rooms))
