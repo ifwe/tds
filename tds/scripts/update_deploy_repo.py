@@ -367,7 +367,7 @@ class UpdateDeployRepoDaemon(Daemon):
             sys.exit(1)
 
 
-if __name__ == '__main__':
+def daemon_main():
     pid = '/var/run/update_deploy_repo.pid'
     logfile = '/var/log/update_deploy_repo.log'
 
@@ -405,3 +405,6 @@ if __name__ == '__main__':
     else:
         print 'Usage: %s {start|stop|restart}' % sys.argv[0]
         sys.exit(0)
+
+if __name__ == '__main__':
+    daemon_main()
