@@ -15,9 +15,13 @@ setup_args = dict(
     author_email='klareau@tagged.com',
     license='Apache License, Version 2.0',
     packages=['tds', 'tds.utils'],
-    scripts=['bin/tds',
-             'bin/unvalidated_deploy_check',
-             'bin/update_deploy_repo', ],
+    entry_points = {
+        'console_scripts': [
+            'tds = tds.scripts.tds:main',
+            'unvalidated_deploy_check = tds.scripts.unvalidated_deploy_check:main',
+            'update_deploy_repo = tds.scripts.update_deploy_repo:daemon_main',
+        ]
+    },
 )
 
 if __name__ == '__main__':
