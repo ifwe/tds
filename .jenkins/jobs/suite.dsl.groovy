@@ -1,15 +1,16 @@
 @GrabResolver('https://artifactory.tagged.com/artifactory/libs-release-local/')
-@Grab('com.tagged.build:jenkins-dsl-common:0.1.11')
+@Grab('com.tagged.build:jenkins-dsl-common:0.1.14')
 
 import com.tagged.build.common.*
 
-def project = new Project(
+def project = new PythonFPMMatrixProject(
     jobFactory,
     [
         githubOwner: 'siteops',
         githubProject: 'deploy',
         hipchatRoom: 'Tagged Deployment System',
         email: 'devtools@tagged.com',
+        interpreters:['python26', 'python27'],
     ]
 )
 
@@ -38,8 +39,20 @@ def pyunit = project.downstreamJob {
     }
 }
 
+def matrixRPMs = project.pythonFPMMatrixJob {
+    name 'build'
+    logRotator(-1, 50)
+
+    steps {
+        publishers {
+            archiveArtifacts('*.rpm')
+        }
+    }
+}
+
 def gauntlet = project.gauntlet([
     ['Gauntlet', [pylint, pyunit]],
+    ['Build', [matrixRPMs]],
 ])
 
 def (tds, branches) = project.branchBuilders(gauntlet.name)
