@@ -21,6 +21,7 @@ import tagopsdb.deploy.deploy as deploy
 import tds.authorize
 import tds.notifications
 import tds.utils
+import tds.deploy_strategy
 
 from tds.exceptions import NoCurrentDeploymentError, \
     WrongEnvironmentError, WrongProjectTypeError
@@ -388,6 +389,7 @@ class BaseDeploy(object):
         """Basic initialization"""
 
         self.log = logger
+        self.deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy()
 
     @tds.utils.debug
     def check_previous_environment(self, params, pkg_id, app_id):
