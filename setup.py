@@ -14,7 +14,13 @@ setup_args = dict(
     author='Kenneth Lareau',
     author_email='klareau@tagged.com',
     license='Apache License, Version 2.0',
-    packages=['tds', 'tds.utils'],
+    packages=[
+              'tds',
+              'tds.deploy_strategy',
+              'tds.notifications',
+              'tds.scripts',
+              'tds.utils'
+              ],
     entry_points = {
         'console_scripts': [
             'tds = tds.scripts.tds:main',
