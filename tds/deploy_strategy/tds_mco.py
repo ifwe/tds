@@ -4,7 +4,7 @@ import re
 
 import tds.utils
 
-from . import DeployStrategy
+from .base import DeployStrategy
 
 
 class TDSMCODeployStrategy(DeployStrategy):
