@@ -10,8 +10,8 @@ import tds.configure_logging as conflog
 import tds.version
 
 from tds.exceptions import AccessError, ConfigurationError, \
-                           WrongEnvironmentError, \
-                           WrongProjectTypeError
+    WrongEnvironmentError, \
+    WrongProjectTypeError
 
 
 def create_subparsers(parser):
@@ -46,9 +46,9 @@ def parse_command_line():
     parser.add_argument('-v', '--verbose', action='count',
                         help='Show more information (more used shows greater '
                              'information)')
-    parser.add_argument('--dbuser', help='Specify user to use to connect '
-                                         'to TagOpsDB',
-                                    default=None)
+    parser.add_argument('--dbuser',
+                        help='Specify user to use to connect to TagOpsDB',
+                        default=None)
     parser.add_argument('--disable-color', dest='use_color',
                         action='store_false',
                         help='Disable color coding when in verbose mode(s)')
