@@ -1,4 +1,5 @@
 from mock import patch, Mock
+from unittest_data_provider import data_provider
 import unittest2
 import logging
 
@@ -70,9 +71,15 @@ class TestPromoteAndPush(unittest2.TestCase):
 
         assert self.deploy.perform_deployments.called
 
-    def test_promote_old_version(self):
+    promote_versions_provider = lambda: [
+        (True,),
+        (False,)
+    ]
+
+    @data_provider(promote_versions_provider)
+    def test_promote_version(self, version_is_new):
         self.patch_method(self.deploy, 'send_notifications', None)
-        self.deploy.ensure_newer_versions.return_value = False
+        self.deploy.ensure_newer_versions.return_value = version_is_new
 
         self.deploy.promote(dict(
             user_level='fake_access',
@@ -81,18 +88,6 @@ class TestPromoteAndPush(unittest2.TestCase):
         ))
 
         assert self.deploy.perform_deployments.called
-
-    def test_push_new_version(self):
-        self.patch_method(self.config, 'send_notifications', None)
-        self.config.ensure_newer_versions.return_value = True
-
-        self.config.push(dict(
-            user_level='fake_access',
-            environment='fake_env',
-            project='fake_app'
-        ))
-
-        assert self.config.perform_deployments.called
 
     def test_push_old_version(self):
         self.patch_method(self.config, 'send_notifications', None)
