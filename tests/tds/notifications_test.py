@@ -65,6 +65,11 @@ class TestNotifierClass(unittest2.TestCase):
             APP_CONFIG['notifications']
         )
         message = n.message_for_deployment(deployments['deploy']['promote'])
+
+        assert isinstance(message['subject'], basestring)
+        assert isinstance(message['body'], basestring)
+
+        # are these assertions really necessary?
         assert message['subject'] == (
             'Promote of version badf00d of fake_project on app tier(s)'
             ' fake_apptype in fakedev'
@@ -74,6 +79,19 @@ class TestNotifierClass(unittest2.TestCase):
             'tier(s) in fakedev:\n'
             '    fake_apptype'
         )
+
+    def test_message_for_unvalidated(self):
+        n = tds.notifications.Notifier(
+            APP_CONFIG,
+            APP_CONFIG['notifications'],
+        )
+
+        message = n.message_for_deployment(
+            deployments['unvalidated']
+        )
+        assert isinstance(message['subject'], basestring)
+        assert isinstance(message['body'], basestring)
+        # do we want to assert any more here?
 
 
 class TestEmailNotifier(unittest2.TestCase):
