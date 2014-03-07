@@ -1,4 +1,3 @@
-import errno
 import os
 import os.path
 import signal
