@@ -111,15 +111,6 @@ class TestPromoteAndPush(unittest2.TestCase):
         notify = Notifications.return_value.notify
         notify.return_value = None
 
-        # msg_subject = (
-        #     'Deployment of version unknown of fake_app on app '
-        #     'tier(s) whatever in development'
-        # )
-        # msg_text = (
-        #     'fake_user performed a "tds package promote" for the following'
-        #     ' app tier(s) in development:\n    whatever'
-        # )
-
         params = dict(
             user_level='fake_access',
             environment='test',  # TODO: mock BaseDeploy.envs
