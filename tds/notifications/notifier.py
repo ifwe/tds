@@ -68,7 +68,7 @@ class Notifier(object):
         self.app_config = app_config
         self.config = config
 
-    def notify(self, sender, project, apptypes, msg_subject, msg_text):
+    def notify(self, deployment):
         raise NotImplementedError
 
     def message_for_deployment(self, deployment):
