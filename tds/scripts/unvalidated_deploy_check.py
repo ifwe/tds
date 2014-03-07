@@ -1,10 +1,8 @@
-#!/usr/bin/env python2.6
-
 import sys
 
 import tagopsdb.deploy.deploy as deploy
 import tds.notifications
-import tds.utils
+import tds.utils.config
 from tds.model import Deployment
 
 from tagopsdb.database import init_session
