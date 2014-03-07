@@ -1,6 +1,9 @@
+'''
+Some pre-instantiated Deployment objects for tests.
+'''
 from tds.model import Deployment
 
-__all__ = ['deployments']
+__all__ = ['DEPLOYMENTS']
 
 # TODO: these should all go in respective fixture modules.
 
@@ -43,9 +46,15 @@ def _make_deployment(
     Construct a Deployment object, with a bunch of prefilled attribute values.
     '''
 
-    return Deployment(**locals())
+    return Deployment(
+        actor=actor,
+        action=action,
+        project=project,
+        package=package,
+        target=target,
+    )
 
-deployments = dict(
+DEPLOYMENTS = dict(
     deploy=dict(
         promote=_make_deployment()
     ),

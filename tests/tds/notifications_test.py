@@ -2,7 +2,7 @@ from mock import patch, Mock
 import unittest2
 
 from tests.fixtures.config import fake_config
-from tests.fixtures.model import deployments
+from tests.fixtures.model import DEPLOYMENTS
 
 import re
 import email
@@ -38,11 +38,11 @@ class TestNotifications(unittest2.TestCase):
         }
 
         with patch.object(n, '_notifiers', notifiers):
-            n.notify(deployments['deploy']['promote'])
+            n.notify(DEPLOYMENTS['deploy']['promote'])
 
             for mock in notifiers.values():
                 assert mock.return_value.notify.called_with(
-                    deployments['deploy']['promote']
+                    DEPLOYMENTS['deploy']['promote']
                 )
 
 
@@ -64,7 +64,7 @@ class TestNotifierClass(unittest2.TestCase):
             APP_CONFIG,
             APP_CONFIG['notifications']
         )
-        message = n.message_for_deployment(deployments['deploy']['promote'])
+        message = n.message_for_deployment(DEPLOYMENTS['deploy']['promote'])
 
         assert isinstance(message['subject'], basestring)
         assert isinstance(message['body'], basestring)
@@ -87,7 +87,7 @@ class TestNotifierClass(unittest2.TestCase):
         )
 
         message = n.message_for_deployment(
-            deployments['unvalidated']
+            DEPLOYMENTS['unvalidated']
         )
         assert isinstance(message['subject'], basestring)
         assert isinstance(message['body'], basestring)
@@ -110,21 +110,21 @@ class TestEmailNotifier(unittest2.TestCase):
                 body='fake body'
             )
 
-            e.notify(deployments['deploy']['promote'])
+            e.notify(DEPLOYMENTS['deploy']['promote'])
 
         SMTP.assert_called_with('localhost')
         (sender, recvrs, content), _kw = SMTP.return_value.sendmail.call_args
-        assert sender == deployments['deploy']['promote'].actor['username']
+        assert sender == DEPLOYMENTS['deploy']['promote'].actor['username']
         self.assertItemsEqual(
             recvrs,
-            [deployments['deploy']['promote'].actor['username']+'@tagged.com',
+            [DEPLOYMENTS['deploy']['promote'].actor['username']+'@tagged.com',
              receiver]
         )
 
         unfold_header = lambda s: re.sub(r'\n(?:[ \t]+)', r' ', s)
 
         msg = email.message_from_string(content)
-        username = deployments['deploy']['promote'].actor['username']
+        username = DEPLOYMENTS['deploy']['promote'].actor['username']
         sender_email = username+'@tagged.com'
         ctype = 'text/plain; charset="us-ascii"'
         assert unfold_header(msg.get('content-type')) == ctype
@@ -164,7 +164,7 @@ class TestHipchatNotifier(unittest2.TestCase):
                 body='fake body'
             )
 
-            h.notify(deployments['deploy']['promote'])
+            h.notify(DEPLOYMENTS['deploy']['promote'])
 
         token = APP_CONFIG['notifications']['hipchat']['token']
         rooms = APP_CONFIG['notifications']['hipchat']['rooms']
@@ -183,7 +183,7 @@ class TestHipchatNotifier(unittest2.TestCase):
                 'params': {
                     'auth_token': token,
                     'room_id': room,
-                    'from': deployments['deploy']['promote'].actor['username'],
+                    'from': DEPLOYMENTS['deploy']['promote'].actor['username'],
                     'message': (
                         '<strong>fake subj</strong><br />fake body'
                     ),
