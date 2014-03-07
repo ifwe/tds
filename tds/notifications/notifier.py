@@ -8,6 +8,7 @@ import requests
 
 import tds.utils
 import tagopsdb.deploy.deploy as deploy
+import tagopsdb.deploy.repo as repo
 
 
 log = logging.getLogger('tds')
@@ -30,15 +31,11 @@ class Notifications(object):
         return notifier_add
 
     @tds.utils.debug
-    def __init__(self, project, user, apptypes):
+    def __init__(self, config):
         """Configure various parameters needed for notifications"""
 
-        self.config = tds.utils.config.TDSDeployConfig().get('notifications')
-
-        # TODO: get these out of here and make part of the params to send()
-        self.sender = user
-        self.project = project
-        self.apptypes = apptypes
+        self._config = config
+        self.config = config.get('notifications', {})
 
         log.debug('Initializing for notifications')
 
@@ -51,7 +48,7 @@ class Notifications(object):
                   self.validation_time)
 
     @tds.utils.debug
-    def send_notifications(self, msg_subject, msg_text):
+    def notify(self, deployment):
         """Send out various enabled notifications for a given action"""
 
         log.debug('Sending out enabled notifications')
@@ -59,38 +56,118 @@ class Notifications(object):
 
         for method in self.enabled_methods:
             notifier_factory = notifiers.get(method)
-            notifier = notifier_factory(self.config.get(method, {}))
-            notifier.send(
-                self.sender,
-                self.project,
-                self.apptypes,
-                msg_subject,
-                msg_text
+            notifier = notifier_factory(
+                self._config,
+                self.config.get(method, {})
             )
+            notifier.notify(deployment)
 
 
 class Notifier(object):
-    def __init__(self, config):
-        pass
+    def __init__(self, app_config, config):
+        self.app_config = app_config
+        self.config = config
 
-    def send(self, sender, project, apptypes, msg_subject, msg_text):
+    def notify(self, sender, project, apptypes, msg_subject, msg_text):
         raise NotImplementedError
+
+    def message_for_deployment(self, deployment):
+        '''Return message object for the deployment. Dispatches
+            on the deployment's action's "command" property, or uses the
+            default method, "message_for_default".
+        '''
+
+        method_name = 'message_for_%s' % deployment.action['command']
+        return getattr(self, method_name, self.message_for_default)(deployment)
+
+    def message_for_default(self, d):
+        '''Return message object for the deployment. Dispatches
+            on the deployment's action's "subcommand" property, or uses
+            the default method, "message_for_default_default".
+        '''
+        method_name = 'message_for_default_%s' % d.action['subcommand']
+        return getattr(self, method_name, self.message_for_default_default)(d)
+
+    def message_for_unvalidated(self, deployment):
+        subject = (
+            'ATTENTION: %s in %s for %s app tier needs validation!' % (
+                deployment.project['name'],
+                deployment.target['environment'],
+                ','.join(deployment.target['apptypes'])
+            )
+        )
+        body = (
+            'Version %s of package %s in %s app tier\n'
+            'has not been validated. Please validate it.\n'
+            'Without this, Puppet cannot manage the tier correctly.' % (
+                deployment.package['version'],
+                deployment.package['name'],
+                ', '.join(deployment.target['apptypes']),
+            )
+        )
+
+        return dict(subject=subject, body=body)
+
+    def message_for_default_default(self, deployment):
+
+        log.debug('Creating information for notifications')
+
+        # Determine version
+        version = deployment.package['version']
+
+        log.debug(5, 'Application version is: %s', version)
+
+        dep_type = deployment.action['subcommand'].capitalize()
+
+        if deployment.target.get('hosts', None):
+            dest_type = 'hosts'
+            destinations = ', '.join(deployment.target['hosts'])
+        elif deployment.target.get('apptypes', None):
+            dest_type = 'app tier(s)'
+            destinations = ', '.join(deployment.target['apptypes'])
+        else:
+            dest_type = 'app tier(s)'
+            app_pkgs = repo.find_app_packages_mapping(
+                deployment.project['name']
+            )
+            destinations = ', '.join(x.app_type for x in app_pkgs)
+
+        log.debug(5, 'Destination type is: %s', dest_type)
+        log.debug(5, 'Destinations are: %s', destinations)
+
+        msg_subject = '%s of version %s of %s on %s %s in %s' \
+                      % (dep_type, version, deployment.package['name'],
+                         dest_type, destinations,
+                         self.app_config['env.environment'])
+        msg_args = (
+            deployment.actor['username'], deployment.action['command'],
+            deployment.action['subcommand'], dest_type,
+            self.app_config['env.environment'], destinations
+        )
+        msg_text = '%s performed a "tds %s %s" for the following %s ' \
+                   'in %s:\n    %s' % msg_args
+
+        return dict(subject=msg_subject, body=msg_text)
 
 
 @Notifications.add('hipchat')
 class HipchatNotifier(Notifier):
-    def __init__(self, config):
-        super(HipchatNotifier, self).__init__(config)
+    def __init__(self, app_config, config):
+        super(HipchatNotifier, self).__init__(app_config, config)
         self.token = config['token']
         self.rooms = config['rooms']
 
-    @tds.utils.debug
-    def send(self, sender, project, apptypes, msg_subject, msg_text):
+    def notify(self, deployment):
         """Send a HipChat message for a given action"""
+
+        message = self.message_for_deployment(deployment)
 
         # Query DB for any additional HipChat rooms
         log.debug('Looking for additional HipChat rooms to be notified')
-        extra_rooms = deploy.find_hipchat_rooms_for_app(project, apptypes)
+        extra_rooms = deploy.find_hipchat_rooms_for_app(
+            deployment.project['name'],
+            deployment.target['apptypes'],
+        )
         log.debug(5, 'HipChat rooms to notify: %s',
                   ', '.join(self.rooms))
         log.debug(5, 'HipChat token: %s', self.token)
@@ -104,9 +181,9 @@ class HipchatNotifier(Notifier):
             payload = {
                 'auth_token': self.token,
                 'room_id': room,
-                'from': sender,
-                'message': ('<strong>%s</strong><br />%s'
-                            % (msg_subject, msg_text)),
+                'from': deployment.actor['username'],
+                'message': ('<strong>%(subject)s</strong><br />%(body)s'
+                            % message),
             }
 
             # Content-Length must be set in header due to bug in Python 2.6
@@ -122,28 +199,32 @@ class HipchatNotifier(Notifier):
 
 @Notifications.add('email')
 class EmailNotifier(Notifier):
-    def __init__(self, config):
-        super(EmailNotifier, self).__init__(config)
+    def __init__(self, app_config, config):
+        super(EmailNotifier, self).__init__(app_config, config)
         self.receiver = config.get('receiver')
 
-    @tds.utils.debug
-    def send(self, sender, project, apptypes, msg_subject, msg_text):
+    def notify(self, deployment):
         """Send an email notification for a given action"""
 
         log.debug('Sending email notification(s)')
 
-        sender_addr = '%s@tagged.com' % sender
+        message = self.message_for_deployment(deployment)
+        sender_addr = '%s@tagged.com' % deployment.actor['username']
         receiver_emails = [sender_addr, self.receiver]
 
         log.debug(5, 'Receiver\'s email address: %s', self.receiver)
         log.debug(5, 'Sender\'s email address is: %s', sender_addr)
 
-        msg = MIMEText(msg_text)
+        msg = MIMEText(message['body'])
 
-        msg['Subject'] = '[TDS] %s' % msg_subject
+        msg['Subject'] = '[TDS] %s' % message['subject']
         msg['From'] = sender_addr
         msg['To'] = ', '.join(receiver_emails)
 
         s = smtplib.SMTP('localhost')
-        s.sendmail(sender, receiver_emails, msg.as_string())
+        s.sendmail(
+            deployment.actor['username'],
+            receiver_emails,
+            msg.as_string()
+        )
         s.quit()
