@@ -183,10 +183,6 @@ config_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
-            (('--force',), odict([
-                ('help', 'Do invalidation even when there are bad hosts'),
-                ('action', 'store_true'),
-            ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for invalidation'),
                 ('metavar', 'APPTYPE'),
@@ -360,10 +356,6 @@ deploy_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
-            ])),
-            (('--force',), odict([
-                ('help', 'Do invalidation even when there are bad hosts'),
-                ('action', 'store_true'),
             ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for invalidation'),
