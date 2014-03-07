@@ -351,66 +351,6 @@ deploy_data = odict([
             ])),
         ])),
     ])),
-    ('force-production', odict([
-        ('help', 'Overriding deployment direct to production'),
-        ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
-            ])),
-            (('version',), odict([
-                ('help', 'Release version number for project'),
-                ('type', int),
-            ])),
-            (('--delay',), odict([
-                ('help', 'Time delay (in seconds) between each deploy'),
-                ('type', int),
-            ])),
-            (('--hosts',), odict([
-                ('help', 'Specific host(s) for deployment'),
-                ('metavar', 'HOST'),
-                ('nargs', '*'),
-            ])),
-            (('--apptypes',), odict([
-                ('help', 'Specific app type(s) for deployment'),
-                ('metavar', 'APPTYPE'),
-                ('nargs', '*'),
-            ])),
-            (('--all-apptypes',), odict([
-                ('help', 'Handle all app types for deployment'),
-                ('action', 'store_true'),
-            ])),
-        ])),
-    ])),
-    ('force-staging', odict([
-        ('help', 'Overriding deployment direct to staging'),
-        ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
-            ])),
-            (('version',), odict([
-                ('help', 'Release version number for project'),
-                ('type', int),
-            ])),
-            (('--delay',), odict([
-                ('help', 'Time delay (in seconds) between each deploy'),
-                ('type', int),
-            ])),
-            (('--hosts',), odict([
-                ('help', 'Specific host(s) for deployment'),
-                ('metavar', 'HOST'),
-                ('nargs', '*'),
-            ])),
-            (('--apptypes',), odict([
-                ('help', 'Specific app type(s) for deployment'),
-                ('metavar', 'APPTYPE'),
-                ('nargs', '*'),
-            ])),
-            (('--all-apptypes',), odict([
-                ('help', 'Handle all app types for deployment'),
-                ('action', 'store_true'),
-            ])),
-        ])),
-    ])),
     ('invalidate', odict([
         ('help', 'Mark a given deployment as not working'),
         ('subargs', odict([
