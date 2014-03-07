@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.6
-
 import collections
 import logging
 import os
@@ -46,12 +44,10 @@ class Zookeeper(object):
         # self.zk.add_listener(self.my_listener)
         self.election = self.zk.Election('/deployrepo', hostname)
 
-
     def my_listener(self, state):
         """Manage connection to Zookeeper"""
 
         pass   # Do we need to do anything here?
-
 
     def run(self, elect_method, *args):
         """Run passed method with given arguments when election is won"""
@@ -97,7 +93,6 @@ class UpdateDeployRepoDaemon(Daemon):
 
     valid_rpms = None
 
-
     def remove_file(self, rpm):
         """ """
 
@@ -106,14 +101,13 @@ class UpdateDeployRepoDaemon(Daemon):
         except OSError as e:
             logger.error('Unable to remove file %s: %s', (rpm, e))
 
-
     def check_rpm_file(self, rpm_to_process):
         """ """
 
         rpm_info = None
-        cmd = [ 'rpm', '-qp', '--queryformat',
-                '%{arch}\n%{name}\n%{version}\n%{release}',
-                rpm_to_process ]
+        cmd = ['rpm', '-qp', '--queryformat',
+               '%{arch}\n%{name}\n%{version}\n%{release}',
+               rpm_to_process]
 
         try:
             rpm_info = run(cmd)
@@ -130,7 +124,6 @@ class UpdateDeployRepoDaemon(Daemon):
             rpm_info = rpm_info.stdout.split('\n')
 
         return rpm_info
-
 
     def prepare_rpms(self, incoming_dir, process_dir, files):
         """Move RPMs in incoming directory to the processing directory"""
@@ -188,7 +181,7 @@ class UpdateDeployRepoDaemon(Daemon):
 
         sender = 'siteops'
         sender_email = '%s@tagged.com' % sender
-        receiver_emails = [ 'eng+tds@tagged.com' ]
+        receiver_emails = ['eng+tds@tagged.com']
 
         msg = MIMEText('The RPM file "%s" is invalid, the builder of it '
                        'should check the build process' % rpm_file)
@@ -200,7 +193,6 @@ class UpdateDeployRepoDaemon(Daemon):
         s = smtplib.SMTP('localhost')
         s.sendmail(sender, receiver_emails, msg.as_string())
         s.quit()
-
 
     def update_repo(self, repo_dir, process_dir):
         """Copy RPMs in processing directory to the repository and run
@@ -248,13 +240,13 @@ class UpdateDeployRepoDaemon(Daemon):
         old_umask = os.umask(0002)
 
         try:
-            run([ 'make', '-C', repo_dir ])
+            run(['make', '-C', repo_dir])
         except subprocess.CalledProcessError as e:
             logger.error('yum database update failed, retrying: %s', e)
             time.sleep(5)   # Short delay before re-attempting
 
             try:
-                run([ 'make', '-C', repo_dir ])
+                run(['make', '-C', repo_dir])
             except subprocess.CalledProcessError as e:
                 # Yes, making the assumption none of the package finds
                 # will fail...
@@ -276,7 +268,6 @@ class UpdateDeployRepoDaemon(Daemon):
 
             self.remove_file(os.path.join(process_dir, rpm_to_process))
 
-
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
         """"""
 
@@ -292,7 +283,6 @@ class UpdateDeployRepoDaemon(Daemon):
                 logger.info('Done processing, checking for incoming files...')
 
             time.sleep(1.0)
-
 
     def main(self):
         """Read configuration file and get relevant information, then try
@@ -352,7 +342,6 @@ class UpdateDeployRepoDaemon(Daemon):
             self.process_incoming_directory(repo_dir, incoming_dir,
                                             process_dir)
 
-
     def run(self):
         """A wrapper for the main process to ensure any unhandled
            exceptions are logged before the daemon exits
@@ -367,7 +356,7 @@ class UpdateDeployRepoDaemon(Daemon):
             sys.exit(1)
 
 
-if __name__ == '__main__':
+def daemon_main():
     pid = '/var/run/update_deploy_repo.pid'
     logfile = '/var/log/update_deploy_repo.log'
 
@@ -405,3 +394,6 @@ if __name__ == '__main__':
     else:
         print 'Usage: %s {start|stop|restart}' % sys.argv[0]
         sys.exit(0)
+
+if __name__ == '__main__':
+    daemon_main()

@@ -14,10 +14,20 @@ setup_args = dict(
     author='Kenneth Lareau',
     author_email='klareau@tagged.com',
     license='MIT',
-    packages=['tds', 'tds.utils'],
-    scripts=['bin/tds',
-             'bin/unvalidated_deploy_check',
-             'bin/update_deploy_repo', ],
+    packages=[
+              'tds',
+              'tds.deploy_strategy',
+              'tds.notifications',
+              'tds.scripts',
+              'tds.utils'
+              ],
+    entry_points = {
+        'console_scripts': [
+            'tds = tds.scripts.tds_prog:main',
+            'unvalidated_deploy_check = tds.scripts.unvalidated_deploy_check:main',
+            'update_deploy_repo = tds.scripts.update_deploy_repo:daemon_main',
+        ]
+    },
 )
 
 if __name__ == '__main__':

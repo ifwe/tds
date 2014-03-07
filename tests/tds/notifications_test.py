@@ -2,57 +2,34 @@ from mock import patch, Mock
 import unittest2
 
 from tests.fixtures.config import fake_config
+from tests.fixtures.model import deployments
 
+import re
 import email
 import tds.notifications
 import tds.utils.config as tds_config
+
+APP_CONFIG = tds_config.DottedDict(fake_config['deploy'])
 
 
 class TestNotifications(unittest2.TestCase):
 
     def setUp(self):
-
-        self.not_cfg = fake_config['deploy']['notifications']
-
-        self.project_rooms = ['project_room1', 'project_room2']
-
-        self.user = 'fake_user'
-        self.project = 'fake_project'
-        self.apptypes = ['fake_apptype']
-
-        notifications_deploy = patch('tds.notifications.notifier.deploy', **{
-            'find_hipchat_rooms_for_app.return_value': self.project_rooms[:]
-        })
-
-        config = patch(
-            'tds.utils.config.TDSDeployConfig',
-            **{
-                'return_value': tds_config.DottedDict(fake_config['deploy']),
-                'return_value.load': Mock(return_value=None),
-            }
-        )
-
-        for ptch in [notifications_deploy, config]:
-            ptch.start()
-
-    def tearDown(self):
-        patch.stopall()
+        self.config = APP_CONFIG['notifications']
 
     def create_notification(self):
-        return tds.notifications.Notifications(
-            self.project,
-            self.user,
-            self.apptypes
-        )
+        return tds.notifications.Notifications(APP_CONFIG)
 
     def test_constructor(self):
         n = self.create_notification()
 
-        assert n.sender == self.user
-        assert n.enabled_methods == self.not_cfg['enabled_methods']
-        assert n.validation_time == self.not_cfg['validation_time']
+        assert n.config == self.config
+        assert n.enabled_methods == self.config['enabled_methods']
+        assert n.validation_time == self.config['validation_time']
 
-    def test_send_notifications(self):
+    @patch('tds.notifications.notifier.EmailNotifier', autospec=True)
+    @patch('tds.notifications.notifier.HipchatNotifier', autospec=True)
+    def test_send_notifications(self, *notifiers):
         n = self.create_notification()
 
         notifiers = {
@@ -61,53 +38,122 @@ class TestNotifications(unittest2.TestCase):
         }
 
         with patch.object(n, '_notifiers', notifiers):
-
-            subject, text = "fake_subj", "fake_body"
-            n.send_notifications(subject, text)
+            n.notify(deployments['deploy']['promote'])
 
             for mock in notifiers.values():
-                assert mock.return_value.send.called_with(
-                    n.sender,
-                    n.project,
-                    n.apptypes,
-                    subject,
-                    text
+                assert mock.return_value.notify.called_with(
+                    deployments['deploy']['promote']
                 )
 
+
+class TestNotifierClass(unittest2.TestCase):
+    def test_send(self):
+        n = tds.notifications.Notifier({}, {})
+        self.assertRaises(
+            NotImplementedError,
+            n.notify,
+            sender='string',
+            project='string',
+            apptypes=['list'],
+            msg_subject='string',
+            msg_text='string'
+        )
+
+    def test_message_for_deploy_promote(self):
+        n = tds.notifications.Notifier(
+            APP_CONFIG,
+            APP_CONFIG['notifications']
+        )
+        message = n.message_for_deployment(deployments['deploy']['promote'])
+        assert message['subject'] == (
+            'Promote of version badf00d of fake_project on app tier(s)'
+            ' fake_apptype in fakedev'
+        )
+        assert message['body'] == (
+            'fake_user performed a "tds deploy promote" for the following app '
+            'tier(s) in fakedev:\n'
+            '    fake_apptype'
+        )
+
+
+class TestEmailNotifier(unittest2.TestCase):
     @patch('smtplib.SMTP')
-    def test_send_email(self, SMTP):
-        n = self.create_notification()
-        n.enabled_methods = ['email']
-        n.send_notifications('fake_subj', 'fake_body')
+    def test_notify(self, SMTP):
+        e = tds.notifications.EmailNotifier(
+            APP_CONFIG,
+            APP_CONFIG['notifications']['email']
+        )
+
+        receiver = APP_CONFIG['notifications']['email']['receiver']
+
+        with patch.object(e, 'message_for_deployment') as mock_message:
+            mock_message.return_value = dict(
+                subject='fake subj',
+                body='fake body'
+            )
+
+            e.notify(deployments['deploy']['promote'])
 
         SMTP.assert_called_with('localhost')
         (sender, recvrs, content), _kw = SMTP.return_value.sendmail.call_args
-        assert sender == self.user
+        assert sender == deployments['deploy']['promote'].actor['username']
         self.assertItemsEqual(
             recvrs,
-            [self.user+'@tagged.com', self.not_cfg['email']['receiver']]
+            [deployments['deploy']['promote'].actor['username']+'@tagged.com',
+             receiver]
         )
 
+        unfold_header = lambda s: re.sub(r'\n(?:[ \t]+)', r' ', s)
+
         msg = email.message_from_string(content)
-        assert msg.get('content-type') == 'text/plain; charset="us-ascii"'
-        assert msg.get('subject') == ('[TDS] fake_subj')
-        assert msg.get('from') == (self.user+'@tagged.com')
+        username = deployments['deploy']['promote'].actor['username']
+        sender_email = username+'@tagged.com'
+        ctype = 'text/plain; charset="us-ascii"'
+        assert unfold_header(msg.get('content-type')) == ctype
+        assert unfold_header(msg.get('subject')) == '[TDS] fake subj'
+        assert unfold_header(msg.get('from')) == sender_email
         self.assertItemsEqual(
             msg.get('to').split(', '),
-            [self.user+'@tagged.com', self.not_cfg['email']['receiver']]
+            [sender_email, receiver]
         )
-        assert msg.get_payload() == 'fake_body'
+        assert msg.get_payload() == 'fake body'
 
         assert SMTP.return_value.quit.called
 
+
+class TestHipchatNotifier(unittest2.TestCase):
+    def setUp(self):
+        self.project_rooms = ['fakeroom1', 'fakeroom2']
+        notifications_deploy = patch('tds.notifications.notifier.deploy', **{
+            'find_hipchat_rooms_for_app.return_value': self.project_rooms[:]
+        })
+
+        notifications_deploy.start()
+
+    def tearDown(self):
+        patch.stopall()
+
     @patch('requests.api.request')
-    def test_send_hipchat(self, request):
-        n = self.create_notification()
-        n.enabled_methods = ['hipchat']
-        n.send_notifications('fake_subj', 'fake_body')
+    def test_notify(self, request):
+        h = tds.notifications.HipchatNotifier(
+            APP_CONFIG,
+            APP_CONFIG['notifications']['hipchat']
+        )
+
+        with patch.object(h, 'message_for_deployment') as mock_message:
+            mock_message.return_value = dict(
+                subject='fake subj',
+                body='fake body'
+            )
+
+            h.notify(deployments['deploy']['promote'])
+
+        token = APP_CONFIG['notifications']['hipchat']['token']
+        rooms = APP_CONFIG['notifications']['hipchat']['rooms']
+        rooms = rooms + self.project_rooms
 
         rooms_callargs = zip(
-            self.not_cfg['hipchat']['rooms'],
+            rooms,
             request.call_args_list
         )
 
@@ -117,24 +163,12 @@ class TestNotifications(unittest2.TestCase):
             assert kwargs == {
                 'data': None,
                 'params': {
-                    'auth_token': self.not_cfg['hipchat']['token'],
+                    'auth_token': token,
                     'room_id': room,
-                    'from': self.user,
-                    'message': ('<strong>fake_subj</strong><br />fake_body'),
+                    'from': deployments['deploy']['promote'].actor['username'],
+                    'message': (
+                        '<strong>fake subj</strong><br />fake body'
+                    ),
                 },
                 'headers': {'Content-Length': '0'}
             }
-
-
-class TestNotifierClass(unittest2.TestCase):
-    def test_send(self):
-        n = tds.notifications.Notifier({})
-        self.assertRaises(
-            NotImplementedError,
-            n.send,
-            sender='string',
-            project='string',
-            apptypes=['list'],
-            msg_subject='string',
-            msg_text='string'
-        )
