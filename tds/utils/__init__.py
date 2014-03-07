@@ -1,4 +1,5 @@
 """Common utility methods for the TDS application"""
 
-from .debug import *
-from .config import *
+from debug import debug
+
+__all__ = ['debug']

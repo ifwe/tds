@@ -10,7 +10,7 @@ from tds.exceptions import ConfigurationError
 
 
 conf_dir = '/etc/tagops'
-conf_log_params = [ 'syslog_facility', 'syslog_priority', ]
+conf_log_params = ['syslog_facility', 'syslog_priority', ]
 
 
 def verify_logging_conf_file_info():
@@ -36,7 +36,7 @@ def verify_logging_conf_file_info():
                                      'section of configuration file '
                                      '"deploy.yml"' % param)
 
-    return [ data['logging'][x] for x in conf_log_params ]
+    return [data['logging'][x] for x in conf_log_params]
 
 
 def configure_logging(verbosity, use_color, daemon=False):
@@ -72,7 +72,7 @@ def configure_logging(verbosity, use_color, daemon=False):
                         priority=log_wrap.priorities[syslog_priority])
 
     if not daemon:
-        log_wrap.add_stream(logger, 'stderr', stream=sys.stderr,  
+        log_wrap.add_stream(logger, 'stderr', stream=sys.stderr,
                             prefix=log_prefix, use_color=use_color)
 
     tds_logger = logging.getLogger('tds')
