@@ -67,6 +67,10 @@ package_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
+            (('--force',), odict([
+                ('help', 'Allow an existing package to be re-added'),
+                ('action', 'store_true'),
+            ])),
         ])),
     ])),
     ('delete', odict([
@@ -178,6 +182,10 @@ config_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
+            ])),
+            (('--force',), odict([
+                ('help', 'Do invalidation even when there are bad hosts'),
+                ('action', 'store_true'),
             ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for invalidation'),
@@ -413,6 +421,10 @@ deploy_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
+            (('--force',), odict([
+                ('help', 'Do invalidation even when there are bad hosts'),
+                ('action', 'store_true'),
+            ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for invalidation'),
                 ('metavar', 'APPTYPE'),
@@ -433,6 +445,12 @@ deploy_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
+            ])),
+            (('--force',), odict([
+                ('help',
+                 'Do deployment without need for validated deployment'
+                 ' in previous environment'),
+                ('action', 'store_true'),
             ])),
             (('--delay',), odict([
                 ('help', 'Time delay (in seconds) between each deploy'),
