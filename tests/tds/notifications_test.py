@@ -52,11 +52,7 @@ class TestNotifierClass(unittest2.TestCase):
         self.assertRaises(
             NotImplementedError,
             n.notify,
-            sender='string',
-            project='string',
-            apptypes=['list'],
-            msg_subject='string',
-            msg_text='string'
+            deployment=object()
         )
 
     def test_message_for_deploy_promote(self):
