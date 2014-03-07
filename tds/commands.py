@@ -1,21 +1,18 @@
 import errno
 import os
 import os.path
-import re
 import signal
 import socket
-import subprocess
 import sys
 import time
 
 from datetime import datetime, timedelta
 
-import json
 import progressbar
 
 from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException, PackageException, \
-                                DeployException, NotImplementedException
+    DeployException
 
 import tagopsdb.deploy.repo as repo
 import tagopsdb.deploy.package as package
@@ -24,26 +21,14 @@ import tagopsdb.deploy.deploy as deploy
 import tds.authorize
 import tds.notifications
 import tds.utils
+import tds.deploy_strategy
 
-from tds.exceptions import NoCurrentDeploymentError, NotImplementedError, \
-                           WrongEnvironmentError, WrongProjectTypeError
-
-
-def catch_exceptions(meth):
-    """Catch common database library exceptions"""
-
-    def wrapped(*args, **kwargs):
-        try:
-            val = meth(*args, **kwargs)
-        except NotImplementedException, e:
-            raise NotImplementedError(e)
-
-        return val
-
-    return wrapped
+from tds.exceptions import NoCurrentDeploymentError, \
+    WrongEnvironmentError, WrongProjectTypeError
 
 
 class Repository(object):
+
     """Commands to manage the deployment repository"""
 
     def __init__(self, logger):
@@ -51,9 +36,7 @@ class Repository(object):
 
         self.log = logger
 
-
     @tds.utils.debug
-    @catch_exceptions
     def add(self, params):
         """Add a given project to the repository"""
 
@@ -102,9 +85,7 @@ class Repository(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def delete(self, params):
         """Remove a given project from the repository"""
 
@@ -122,9 +103,7 @@ class Repository(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def list(self, params):
         """Show information for requested projects (or all projects)"""
 
@@ -147,7 +126,7 @@ class Repository(object):
             self.log.debug(5, 'Finding application types for project "%s"',
                            app.app_name)
             app_defs = repo.find_app_packages_mapping(app.app_name)
-            app_types = sorted([ x.app_type for x in app_defs ])
+            app_types = sorted([x.app_type for x in app_defs])
             self.log.info('App types: %s', ', '.join(app_types))
 
             if app.environment:
@@ -162,6 +141,7 @@ class Repository(object):
 
 
 class Package(object):
+
     """Commands to manage packages for supported applications"""
 
     def __init__(self, logger):
@@ -169,7 +149,6 @@ class Package(object):
 
         self.host = socket.gethostname()
         self.log = logger
-
 
     def processing_handler(self, signum, frame):
         """This handler is called if the file in the incoming or processing
@@ -181,13 +160,11 @@ class Package(object):
                                'processing queue was not removed.\n'
                                'Please contact SiteOps for assistance.')
 
-
     def check_package_state(self, pkg_info):
         """Check state of package in database"""
 
         return package.find_package(pkg_info['project'], pkg_info['version'],
                                     pkg_info['revision'])
-
 
     def wait_for_state_change(self, pkg_info):
         """Check for state change for package in database"""
@@ -221,7 +198,6 @@ class Package(object):
                 Session.remove()
                 time.sleep(0.5)
 
-
     def _queue_rpm(self, params, queued_rpm, rpm_name, app):
         """Move requested RPM into queue for processing"""
 
@@ -250,9 +226,7 @@ class Package(object):
         self.log.info('RPM successfully linked')
         return True
 
-
     @tds.utils.debug
-    @catch_exceptions
     def add(self, params):
         """Add a given version of a package for a given project"""
 
@@ -264,9 +238,9 @@ class Package(object):
 
         # The real 'revision' is hardcoded to 1 for now
         # This needs to be changed at some point
-        pkg_info = { 'project': params['project'],
-                     'version': params['version'],
-                     'revision': '1', }
+        pkg_info = {'project': params['project'],
+                    'version': params['version'],
+                    'revision': '1', }
 
         if self.check_package_state(pkg_info) is None:
             try:
@@ -309,9 +283,7 @@ class Package(object):
 
         signal.alarm(0)
 
-
     @tds.utils.debug
-    @catch_exceptions
     def delete(self, params):
         """Delete a given version of a package for a given project"""
 
@@ -332,9 +304,7 @@ class Package(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def list(self, params):
         """Show information for all existing packages in the software
            repository for requested projects (or all projects)
@@ -361,6 +331,7 @@ class Package(object):
 
 
 class Jenkinspackage(Package):
+
     """Temporary class to manage packages for supported applications
        via direct access to Jenkins build (artifactory)
     """
@@ -375,7 +346,7 @@ class Jenkinspackage(Package):
         from jenkinsapi.jenkins import Jenkins
         from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
-        J = Jenkins('https://ci.tagged.com/')   #TODO: use config
+        J = Jenkins('https://ci.tagged.com/')  # TODO: use config
 
         try:
             a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
@@ -397,27 +368,79 @@ class Jenkinspackage(Package):
 
 
 class BaseDeploy(object):
+
     """Common methods for the config and deploy commands"""
 
-    dep_types = { 'promote' : 'Deployment',
-                  'redeploy' : 'Redeployment',
-                  'rollback' : 'Rollback',
-                  'push' : 'Push',
-                  'repush' : 'Repush',
-                  'revert' : 'Reversion', }
-    envs = { 'dev' : 'development',
-             'stage' : 'staging',
-             'prod' : 'production', }
-    env_order = [ 'dev', 'stage', 'prod' ]
+    dep_types = {'promote': 'Deployment',
+                 'redeploy': 'Redeployment',
+                 'rollback': 'Rollback',
+                 'push': 'Push',
+                 'repush': 'Repush',
+                 'revert': 'Reversion', }
+    envs = {'dev': 'development',
+            'stage': 'staging',
+            'prod': 'production', }
+    env_order = ['dev', 'stage', 'prod']
 
     requires_tier_progression = True
+    valid_project_types = []
 
     def __init__(self, logger):
         """Basic initialization"""
 
-        self.valid_project_types = None
         self.log = logger
+        self.deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy()
 
+    @tds.utils.debug
+    def check_previous_environment(self, params, pkg_id, app_id):
+        """Ensure deployment for previous environment for given package
+           and apptier was validated; this is only relevant for staging
+           and production environments
+        """
+        if not self.requires_tier_progression:
+            self.log.debug('Previous environment not required for %(project)r'
+                           % params
+                           )
+            return True
+
+        self.log.debug('Checking for validation in previous environment')
+
+        if params['environment'] != 'dev':
+            prev_env = self.get_previous_environment(params['environment'])
+            self.log.debug(5, 'Previous environment is: %s', prev_env)
+
+            prev_deps = deploy.find_app_deployment(pkg_id, [app_id],
+                                                   self.envs[prev_env])
+            # There might be no deployment available; otherwise
+            # there should only be one deployment here
+            if not prev_deps:
+                self.log.info('Application %r with version %r never '
+                              'deployed to previous environment (%s) '
+                              'for current apptype', params['project'],
+                              params['version'], prev_env)
+                return False
+
+            prev_app_dep, prev_app_type, prev_dep_type, \
+                prev_pkg = prev_deps[0]
+            self.log.debug(5, 'Previous application deployment is: %r',
+                           prev_app_dep)
+            self.log.debug(5, 'Previous application type is: %s',
+                           prev_app_type)
+            self.log.debug(5, 'Previous deployment type is: %s',
+                           prev_dep_type)
+            self.log.debug(5, 'Previous package is: %r', prev_pkg)
+
+            if (prev_dep_type != 'deploy' or
+                    prev_app_dep.status != 'validated'):
+                self.log.info('Application %r with version %r not fully '
+                              'deployed or validated to previous environment '
+                              '(%s) for apptype %r', params['project'],
+                              params['version'], prev_env, prev_app_type)
+                return False
+
+        self.log.debug(5, 'In development environment, nothing to check')
+
+        return True
 
     @tds.utils.debug
     def check_for_current_deployment(self, params, app_id, hosts=None):
@@ -432,8 +455,9 @@ class BaseDeploy(object):
         self.log.debug(5, 'time_delta is: %s', time_delta)
 
         dep_info = deploy.find_running_deployment(app_id,
-                                       self.envs[params['environment']],
-                                       hosts=hosts)
+                                                  self.envs[
+                                                      params['environment']],
+                                                  hosts=hosts)
 
         if dep_info:
             self.log.debug('Current deployment found')
@@ -475,7 +499,7 @@ class BaseDeploy(object):
                 if dep_hosts:
                     # Allow separate hosts to get simultaneous deployments
                     if (hosts is None or
-                        not set(dep_hosts).isdisjoint(set(hosts))):
+                            not set(dep_hosts).isdisjoint(set(hosts))):
                         host_list = ', '.join(dep_hosts)
                         self.log.info('User "%s" is currently running a '
                                       'deployment for the hosts "%s" in '
@@ -486,7 +510,6 @@ class BaseDeploy(object):
         self.log.debug('No current deployment found')
         return False
 
-
     @tds.utils.debug
     def check_tier_state(self, params, pkg_id, app_dep):
         """Ensure state of tier (from given app deployment) is consistent
@@ -495,32 +518,36 @@ class BaseDeploy(object):
 
         self.log.debug('Checking state of tier')
 
-        apptype_hosts = deploy.find_hosts_for_app(app_dep.app_id,
-                                          self.envs[params['environment']])
-        apptype_hostnames = [ x.hostname for x in apptype_hosts ]
+        apptype_hosts = deploy.find_hosts_for_app(
+            app_dep.app_id,
+            self.envs[params['environment']]
+        )
+        apptype_hostnames = [x.hostname for x in apptype_hosts]
         self.log.debug(5, 'Tier hosts are: %s', ', '.join(apptype_hostnames))
 
         dep_hosts = \
             deploy.find_host_deployments_by_package_name(params['project'],
                                                          apptype_hostnames)
-        dep_hostnames = [ x.hostname for x in dep_hosts ]
+        dep_hostnames = [x.hostname for x in dep_hosts]
 
         if dep_hostnames:
             self.log.debug(5, 'Deployed hosts are: %s',
                            ', '.join(dep_hostnames))
 
         missing_deps = list(set(apptype_hostnames) - set(dep_hostnames))
-        version_diffs = [ x.hostname for x in dep_hosts
-                          if int(x.version) != params['version'] ]
+        version_diffs = [x.hostname for x in dep_hosts
+                         if int(x.version) != params['version']]
 
         if version_diffs:
             self.log.debug(5, 'Version differences on: %s',
                            ', '.join(version_diffs))
 
-        not_ok_hosts = deploy.find_host_deployments_not_ok(pkg_id,
-                              app_dep.app_id,
-                              self.envs[params['environment']])
-        not_ok_hostnames = [ x.hostname for x in not_ok_hosts ]
+        not_ok_hosts = deploy.find_host_deployments_not_ok(
+            pkg_id,
+            app_dep.app_id,
+            self.envs[params['environment']]
+        )
+        not_ok_hostnames = [x.hostname for x in not_ok_hosts]
 
         if not_ok_hostnames:
             self.log.debug(5, 'Hosts with failed deployments are: %s',
@@ -530,7 +557,6 @@ class BaseDeploy(object):
             return ('failed', missing_deps, version_diffs, not_ok_hostnames)
         else:
             return ('ok', [], [], [])
-
 
     @tds.utils.debug
     def create_notifications(self, params):
@@ -558,8 +584,8 @@ class BaseDeploy(object):
             destinations = ', '.join(params['apptypes'])
         else:
             dest_type = 'app tier(s)'
-            destinations = ', '.join([ x.app_type for x in
-                repo.find_app_packages_mapping(params['project']) ])
+            app_pkgs = repo.find_app_packages_mapping(params['project'])
+            destinations = ', '.join(x.app_type for x in app_pkgs)
 
         self.log.debug(5, 'Destination type is: %s', dest_type)
         self.log.debug(5, 'Destinations are: %s', destinations)
@@ -575,19 +601,20 @@ class BaseDeploy(object):
 
         return msg_subject, msg_text
 
-
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
         """Deploy specified package to a given host"""
 
-        self.log.debug('Deploying to host %r' % dep_host)
+        return self.deploy_strategy.deploy_to_host(
+            dep_host,
+            app,
+            version,
+            retry
+        )
 
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '4',
-                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
-                    app, version ]
-
-        return self.process_mco_command(mco_cmd, retry)
-
+    @tds.utils.debug
+    def restart_host(self, dep_host, app, retry=4):
+        return self.deploy_strategy.restart_host(dep_host, app, retry)
 
     @tds.utils.debug
     def deploy_to_hosts(self, params, dep_hosts, dep_id, redeploy=False):
@@ -602,9 +629,9 @@ class BaseDeploy(object):
         failed_hosts = []
 
         # widgets for progress bar
-        widgets = [ 'Completed: ', progressbar.Counter(),
-                    ' out of %d hosts' % total_hosts,
-                    ' (', progressbar.Timer(), ', ', progressbar.ETA(), ')' ]
+        widgets = ['Completed: ', progressbar.Counter(),
+                   ' out of %d hosts' % total_hosts,
+                   ' (', progressbar.Timer(), ', ', progressbar.ETA(), ')']
 
         if params['verbose'] is None:
             pbar = progressbar.ProgressBar(widgets=widgets,
@@ -700,7 +727,6 @@ class BaseDeploy(object):
         else:
             return True
 
-
     @tds.utils.debug
     def deploy_to_hosts_or_tiers(self, params, dep_id, app_host_map,
                                  app_dep_map, redeploy=False):
@@ -724,13 +750,13 @@ class BaseDeploy(object):
 
                 self.log.debug(5, 'Hosts being deployed to are: %s',
                                ', '.join(hosts))
-                dep_hosts = [ deploy.find_host_by_hostname(x) for x in hosts ]
+                dep_hosts = [deploy.find_host_by_hostname(x) for x in hosts]
 
                 # We want the tier status updated only if doing
                 # a rollback
                 if self.deploy_to_hosts(params, dep_hosts, dep_id,
                                         redeploy=redeploy) \
-                    and params['subcommand_name'] == 'rollback':
+                        and params['subcommand_name'] == 'rollback':
                     app_dep = app_dep_map[app_id][0]
                     app_dep.status = 'complete'
         else:
@@ -755,18 +781,26 @@ class BaseDeploy(object):
                                       app_type)
                         continue
                 else:
-                    app_dep = deploy.add_app_deployment(dep_id, app_id,
-                                             params['user'], 'inprogress',
-                                             self.envs[params['environment']])
+                    app_dep = deploy.add_app_deployment(
+                        dep_id,
+                        app_id,
+                        params['user'],
+                        'inprogress',
+                        self.envs[params['environment']]
+                    )
 
                 try:
-                    dep_hosts = deploy.find_hosts_for_app(app_id,
-                                            self.envs[params['environment']])
+                    dep_hosts = deploy.find_hosts_for_app(
+                        app_id,
+                        self.envs[params['environment']]
+                    )
                 except DeployException:
                     app_type = dep_info[1]
-                    self.log.info('No hosts available for application type '
-                                  '"%s" in %s environment' % (app_type,
-                                  self.envs[params['environment']]))
+                    self.log.info(
+                        'No hosts available for application type '
+                        '"%s" in %s environment' %
+                        (app_type, self.envs[params['environment']])
+                    )
 
                     # Set the deployment status due to no hosts
                     # being available
@@ -794,7 +828,6 @@ class BaseDeploy(object):
                               'status.cgi?style=detail&hostgroup=app.%s',
                               app_type)
 
-
     @tds.utils.debug
     def determine_invalidations(self, params, app_ids, app_dep_map):
         """Determine which application tiers need invalidations performed"""
@@ -802,9 +835,11 @@ class BaseDeploy(object):
         self.log.debug('Determining invalidations for requested application '
                        'types')
 
-        curr_deps = deploy.find_latest_deployed_version(params['project'],
-                                       self.envs[params['environment']],
-                                       apptier=True)
+        curr_deps = deploy.find_latest_deployed_version(
+            params['project'],
+            self.envs[params['environment']],
+            apptier=True
+        )
         curr_dep_versions = {}
 
         for app_type, version, revision in curr_deps:
@@ -853,7 +888,6 @@ class BaseDeploy(object):
 
         return app_dep_map
 
-
     @tds.utils.debug
     def determine_new_deployments(self, params, pkg_id, app_ids, app_host_map,
                                   app_dep_map):
@@ -887,7 +921,7 @@ class BaseDeploy(object):
                 self.log.debug(5, 'Package is: %r', pkg)
 
                 if (app_dep.status != 'invalidated' and dep_type == 'deploy'
-                    and pkg.version == params['version']):
+                        and pkg.version == params['version']):
                     self.log.info('Application %r with version "%s" '
                                   'already deployed to this environment (%s) '
                                   'for apptype %r',
@@ -910,7 +944,6 @@ class BaseDeploy(object):
 
         return (app_host_map, app_dep_map)
 
-
     @tds.utils.debug
     def determine_redeployments(self, pkg_id):
         """Determine which application tiers or hosts need redeployments"""
@@ -923,7 +956,6 @@ class BaseDeploy(object):
 
         return last_pkg_dep.id
 
-
     @tds.utils.debug
     def determine_restarts(self, pkg_id):
         """Determine which application tiers or hosts need restarts"""
@@ -935,7 +967,6 @@ class BaseDeploy(object):
         last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
 
         return last_pkg_dep.id
-
 
     @tds.utils.debug
     def determine_rollbacks(self, params, app_ids, app_host_map, app_dep_map):
@@ -957,13 +988,13 @@ class BaseDeploy(object):
             if params.get('hosts', None):
                 prev_dep_info = \
                     deploy.find_latest_validated_deployment(
-                                            params['project'], app_id,
-                                            self.envs[params['environment']])
+                        params['project'], app_id,
+                        self.envs[params['environment']])
             else:
                 prev_dep_info = \
                     deploy.find_previous_validated_deployment(
-                                            params['project'], app_id,
-                                            self.envs[params['environment']])
+                        params['project'], app_id,
+                        self.envs[params['environment']])
 
             if prev_dep_info is None:
                 self.log.info('No previous deployment to roll back to for '
@@ -989,7 +1020,6 @@ class BaseDeploy(object):
         self.log.debug(5, 'Deployment/application map is: %r', app_dep_map)
 
         return (app_pkg_map, app_host_map, app_dep_map)
-
 
     @tds.utils.debug
     def determine_validations(self, params, pkg_id, app_ids, app_dep_map):
@@ -1059,7 +1089,6 @@ class BaseDeploy(object):
 
         return app_dep_map
 
-
     @tds.utils.debug
     def ensure_explicit_destinations(self, params):
         """Make sure multiple application types are explicit"""
@@ -1073,7 +1102,6 @@ class BaseDeploy(object):
                           '"--all-apptypes"', params['project'])
             sys.exit(1)
 
-
     @tds.utils.debug
     def ensure_newer_versions(self, params):
         """Ensure version being deployed is more recent than
@@ -1084,8 +1112,11 @@ class BaseDeploy(object):
                        'currently deployed version')
 
         newer_versions = []
-        dep_versions = deploy.find_latest_deployed_version(params['project'],
-                              self.envs[params['environment']], apptier=True)
+        dep_versions = deploy.find_latest_deployed_version(
+            params['project'],
+            self.envs[params['environment']],
+            apptier=True
+        )
 
         for dep_app_type, dep_version, dep_revision in dep_versions:
             if params['apptypes'] and dep_app_type not in params['apptypes']:
@@ -1114,7 +1145,6 @@ class BaseDeploy(object):
             return False
 
         return True
-
 
     @tds.utils.debug
     def find_app_deployments(self, pkg_id, app_ids, params):
@@ -1146,7 +1176,6 @@ class BaseDeploy(object):
 
         return app_dep_map
 
-
     @tds.utils.debug
     def get_app_info(self, params, hostonly=False):
         """Verify requested package and which hosts or app tiers
@@ -1168,7 +1197,7 @@ class BaseDeploy(object):
                 sys.exit(1)
 
             host_deps = deploy.find_host_deployments_by_package_name(
-                                         params['project'], params['hosts'])
+                params['project'], params['hosts'])
 
             for host_dep, hostname, app_id, dep_version in host_deps:
                 self.log.debug(5, 'Host deployment is: %r', host_dep)
@@ -1181,7 +1210,7 @@ class BaseDeploy(object):
 
                 if (params['subcommand_name'] != 'rollback'
                     and dep_version == curr_version
-                    and host_dep.status == 'ok' and params['deployment']):
+                        and host_dep.status == 'ok' and params['deployment']):
                     self.log.info('Application %r with version %r already '
                                   'deployed to host %r', params['project'],
                                   curr_version, hostname)
@@ -1207,11 +1236,10 @@ class BaseDeploy(object):
 
         self.log.debug(5, 'Package ID is: %s', pkg_id)
         self.log.debug(5, 'Application IDs are: %s',
-                       ', '.join([ str(x) for x in app_ids ]))
+                       ', '.join([str(x) for x in app_ids]))
         self.log.debug(5, 'Host/application map is: %r', app_host_map)
 
         return (pkg_id, app_ids, app_host_map)
-
 
     @tds.utils.debug
     def get_app_types(self, params):
@@ -1220,27 +1248,27 @@ class BaseDeploy(object):
         self.log.debug('Determining the application IDs for deployment')
 
         try:
-            app_ids = [ x.id for x
-                        in repo.find_app_packages_mapping(params['project']) ]
+            app_ids = [x.id for x
+                       in repo.find_app_packages_mapping(params['project'])]
             self.log.debug(5, 'Application IDs for projects are: %s',
-                           ', '.join([ str(x) for x in app_ids ]))
+                           ', '.join([str(x) for x in app_ids]))
         except RepoException, e:
             self.log.error(e)
             sys.exit(1)
 
         if params['apptypes']:
             try:
-                app_defs = [ deploy.find_app_by_apptype(x)
-                             for x in params['apptypes'] ]
+                app_defs = [deploy.find_app_by_apptype(x)
+                            for x in params['apptypes']]
                 self.log.debug(5, 'Definitions for applications types are: '
-                               '%s', ', '.join([ repr(x) for x in app_defs ]))
+                               '%s', ', '.join([repr(x) for x in app_defs]))
             except DeployException, e:
                 self.log.error(e)
                 sys.exit(1)
 
-            new_app_ids = [ x.id for x in app_defs ]
+            new_app_ids = [x.id for x in app_defs]
             self.log.debug(5, 'Application IDs for given defintions are: %s',
-                           ', '.join([ str(x) for x in new_app_ids ]))
+                           ', '.join([str(x) for x in new_app_ids]))
 
             if set(new_app_ids).issubset(set(app_ids)):
                 app_ids = new_app_ids
@@ -1250,10 +1278,9 @@ class BaseDeploy(object):
                 sys.exit(1)
 
         self.log.debug(5, 'Final application IDs are: %s',
-                       ', '.join([ str(x) for x in app_ids ]))
+                       ', '.join([str(x) for x in app_ids]))
 
         return app_ids
-
 
     @tds.utils.debug
     def get_package_id(self, params, app_ids, hostonly=False):
@@ -1264,7 +1291,7 @@ class BaseDeploy(object):
 
         self.log.debug('Determining package ID for given project')
 
-        app_types = [ deploy.find_apptype_by_appid(x) for x in app_ids ]
+        app_types = [deploy.find_apptype_by_appid(x) for x in app_ids]
         self.log.debug(5, 'Application types are: %s', ', '.join(app_types))
 
         if 'version' in params:
@@ -1279,17 +1306,19 @@ class BaseDeploy(object):
             # (Tuple of app_type, version, revision returned
             #  with DB query)
             apptier = not hostonly
-            last_deps = deploy.find_latest_deployed_version(params['project'],
-                               self.envs[params['environment']],
-                               apptier=apptier)
+            last_deps = deploy.find_latest_deployed_version(
+                params['project'],
+                self.envs[params['environment']],
+                apptier=apptier
+            )
             self.log.debug(5, 'Latest validated deployments: %r', last_deps)
 
             if hostonly:
-                versions = [ x.version for x in last_deps
-                             if x.app_id in app_ids ]
+                versions = [x.version for x in last_deps
+                            if x.app_id in app_ids]
             else:
-                versions = [ x.version for x in last_deps
-                             if x.appType in app_types ]
+                versions = [x.version for x in last_deps
+                            if x.appType in app_types]
 
             self.log.debug(5, 'Found versions are: %s', ', '.join(versions))
 
@@ -1322,7 +1351,6 @@ class BaseDeploy(object):
 
         return pkg.id
 
-
     @tds.utils.debug
     def get_previous_environment(self, curr_env):
         """Find the previous environment to the current one"""
@@ -1339,7 +1367,6 @@ class BaseDeploy(object):
             return self.env_order[self.env_order.index(curr_env) - 1]
         except ValueError:
             raise WrongEnvironmentError('Invalid environment: %s' % curr_env)
-
 
     @tds.utils.debug
     def perform_deployments(self, params, pkg_id, app_host_map, app_dep_map):
@@ -1378,7 +1405,6 @@ class BaseDeploy(object):
         self.deploy_to_hosts_or_tiers(params, dep_id, app_host_map,
                                       app_dep_map)
 
-
     @tds.utils.debug
     def perform_invalidations(self, app_dep_map):
         """Perform all invalidations to the requested application tiers"""
@@ -1394,7 +1420,6 @@ class BaseDeploy(object):
 
             app_dep.status = 'invalidated'
 
-
     @tds.utils.debug
     def perform_redeployments(self, params, dep_id, app_host_map,
                               app_dep_map):
@@ -1408,7 +1433,6 @@ class BaseDeploy(object):
         self.deploy_to_hosts_or_tiers(params, dep_id, app_host_map,
                                       app_dep_map, redeploy=True)
 
-
     @tds.utils.debug
     def perform_restarts(self, params, dep_id, app_host_map, app_dep_map):
         """Perform all restarts to the requested application tiers or hosts"""
@@ -1416,7 +1440,6 @@ class BaseDeploy(object):
         self.log.debug('Performing restart to application tiers or hosts')
 
         self.restart_hosts_or_tiers(params, dep_id, app_host_map, app_dep_map)
-
 
     @tds.utils.debug
     def perform_rollbacks(self, params, app_pkg_map, app_host_map,
@@ -1463,13 +1486,12 @@ class BaseDeploy(object):
             if app_host_map is None:
                 single_app_host_map = None
             else:
-                single_app_host_map = { app_id : app_host_map[app_id] }
+                single_app_host_map = {app_id: app_host_map[app_id]}
 
-            single_app_dep_map = { app_id : app_dep_map[app_id] }
+            single_app_dep_map = {app_id: app_dep_map[app_id]}
 
             self.deploy_to_hosts_or_tiers(params, dep_id, single_app_host_map,
                                           single_app_dep_map)
-
 
     @tds.utils.debug
     def perform_validations(self, params, app_dep_map):
@@ -1494,77 +1516,6 @@ class BaseDeploy(object):
                            'tier')
             deploy.delete_host_deployments(params['project'], app_dep.app_id,
                                            self.envs[params['environment']])
-
-
-    @tds.utils.debug
-    def process_mco_command(self, mco_cmd, retry):
-        """Run a given MCollective 'mco' command"""
-
-        self.log.debug('Running MCollective command')
-        self.log.debug(5, 'Command is: %s' % ' '.join(mco_cmd))
-
-        proc = subprocess.Popen(mco_cmd, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-
-        if proc.returncode:
-            return (False, 'The mco process failed to run successfully, '
-                           'return code is %s' % proc.returncode)
-
-        mc_output = None
-        summary = None
-
-        # Extract the JSON output and summary line
-        for line in stdout.split('\n'):
-            if line == '':
-                continue
-
-            if line.startswith('{'):
-                mc_output = json.loads(line)
-
-            if line.startswith('Finished'):
-                summary = line.strip()
-
-        # Ensure valid response and extract information
-        if mc_output is None or summary is None:
-            return (False, 'No output or summary information returned '
-                           'from mco process')
-
-        self.log.debug(summary)
-        m = re.search(r'processing (\d+) / (\d+) ', summary)
-
-        if m is None:
-            return (False, 'Error parsing summary line.')
-
-        # Virtual hosts in dev tend to time out unpredictably, probably
-        # because vmware is slow to respond when the hosts are not
-        # active. Subsequent retries after a timeout work better.
-        if m.group(2) == '0' and retry > 0:
-            self.log.debug('Discovery failure, trying again.')
-            return self.process_mco_command(mco_cmd, retry-1)
-
-        for host, hostinfo in mc_output.iteritems():
-            if hostinfo['exitcode'] != 0:
-                return (False, hostinfo['stderr'].strip())
-            else:
-                return (True, 'Deploy successful')
-
-        return (False, 'Unknown/unparseable mcollective output: %s' %
-                stdout)
-
-
-    @tds.utils.debug
-    def restart_host(self, dep_host, app, retry=4):
-        """Restart application on a given host"""
-
-        self.log.debug('Restarting application on host %r', dep_host)
-
-        mco_cmd = [ '/usr/bin/mco', 'tds', '--discovery-timeout', '4',
-                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
-                    app, 'restart' ]
-
-        return self.process_mco_command(mco_cmd, retry)
-
 
     @tds.utils.debug
     def restart_hosts(self, params, dep_hosts, dep_id):
@@ -1602,7 +1553,6 @@ class BaseDeploy(object):
                 self.log.info('Hostname: %s', failed_host)
                 self.log.info('Reason: %s', reason)
 
-
     @tds.utils.debug
     def restart_hosts_or_tiers(self, params, dep_id, app_host_map,
                                app_dep_map):
@@ -1623,7 +1573,7 @@ class BaseDeploy(object):
 
             self.log.debug(5, 'Hostnames are: %s', ', '.join(hostnames))
 
-            dep_hosts = [ deploy.find_host_by_hostname(x) for x in hostnames ]
+            dep_hosts = [deploy.find_host_by_hostname(x) for x in hostnames]
             self.restart_hosts(params, dep_hosts, dep_id)
         else:
             self.log.debug(5, 'Restarts are for application tiers...')
@@ -1631,10 +1581,11 @@ class BaseDeploy(object):
             for app_id, dep_info in app_dep_map.iteritems():
                 self.log.debug(5, 'Application ID is: %s', app_id)
 
-                dep_hosts = deploy.find_hosts_for_app(app_id,
-                                        self.envs[params['environment']])
+                dep_hosts = deploy.find_hosts_for_app(
+                    app_id,
+                    self.envs[params['environment']]
+                )
                 self.restart_hosts(params, dep_hosts, dep_id)
-
 
     @tds.utils.debug
     def send_notifications(self, params):
@@ -1647,7 +1598,6 @@ class BaseDeploy(object):
                                                        params['user'],
                                                        params['apptypes'])
         notification.send_notifications(msg_subject, msg_text)
-
 
     @tds.utils.debug
     def show_app_deployments(self, project, app_versions, env):
@@ -1685,7 +1635,6 @@ class BaseDeploy(object):
             self.log.info('Install state: %s', app_dep.status)
             self.log.info('')
 
-
     @tds.utils.debug
     def show_host_deployments(self, project, version, revision, apptypes,
                               env):
@@ -1721,7 +1670,6 @@ class BaseDeploy(object):
                 self.log.info('Install state: %s', host_dep.status)
                 self.log.info('')
 
-
     @tds.utils.debug
     def verify_hosts(self, hosts, app_ids, environment):
         """Verify given hosts are in the correct environment and of the
@@ -1738,8 +1686,8 @@ class BaseDeploy(object):
             self.log.debug(5, 'Application ID is: %s', app_id)
 
             try:
-                hostnames = [ x.hostname for x in
-                              deploy.find_hosts_for_app(app_id, environment) ]
+                hostnames = [x.hostname for x in
+                             deploy.find_hosts_for_app(app_id, environment)]
                 self.log.debug(5, 'Hostnames for application ID are: %s',
                                ', '.join(hostnames))
 
@@ -1778,7 +1726,6 @@ class BaseDeploy(object):
 
         return app_id_hosts_mapping
 
-
     @tds.utils.debug
     def verify_package(self, params, hostonly=False):
         """Ensure requested package is valid (exists in the software
@@ -1801,10 +1748,9 @@ class BaseDeploy(object):
         else:
             self.log.debug(5, 'Verification is for application tiers...')
             self.log.debug(5, 'Applications IDs are: %s',
-                           ', '.join([ str(x) for x in app_ids ]))
+                           ', '.join([str(x) for x in app_ids]))
 
             return (pkg_id, app_ids)
-
 
     @tds.utils.debug
     def verify_project_type(self, project):
@@ -1826,9 +1772,7 @@ class BaseDeploy(object):
 
         return project_type
 
-
     @tds.utils.debug
-    @catch_exceptions
     def add_apptype(self, params):
         """Add a specific application type to the given project"""
 
@@ -1853,9 +1797,7 @@ class BaseDeploy(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def delete_apptype(self, params):
         """Delete a specific application type from the given project"""
 
@@ -1875,9 +1817,7 @@ class BaseDeploy(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def invalidate(self, params):
         """Invalidate a given version of a given project"""
 
@@ -1909,9 +1849,7 @@ class BaseDeploy(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def show(self, params):
         """Show deployment information for a given project"""
 
@@ -1923,15 +1861,17 @@ class BaseDeploy(object):
 
         if params['version'] is None:
             app_versions = deploy.find_latest_deployed_version(
-                                  params['project'],
-                                  self.envs[params['environment']],
-                                  apptypes=params['apptypes'], apptier=True)
+                params['project'],
+                self.envs[params['environment']],
+                apptypes=params['apptypes'], apptier=True)
         else:
-            app_versions = deploy.find_deployed_version(params['project'],
-                                       self.envs[params['environment']],
-                                       version=params['version'],
-                                       apptypes=params['apptypes'],
-                                       apptier=True)
+            app_versions = deploy.find_deployed_version(
+                params['project'],
+                self.envs[params['environment']],
+                version=params['version'],
+                apptypes=params['apptypes'],
+                apptier=True
+            )
 
         self.log.debug(5, 'Application versions are: %r', app_versions)
 
@@ -1942,9 +1882,7 @@ class BaseDeploy(object):
                                    params['apptypes'],
                                    self.envs[params['environment']])
 
-
     @tds.utils.debug
-    @catch_exceptions
     def validate(self, params):
         """Validate a given version of a given project"""
 
@@ -1977,30 +1915,13 @@ class BaseDeploy(object):
 
 
 class Config(BaseDeploy):
+
     """Commands to manage deployments for supported config applications"""
 
-    def __init__(self, logger):
-        """Basic initialization"""
-
-        super(Config, self).__init__(logger)
-        self.valid_project_types = [ 'tagconfig', 'kafka-config' ]
-
+    valid_project_types = ['tagconfig', 'kafka-config']
+    requires_tier_progression = False
 
     @tds.utils.debug
-    def check_previous_environment(self, params, pkg_id, app_id):
-        """Placeholder method as config projects don't check
-           the previous environment for validation (due to
-           differences in configuration information)
-        """
-
-        self.log.debug('Previous environment not required for config '
-                       'projects')
-
-        return True
-
-
-    @tds.utils.debug
-    @catch_exceptions
     def create(self, params):
         """Add a new config project to the system"""
 
@@ -2028,9 +1949,7 @@ class Config(BaseDeploy):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def delete(self, params):
         """Remove a config project from the system"""
 
@@ -2049,9 +1968,7 @@ class Config(BaseDeploy):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def push(self, params):
         """Push given version of given config project to requested application
            tiers or hosts
@@ -2066,13 +1983,13 @@ class Config(BaseDeploy):
         self.ensure_explicit_destinations(params)
 
         if not self.ensure_newer_versions(params):
-            return
+            pass
 
         pkg_id, app_ids, app_host_map = self.get_app_info(params)
 
         try:
             app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-        except NoCurrentDeploymentError, e:
+        except NoCurrentDeploymentError:
             pass
 
         app_host_map, app_dep_map = \
@@ -2084,9 +2001,7 @@ class Config(BaseDeploy):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def repush(self, params):
         """Repush given config project to requested application tiers or
            hosts
@@ -2117,9 +2032,7 @@ class Config(BaseDeploy):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def revert(self, params):
         """Revert to the previous validated deployed version of given config
            project on requested application tiers or hosts
@@ -2163,64 +2076,13 @@ class Config(BaseDeploy):
 
 
 class Deploy(BaseDeploy):
+
     """Commands to manage deployments for supported applications"""
 
-    def __init__(self, logger):
-        """Basic initialization"""
-
-        super(Deploy, self).__init__(logger)
-        self.valid_project_types = [ 'application' ]
-
+    valid_project_types = ['application']
+    requires_tier_progression = True
 
     @tds.utils.debug
-    def check_previous_environment(self, params, pkg_id, app_id):
-        """Ensure deployment for previous environment for given package
-           and apptier was validated; this is only relevant for staging
-           and production environments
-        """
-
-        self.log.debug('Checking for validation in previous environment')
-
-        if params['environment'] != 'dev':
-            prev_env = self.get_previous_environment(params['environment'])
-            self.log.debug(5, 'Previous environment is: %s', prev_env)
-
-            prev_deps = deploy.find_app_deployment(pkg_id, [ app_id ],
-                                                   self.envs[prev_env])
-            # There might be no deployment available; otherwise
-            # there should only be one deployment here
-            if not prev_deps:
-                self.log.info('Application %r with version %r never '
-                              'deployed to previous environment (%s) '
-                              'for current apptype', params['project'],
-                              params['version'], prev_env)
-                return False
-
-            prev_app_dep, prev_app_type, prev_dep_type, \
-                prev_pkg = prev_deps[0]
-            self.log.debug(5, 'Previous application deployment is: %r',
-                           prev_app_dep)
-            self.log.debug(5, 'Previous application type is: %s',
-                           prev_app_type)
-            self.log.debug(5, 'Previous deployment type is: %s',
-                           prev_dep_type)
-            self.log.debug(5, 'Previous package is: %r', prev_pkg)
-
-            if (prev_dep_type != 'deploy' or
-                prev_app_dep.status != 'validated'):
-                self.log.info('Application %r with version %r not fully '
-                              'deployed or validated to previous environment '
-                              '(%s) for apptype %r', params['project'],
-                              params['version'], prev_env, prev_app_type)
-                return False
-
-        self.log.debug(5, 'In development environment, nothing to check')
-
-        return True
-
-
-    @tds.utils.debug
-    @catch_exceptions
     def force_production(self, params):
         """Allow deployment to production of given project without the
            previous environment check
@@ -2234,9 +2096,7 @@ class Deploy(BaseDeploy):
         raise NotImplementedError('This subcommand is currently not '
                                   'implemented')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def force_staging(self, params):
         """Allow deployment to staging of given project without the
            previous environment check
@@ -2250,9 +2110,7 @@ class Deploy(BaseDeploy):
         raise NotImplementedError('This subcommand is currently not '
                                   'implemented')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def promote(self, params):
         """Deploy given version of given project to requested application
            tiers or hosts
@@ -2267,7 +2125,7 @@ class Deploy(BaseDeploy):
         self.ensure_explicit_destinations(params)
 
         if not self.ensure_newer_versions(params):
-            return
+            pass
 
         pkg_id, app_ids, app_host_map = self.get_app_info(params)
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
@@ -2280,9 +2138,7 @@ class Deploy(BaseDeploy):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def redeploy(self, params):
         """Redeploy given project to requested application tiers or hosts"""
 
@@ -2311,9 +2167,7 @@ class Deploy(BaseDeploy):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
     @tds.utils.debug
-    @catch_exceptions
     def restart(self, params):
         """Restart given project on requested application tiers or hosts"""
 
@@ -2340,9 +2194,7 @@ class Deploy(BaseDeploy):
         dep_id = self.determine_restarts(pkg_id)
         self.perform_restarts(params, dep_id, app_host_map, app_dep_map)
 
-
     @tds.utils.debug
-    @catch_exceptions
     def rollback(self, params):
         """Rollback to the previous validated deployed version of given
            project on requested application tiers or hosts

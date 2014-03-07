@@ -6,12 +6,12 @@ import tds.utils
 
 from tds.exceptions import AccessError
 
-access_levels  = [ 'disabled', 'admin', 'prod', 'stage', 'dev' ]
-access_mapping = { 'disabled' : 'root',
-                   'admin' : 'siteops',
-                   'prod' : 'prodsupportlite',
-                   'stage' : 'stagesupport',
-                   'dev' : 'engteam', }
+access_levels = ['disabled', 'admin', 'prod', 'stage', 'dev']
+access_mapping = {'disabled': 'root',
+                  'admin': 'siteops',
+                  'prod': 'prodsupportlite',
+                  'stage': 'stagesupport',
+                  'dev': 'engteam', }
 
 tds_log = logging.getLogger('tds')
 
@@ -22,7 +22,7 @@ def get_access_level():
 
     tds_log.debug('Finding user\'s access level')
 
-    user_groups = [ grp.getgrgid(group).gr_name for group in os.getgroups() ]
+    user_groups = [grp.getgrgid(group).gr_name for group in os.getgroups()]
     tds_log.debug(5, 'User\'s groups are: %s', ', '.join(user_groups))
 
     for level in access_levels:

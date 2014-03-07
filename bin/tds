@@ -1,20 +1,16 @@
 #!/usr/bin/env python
 
 import argparse
-import logging
-import os.path
 import sys
-import yaml
 
 import argcomplete
 
 import tds.cmdline
 import tds.configure_logging as conflog
-import tds.logging_wrapper as log_wrap
 import tds.version
 
 from tds.exceptions import AccessError, ConfigurationError, \
-                           NotImplementedError, WrongEnvironmentError, \
+                           WrongEnvironmentError, \
                            WrongProjectTypeError
 
 
@@ -63,7 +59,7 @@ def parse_command_line():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
     args = parse_command_line()
     tds_params = vars(args)
     tds_params['log'] = conflog.configure_logging(tds_params['verbose'],
@@ -72,9 +68,9 @@ if __name__ == '__main__':
                             sorted(tds_params.iteritems()))
 
     # Must be done *after* logging is configured
-    import tds.main
+    import tds.main as tds_main
 
-    prog = tds.main.TDS(tds_params)
+    prog = tds_main.TDS(tds_params)
 
     try:
         prog.check_exclusive_options()
@@ -82,6 +78,9 @@ if __name__ == '__main__':
         prog.initialize_db()
         prog.execute_command()
     except (AccessError, ConfigurationError, NotImplementedError,
-            WrongEnvironmentError, WrongProjectTypeError), e:
-        tds_params['log'].error(e)
+            WrongEnvironmentError, WrongProjectTypeError) as exc:
+        tds_params['log'].error(exc)
         sys.exit(1)
+
+if __name__ == '__main__':
+    main()

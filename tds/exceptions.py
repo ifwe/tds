@@ -3,6 +3,7 @@
 #
 # All rights reserved
 
+
 """Custom exceptions for TagOps deployment program"""
 
 
@@ -20,12 +21,6 @@ class ConfigurationError(Exception):
 
 class NoCurrentDeploymentError(Exception):
     """Exception for missing but needed current deployment"""
-
-    pass
-
-
-class NotImplementedError(Exception):
-    """Exception for unimplemented methods"""
 
     pass
 
