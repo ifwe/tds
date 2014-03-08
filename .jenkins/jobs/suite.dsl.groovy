@@ -43,6 +43,10 @@ def matrixRPMs = project.pythonFPMMatrixJob {
     name 'build'
     logRotator(-1, 50)
 
+    environmentVariables([
+        'FPM_EXTRAS':'--python-obey-requirements-txt',
+    ])
+
     steps {
         publishers {
             archiveArtifacts('*.rpm')
