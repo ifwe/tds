@@ -6,6 +6,16 @@ from setuptools import setup
 # Get version of project
 import tds.version
 
+with open('requirements.txt', 'r') as reqfile:
+    reqs = reqfile.read()
+
+REQUIREMENTS = []
+
+for req in filter(None, reqs.strip().splitlines()):
+    if req.startswith('git+'):
+        req = '=='.join(req.rsplit('=')[-1].rsplit('-', 1))
+    REQUIREMENTS.append(req)
+
 setup_args = dict(
     name='TDS',
     version=tds.version.__version__,
@@ -21,6 +31,7 @@ setup_args = dict(
               'tds.scripts',
               'tds.utils'
               ],
+    install_requires = REQUIREMENTS,
     entry_points = {
         'console_scripts': [
             'tds = tds.scripts.tds_prog:main',
