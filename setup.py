@@ -1,4 +1,5 @@
 from setuptools import setup
+import sys
 
 # Let's add this later
 # long_description = open('README.txt').read()
@@ -11,9 +12,14 @@ with open('requirements.txt', 'r') as reqfile:
 
 REQUIREMENTS = []
 
+PYTHON27_REQ_BLACKLIST = ['argparse', 'ordereddict']
+
 for req in filter(None, reqs.strip().splitlines()):
     if req.startswith('git+'):
         req = '=='.join(req.rsplit('=')[-1].rsplit('-', 1))
+    if sys.version_info > (2,7) or sys.version_info > (3, 2):
+        if any(req.startswith(bl) for bl in PYTHON27_REQ_BLACKLIST):
+            continue
     REQUIREMENTS.append(req)
 
 setup_args = dict(
