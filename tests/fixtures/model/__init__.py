@@ -1,3 +1,3 @@
-from .deployment import deployments
+from .deployment import DEPLOYMENTS
 
-__all__ = ['deployments']
+__all__ = ['DEPLOYMENTS']
