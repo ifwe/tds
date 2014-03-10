@@ -1,8 +1,8 @@
 from mock import patch, Mock
 import unittest2
 
-from tests.fixtures.config import fake_config
-from tests.factories.deployment import (
+from tests.factories.config import DeployConfigFactory
+from tests.factories.model.deployment import (
     DeploymentFactory,
     UnvalidatedDeploymentFactory
 )
@@ -10,9 +10,9 @@ from tests.factories.deployment import (
 import re
 import email
 import tds.notifications
-import tds.utils.config as tds_config
 
-APP_CONFIG = tds_config.DottedDict(fake_config['deploy'])
+APP_CONFIG = DeployConfigFactory()
+APP_CONFIG.load()
 
 
 class TestNotifications(unittest2.TestCase):

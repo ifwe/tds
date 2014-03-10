@@ -3,8 +3,11 @@ import unittest2
 from unittest_data_provider import data_provider
 
 import yaml
+import os.path
 import tds.utils.config as config
-from tests.fixtures.config import fake_config
+
+import tests
+import tests.factories
 
 
 class TestDottedDict(unittest2.TestCase):
@@ -29,7 +32,13 @@ class TestConfig(unittest2.TestCase):
 
 class FileConfigLoader(object):
     def load_fake_config(self, c, fixture_id):
-        m = mock.mock_open(read_data=yaml.dump(fake_config[fixture_id]))
+        fname = os.path.join(
+            tests.FIXTURES_PATH,
+            'config',
+            fixture_id + '.yml'
+        )
+
+        m = mock.mock_open(read_data=open(fname).read())
         with mock.patch('__builtin__.open', m, create=True):
             c.load(logger=None)
 
@@ -70,19 +79,29 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
 
 
 class TestYAMLConfig(unittest2.TestCase):
+    def setUp(self):
+        self.fake_config = dict(
+            string='a string',
+            number=1234,
+            nested=dict(
+                float=3.14159
+            ),
+            list=['a', 1, None]
+        )
+
     def test_parse_success(self):
         c = config.YAMLConfig('foo')
-        assert fake_config == c.parse(yaml.dump(fake_config))
+        assert self.fake_config == c.parse(yaml.dump(self.fake_config))
 
     def test_parse_invalid_yaml(self):
         c = config.YAMLConfig('foo')
-        config_data = yaml.dump(fake_config)
+        config_data = yaml.dump(self.fake_config)
         config_data += 'this is some invalid yaml\nE%&*O(O*&^%E$'
         self.assertRaises(config.ConfigurationError, c.parse, data=config_data)
 
     def test_parse_non_dict_yaml(self):
         c = config.YAMLConfig('foo')
-        config_data = yaml.dump([fake_config])
+        config_data = yaml.dump([self.fake_config])
         self.assertRaises(config.ConfigurationError, c.parse, data=config_data)
 
 
@@ -222,13 +241,17 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
 
     def test_schema_success(self):
         c = config.TDSDatabaseConfig('foo')
-        self.load_fake_config(c, 'database')
-        assert c['db.user'] == fake_config['database']['db']['user']
-        assert c['db.password'] == fake_config['database']['db']['password']
+        self.load_fake_config(c, 'dbaccess.test')
+
+        fake_config = tests.factories.config.TestDatabaseConfigFactory()
+        fake_config.load()
+
+        assert c['db.user'] == fake_config['db']['user']
+        assert c['db.password'] == fake_config['db']['password']
 
     def test_schema_failure(self):
         c = config.TDSDatabaseConfig('foo')
-        self.load_fake_config(c, 'database')
+        self.load_fake_config(c, 'dbaccess.test')
         c['db'].pop('user')
         self.assertRaises(config.ConfigurationError, c.verify, None)
 
@@ -269,7 +292,9 @@ class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
     def test_schema_success(self):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
-        assert c == fake_config['deploy']
+        fake_config = tests.factories.config.DeployConfigFactory()
+        fake_config.load()
+        assert c == fake_config
 
     def test_dotted_key_hit(self):
         c = config.TDSDeployConfig('foo')
