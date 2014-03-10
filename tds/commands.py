@@ -399,8 +399,12 @@ class BaseDeploy(object):
            and apptier was validated; this is only relevant for staging
            and production environments
         """
-        if not self.requires_tier_progression:
+        # Note: this will currently allow any user to force
+        # a deployment without previous tier requirement;
+        # the use of '--force' needs to be authorized further up
+        if not self.requires_tier_progression or params['force']:
             self.log.debug('Previous environment not required for %(project)r'
+                           ' or "--force" option in use'
                            % params
                            )
             return True
