@@ -5,6 +5,7 @@ import logging
 
 from tests.factories.utils.config import DeployConfigFactory
 
+import tagopsdb.deploy.deploy
 import tds.commands
 import tds.model
 import tds.utils.config as tds_config
@@ -55,6 +56,44 @@ class TestPromoteAndPush(unittest2.TestCase):
         patcher = patch.object(obj, key)
         ptch = patcher.start()
         ptch.return_value = return_value
+
+    def test_check_previous_environment_no_force(self):
+        self.deploy.requires_tier_progression = True
+        self.patch_method(
+            tagopsdb.deploy.deploy,
+            'find_app_deployment',
+            None
+        )
+
+        return_val = self.deploy.check_previous_environment(
+            params={'force': False,
+                    'environment': 'prod',
+                    'project': 'fake_app',
+                    'version': 'deadbeef'},
+            pkg_id='123',
+            app_id='123',
+        )
+
+        assert return_val == False
+
+    def test_check_previous_environment_force(self):
+        self.deploy.requires_tier_progression = True
+        self.patch_method(
+            tagopsdb.deploy.deploy,
+            'find_app_deployment',
+            None
+        )
+
+        return_val = self.deploy.check_previous_environment(
+            params={'force': True,
+                    'environment': 'prod',
+                    'project': 'fake_app',
+                    'version': 'deadbeef'},
+            pkg_id='123',
+            app_id='123',
+        )
+
+        assert return_val == True
 
     def test_promote_new_version(self):
         self.patch_method(self.deploy, 'send_notifications', None)
