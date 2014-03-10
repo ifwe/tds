@@ -1,0 +1,11 @@
+---
+env: {environment: fakedev}
+logging: {syslog_facility: fakelocal3, syslog_priority: fakedebug}
+notifications:
+  email: {receiver: fake@example.com}
+  enabled_methods: [email, hipchat]
+  hipchat:
+    rooms: [fakeroom]
+    token: deadbeef
+  validation_time: -1
+repo: {build_base: /fake/mnt/deploy/builds, incoming: /fake/mnt/deploy/incoming, processing: /fake/mnt/deploy/processing}
