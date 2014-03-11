@@ -1,15 +1,17 @@
 from mock import patch, Mock
 import unittest2
 
-from tests.fixtures.config import fake_config
-from tests.fixtures.model import DEPLOYMENTS
+from tests.factories.config import DeployConfigFactory
+from tests.factories.model.deployment import (
+    DeploymentFactory,
+    UnvalidatedDeploymentFactory
+)
 
 import re
 import email
 import tds.notifications
-import tds.utils.config as tds_config
 
-APP_CONFIG = tds_config.DottedDict(fake_config['deploy'])
+APP_CONFIG = DeployConfigFactory()
 
 
 class TestNotifications(unittest2.TestCase):
@@ -37,13 +39,12 @@ class TestNotifications(unittest2.TestCase):
             'hipchat': Mock(spec=tds.notifications.HipchatNotifier)
         }
 
+        deployment = DeploymentFactory()
         with patch.object(n, '_notifiers', notifiers):
-            n.notify(DEPLOYMENTS['deploy']['promote'])
+            n.notify(deployment)
 
             for mock in notifiers.values():
-                assert mock.return_value.notify.called_with(
-                    DEPLOYMENTS['deploy']['promote']
-                )
+                assert mock.return_value.notify.called_with(deployment)
 
 
 class TestNotifierClass(unittest2.TestCase):
@@ -60,7 +61,7 @@ class TestNotifierClass(unittest2.TestCase):
             APP_CONFIG,
             APP_CONFIG['notifications']
         )
-        message = n.message_for_deployment(DEPLOYMENTS['deploy']['promote'])
+        message = n.message_for_deployment(DeploymentFactory())
 
         assert isinstance(message['subject'], basestring)
         assert isinstance(message['body'], basestring)
@@ -83,7 +84,7 @@ class TestNotifierClass(unittest2.TestCase):
         )
 
         message = n.message_for_deployment(
-            DEPLOYMENTS['unvalidated']
+            UnvalidatedDeploymentFactory()
         )
         assert isinstance(message['subject'], basestring)
         assert isinstance(message['body'], basestring)
@@ -99,6 +100,7 @@ class TestEmailNotifier(unittest2.TestCase):
         )
 
         receiver = APP_CONFIG['notifications']['email']['receiver']
+        deployment = DeploymentFactory()
 
         with patch.object(e, 'message_for_deployment') as mock_message:
             mock_message.return_value = dict(
@@ -106,21 +108,21 @@ class TestEmailNotifier(unittest2.TestCase):
                 body='fake body'
             )
 
-            e.notify(DEPLOYMENTS['deploy']['promote'])
+            e.notify(deployment)
 
         SMTP.assert_called_with('localhost')
         (sender, recvrs, content), _kw = SMTP.return_value.sendmail.call_args
-        assert sender == DEPLOYMENTS['deploy']['promote'].actor['username']
+        assert sender == deployment.actor['username']
         self.assertItemsEqual(
             recvrs,
-            [DEPLOYMENTS['deploy']['promote'].actor['username']+'@tagged.com',
+            [deployment.actor['username']+'@tagged.com',
              receiver]
         )
 
         unfold_header = lambda s: re.sub(r'\n(?:[ \t]+)', r' ', s)
 
         msg = email.message_from_string(content)
-        username = DEPLOYMENTS['deploy']['promote'].actor['username']
+        username = deployment.actor['username']
         sender_email = username+'@tagged.com'
         ctype = 'text/plain; charset="us-ascii"'
         assert unfold_header(msg.get('content-type')) == ctype
@@ -154,13 +156,14 @@ class TestHipchatNotifier(unittest2.TestCase):
             APP_CONFIG['notifications']['hipchat']
         )
 
+        deployment = DeploymentFactory()
         with patch.object(h, 'message_for_deployment') as mock_message:
             mock_message.return_value = dict(
                 subject='fake subj',
                 body='fake body'
             )
 
-            h.notify(DEPLOYMENTS['deploy']['promote'])
+            h.notify(deployment)
 
         token = APP_CONFIG['notifications']['hipchat']['token']
         rooms = APP_CONFIG['notifications']['hipchat']['rooms']
@@ -179,7 +182,7 @@ class TestHipchatNotifier(unittest2.TestCase):
                 'params': {
                     'auth_token': token,
                     'room_id': room,
-                    'from': DEPLOYMENTS['deploy']['promote'].actor['username'],
+                    'from': deployment.actor['username'],
                     'message': (
                         '<strong>fake subj</strong><br />fake body'
                     ),
