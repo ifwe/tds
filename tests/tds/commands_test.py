@@ -57,7 +57,13 @@ class TestPromoteAndPush(unittest2.TestCase):
         ptch = patcher.start()
         ptch.return_value = return_value
 
-    def test_check_previous_environment_no_force(self):
+    force_promote_provider = lambda: [
+        (True,),
+        (False,),
+    ]
+
+    @data_provider(force_promote_provider)
+    def test_check_previous_environment(self, force_option_used):
         self.deploy.requires_tier_progression = True
         self.patch_method(
             tagopsdb.deploy.deploy,
@@ -66,7 +72,7 @@ class TestPromoteAndPush(unittest2.TestCase):
         )
 
         return_val = self.deploy.check_previous_environment(
-            params={'force': False,
+            params={'force': force_option_used,
                     'environment': 'prod',
                     'project': 'fake_app',
                     'version': 'deadbeef'},
@@ -74,26 +80,7 @@ class TestPromoteAndPush(unittest2.TestCase):
             app_id='123',
         )
 
-        assert return_val == False
-
-    def test_check_previous_environment_force(self):
-        self.deploy.requires_tier_progression = True
-        self.patch_method(
-            tagopsdb.deploy.deploy,
-            'find_app_deployment',
-            None
-        )
-
-        return_val = self.deploy.check_previous_environment(
-            params={'force': True,
-                    'environment': 'prod',
-                    'project': 'fake_app',
-                    'version': 'deadbeef'},
-            pkg_id='123',
-            app_id='123',
-        )
-
-        assert return_val == True
+        assert return_val == force_option_used
 
     def test_promote_new_version(self):
         self.patch_method(self.deploy, 'send_notifications', None)
