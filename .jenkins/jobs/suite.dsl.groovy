@@ -79,7 +79,7 @@ def matrixRPMs = project.pythonFPMMatrixJob {
             fi
             FPM_ITERATION="--iteration $FPM_PYPKG_ITERATION"
             set -x
-            /usr/lib/ruby/gems/1.8/bin/fpm --verbose -s dir --rpm-auto-add-directories -C ./etc --prefix /etc/init.d -n tds-update-repo -t rpm --after-install pkg/rpm/after_install.sh --before-remove pkg/rpm/before_remove.sh -d "$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION" --description 'Daemon to update repository for deployment application' $FPM_VERSION $FPM_ITERATION $FPM_EXTRAS .
+            /usr/lib/ruby/gems/1.8/bin/fpm --verbose -s dir --rpm-auto-add-directories -C ./etc --prefix /etc/init.d -n tds-update-repo -t rpm --after-install pkg/rpm/after_install.sh --before-remove pkg/rpm/before_remove.sh -d "$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_PYPKG_ITERATION" --description 'Daemon to update repository for deployment application' $FPM_VERSION $FPM_ITERATION $FPM_EXTRAS .
             '''.stripIndent().trim())
 
         publishers {
