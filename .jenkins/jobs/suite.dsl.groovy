@@ -68,16 +68,16 @@ def matrixRPMs = project.pythonFPMMatrixJob {
                 FPM_PYPKG_VERSION=`$FPM_CMD_PYTHON -c "import version; v = version.__version__; print v.split('-', 1)[0] if '-' in v else v"`
                 FPM_PYPKG_ITERATION=`$FPM_CMD_PYTHON -c "import version, string; v = version.__version__; print '0.' + v.split('-', 1)[1] if '-' in v and v.split('-', 1)[1][0] not in string.digits else '1'"`
                 FPM_VERSION="-v $FPM_PYPKG_VERSION"
-                FPM_ITERATION="--iteration $FPM_PYPKG_ITERATION"
             else
                 FPM_VERSION=""
-                FPM_ITERATION="--iteration 1"
+                FPM_PYPKG_ITERATION="1"
             fi
             if [ "$os" == "centos54" ]; then
-                FPM_ITERATION="$FPM_ITERATION.tagged.el5"
+                FPM_PYPKG_ITERATION="$FPM_PYPKG_ITERATION.tagged.el5"
             elif [ "$os" == "centos64" ]; then
-                FPM_ITERATION="$FPM_ITERATION.tagged.el6"
+                FPM_PYPKG_ITERATION="$FPM_PYPKG_ITERATION.tagged.el6"
             fi
+            FPM_ITERATION="--iteration $FPM_PYPKG_ITERATION"
             set -x
             /usr/lib/ruby/gems/1.8/bin/fpm --verbose -s dir --rpm-auto-add-directories -C ./etc --prefix /etc/init.d -n tds-update-repo -t rpm --after-install pkg/rpm/after_install.sh --before-remove pkg/rpm/before_remove.sh -d "$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION" --description 'Daemon to update repository for deployment application' $FPM_VERSION $FPM_ITERATION $FPM_EXTRAS .
             '''.stripIndent().trim())
