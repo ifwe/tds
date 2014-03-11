@@ -244,7 +244,6 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         self.load_fake_config(c, 'dbaccess.test')
 
         fake_config = tests.factories.config.TestDatabaseConfigFactory()
-        fake_config.load()
 
         assert c['db.user'] == fake_config['db']['user']
         assert c['db.password'] == fake_config['db']['password']
@@ -293,7 +292,6 @@ class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
         fake_config = tests.factories.config.DeployConfigFactory()
-        fake_config.load()
         assert c == fake_config
 
     def test_dotted_key_hit(self):

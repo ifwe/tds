@@ -1,9 +1,9 @@
-from mock import patch, Mock
+from mock import patch
 from unittest_data_provider import data_provider
 import unittest2
 import logging
 
-from tests.fixtures.config import fake_config
+from tests.factories.config import DeployConfigFactory
 
 import tds.commands
 import tds.model
@@ -15,10 +15,7 @@ class TestPromoteAndPush(unittest2.TestCase):
 
         self.app_config = patch(
             'tds.utils.config.TDSDeployConfig',
-            **{
-                'return_value': tds_config.DottedDict(fake_config['deploy']),
-                'return_value.load': Mock(return_value=None),
-            }
+            return_value=DeployConfigFactory(),
         )
 
         self.deploy = tds.commands.Deploy(

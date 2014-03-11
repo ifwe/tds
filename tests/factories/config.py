@@ -16,6 +16,8 @@ class ConfigFactory(factory.Factory):
 
     conf_dir = join(FIXTURES_PATH, 'config')
 
+    __loaded = factory.PostGenerationMethodCall('load')
+
 
 class DeployConfigFactory(ConfigFactory):
     'A factory for a config that uses deploy.yml'

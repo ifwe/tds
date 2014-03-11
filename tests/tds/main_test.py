@@ -1,35 +1,34 @@
 import contextlib
 import mock
 import unittest2
-import yaml
 from unittest_data_provider import data_provider
 
-from tests.fixtures.config import fake_config
+from tests.factories.config import (
+    DeployConfigFactory,
+    TestDatabaseConfigFactory
+)
 
 import tds.main
-import tds.utils.config as tds_config
 
 
 class TestTDS(unittest2.TestCase):
 
     def setUp(self):
-        self.config = mock.patch(
-            'tds.utils.config.TDSDeployConfig',
-            **{
-                'return_value': tds_config.DottedDict(fake_config['deploy']),
-                'return_value.load': mock.Mock(return_value=None),
-            }
-        )
-        self.dbconfig = mock.patch(
-            'tds.utils.config.TDSDatabaseConfig',
-            **{
-                'return_value': tds_config.DottedDict(fake_config['database']),
-                'return_value.load': mock.Mock(return_value=None),
-            }
-        )
+        config = DeployConfigFactory()
 
-        for x in (self.config, self.dbconfig):
-            x.start()
+        mock.patch.object(
+            tds.main.TDS,
+            '_load_config',
+            return_value=config
+        ).start()
+
+        dbconfig = TestDatabaseConfigFactory()
+
+        mock.patch.object(
+            tds.main.TDS,
+            '_load_dbconfig',
+            return_value=dbconfig
+        ).start()
 
     def tearDown(self):
         mock.patch.stopall()
@@ -65,7 +64,6 @@ class TestTDS(unittest2.TestCase):
 
     def test_update_program_parameters(self):
         t = tds.main.TDS(dict())
-        m = mock.mock_open(read_data=yaml.dump(fake_config['deploy']))
 
         with contextlib.nested(
             mock.patch(
@@ -73,13 +71,14 @@ class TestTDS(unittest2.TestCase):
                 **{'return_value.pw_name': 'fake'}
             ),
             mock.patch.object(t, 'check_user_auth'),
-            mock.patch('__builtin__.open', m, create=True),
         ):
             t.update_program_parameters()
 
+        config = DeployConfigFactory()
+
         assert t.params['user'] == 'fake'
         assert t.params['environment'] == 'fakedev'
-        assert t.params['repo'] == fake_config['deploy']['repo']
+        assert t.params['repo'] == config['repo']
 
     def test_check_user_auth_failure(self):
         t = tds.main.TDS(dict(user='someone'))
@@ -133,5 +132,6 @@ class TestTDS(unittest2.TestCase):
             t = tds.main.TDS(dict(user_level='something'))
             self.assertRaises(tds.main.AccessError, t.initialize_db)
 
+    @unittest2.skip('empty test')
     def test_execute_command(self):
         pass
