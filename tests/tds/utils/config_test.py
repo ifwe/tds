@@ -243,7 +243,7 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         c = config.TDSDatabaseConfig('foo')
         self.load_fake_config(c, 'dbaccess.test')
 
-        fake_config = tests.factories.config.TestDatabaseConfigFactory()
+        fake_config = tests.factories.config.DatabaseTestConfigFactory()
 
         assert c['db.user'] == fake_config['db']['user']
         assert c['db.password'] == fake_config['db']['password']

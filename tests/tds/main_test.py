@@ -5,7 +5,7 @@ from unittest_data_provider import data_provider
 
 from tests.factories.config import (
     DeployConfigFactory,
-    TestDatabaseConfigFactory
+    DatabaseTestConfigFactory
 )
 
 import tds.main
@@ -22,7 +22,7 @@ class TestTDS(unittest2.TestCase):
             return_value=config
         ).start()
 
-        dbconfig = TestDatabaseConfigFactory()
+        dbconfig = DatabaseTestConfigFactory()
 
         mock.patch.object(
             tds.main.TDS,

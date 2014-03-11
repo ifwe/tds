@@ -24,7 +24,7 @@ class DeployConfigFactory(ConfigFactory):
     FACTORY_FOR = tds.utils.config.TDSDeployConfig
 
 
-class TestDatabaseConfigFactory(ConfigFactory):
+class DatabaseTestConfigFactory(ConfigFactory):
     'A factory for a config that uses dbaccess.%(access_level)s.yml'
     FACTORY_FOR = tds.utils.config.TDSDatabaseConfig
 
