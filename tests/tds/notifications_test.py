@@ -12,7 +12,6 @@ import email
 import tds.notifications
 
 APP_CONFIG = DeployConfigFactory()
-APP_CONFIG.load()
 
 
 class TestNotifications(unittest2.TestCase):
