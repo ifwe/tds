@@ -8,7 +8,5 @@ ordereddict==1.1
 progressbar==2.3
 pytz==2013.9
 requests==1.2.3
-wsgiref==0.1.2
-zope.interface==4.1.0
 git+https://github.tagged.com/siteops/tagopsdb@v0.7.4#egg=TagOpsDB-Library-0.7.4
 git+https://github.tagged.com/siteops/python-simpledaemon@master#egg=simpledaemon-1.0
