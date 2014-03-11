@@ -23,12 +23,24 @@ class TDS(object):
 
         self.params = params
         self.params['deployment'] = True
-        self.config = tds.utils.config.TDSDeployConfig()
-        self.dbconfig = tds.utils.config.TDSDatabaseConfig(
+        self.config = self._load_config(params)
+        self.dbconfig = self._load_dbconfig(params)
+
+    @staticmethod
+    def _load_config(params):
+        config = tds.utils.config.TDSDeployConfig()
+        config.load()
+
+        return config
+
+    @staticmethod
+    def _load_dbconfig(params):
+        dbconfig = tds.utils.config.TDSDatabaseConfig(
             params.get('user_level')
         )
-        self.config.load()
-        self.dbconfig.load()
+        dbconfig.load()
+
+        return dbconfig
 
     @tds.utils.debug
     def check_user_auth(self):
