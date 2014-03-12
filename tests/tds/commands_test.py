@@ -11,13 +11,67 @@ import tds.model
 import tds.utils.config as tds_config
 
 
-class TestPromoteAndPush(unittest2.TestCase):
+class _Base(unittest2.TestCase):
     def setUp(self):
-
         self.app_config = patch(
             'tds.utils.config.TDSDeployConfig',
             return_value=DeployConfigFactory(),
         )
+        self.session = patch(
+            'tds.commands.Session',
+            **{'commit.return_value': None}
+        ).start()
+        self.tds_authorize = patch(
+            'tds.authorize',
+            **{'verify_access.return_value': True}
+        ).start()
+
+    def tearDown(self):
+        patch.stopall()
+
+    def patch_method(self, obj, key, return_value):
+        patcher = patch.object(obj, key)
+        ptch = patcher.start()
+        ptch.return_value = return_value
+
+    force_provider = staticmethod(lambda: [
+        (True,),
+        (False,),
+    ])
+
+
+class TestPackageAdd(_Base):
+    def setUp(self):
+        super(TestPackageAdd, self).setUp()
+
+        self.package = tds.commands.Package(
+            logging.getLogger(type(self).__name__ + ' Package')
+        )
+
+        package_methods = [
+            ('check_package_state', tds.model.PackagesModel()),
+            ('_queue_rpm', True),
+        ]
+
+        for (key, return_value) in package_methods:
+            for obj in [self.package]:
+                self.patch_method(obj, key, return_value)
+
+    @data_provider(_Base.force_provider)
+    def test_add_package(self, force_option_used):
+        self.package_module = patch(
+            'tds.commands.package',
+            **{'add_package.return_value': None}
+        )
+        self.repo_module = patch(
+            'tds.commands.repo',
+            **{'find_app_location': tds.model.PackageLocationsModel()}
+        )
+
+
+class TestPromoteAndPush(_Base):
+    def setUp(self):
+        super(TestPromoteAndPush, self).setUp()
 
         self.deploy = tds.commands.Deploy(
             logging.getLogger(type(self).__name__ + ' Deploy')
@@ -40,29 +94,7 @@ class TestPromoteAndPush(unittest2.TestCase):
             for obj in [self.deploy, self.config]:
                 self.patch_method(obj, key, return_value)
 
-        self.session = patch(
-            'tds.commands.Session',
-            **{'commit.return_value': None}
-        ).start()
-        self.tds_authorize = patch(
-            'tds.authorize',
-            **{'verify_access.return_value': True}
-        ).start()
-
-    def tearDown(self):
-        patch.stopall()
-
-    def patch_method(self, obj, key, return_value):
-        patcher = patch.object(obj, key)
-        ptch = patcher.start()
-        ptch.return_value = return_value
-
-    force_promote_provider = lambda: [
-        (True,),
-        (False,),
-    ]
-
-    @data_provider(force_promote_provider)
+    @data_provider(_Base.force_provider)
     def test_check_previous_environment(self, force_option_used):
         self.deploy.requires_tier_progression = True
         self.patch_method(
