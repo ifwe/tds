@@ -16,7 +16,7 @@ class DeploymentFactory(factory.Factory):
 
     actor = dict(
         username='fake_user',
-        automated=False
+        automated=False,
     )
 
     action = dict(
@@ -25,12 +25,12 @@ class DeploymentFactory(factory.Factory):
     )
 
     project = dict(
-        name='fake_project'
+        name='fake_project',
     )
 
     package = dict(
         name=project['name'],
-        version='badf00d'
+        version='badf00d',
     )
 
     target = dict(
@@ -49,3 +49,18 @@ class UnvalidatedDeploymentFactory(DeploymentFactory):
     has not been validated and the unvalidated_deploy_check.py script is run
     '''
     action = dict(command='unvalidated')
+
+
+class AddPackageFactory(DeploymentFactory):
+    '''
+    Package for the following command:
+
+    `tds package add fake_package badf00d`
+    by user 'fake_user'.
+    '''
+    action = dict(
+        command='package',
+        subcommand='add',
+    )
+
+    target = None
