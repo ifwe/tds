@@ -1,10 +1,12 @@
 import logging
 import os
-import smtplib
 
+import smtplib
 from email.mime.text import MIMEText
 
 import requests
+
+import graphiteudp
 
 import tds.utils
 import tagopsdb.deploy.deploy as deploy
@@ -228,3 +230,31 @@ class EmailNotifier(Notifier):
             msg.as_string()
         )
         s.quit()
+
+
+@Notifications.add('graphite')
+class GraphiteNotifier(Notifier):
+    active_events = (
+        ('config', 'push'),
+        ('config', 'repush'),
+        ('config', 'revert'),
+        ('deploy', 'promote'),
+        ('deploy', 'redeploy'),
+        ('deploy', 'rollback')
+    )
+
+    def notify(self, deployment):
+        event = (
+            deployment.action.get('command'),
+            deployment.action.get('subcommand')
+        )
+        if event not in self.active_events:
+            return
+
+        graphite = graphiteudp.GraphiteUDPClient(
+            host=self.config['host'],
+            port=self.config['port'],
+            prefix=self.config['prefix']
+        )
+
+        graphite.send(deployment.package['name'], 1)
