@@ -2057,21 +2057,7 @@ class Config(Deploy):
     @tds.utils.debug
     def delete(self, params):
         """Remove a config project from the system"""
-
-        self.log.debug('Removing given config project')
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        self.proj_type = self.verify_project_type(params['project'])
-
-        try:
-            repo.delete_app_location(params['project'])
-        except RepoException, e:
-            self.log.error(e)
-            return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
+        return Repository(self.log).delete(params)
 
     @tds.utils.debug
     def push(self, params):
