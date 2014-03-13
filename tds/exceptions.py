@@ -19,12 +19,6 @@ class ConfigurationError(Exception):
     pass
 
 
-class NoCurrentDeploymentError(Exception):
-    """Exception for missing but needed current deployment"""
-
-    pass
-
-
 class WrongEnvironmentError(Exception):
     """Exception for command attempts in incorrect environment"""
 
