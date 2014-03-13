@@ -118,6 +118,14 @@ class TestPromoteAndPush(_Base):
             'find_app_deployment',
             None
         )
+        self.session = patch(
+            'tagopsdb.database.meta.Session',
+            **{'commit.return_value': None}
+        ).start()
+        self.tds_authorize = patch(
+            'tds.authorize',
+            **{'verify_access.return_value': True}
+        ).start()
 
         return_val = self.deploy.check_previous_environment(
             params={'force': force_option_used,

@@ -1,377 +1,15 @@
-import os
-import os.path
-import signal
-import socket
-import sys
+import progressbar
 import time
-
 from datetime import datetime, timedelta
 
-import progressbar
+import tagopsdb.exceptions
+import tagopsdb.database.meta
+import tagopsdb.deploy.repo
+import tagopsdb.deploy.deploy
+import tagopsdb.deploy.package
 
-from tagopsdb.database.meta import Session
-from tagopsdb.exceptions import RepoException, PackageException, \
-    DeployException
-
-import tagopsdb.deploy.repo as repo
-import tagopsdb.deploy.package as package
-import tagopsdb.deploy.deploy as deploy
-
-import tds.model
 import tds.utils
-import tds.authorize
-import tds.utils.config
-import tds.notifications
 import tds.deploy_strategy
-
-from tds.exceptions import WrongEnvironmentError, WrongProjectTypeError
-
-
-class Repository(object):
-
-    """Commands to manage the deployment repository"""
-
-    def __init__(self, logger):
-        """Basic initialization"""
-
-        self.log = logger
-
-    @tds.utils.debug
-    def add(self, params):
-        """Add a given project to the repository"""
-
-        self.log.debug('Adding application %r to repository',
-                       params['project'])
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        try:
-            # For now, project_type is 'application'
-            params['projecttype'] = 'application'
-            project, project_new, pkg_def = \
-                repo.add_app_location(params['projecttype'],
-                                      params['buildtype'], params['pkgname'],
-                                      params['project'], params['pkgpath'],
-                                      params['arch'], params['buildhost'],
-                                      params['env_specific'])
-            self.log.debug(5, 'Application\'s Location ID is: %d',
-                           project.id)
-
-            self.log.debug('Mapping Location ID to various applications')
-            repo.add_app_packages_mapping(project, project_new, pkg_def,
-                                          params['apptypes'])
-        except RepoException, e:
-            self.log.error(e)
-            return
-
-        if params['config']:
-            # XXX: this should go away as config is not special
-            self.log.debug('Adding application %r to config project %r',
-                           params['project'], params['config'])
-
-            try:
-                config = repo.find_app_location(params['config'])
-                # Transitional code for refactoring
-                config_new = repo.find_project(params['config'])
-                config_def = package.find_package_definition(config_new.id)
-
-                self.log.debug(5, 'Config project %r\'s Location ID is: %s',
-                               params['config'], config.id)
-                repo.add_app_packages_mapping(config, config_new, config_def,
-                                              params['apptypes'])
-            except RepoException, e:
-                self.log.error(e)
-                return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def delete(self, params):
-        """Remove a given project from the repository"""
-
-        self.log.debug('Removing application %r from repository',
-                       params['project'])
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        try:
-            repo.delete_app_location(params['project'])
-        except RepoException, e:
-            self.log.error(e)
-            return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def list(self, params):
-        """Show information for requested projects (or all projects)"""
-
-        self.log.debug('Listing information for requested application(s) '
-                       'in the repository')
-
-        tds.authorize.verify_access(params['user_level'], 'dev')
-
-        apps = repo.list_app_locations(params['projects'])
-
-        for app in apps:
-            self.log.info('Project: %s', app.app_name)
-            self.log.info('Project type: %s', app.project_type)
-            self.log.info('Package type: %s', app.pkg_type)
-            self.log.info('Package name: %s', app.pkg_name)
-            self.log.info('Path: %s', app.path)
-            self.log.info('Architecture: %s', app.arch)
-            self.log.info('Build host: %s', app.build_host)
-
-            self.log.debug(5, 'Finding application types for project "%s"',
-                           app.app_name)
-            app_defs = repo.find_app_packages_mapping(app.app_name)
-            app_types = sorted([x.app_type for x in app_defs])
-            self.log.info('App types: %s', ', '.join(app_types))
-
-            if app.environment:
-                is_env = 'Yes'
-            else:
-                is_env = 'No'
-
-            self.log.info('Environment specific: %s', is_env)
-            self.log.info('')
-
-        return apps
-
-
-class Package(object):
-
-    """Commands to manage packages for supported applications"""
-
-    def __init__(self, logger):
-        """Basic initialization"""
-
-        self.host = socket.gethostname()
-        self.log = logger
-
-    def processing_handler(self, signum, frame):
-        """This handler is called if the file in the incoming or processing
-           directory is not removed in a given amount of time, meaning the
-           repository server had a failure.
-        """
-
-        raise PackageException('The file placed in the incoming or '
-                               'processing queue was not removed.\n'
-                               'Please contact SiteOps for assistance.')
-
-    def check_package_state(self, pkg_info):
-        """Check state of package in database"""
-
-        return package.find_package(pkg_info['project'], pkg_info['version'],
-                                    pkg_info['revision'])
-
-    def wait_for_state_change(self, pkg_info):
-        """Check for state change for package in database"""
-
-        # This call is just to seed previous_status
-        # for the first run of the loop
-        pkg = self.check_package_state(pkg_info)
-
-        while True:
-            previous_status = pkg.status
-            pkg = self.check_package_state(pkg_info)
-
-            if pkg.status == 'completed':
-                self.log.info('Repository successfully updated')
-                self.log.info('Added package for project "%s", version %s',
-                              pkg_info['project'], pkg_info['version'])
-                return
-            elif pkg.status == 'failed':
-                self.log.info('Failed to update repository with package '
-                              'for project "%s", version %s',
-                              pkg_info['project'], pkg_info['version'])
-                self.log.info('Please try again')
-                return
-            else:
-                if pkg.status != previous_status:
-                    self.log.debug(5, 'State of package is now: %s',
-                                   pkg.status)
-
-                # The following line should reset the transaction
-                # so the next query is re-read from the database
-                Session.remove()
-                time.sleep(0.5)
-
-    def _queue_rpm(self, params, queued_rpm, rpm_name, app):
-        """Move requested RPM into queue for processing"""
-
-        # Verify required RPM exists and create hard link into
-        # the incoming directory for the repository server to find
-        build_base = params['repo']['build_base']
-        src_rpm = os.path.join(build_base, app.path, rpm_name)
-        self.log.debug(5, 'Source RPM is: %s', src_rpm)
-
-        self.log.info('Checking for existence of file "%s"...', src_rpm)
-
-        if not os.path.isfile(src_rpm):
-            self.log.info('File "%s" is not found in "%s"',
-                          src_rpm, build_base)
-            return False
-
-        try:
-            self.log.info('Build host "%s" built RPM successfully',
-                          app.build_host)
-            self.log.info('Linking RPM into incoming directory...')
-            os.link(src_rpm, queued_rpm)
-        except Exception, e:   # Really need to narrow the exception down
-            self.log.error(e)
-            return False
-
-        self.log.info('RPM successfully linked')
-        return True
-
-    @tds.utils.debug
-    def add(self, params):
-        """Add a given version of a package for a given project"""
-
-        self.log.debug('Adding version %s of the package for project "%s" '
-                       'to software repository', params['version'],
-                       params['project'])
-
-        tds.authorize.verify_access(params['user_level'], 'dev')
-
-        # The real 'revision' is hardcoded to 1 for now
-        # This needs to be changed at some point
-        pkg_info = {'project': params['project'],
-                    'version': params['version'],
-                    'revision': '1', }
-
-        if self.check_package_state(pkg_info) is None or params['force']:
-            try:
-                package.add_package(params['project'], params['version'],
-                                    '1', params['user'])
-            except PackageException as e:
-                if params['force']:
-                    pkg = package.find_package(pkg_info['project'],
-                                               pkg_info['version'],
-                                               pkg_info['revision'])
-                    pkg.status = 'pending'
-                else:
-                    self.log.error(e)
-                    return
-
-            Session.commit()
-            self.log.debug('Committed database changes')
-
-            # Get repo information for package
-            app = repo.find_app_location(params['project'])
-
-            # Revision hardcoded for now
-            rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, params['version'],
-                                           app.arch)
-            incoming_dir = params['repo']['incoming']
-
-            pending_rpm = os.path.join(incoming_dir, rpm_name)
-            self.log.debug(5, 'Pending RPM is: %s', pending_rpm)
-
-            if not self._queue_rpm(params, pending_rpm, rpm_name, app):
-                self.log.info('Failed to copy RPM into incoming directory')
-                return
-
-        # Wait until status has been updated to 'failed' or 'completed',
-        # or timeout occurs (meaning repository side failed, check logs there)
-
-        self.log.info('Waiting for software repository server to update '
-                      'deploy repo...')
-
-        self.log.debug(5, 'Setting up signal handler')
-        signal.signal(signal.SIGALRM, self.processing_handler)
-        signal.alarm(120)
-
-        self.log.debug(5, 'Waiting for status update in database for package')
-        self.wait_for_state_change(pkg_info)
-
-        signal.alarm(0)
-
-    @tds.utils.debug
-    def delete(self, params):
-        """Delete a given version of a package for a given project"""
-
-        self.log.debug('Deleting version %s of the package for project "%s" '
-                       'from software repository', params['version'],
-                       params['project'])
-
-        tds.authorize.verify_access(params['user_level'], 'dev')
-
-        try:
-            # The real 'revision' is hardcoded to 1 for now
-            # This needs to be changed at some point
-            package.delete_package(params['project'], params['version'], '1')
-        except PackageException, e:
-            self.log.error(e)
-            return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def list(self, params):
-        """Show information for all existing packages in the software
-           repository for requested projects (or all projects)
-        """
-
-        if params['projects'] is None:
-            apps = 'ALL'
-        else:
-            apps = ', '.join(params['projects'])
-
-        self.log.debug('Listing information for all existing packages '
-                       'for projects: %s', apps)
-
-        tds.authorize.verify_access(params['user_level'], 'dev')
-
-        packages_sorted = sorted(package.list_packages(params['projects']),
-                                 key=lambda pkg: int(pkg.version))
-
-        for pkg in packages_sorted:
-            self.log.info('Project: %s', pkg.pkg_name)
-            self.log.info('Version: %s', pkg.version)
-            self.log.info('Revision: %s', pkg.revision)
-            self.log.info('')
-
-
-class Jenkinspackage(Package):
-
-    """Temporary class to manage packages for supported applications
-       via direct access to Jenkins build (artifactory)
-    """
-
-    def _queue_rpm(self, params, queued_rpm, rpm_name, app):
-        """Move requested RPM into queue for processing"""
-
-        buildnum = int(params['version'])
-        job_name = params['job_name']
-
-        # Late import to prevent hard dependency
-        from jenkinsapi.jenkins import Jenkins
-        from jenkinsapi.exceptions import JenkinsAPIException, NotFound
-
-        J = Jenkins('https://ci.tagged.com/')  # TODO: use config
-
-        try:
-            a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
-            data = a.get_data()
-        except (JenkinsAPIException, KeyError, NotFound) as e:
-            self.log.error(e)
-            return False
-
-        tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)),
-                               'tmp', rpm_name)
-
-        with open(tmpname, 'wb') as f:
-            f.write(data)
-            f.close()
-            os.link(f.name, queued_rpm)
-            os.unlink(f.name)
-
-        return True
 
 
 class Deploy(object):
@@ -408,6 +46,7 @@ class Deploy(object):
         # Note: this will currently allow any user to force
         # a deployment without previous tier requirement;
         # the use of '--force' needs to be authorized further up
+
         if not self.requires_tier_progression or params['force']:
             self.log.debug('Previous environment not required for %(project)r'
                            ' or "--force" option in use'
@@ -421,8 +60,11 @@ class Deploy(object):
             prev_env = self.get_previous_environment(params['environment'])
             self.log.debug(5, 'Previous environment is: %s', prev_env)
 
-            prev_deps = deploy.find_app_deployment(pkg_id, [app_id],
-                                                   self.envs[prev_env])
+            prev_deps = tagopsdb.deploy.deploy.find_app_deployment(
+                pkg_id,
+                [app_id],
+                self.envs[prev_env]
+            )
             # There might be no deployment available; otherwise
             # there should only be one deployment here
             if not prev_deps:
@@ -466,10 +108,11 @@ class Deploy(object):
         time_delta = timedelta(hours=1)  # Harcoded to an hour for now
         self.log.debug(5, 'time_delta is: %s', time_delta)
 
-        dep_info = deploy.find_running_deployment(app_id,
-                                                  self.envs[
-                                                      params['environment']],
-                                                  hosts=hosts)
+        dep_info = tagopsdb.deploy.deploy.find_running_deployment(
+            app_id,
+            self.envs[params['environment']],
+            hosts=hosts
+        )
 
         if dep_info:
             self.log.debug('Current deployment found')
@@ -530,7 +173,7 @@ class Deploy(object):
 
         self.log.debug('Checking state of tier')
 
-        apptype_hosts = deploy.find_hosts_for_app(
+        apptype_hosts = tagopsdb.deploy.deploy.find_hosts_for_app(
             app_dep.app_id,
             self.envs[params['environment']]
         )
@@ -538,8 +181,10 @@ class Deploy(object):
         self.log.debug(5, 'Tier hosts are: %s', ', '.join(apptype_hostnames))
 
         dep_hosts = \
-            deploy.find_host_deployments_by_package_name(params['project'],
-                                                         apptype_hostnames)
+            tagopsdb.deploy.deploy.find_host_deployments_by_package_name(
+                params['project'],
+                apptype_hostnames
+            )
         dep_hostnames = [x.hostname for x in dep_hosts]
 
         if dep_hostnames:
@@ -554,7 +199,7 @@ class Deploy(object):
             self.log.debug(5, 'Version differences on: %s',
                            ', '.join(version_diffs))
 
-        not_ok_hosts = deploy.find_host_deployments_not_ok(
+        not_ok_hosts = tagopsdb.deploy.deploy.find_host_deployments_not_ok(
             pkg_id,
             app_dep.app_id,
             self.envs[params['environment']]
@@ -607,12 +252,14 @@ class Deploy(object):
                                            maxval=total_hosts).start()
 
         for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
-            pkg = deploy.find_app_by_depid(dep_id)
+            pkg = tagopsdb.deploy.deploy.find_app_by_depid(dep_id)
             app, version = pkg.pkg_name, pkg.version
             self.log.debug(5, 'Project name and version: %s %s', app, version)
 
-            host_dep = deploy.find_host_deployment_by_depid(dep_id,
-                                                            dep_host.hostname)
+            host_dep = tagopsdb.deploy.deploy.find_host_deployment_by_depid(
+                dep_id,
+                dep_host.hostname
+            )
 
             if redeploy and host_dep and host_dep.status != 'ok':
                 self.log.debug(5, 'Host %r needs redeloyment',
@@ -626,7 +273,7 @@ class Deploy(object):
 
                     # Commit to DB immediately
                     host_dep.status = 'ok'
-                    Session.commit()
+                    tagopsdb.database.meta.Session.commit()
 
                     self.log.debug(5, 'Committed database (nested) change')
                 else:
@@ -643,11 +290,16 @@ class Deploy(object):
                 # Clear out any old deployments for this host
                 self.log.debug(5, 'Deleting any old deployments for host %r',
                                dep_host.hostname)
-                deploy.delete_host_deployment(dep_host.hostname,
-                                              params['project'])
-                host_dep = deploy.add_host_deployment(dep_id, dep_host.id,
-                                                      params['user'],
-                                                      'inprogress')
+                tagopsdb.deploy.deploy.delete_host_deployment(
+                    dep_host.hostname,
+                    params['project']
+                )
+                host_dep = tagopsdb.deploy.deploy.add_host_deployment(
+                    dep_id,
+                    dep_host.id,
+                    params['user'],
+                    'inprogress'
+                )
                 success, info = self.deploy_to_host(dep_host.hostname, app,
                                                     version)
 
@@ -657,14 +309,14 @@ class Deploy(object):
 
                     # Commit to DB immediately
                     host_dep.status = 'ok'
-                    Session.commit()
+                    tagopsdb.database.meta.Session.commit()
                 else:
                     self.log.debug(5, 'Deployment to host %r failed',
                                    dep_host.hostname)
 
                     # Commit to DB immediately
                     host_dep.status = 'failed'
-                    Session.commit()
+                    tagopsdb.database.meta.Session.commit()
 
                     failed_hosts.append((dep_host.hostname, info))
 
@@ -719,7 +371,10 @@ class Deploy(object):
 
                 self.log.debug(5, 'Hosts being deployed to are: %s',
                                ', '.join(hosts))
-                dep_hosts = [deploy.find_host_by_hostname(x) for x in hosts]
+                dep_hosts = [
+                    tagopsdb.deploy.deploy.find_host_by_hostname(x)
+                    for x in hosts
+                ]
 
                 # We want the tier status updated only if doing
                 # a rollback
@@ -750,7 +405,7 @@ class Deploy(object):
                                       app_type)
                         continue
                 else:
-                    app_dep = deploy.add_app_deployment(
+                    app_dep = tagopsdb.deploy.deploy.add_app_deployment(
                         dep_id,
                         app_id,
                         params['user'],
@@ -759,11 +414,11 @@ class Deploy(object):
                     )
 
                 try:
-                    dep_hosts = deploy.find_hosts_for_app(
+                    dep_hosts = tagopsdb.deploy.deploy.find_hosts_for_app(
                         app_id,
                         self.envs[params['environment']]
                     )
-                except DeployException:
+                except tagopsdb.exceptions.DeployException:
                     app_type = dep_info[1]
                     self.log.info(
                         'No hosts available for application type '
@@ -792,7 +447,7 @@ class Deploy(object):
                           'or the deploy health status:')
 
             for app_id in app_ids:
-                app_type = deploy.find_apptype_by_appid(app_id)
+                app_type = tagopsdb.deploy.deploy.find_apptype_by_appid(app_id)
                 self.log.info('  https://nagios.tagged.com/nagios/cgi-bin/'
                               'status.cgi?style=detail&hostgroup=app.%s',
                               app_type)
@@ -804,7 +459,7 @@ class Deploy(object):
         self.log.debug('Determining invalidations for requested application '
                        'types')
 
-        curr_deps = deploy.find_latest_deployed_version(
+        curr_deps = tagopsdb.deploy.deploy.find_latest_deployed_version(
             params['project'],
             self.envs[params['environment']],
             apptier=True
@@ -920,7 +575,7 @@ class Deploy(object):
         self.log.debug('Determining redeployments for requested application '
                        'types or hosts')
 
-        pkg_deps = deploy.find_deployment_by_pkgid(pkg_id)
+        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(pkg_id)
         last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
 
         return last_pkg_dep.id
@@ -932,7 +587,7 @@ class Deploy(object):
         self.log.debug('Determining restarts for requested application '
                        'types or hosts')
 
-        pkg_deps = deploy.find_deployment_by_pkgid(pkg_id)
+        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(pkg_id)
         last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
 
         return last_pkg_dep.id
@@ -956,12 +611,12 @@ class Deploy(object):
 
             if params.get('hosts', None):
                 prev_dep_info = \
-                    deploy.find_latest_validated_deployment(
+                    tagopsdb.deploy.deploy.find_latest_validated_deployment(
                         params['project'], app_id,
                         self.envs[params['environment']])
             else:
                 prev_dep_info = \
-                    deploy.find_previous_validated_deployment(
+                    tagopsdb.deploy.deploy.find_previous_validated_deployment(
                         params['project'], app_id,
                         self.envs[params['environment']])
 
@@ -1069,7 +724,7 @@ class Deploy(object):
             self.log.info('Application "%s" has multiple corresponding '
                           'app types, please use "--apptypes" or '
                           '"--all-apptypes"', params['project'])
-            sys.exit(1)
+            raise SystemExit(1)
 
     @tds.utils.debug
     def ensure_newer_versions(self, params):
@@ -1081,7 +736,7 @@ class Deploy(object):
                        'currently deployed version')
 
         newer_versions = []
-        dep_versions = deploy.find_latest_deployed_version(
+        dep_versions = tagopsdb.deploy.deploy.find_latest_deployed_version(
             params['project'],
             self.envs[params['environment']],
             apptier=True
@@ -1125,8 +780,11 @@ class Deploy(object):
 
         self.log.debug('Finding all relevant application deployments')
 
-        deps = deploy.find_app_deployment(pkg_id, app_ids,
-                                          self.envs[params['environment']])
+        deps = tagopsdb.deploy.deploy.find_app_deployment(
+            pkg_id,
+            app_ids,
+            self.envs[params['environment']]
+        )
 
         app_dep_map = {}
 
@@ -1163,10 +821,13 @@ class Deploy(object):
                                                            hostonly=hostonly)
             except ValueError, e:
                 self.log.error('%s for given project and hosts', e)
-                sys.exit(1)
+                raise SystemExit(1)
 
-            host_deps = deploy.find_host_deployments_by_package_name(
-                params['project'], params['hosts'])
+            host_deps = \
+                tagopsdb.deploy.deploy.find_host_deployments_by_package_name(
+                    params['project'],
+                    params['hosts']
+                )
 
             for host_dep, hostname, app_id, dep_version in host_deps:
                 self.log.debug(5, 'Host deployment is: %r', host_dep)
@@ -1199,7 +860,7 @@ class Deploy(object):
             except ValueError, e:
                 self.log.error('%s for given project and application tiers',
                                e)
-                sys.exit(1)
+                raise SystemExit(1)
 
             app_host_map = None   # No need for this for tiers
 
@@ -1217,23 +878,25 @@ class Deploy(object):
         self.log.debug('Determining the application IDs for deployment')
 
         try:
-            app_ids = [x.id for x
-                       in repo.find_app_packages_mapping(params['project'])]
+            app_packages = tagopsdb.deploy.repo.find_app_packages_mapping(
+                params['project']
+            )
+            app_ids = [x.id for x in app_packages]
             self.log.debug(5, 'Application IDs for projects are: %s',
                            ', '.join([str(x) for x in app_ids]))
-        except RepoException, e:
+        except tagopsdb.exceptions.RepoException as e:
             self.log.error(e)
-            sys.exit(1)
+            raise SystemExit(1)
 
         if params['apptypes']:
             try:
-                app_defs = [deploy.find_app_by_apptype(x)
+                app_defs = [tagopsdb.deploy.deploy.find_app_by_apptype(x)
                             for x in params['apptypes']]
                 self.log.debug(5, 'Definitions for applications types are: '
                                '%s', ', '.join([repr(x) for x in app_defs]))
-            except DeployException, e:
+            except tagopsdb.exceptions.DeployException as e:
                 self.log.error(e)
-                sys.exit(1)
+                raise SystemExit(1)
 
             new_app_ids = [x.id for x in app_defs]
             self.log.debug(5, 'Application IDs for given defintions are: %s',
@@ -1244,7 +907,7 @@ class Deploy(object):
             else:
                 self.log.info('One of the app types given is not a valid app '
                               'type for the current deployment')
-                sys.exit(1)
+                raise SystemExit(1)
 
         self.log.debug(5, 'Final application IDs are: %s',
                        ', '.join([str(x) for x in app_ids]))
@@ -1260,7 +923,7 @@ class Deploy(object):
 
         self.log.debug('Determining package ID for given project')
 
-        app_types = [deploy.find_apptype_by_appid(x) for x in app_ids]
+        app_types = map(tagopsdb.deploy.deploy.find_apptype_by_appid, app_ids)
         self.log.debug(5, 'Application types are: %s', ', '.join(app_types))
 
         if 'version' in params:
@@ -1275,7 +938,7 @@ class Deploy(object):
             # (Tuple of app_type, version, revision returned
             #  with DB query)
             apptier = not hostonly
-            last_deps = deploy.find_latest_deployed_version(
+            last_deps = tagopsdb.deploy.deploy.find_latest_deployed_version(
                 params['project'],
                 self.envs[params['environment']],
                 apptier=apptier
@@ -1295,7 +958,7 @@ class Deploy(object):
                 self.log.info('Application "%s" has no current tier/host '
                               'deployments to verify for the given apptypes/'
                               'hosts', params['project'])
-                sys.exit(1)
+                raise SystemExit(1)
 
             if not all(x == versions[0] for x in versions):
                 raise ValueError('Multiple versions not allowed')
@@ -1306,15 +969,19 @@ class Deploy(object):
 
         try:
             # Revision hardcoded to '1' for now
-            pkg = package.find_package(params['project'], version, '1')
+            pkg = tagopsdb.deploy.package.find_package(
+                params['project'],
+                version,
+                '1'
+            )
             if not pkg:
                 self.log.info('Application "%s" with version "%s" not '
                               'available in the repository.',
                               params['project'], version)
-                sys.exit(1)
-        except PackageException, e:
+                raise SystemExit(1)
+        except tagopsdb.exceptions.PackageException as e:
             self.log.error(e)
-            sys.exit(1)
+            raise SystemExit(1)
 
         self.log.debug(5, 'Package ID is: %s', pkg.id)
 
@@ -1328,14 +995,17 @@ class Deploy(object):
 
         # Done this way since negative indexes are allowed
         if curr_env == 'dev':
-            raise WrongEnvironmentError('There is no environment before '
-                                        'the current environment (%s)'
-                                        % curr_env)
+            raise tds.exceptions.WrongEnvironmentError(
+                'There is no environment before the current environment (%s)',
+                curr_env
+            )
 
         try:
             return self.env_order[self.env_order.index(curr_env) - 1]
         except ValueError:
-            raise WrongEnvironmentError('Invalid environment: %s' % curr_env)
+            raise tds.exceptions.WrongEnvironmentError(
+                'Invalid environment: %s', curr_env
+            )
 
     @tds.utils.debug
     def perform_deployments(self, params, pkg_id, app_host_map, app_dep_map):
@@ -1352,7 +1022,7 @@ class Deploy(object):
         #   3. Determine the appropriate hosts to deploy the application
         #   4. Do the deploy to the hosts
         dep_id = None
-        pkg_deps = deploy.find_deployment_by_pkgid(pkg_id)
+        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(pkg_id)
 
         if pkg_deps:
             self.log.debug(5, 'Found existing deployment')
@@ -1367,7 +1037,11 @@ class Deploy(object):
         if dep_id is None:
             self.log.debug(5, 'Creating new deployment')
 
-            pkg_dep = deploy.add_deployment(pkg_id, params['user'], 'deploy')
+            pkg_dep = tagopsdb.deploy.deploy.add_deployment(
+                pkg_id,
+                params['user'],
+                'deploy'
+            )
             dep_id = pkg_dep.id
             self.log.debug(5, 'Deployment ID is: %s', dep_id)
 
@@ -1435,8 +1109,11 @@ class Deploy(object):
             if app_host_map is None or not app_host_map.get(app_id, None):
                 self.log.debug(5, 'Creating new deployment')
 
-                pkg_dep = deploy.add_deployment(pkg_id, params['user'],
-                                                'deploy')
+                pkg_dep = tagopsdb.deploy.deploy.add_deployment(
+                    pkg_id,
+                    params['user'],
+                    'deploy'
+                )
                 dep_id = pkg_dep.id
                 self.log.debug(5, 'Deployment ID is: %s', dep_id)
             else:
@@ -1448,7 +1125,7 @@ class Deploy(object):
                 else:
                     app_dep.status = 'inprogress'
 
-                Session.commit()
+                tagopsdb.database.meta.Session.commit()
 
                 dep_id = app_dep.deployment_id
 
@@ -1477,14 +1154,17 @@ class Deploy(object):
 
             # Commit to DB immediately
             app_dep.status = 'validated'
-            Session.commit()
+            tagopsdb.database.meta.Session.commit()
 
             self.log.debug(5, 'Committed database (nested) change')
 
             self.log.debug(5, 'Clearing host deployments for application '
                            'tier')
-            deploy.delete_host_deployments(params['project'], app_dep.app_id,
-                                           self.envs[params['environment']])
+            tagopsdb.deploy.deploy.delete_host_deployments(
+                params['project'],
+                app_dep.app_id,
+                self.envs[params['environment']]
+            )
 
     @tds.utils.debug
     def restart_hosts(self, params, dep_hosts, dep_id):
@@ -1497,7 +1177,7 @@ class Deploy(object):
         for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
             self.log.debug(5, 'Hostname is: %s', dep_host.hostname)
 
-            pkg = deploy.find_app_by_depid(dep_id)
+            pkg = tagopsdb.deploy.deploy.find_app_by_depid(dep_id)
             app = pkg.pkg_name
             self.log.debug(5, 'Application is: %s', app)
 
@@ -1542,7 +1222,10 @@ class Deploy(object):
 
             self.log.debug(5, 'Hostnames are: %s', ', '.join(hostnames))
 
-            dep_hosts = [deploy.find_host_by_hostname(x) for x in hostnames]
+            dep_hosts = map(
+                tagopsdb.deploy.deploy.find_host_by_hostname,
+                hostnames
+            )
             self.restart_hosts(params, dep_hosts, dep_id)
         else:
             self.log.debug(5, 'Restarts are for application tiers...')
@@ -1550,7 +1233,7 @@ class Deploy(object):
             for app_id, dep_info in app_dep_map.iteritems():
                 self.log.debug(5, 'Application ID is: %s', app_id)
 
-                dep_hosts = deploy.find_hosts_for_app(
+                dep_hosts = tagopsdb.deploy.deploy.find_hosts_for_app(
                     app_id,
                     self.envs[params['environment']]
                 )
@@ -1609,8 +1292,13 @@ class Deploy(object):
                           project, app_type, env)
             self.log.info('==========\n')
 
-            app_dep = deploy.list_app_deployment_info(project, env, app_type,
-                                                      version, revision)
+            app_dep = tagopsdb.deploy.deploy.list_app_deployment_info(
+                project,
+                env,
+                app_type,
+                version,
+                revision
+            )
 
             dep, app_dep, pkg = app_dep
 
@@ -1635,10 +1323,13 @@ class Deploy(object):
         self.log.debug('Showing information for current deployments '
                        'for hosts')
 
-        host_deps = deploy.list_host_deployment_info(project, env,
-                                                     version=version,
-                                                     revision=revision,
-                                                     apptypes=apptypes)
+        host_deps = tagopsdb.deploy.deploy.list_host_deployment_info(
+            project,
+            env,
+            version=version,
+            revision=revision,
+            apptypes=apptypes
+        )
 
         if not host_deps:
             self.log.info('No deployments to hosts for this application '
@@ -1676,13 +1367,16 @@ class Deploy(object):
             self.log.debug(5, 'Application ID is: %s', app_id)
 
             try:
-                hostnames = [x.hostname for x in
-                             deploy.find_hosts_for_app(app_id, environment)]
+                hosts_for_app = tagopsdb.deploy.deploy.find_hosts_for_app(
+                    app_id,
+                    environment
+                )
+                hostnames = [x.hostname for x in hosts_for_app]
                 self.log.debug(5, 'Hostnames for application ID are: %s',
                                ', '.join(hostnames))
 
                 valid_hostnames[app_id] = hostnames
-            except DeployException, e:
+            except tagopsdb.exceptions.DeployException as e:
                 # Currently we should NOT fail on this; it will
                 # be caught when checking the hosts involved
                 self.log.warning(e)
@@ -1710,7 +1404,7 @@ class Deploy(object):
             self.log.info('The following hosts are in the wrong environment '
                           'or do not belong to a matching app type: %s',
                           ', '.join(bad_hosts))
-            sys.exit(1)
+            raise SystemExit(1)
 
         self.log.debug(5, 'App ID/hosts map is: %r', app_id_hosts_mapping)
 
@@ -1750,15 +1444,17 @@ class Deploy(object):
 
         try:
             # Tuple of one returned, just get the value
-            project_type = repo.find_project_type(project)[0]
+            project_type = tagopsdb.deploy.repo.find_project_type(project)[0]
             self.log.debug(5, 'Project type is: %s', project_type)
-        except RepoException, e:
+        except tagopsdb.exceptions.RepoException as e:
             self.log.error(e)
-            sys.exit(1)
+            raise SystemExit(1)
 
         if project_type not in self.valid_project_types:
-            raise WrongProjectTypeError('Project "%s" is not valid for '
-                                        'this command' % project)
+            raise tds.exceptions.WrongProjectTypeError(
+                'Project "%s" is not valid for this command',
+                project
+            )
 
         return project_type
 
@@ -1773,18 +1469,24 @@ class Deploy(object):
         self.proj_type = self.verify_project_type(params['project'])
 
         try:
-            app = repo.find_app_location(params['project'])
+            app = tagopsdb.deploy.repo.find_app_location(params['project'])
             # Transitional code for refactoring
-            project_new = repo.find_project(params['project'])
-            pkg_def = package.find_package_definition(project_new.id)
+            project_new = tagopsdb.deploy.repo.find_project(params['project'])
+            pkg_def = tagopsdb.deploy.package.find_package_definition(
+                project_new.id
+            )
 
-            repo.add_app_packages_mapping(app, project_new, pkg_def,
-                                          [params['apptype']])
-        except RepoException, e:
+            tagopsdb.deploy.repo.add_app_packages_mapping(
+                app,
+                project_new,
+                pkg_def,
+                [params['apptype']]
+            )
+        except tagopsdb.exceptions.RepoException as e:
             self.log.error(e)
             return
 
-        Session.commit()
+        tagopsdb.database.meta.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1798,13 +1500,16 @@ class Deploy(object):
         self.proj_type = self.verify_project_type(params['project'])
 
         try:
-            app = repo.find_app_location(params['project'])
-            repo.delete_app_packages_mapping(app, [params['apptype']])
-        except RepoException, e:
+            app = tagopsdb.deploy.repo.find_app_location(params['project'])
+            tagopsdb.deploy.repo.delete_app_packages_mapping(
+                app,
+                [params['apptype']]
+            )
+        except tagopsdb.exceptions.RepoException, e:
             self.log.error(e)
             return
 
-        Session.commit()
+        tagopsdb.database.meta.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1832,7 +1537,7 @@ class Deploy(object):
         self.send_notifications(params)
         self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
 
-        Session.commit()
+        tagopsdb.database.meta.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1864,7 +1569,7 @@ class Deploy(object):
                                                    app_dep_map)
         self.perform_invalidations(app_dep_map)
 
-        Session.commit()
+        tagopsdb.database.meta.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1878,12 +1583,12 @@ class Deploy(object):
         self.proj_type = self.verify_project_type(params['project'])
 
         if params['version'] is None:
-            app_versions = deploy.find_latest_deployed_version(
+            app_versions = tagopsdb.deploy.deploy.find_latest_deployed_version(
                 params['project'],
                 self.envs[params['environment']],
                 apptypes=params['apptypes'], apptier=True)
         else:
-            app_versions = deploy.find_deployed_version(
+            app_versions = tagopsdb.deploy.deploy.find_deployed_version(
                 params['project'],
                 self.envs[params['environment']],
                 version=params['version'],
@@ -1928,7 +1633,7 @@ class Deploy(object):
                                                  app_dep_map)
         self.perform_validations(params, app_dep_map)
 
-        Session.commit()
+        tagopsdb.database.meta.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1970,7 +1675,7 @@ class Deploy(object):
             # Note this is only done for tiers
             self.perform_invalidations(orig_app_dep_map)
 
-        Session.commit()
+        tagopsdb.database.meta.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -2026,59 +1731,5 @@ class Deploy(object):
         self.send_notifications(params)
         self.perform_redeployments(params, dep_id, app_host_map, app_dep_map)
 
-        Session.commit()
+        tagopsdb.database.meta.Session.commit()
         self.log.debug('Committed database changes')
-
-
-class Config(Deploy):
-
-    """Commands to manage deployments for supported config applications"""
-
-    valid_project_types = ['tagconfig', 'kafka-config']
-    requires_tier_progression = False
-
-    @tds.utils.debug
-    def create(self, params):
-        # XXX: Replace this with a call to Repository(self.log).add(params)
-        """Add a new config project to the system"""
-
-        self.log.debug('Creating new config project')
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        # Currently project type matches the project name
-        if params['project'] not in self.valid_project_types:
-            raise WrongProjectTypeError('Project "%s" is not valid for '
-                                        'this command' % params['project'])
-
-        try:
-            self.log.debug(5, 'Adding config project to repository')
-
-            # Project type matches project name
-            repo.add_app_location(params['project'], params['buildtype'],
-                                  params['pkgname'], params['project'],
-                                  params['pkgpath'], params['arch'],
-                                  params['buildhost'], params['env_specific'])
-        except RepoException, e:
-            self.log.error(e)
-            return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def delete(self, params):
-        """Remove a config project from the system"""
-        return Repository(self.log).delete(params)
-
-    @tds.utils.debug
-    def push(self, params):
-        super(Config, self).promote(params)
-
-    @tds.utils.debug
-    def repush(self, params):
-        super(Config, self).redeploy(params)
-
-    @tds.utils.debug
-    def revert(self, params):
-        super(Config, self).rollback(params)
