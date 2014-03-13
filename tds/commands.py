@@ -1935,6 +1935,33 @@ class BaseDeploy(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
+    @tds.utils.debug
+    def restart(self, params):
+        """Restart given project on requested application tiers or hosts"""
+
+        self.log.debug('Restarting application for project')
+
+        # Not a deployment
+        params['deployment'] = False
+
+        tds.authorize.verify_access(params['user_level'],
+                                    params['environment'])
+
+        self.proj_type = self.verify_project_type(params['project'])
+        self.ensure_explicit_destinations(params)
+
+        pkg_id, app_ids, app_host_map = self.get_app_info(params)
+        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+
+        if not len(filter(None, app_dep_map.itervalues())):
+            self.log.info('Nothing to restart for application %r in %s '
+                          'environment', params['project'],
+                          self.envs[params['environment']])
+            return
+
+        dep_id = self.determine_restarts(pkg_id)
+        self.perform_restarts(params, dep_id, app_host_map, app_dep_map)
+
 
 class Config(BaseDeploy):
 
@@ -2150,30 +2177,3 @@ class Deploy(BaseDeploy):
 
         Session.commit()
         self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def restart(self, params):
-        """Restart given project on requested application tiers or hosts"""
-
-        self.log.debug('Restarting application for project')
-
-        # Not a deployment
-        params['deployment'] = False
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to restart for application %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        dep_id = self.determine_restarts(pkg_id)
-        self.perform_restarts(params, dep_id, app_host_map, app_dep_map)
