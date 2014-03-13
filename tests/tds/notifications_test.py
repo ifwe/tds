@@ -1,7 +1,7 @@
 from mock import patch, Mock
 import unittest2
 
-from tests.factories.config import DeployConfigFactory
+from tests.factories.utils.config import DeployConfigFactory
 from tests.factories.model.deployment import (
     DeploymentFactory,
     UnvalidatedDeploymentFactory
