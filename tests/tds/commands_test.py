@@ -1,4 +1,4 @@
-from mock import patch
+from mock import Mock, patch
 from unittest_data_provider import data_provider
 import unittest2
 import logging
@@ -49,7 +49,6 @@ class TestPackageAdd(_Base):
         )
 
         package_methods = [
-            ('check_package_state', tds.model.PackagesModel()),
             ('_queue_rpm', True),
         ]
 
@@ -57,17 +56,31 @@ class TestPackageAdd(_Base):
             for obj in [self.package]:
                 self.patch_method(obj, key, return_value)
 
-    @data_provider(_Base.force_provider)
-    def test_add_package(self, force_option_used):
+    add_provider = lambda: [
+        (True, 'Not_None'),
+        (False, 'Not_None'),
+    ]
+
+    @data_provider(add_provider)
+    def test_add_package(self, force_option_used, pkg_state):
         self.package_module = patch(
             'tds.commands.package',
             **{'add_package.return_value': None}
         )
         self.repo_module = patch(
             'tds.commands.repo',
-            **{'find_app_location': tds.model.PackageLocationsModel()}
+            **{'find_app_location': Mock(pkg_name='fake_app', arch='noarch')}
         )
+        self.patch_method(self.package, 'check_package_state', pkg_state)
+        self.patch_method(self.package, 'wait_for_state_change', None)
 
+        self.package.add(dict(
+            project='fake_app',
+            version='deadbeef',
+            user='fake_user',
+            user_level='fake_access',
+            repo={'incoming': 'fake_path'}
+        ))
 
 class TestPromoteAndPush(_Base):
     def setUp(self):

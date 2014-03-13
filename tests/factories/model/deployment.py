@@ -51,7 +51,7 @@ class UnvalidatedDeploymentFactory(DeploymentFactory):
     action = dict(command='unvalidated')
 
 
-class AddPackageFactory(DeploymentFactory):
+class PackageAddFactory(DeploymentFactory):
     '''
     Package for the following command:
 
