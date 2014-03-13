@@ -24,8 +24,7 @@ import tds.utils.config
 import tds.notifications
 import tds.deploy_strategy
 
-from tds.exceptions import NoCurrentDeploymentError, \
-    WrongEnvironmentError, WrongProjectTypeError
+from tds.exceptions import WrongEnvironmentError, WrongProjectTypeError
 
 
 class Repository(object):
@@ -1798,6 +1797,34 @@ class BaseDeploy(object):
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
+    def promote(self, params):
+        """Deploy given version of given project to requested application
+           tiers or hosts
+        """
+
+        self.log.debug('Deploying project')
+
+        tds.authorize.verify_access(params['user_level'],
+                                    params['environment'])
+
+        self.proj_type = self.verify_project_type(params['project'])
+        self.ensure_explicit_destinations(params)
+
+        if not self.ensure_newer_versions(params):
+            pass
+
+        pkg_id, app_ids, app_host_map = self.get_app_info(params)
+        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+        app_host_map, app_dep_map = \
+            self.determine_new_deployments(params, pkg_id, app_ids,
+                                           app_host_map, app_dep_map)
+        self.send_notifications(params)
+        self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
+
+        Session.commit()
+        self.log.debug('Committed database changes')
+
+    @tds.utils.debug
     def invalidate(self, params):
         """Invalidate a given version of a given project"""
 
@@ -2048,36 +2075,7 @@ class Config(BaseDeploy):
 
     @tds.utils.debug
     def push(self, params):
-        """Push given version of given config project to requested application
-           tiers or hosts
-        """
-
-        self.log.debug('Pushing config project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        if not self.ensure_newer_versions(params):
-            pass
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-
-        try:
-            app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-        except NoCurrentDeploymentError:
-            pass
-
-        app_host_map, app_dep_map = \
-            self.determine_new_deployments(params, pkg_id, app_ids,
-                                           app_host_map, app_dep_map)
-        self.send_notifications(params)
-        self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
+        super(Config, self).promote(params)
 
     @tds.utils.debug
     def repush(self, params):
@@ -2122,31 +2120,3 @@ class Deploy(BaseDeploy):
 
         raise NotImplementedError('This subcommand is currently not '
                                   'implemented')
-
-    @tds.utils.debug
-    def promote(self, params):
-        """Deploy given version of given project to requested application
-           tiers or hosts
-        """
-
-        self.log.debug('Deploying project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        if not self.ensure_newer_versions(params):
-            pass
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-        app_host_map, app_dep_map = \
-            self.determine_new_deployments(params, pkg_id, app_ids,
-                                           app_host_map, app_dep_map)
-        self.send_notifications(params)
-        self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
