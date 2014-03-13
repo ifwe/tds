@@ -65,12 +65,13 @@ class TestPackageAdd(_Base):
     def test_add_package(self, force_option_used, pkg_state):
         self.package_module = patch(
             'tds.commands.package',
-            **{'add_package.return_value': None}
-        )
+            **{'add_package.return_value': None,
+               'find_package': Mock(status='completed')}
+        ).start()
         self.repo_module = patch(
             'tds.commands.repo',
             **{'find_app_location': Mock(pkg_name='fake_app', arch='noarch')}
-        )
+        ).start()
         self.patch_method(self.package, 'check_package_state', pkg_state)
         self.patch_method(self.package, 'wait_for_state_change', None)
 
@@ -79,8 +80,10 @@ class TestPackageAdd(_Base):
             version='deadbeef',
             user='fake_user',
             user_level='fake_access',
-            repo={'incoming': 'fake_path'}
+            repo={'incoming': 'fake_path'},
+            force=force_option_used
         ))
+
 
 class TestPromoteAndPush(_Base):
     def setUp(self):
