@@ -67,7 +67,7 @@ package_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
-            (('-f', '--force',), odict([
+            (('--force', '-f'), odict([
                 ('help', 'Allow an existing package to be re-added'),
                 ('action', 'store_true'),
             ])),
@@ -307,7 +307,7 @@ config_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
-            (('-f', '--force',), odict([
+            (('--force', '-f'), odict([
                 ('help', 'Do validation even when there are bad hosts'),
                 ('action', 'store_true'),
             ])),
@@ -378,7 +378,7 @@ deploy_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
-            (('-f', '--force',), odict([
+            (('--force', '-f'), odict([
                 ('help',
                  'Do deployment without need for validated deployment'
                  ' in previous environment'),
@@ -514,7 +514,7 @@ deploy_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
-            (('-f', '--force',), odict([
+            (('--force', '-f'), odict([
                 ('help', 'Do validation even when there are bad hosts'),
                 ('action', 'store_true'),
             ])),
