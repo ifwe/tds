@@ -1,4 +1,3 @@
-import os
 import requests
 import tagopsdb.deploy.deploy as deploy
 
@@ -14,6 +13,16 @@ class HipchatNotifier(Notifier):
         super(HipchatNotifier, self).__init__(app_config, config)
         self.token = config['token']
         self.rooms = config['rooms']
+
+    @property
+    def proxies(self):
+        proxies = {}
+        config_proxies = self.app_config.get('proxy', {})
+        for proto in ('http', 'https'):
+            if proto in config_proxies:
+                proxies[proto] = config_proxies[proto]
+
+        return proxies
 
     def notify(self, deployment):
         """Send a HipChat message for a given action"""
@@ -32,24 +41,31 @@ class HipchatNotifier(Notifier):
 
         log.debug('Sending HipChat notification(s)')
 
-        os.environ['HTTP_PROXY'] = 'http://10.15.11.132:80/'
-        os.environ['HTTPS_PROXY'] = 'http://10.15.11.132:443/'
-
         for room in self.rooms + extra_rooms:
-            payload = {
-                'auth_token': self.token,
-                'room_id': room,
-                'from': deployment.actor['username'],
-                'message': ('<strong>%(subject)s</strong><br />%(body)s'
-                            % message),
-            }
+            self.send_hipchat_message(
+                room,
+                deployment.actor['username'],
+                '<strong>%(subject)s</strong><br />%(body)s' % message
+            )
 
-            # Content-Length must be set in header due to bug in Python 2.6
-            headers = {'Content-Length': '0'}
+    def send_hipchat_message(self, room, user, message):
+        payload = {
+            'auth_token': self.token,
+            'room_id': room,
+            'from': user,
+            'message': message,
+        }
 
-            r = requests.post('https://api.hipchat.com/v1/rooms/message',
-                              params=payload, headers=headers)
+        # Content-Length must be set in header due to bug in Python 2.6
+        headers = {'Content-Length': '0'}
 
-            if r.status_code != requests.codes.ok:
-                log.error('Notification to HipChat failed, status code '
-                          'is: %r', r.status_code)
+        r = requests.post(
+            'https://api.hipchat.com/v1/rooms/message',
+            params=payload,
+            headers=headers,
+            proxies=self.proxies
+        )
+
+        if r.status_code != requests.codes.ok:
+            log.error('Notification to HipChat failed, status code '
+                      'is: %r', r.status_code)

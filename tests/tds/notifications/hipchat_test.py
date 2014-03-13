@@ -59,5 +59,6 @@ class TestHipchatNotifier(unittest2.TestCase):
                         '<strong>fake subj</strong><br />fake body'
                     ),
                 },
-                'headers': {'Content-Length': '0'}
+                'headers': {'Content-Length': '0'},
+                'proxies': h.proxies,
             }
