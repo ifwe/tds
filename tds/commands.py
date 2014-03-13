@@ -2092,31 +2092,3 @@ class Deploy(BaseDeploy):
 
     valid_project_types = ['application']
     requires_tier_progression = True
-
-    @tds.utils.debug
-    def force_production(self, params):
-        """Allow deployment to production of given project without the
-           previous environment check
-        """
-
-        self.log.debug('Deploying project to production (without environment '
-                       'check)')
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        raise NotImplementedError('This subcommand is currently not '
-                                  'implemented')
-
-    @tds.utils.debug
-    def force_staging(self, params):
-        """Allow deployment to staging of given project without the
-           previous environment check
-        """
-
-        self.log.debug('Deploying project to staging (without environment '
-                       'check)')
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        raise NotImplementedError('This subcommand is currently not '
-                                  'implemented')
