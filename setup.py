@@ -1,4 +1,6 @@
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
+
 import sys
 
 # Let's add this later
@@ -7,20 +9,40 @@ import sys
 # Get version of project
 import tds.version
 
-with open('requirements.txt', 'r') as reqfile:
-    reqs = reqfile.read()
 
-REQUIREMENTS = []
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = [self.test_suite]
+
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.test_args)
+        if errno != 0:
+            raise SystemExit("Test failures (errno=%d)", errno)
+
 
 PYTHON27_REQ_BLACKLIST = ['argparse', 'ordereddict']
 
-for req in filter(None, reqs.strip().splitlines()):
-    if req.startswith('git+'):
-        req = '=='.join(req.rsplit('=')[-1].rsplit('-', 1))
-    if sys.version_info > (2,7) or sys.version_info > (3, 2):
-        if any(req.startswith(bl) for bl in PYTHON27_REQ_BLACKLIST):
-            continue
-    REQUIREMENTS.append(req)
+
+def load_requirements(fname):
+    requirements = []
+    with open(fname, 'r') as reqfile:
+        reqs = reqfile.read()
+
+    for req in filter(None, reqs.strip().splitlines()):
+        if req.startswith('git+'):
+            req = '=='.join(req.rsplit('=')[-1].rsplit('-', 1))
+        if sys.version_info > (2, 7) or sys.version_info > (3, 2):
+            if any(req.startswith(bl) for bl in PYTHON27_REQ_BLACKLIST):
+                continue
+        requirements.append(req)
+
+    return requirements
+
+REQUIREMENTS = load_requirements('requirements.txt')
+DEV_REQUIREMENTS = load_requirements('requirements-dev.txt')
 
 setup_args = dict(
     name='TDS',
@@ -31,20 +53,23 @@ setup_args = dict(
     author_email='klareau@tagged.com',
     license='Apache License, Version 2.0',
     packages=[
-              'tds',
-              'tds.deploy_strategy',
-              'tds.notifications',
-              'tds.scripts',
-              'tds.utils'
-              ],
-    install_requires = REQUIREMENTS,
-    entry_points = {
+        'tds',
+        'tds.deploy_strategy',
+        'tds.notifications',
+        'tds.scripts',
+        'tds.utils'
+    ],
+    install_requires=REQUIREMENTS,
+    entry_points={
         'console_scripts': [
             'tds = tds.scripts.tds_prog:main',
             'unvalidated_deploy_check = tds.scripts.unvalidated_deploy_check:main',
             'update_deploy_repo = tds.scripts.update_deploy_repo:daemon_main',
         ]
     },
+    test_suite='tests',
+    tests_require=REQUIREMENTS + DEV_REQUIREMENTS,
+    cmdclass=dict(test=PyTest)
 )
 
 if __name__ == '__main__':
