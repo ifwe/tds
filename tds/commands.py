@@ -1962,6 +1962,35 @@ class BaseDeploy(object):
         dep_id = self.determine_restarts(pkg_id)
         self.perform_restarts(params, dep_id, app_host_map, app_dep_map)
 
+    @tds.utils.debug
+    def redeploy(self, params):
+        """Redeploy given project to requested application tiers or hosts"""
+
+        self.log.debug('Redeploying project')
+
+        tds.authorize.verify_access(params['user_level'],
+                                    params['environment'])
+
+        self.proj_type = self.verify_project_type(params['project'])
+        self.ensure_explicit_destinations(params)
+
+        pkg_id, app_ids, app_host_map = self.get_app_info(params,
+                                                          hostonly=True)
+        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+
+        if not len(filter(None, app_dep_map.itervalues())):
+            self.log.info('Nothing to redeploy for application %r in %s '
+                          'environment', params['project'],
+                          self.envs[params['environment']])
+            return
+
+        dep_id = self.determine_redeployments(pkg_id)
+        self.send_notifications(params)
+        self.perform_redeployments(params, dep_id, app_host_map, app_dep_map)
+
+        Session.commit()
+        self.log.debug('Committed database changes')
+
 
 class Config(BaseDeploy):
 
@@ -2052,34 +2081,7 @@ class Config(BaseDeploy):
 
     @tds.utils.debug
     def repush(self, params):
-        """Repush given config project to requested application tiers or
-           hosts
-        """
-
-        self.log.debug('Repushing config project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params,
-                                                          hostonly=True)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to repush for configuration %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        dep_id = self.determine_redeployments(pkg_id)
-        self.send_notifications(params)
-        self.perform_redeployments(params, dep_id, app_host_map, app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
+        super(Config, self).redeploy(params)
 
     @tds.utils.debug
     def revert(self, params):
@@ -2145,35 +2147,6 @@ class Deploy(BaseDeploy):
                                            app_host_map, app_dep_map)
         self.send_notifications(params)
         self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def redeploy(self, params):
-        """Redeploy given project to requested application tiers or hosts"""
-
-        self.log.debug('Redeploying project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params,
-                                                          hostonly=True)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to redeploy for application %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        dep_id = self.determine_redeployments(pkg_id)
-        self.send_notifications(params)
-        self.perform_redeployments(params, dep_id, app_host_map, app_dep_map)
 
         Session.commit()
         self.log.debug('Committed database changes')
