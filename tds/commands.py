@@ -1893,6 +1893,48 @@ class BaseDeploy(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
+    @tds.utils.debug
+    def rollback(self, params):
+        """Rollback to the previous validated deployed version of given
+           project on requested application tiers or hosts
+        """
+
+        self.log.debug('Rolling back project')
+
+        tds.authorize.verify_access(params['user_level'],
+                                    params['environment'])
+
+        self.proj_type = self.verify_project_type(params['project'])
+        self.ensure_explicit_destinations(params)
+
+        pkg_id, app_ids, app_host_map = self.get_app_info(params)
+        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+
+        if not len(filter(None, app_dep_map.itervalues())):
+            self.log.info('Nothing to roll back for application %r in %s '
+                          'environment', params['project'],
+                          self.envs[params['environment']])
+            return
+
+        # Save verison of application/deployment map for invalidation
+        # at the end of the run
+        self.log.debug(5, 'Saving current application/deployment map')
+        orig_app_dep_map = app_dep_map
+
+        app_pkg_map, app_host_map, app_dep_map = \
+            self.determine_rollbacks(params, app_ids, app_host_map,
+                                     app_dep_map)
+        self.send_notifications(params)
+        self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
+
+        if not params.get('hosts', None):
+            # Now perform invalidations, commit immediately follows
+            # Note this is only done for tiers
+            self.perform_invalidations(orig_app_dep_map)
+
+        Session.commit()
+        self.log.debug('Committed database changes')
+
 
 class Config(BaseDeploy):
 
@@ -2014,45 +2056,7 @@ class Config(BaseDeploy):
 
     @tds.utils.debug
     def revert(self, params):
-        """Revert to the previous validated deployed version of given config
-           project on requested application tiers or hosts
-        """
-
-        self.log.debug('Reverting config project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to revert for configuration %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        # Save verison of application/deployment map for invalidation
-        # at the end of the run
-        self.log.debug(5, 'Saving current application/deployment map')
-        orig_app_dep_map = app_dep_map
-
-        app_pkg_map, app_host_map, app_dep_map = \
-            self.determine_rollbacks(params, app_ids, app_host_map,
-                                     app_dep_map)
-        self.send_notifications(params)
-        self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
-
-        if not params.get('hosts', None):
-            # Now perform invalidations, commit immediately follows
-            # Note this is only done for tiers
-            self.perform_invalidations(orig_app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
+        super(Config, self).rollback(params)
 
 
 class Deploy(BaseDeploy):
@@ -2173,45 +2177,3 @@ class Deploy(BaseDeploy):
 
         dep_id = self.determine_restarts(pkg_id)
         self.perform_restarts(params, dep_id, app_host_map, app_dep_map)
-
-    @tds.utils.debug
-    def rollback(self, params):
-        """Rollback to the previous validated deployed version of given
-           project on requested application tiers or hosts
-        """
-
-        self.log.debug('Rolling back project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to roll back for application %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        # Save verison of application/deployment map for invalidation
-        # at the end of the run
-        self.log.debug(5, 'Saving current application/deployment map')
-        orig_app_dep_map = app_dep_map
-
-        app_pkg_map, app_host_map, app_dep_map = \
-            self.determine_rollbacks(params, app_ids, app_host_map,
-                                     app_dep_map)
-        self.send_notifications(params)
-        self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
-
-        if not params.get('hosts', None):
-            # Now perform invalidations, commit immediately follows
-            # Note this is only done for tiers
-            self.perform_invalidations(orig_app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
