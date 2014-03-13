@@ -367,9 +367,9 @@ class Jenkinspackage(Package):
         return True
 
 
-class BaseDeploy(object):
+class Deploy(object):
 
-    """Common methods for the config and deploy commands"""
+    """Commands to manage deployments for supported applications"""
 
     dep_types = {'promote': 'Deployment',
                  'redeploy': 'Redeployment',
@@ -383,7 +383,7 @@ class BaseDeploy(object):
     env_order = ['dev', 'stage', 'prod']
 
     requires_tier_progression = True
-    valid_project_types = []
+    valid_project_types = ['application']
 
     def __init__(self, logger):
         """Basic initialization"""
@@ -2019,7 +2019,7 @@ class BaseDeploy(object):
         self.log.debug('Committed database changes')
 
 
-class Config(BaseDeploy):
+class Config(Deploy):
 
     """Commands to manage deployments for supported config applications"""
 
@@ -2084,11 +2084,3 @@ class Config(BaseDeploy):
     @tds.utils.debug
     def revert(self, params):
         super(Config, self).rollback(params)
-
-
-class Deploy(BaseDeploy):
-
-    """Commands to manage deployments for supported applications"""
-
-    valid_project_types = ['application']
-    requires_tier_progression = True
