@@ -243,13 +243,19 @@ class Package(object):
                     'version': params['version'],
                     'revision': '1', }
 
-        if self.check_package_state(pkg_info) is None:
+        if self.check_package_state(pkg_info) is None or params['force']:
             try:
-                package.add_package(params['project'], params['version'], '1',
-                                    params['user'])
-            except PackageException, e:
-                self.log.error(e)
-                return
+                package.add_package(params['project'], params['version'],
+                                    '1', params['user'])
+            except PackageException as e:
+                if params['force']:
+                    pkg = package.find_package(pkg_info['project'],
+                                               pkg_info['version'],
+                                               pkg_info['revision'])
+                    pkg.status = 'pending'
+                else:
+                    self.log.error(e)
+                    return
 
             Session.commit()
             self.log.debug('Committed database changes')
