@@ -7,5 +7,9 @@ notifications:
   hipchat:
     rooms: [fakeroom]
     token: deadbeef
+  graphite:
+    host: graphite.example.com
+    port: 9999
+    prefix: 'tagged.deploy'
   validation_time: -1
 repo: {build_base: /fake/mnt/deploy/builds, incoming: /fake/mnt/deploy/incoming, processing: /fake/mnt/deploy/processing}
