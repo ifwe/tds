@@ -1,7 +1,5 @@
+from .base import Base
 
-class Deployment(object):
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
 
-    def __eq__(self, other):
-        return self.__dict__.__eq__(other.__dict__)
+class Deployment(Base):
+    pass
