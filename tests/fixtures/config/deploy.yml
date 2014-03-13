@@ -1,6 +1,9 @@
 ---
 env: {environment: fakedev}
 logging: {syslog_facility: fakelocal3, syslog_priority: fakedebug}
+proxy:
+  https: https://proxy.example.com:443
+  fakeproto: svn://svn.example.com:12345
 notifications:
   email: {receiver: fake@example.com}
   enabled_methods: [email, hipchat]
