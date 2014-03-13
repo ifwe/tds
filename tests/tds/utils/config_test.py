@@ -7,7 +7,7 @@ import os.path
 import tds.utils.config as config
 
 import tests
-import tests.factories
+import tests.factories.utils.config as config_factories
 
 
 class TestDottedDict(unittest2.TestCase):
@@ -243,7 +243,7 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         c = config.TDSDatabaseConfig('foo')
         self.load_fake_config(c, 'dbaccess.test')
 
-        fake_config = tests.factories.config.DatabaseTestConfigFactory()
+        fake_config = config_factories.DatabaseTestConfigFactory()
 
         assert c['db.user'] == fake_config['db']['user']
         assert c['db.password'] == fake_config['db']['password']
@@ -291,7 +291,7 @@ class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
     def test_schema_success(self):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
-        fake_config = tests.factories.config.DeployConfigFactory()
+        fake_config = config_factories.DeployConfigFactory()
         assert c == fake_config
 
     def test_dotted_key_hit(self):

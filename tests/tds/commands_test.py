@@ -3,7 +3,7 @@ from unittest_data_provider import data_provider
 import unittest2
 import logging
 
-from tests.factories.config import DeployConfigFactory
+from tests.factories.utils.config import DeployConfigFactory
 
 import tds.commands
 import tds.model

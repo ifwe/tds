@@ -7,7 +7,7 @@ import tds.utils.config
 import factory
 
 from os.path import join
-from .. import FIXTURES_PATH
+from tests import FIXTURES_PATH
 
 
 class ConfigFactory(factory.Factory):
