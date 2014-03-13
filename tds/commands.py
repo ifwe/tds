@@ -65,6 +65,7 @@ class Repository(object):
             return
 
         if params['config']:
+            # XXX: this should go away as config is not special
             self.log.debug('Adding application %r to config project %r',
                            params['project'], params['config'])
 
@@ -2028,6 +2029,7 @@ class Config(Deploy):
 
     @tds.utils.debug
     def create(self, params):
+        # XXX: Replace this with a call to Repository(self.log).add(params)
         """Add a new config project to the system"""
 
         self.log.debug('Creating new config project')
