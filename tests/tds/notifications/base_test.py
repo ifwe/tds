@@ -66,7 +66,7 @@ class TestNotifierClass(unittest2.TestCase):
 
         # are these assertions really necessary?
         assert message['subject'] == (
-            'Promote of version badf00d of fake_project on app tier(s)'
+            'Promote of version badf00d of fake_package on app tier(s)'
             ' fake_apptype in fakedev'
         )
         assert message['body'] == (

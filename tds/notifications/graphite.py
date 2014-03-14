@@ -28,4 +28,4 @@ class GraphiteNotifier(Notifier):
             prefix=self.config['prefix']
         )
 
-        graphite.send(deployment.package['name'], 1)
+        graphite.send(deployment.package.name, 1)
