@@ -180,44 +180,51 @@ def verify_install(app, version):
                  '%s.' % (app, inst_version, version))
 
 
+def do_install(app, version):
+    'TDS install install'
+    try:
+        inst_version = get_version(app)
+    except ExtCommandError:
+        inst_version = None  # Assume app not installed
+    if inst_version == version:
+        return  # Nothing to do
+
+    stop_puppet()
+    app_install(app, version, inst_version)
+    verify_install(app, version)
+
+
+def parse_args(args):
+    'TDS install argument parsing'
+
+    if len(args) != 3:
+        sys.exit('Usage: %s <application> [<version>|restart]' % args[0])
+
+    if args[2] in ('restart', 'uninstall'):
+        return args[2]
+    else:
+        try:
+            int(args[2])
+        except ValueError:
+            sys.exit('Version passed (%s) was not a number' % args[2])
+        return 'install'
+
+
 def main():
     """TDS (un)install/restart"""
 
-    if len(sys.argv) != 3:
-        sys.exit('Usage: %s <application> [<version>|restart]' % sys.argv[0])
-
-    restart = False
-    uninstall = False
-
-    if sys.argv[2] == 'restart':
-        restart = True
-    elif sys.argv[2] == 'uninstall':
-        uninstall = True
-    else:
-        try:
-            int(sys.argv[2])
-        except ValueError:
-            sys.exit('Version passed (%s) was not a number' % sys.argv[2])
+    action = parse_args(sys.argv)
 
     app, version = sys.argv[1:]
     app_check(app)
 
-    if restart:
+    if action == 'restart':
         manage_services('restart')
-    elif uninstall:
+    elif action == 'uninstall':
         stop_puppet()
         app_uninstall(app)
-    else:
-        try:
-            inst_version = get_version(app)
-        except ExtCommandError:
-            inst_version = None  # Assume app not installed
-        if inst_version == version:
-            return  # Nothing to do
-
-        stop_puppet()
-        app_install(app, version, inst_version)
-        verify_install(app, version)
+    elif action == 'install':
+        do_install(app, version)
 
 
 if __name__ == '__main__':
