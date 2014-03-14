@@ -17,7 +17,7 @@ import psutil
 
 
 class ExtCommandError(Exception):
-    pass
+    'Error running external command'
 
 
 def run_command(cmd):
@@ -25,14 +25,13 @@ def run_command(cmd):
 
     print "running: ", " ".join(cmd)
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE)
 
     stdout, stderr = proc.communicate()
 
     if proc.returncode:
         cmdline = ' '.join(cmd)
-        raise ExtCommandError('Command "%s" failed:\n%s'
-                              % (cmdline, stderr))
+        raise ExtCommandError('Command "%s" failed:\n%s' % (cmdline, stderr))
 
     return stdout
 
@@ -61,16 +60,16 @@ def app_check(app):
         with open(tds_conf) as conf_file:
             config = ConfigParser.SafeConfigParser()
             config.readfp(conf_file)
-    except IOError, e:
+    except IOError as e:
         sys.exit('Unable to access the configuration file %s: %s'
                  % (tds_conf, e))
 
     try:
         apps = config.get('applications', 'valid')
-    except ConfigParser.NoOptionError, e:
+    except ConfigParser.NoOptionError as e:
         sys.exit('Failed to get configuration information: %s' % e)
 
-    valid_apps = [ x.strip() for x in apps.split(',') ]
+    valid_apps = [x.strip() for x in apps.split(',')]
 
     if app not in valid_apps:
         sys.exit('Application "%s" is not allowed on this system' % app)
@@ -84,7 +83,7 @@ def stop_puppet():
     if running:
         print 'Puppet process(es) running, trying to stop nicely'
 
-        for idx in xrange(0, 10):
+        for _idx in xrange(0, 10):
             for pid in running:
                 try:
                     os.kill(pid, signal.SIGINT)
@@ -107,11 +106,11 @@ def stop_puppet():
 def manage_services(action):
     """Manage a defined application services with a given action"""
 
-    svc_cmd = [ '/usr/local/tagops/sbin/services', action ]
+    svc_cmd = ['/usr/local/tagops/sbin/services', action]
 
     try:
         run_command(svc_cmd)
-    except ExtCommandError, e:
+    except ExtCommandError as e:
         sys.exit('Failed to perform action "%s" on defined services: %s'
                  % (action, e))
 
@@ -126,20 +125,20 @@ def app_install(app, version, inst_version):
     else:
         yum_op = "downgrade"
 
-    makecache_cmd = [ '/usr/bin/yum', 'makecache' ]
+    makecache_cmd = ['/usr/bin/yum', 'makecache']
     try:
         run_command(makecache_cmd)
-    except ExtCommandError, e:
+    except ExtCommandError as e:
         sys.exit('Unable to run "yum makecache": %s' % e)
 
     # Stop services before install, then restart them after install
     manage_services('stop')
 
-    install_cmd = [ '/usr/bin/yum', '-y', '--nogpgcheck', yum_op,
-                    '%s-%s-1' % (app, version) ]
+    install_cmd = ['/usr/bin/yum', '-y', '--nogpgcheck', yum_op,
+                   '%s-%s-1' % (app, version)]
     try:
-        output = run_command(install_cmd)
-    except ExtCommandError, e:
+        run_command(install_cmd)
+    except ExtCommandError as e:
         sys.exit('Unable to install application via yum: %s' % e)
 
     manage_services('start')
@@ -151,18 +150,18 @@ def app_uninstall(app):
     # Stop service before uninstall, no need to restart
     manage_services('stop')
 
-    uninstall_cmd = [ '/usr/bin/yum', '-y', '--nogpgcheck', 'remove', app ]
+    uninstall_cmd = ['/usr/bin/yum', '-y', '--nogpgcheck', 'remove', app]
 
     try:
-        output = run_command(uninstall_cmd)
-    except ExtCommandError, e:
+        run_command(uninstall_cmd)
+    except ExtCommandError as e:
         sys.exit('Unable to uninstall application via yum: %s' % e)
 
 
 def get_version(app):
     """Return current version of application"""
 
-    vers_cmd = [ '/bin/rpm', '-q', '--queryformat', '%{VERSION}', app ]
+    vers_cmd = ['/bin/rpm', '-q', '--queryformat', '%{VERSION}', app]
 
     return run_command(vers_cmd)
 
@@ -172,7 +171,7 @@ def verify_install(app, version):
 
     try:
         inst_version = get_version(app)
-    except ExtCommandError, e:
+    except ExtCommandError as e:
         sys.exit('Unable to query for installed version of "%s": %s'
                  % (app, e))
 
@@ -182,7 +181,7 @@ def verify_install(app, version):
 
 
 def main():
-    """ """
+    """TDS (un)install/restart"""
 
     if len(sys.argv) != 3:
         sys.exit('Usage: %s <application> [<version>|restart]' % sys.argv[0])
@@ -212,9 +211,9 @@ def main():
         try:
             inst_version = get_version(app)
         except ExtCommandError:
-            inst_version = None   # Assume app not installed
+            inst_version = None  # Assume app not installed
         if inst_version == version:
-            return   # Nothing to do
+            return  # Nothing to do
 
         stop_puppet()
         app_install(app, version, inst_version)
@@ -224,12 +223,12 @@ def main():
 if __name__ == '__main__':
     # Make sure we're running at least Python 2.6
     # and not running Python 3
-    pyvers = sys.version_info[:2]
+    PYVERS = sys.version_info[:2]
 
-    if pyvers < (2, 6):
+    if PYVERS < (2, 6):
         raise RuntimeError('Python 2.6 is required to use this program')
 
-    if pyvers[0] == 3:
+    if PYVERS[0] == 3:
         raise RuntimeError('Python 3.x is not supported at this time, please '
                            'use Python 2.6+')
     main()
