@@ -24,8 +24,7 @@ import tds.utils.config
 import tds.notifications
 import tds.deploy_strategy
 
-from tds.exceptions import NoCurrentDeploymentError, \
-    WrongEnvironmentError, WrongProjectTypeError
+from tds.exceptions import WrongEnvironmentError, WrongProjectTypeError
 
 
 class Repository(object):
@@ -66,6 +65,7 @@ class Repository(object):
             return
 
         if params['config']:
+            # XXX: this should go away as config is not special
             self.log.debug('Adding application %r to config project %r',
                            params['project'], params['config'])
 
@@ -374,9 +374,9 @@ class Jenkinspackage(Package):
         return True
 
 
-class BaseDeploy(object):
+class Deploy(object):
 
-    """Common methods for the config and deploy commands"""
+    """Commands to manage deployments for supported applications"""
 
     dep_types = {'promote': 'Deployment',
                  'redeploy': 'Redeployment',
@@ -390,7 +390,7 @@ class BaseDeploy(object):
     env_order = ['dev', 'stage', 'prod']
 
     requires_tier_progression = True
-    valid_project_types = []
+    valid_project_types = ['application']
 
     def __init__(self, logger):
         """Basic initialization"""
@@ -1808,6 +1808,34 @@ class BaseDeploy(object):
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
+    def promote(self, params):
+        """Deploy given version of given project to requested application
+           tiers or hosts
+        """
+
+        self.log.debug('Deploying project')
+
+        tds.authorize.verify_access(params['user_level'],
+                                    params['environment'])
+
+        self.proj_type = self.verify_project_type(params['project'])
+        self.ensure_explicit_destinations(params)
+
+        if not self.ensure_newer_versions(params):
+            pass
+
+        pkg_id, app_ids, app_host_map = self.get_app_info(params)
+        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+        app_host_map, app_dep_map = \
+            self.determine_new_deployments(params, pkg_id, app_ids,
+                                           app_host_map, app_dep_map)
+        self.send_notifications(params)
+        self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
+
+        Session.commit()
+        self.log.debug('Committed database changes')
+
+    @tds.utils.debug
     def invalidate(self, params):
         """Invalidate a given version of a given project"""
 
@@ -1903,287 +1931,6 @@ class BaseDeploy(object):
         Session.commit()
         self.log.debug('Committed database changes')
 
-
-class Config(BaseDeploy):
-
-    """Commands to manage deployments for supported config applications"""
-
-    valid_project_types = ['tagconfig', 'kafka-config']
-    requires_tier_progression = False
-
-    @tds.utils.debug
-    def create(self, params):
-        """Add a new config project to the system"""
-
-        self.log.debug('Creating new config project')
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        # Currently project type matches the project name
-        if params['project'] not in self.valid_project_types:
-            raise WrongProjectTypeError('Project "%s" is not valid for '
-                                        'this command' % params['project'])
-
-        try:
-            self.log.debug(5, 'Adding config project to repository')
-
-            # Project type matches project name
-            repo.add_app_location(params['project'], params['buildtype'],
-                                  params['pkgname'], params['project'],
-                                  params['pkgpath'], params['arch'],
-                                  params['buildhost'], params['env_specific'])
-        except RepoException, e:
-            self.log.error(e)
-            return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def delete(self, params):
-        """Remove a config project from the system"""
-
-        self.log.debug('Removing given config project')
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        self.proj_type = self.verify_project_type(params['project'])
-
-        try:
-            repo.delete_app_location(params['project'])
-        except RepoException, e:
-            self.log.error(e)
-            return
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def push(self, params):
-        """Push given version of given config project to requested application
-           tiers or hosts
-        """
-
-        self.log.debug('Pushing config project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        if not self.ensure_newer_versions(params):
-            pass
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-
-        try:
-            app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-        except NoCurrentDeploymentError:
-            pass
-
-        app_host_map, app_dep_map = \
-            self.determine_new_deployments(params, pkg_id, app_ids,
-                                           app_host_map, app_dep_map)
-        self.send_notifications(params)
-        self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def repush(self, params):
-        """Repush given config project to requested application tiers or
-           hosts
-        """
-
-        self.log.debug('Repushing config project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params,
-                                                          hostonly=True)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to repush for configuration %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        dep_id = self.determine_redeployments(pkg_id)
-        self.send_notifications(params)
-        self.perform_redeployments(params, dep_id, app_host_map, app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def revert(self, params):
-        """Revert to the previous validated deployed version of given config
-           project on requested application tiers or hosts
-        """
-
-        self.log.debug('Reverting config project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to revert for configuration %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        # Save verison of application/deployment map for invalidation
-        # at the end of the run
-        self.log.debug(5, 'Saving current application/deployment map')
-        orig_app_dep_map = app_dep_map
-
-        app_pkg_map, app_host_map, app_dep_map = \
-            self.determine_rollbacks(params, app_ids, app_host_map,
-                                     app_dep_map)
-        self.send_notifications(params)
-        self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
-
-        if not params.get('hosts', None):
-            # Now perform invalidations, commit immediately follows
-            # Note this is only done for tiers
-            self.perform_invalidations(orig_app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-
-class Deploy(BaseDeploy):
-
-    """Commands to manage deployments for supported applications"""
-
-    valid_project_types = ['application']
-    requires_tier_progression = True
-
-    @tds.utils.debug
-    def force_production(self, params):
-        """Allow deployment to production of given project without the
-           previous environment check
-        """
-
-        self.log.debug('Deploying project to production (without environment '
-                       'check)')
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        raise NotImplementedError('This subcommand is currently not '
-                                  'implemented')
-
-    @tds.utils.debug
-    def force_staging(self, params):
-        """Allow deployment to staging of given project without the
-           previous environment check
-        """
-
-        self.log.debug('Deploying project to staging (without environment '
-                       'check)')
-
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
-        raise NotImplementedError('This subcommand is currently not '
-                                  'implemented')
-
-    @tds.utils.debug
-    def promote(self, params):
-        """Deploy given version of given project to requested application
-           tiers or hosts
-        """
-
-        self.log.debug('Deploying project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        if not self.ensure_newer_versions(params):
-            pass
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-        app_host_map, app_dep_map = \
-            self.determine_new_deployments(params, pkg_id, app_ids,
-                                           app_host_map, app_dep_map)
-        self.send_notifications(params)
-        self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def redeploy(self, params):
-        """Redeploy given project to requested application tiers or hosts"""
-
-        self.log.debug('Redeploying project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params,
-                                                          hostonly=True)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to redeploy for application %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        dep_id = self.determine_redeployments(pkg_id)
-        self.send_notifications(params)
-        self.perform_redeployments(params, dep_id, app_host_map, app_dep_map)
-
-        Session.commit()
-        self.log.debug('Committed database changes')
-
-    @tds.utils.debug
-    def restart(self, params):
-        """Restart given project on requested application tiers or hosts"""
-
-        self.log.debug('Restarting application for project')
-
-        # Not a deployment
-        params['deployment'] = False
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
-        self.proj_type = self.verify_project_type(params['project'])
-        self.ensure_explicit_destinations(params)
-
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            self.log.info('Nothing to restart for application %r in %s '
-                          'environment', params['project'],
-                          self.envs[params['environment']])
-            return
-
-        dep_id = self.determine_restarts(pkg_id)
-        self.perform_restarts(params, dep_id, app_host_map, app_dep_map)
-
     @tds.utils.debug
     def rollback(self, params):
         """Rollback to the previous validated deployed version of given
@@ -2225,3 +1972,113 @@ class Deploy(BaseDeploy):
 
         Session.commit()
         self.log.debug('Committed database changes')
+
+    @tds.utils.debug
+    def restart(self, params):
+        """Restart given project on requested application tiers or hosts"""
+
+        self.log.debug('Restarting application for project')
+
+        # Not a deployment
+        params['deployment'] = False
+
+        tds.authorize.verify_access(params['user_level'],
+                                    params['environment'])
+
+        self.proj_type = self.verify_project_type(params['project'])
+        self.ensure_explicit_destinations(params)
+
+        pkg_id, app_ids, app_host_map = self.get_app_info(params)
+        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+
+        if not len(filter(None, app_dep_map.itervalues())):
+            self.log.info('Nothing to restart for application %r in %s '
+                          'environment', params['project'],
+                          self.envs[params['environment']])
+            return
+
+        dep_id = self.determine_restarts(pkg_id)
+        self.perform_restarts(params, dep_id, app_host_map, app_dep_map)
+
+    @tds.utils.debug
+    def redeploy(self, params):
+        """Redeploy given project to requested application tiers or hosts"""
+
+        self.log.debug('Redeploying project')
+
+        tds.authorize.verify_access(params['user_level'],
+                                    params['environment'])
+
+        self.proj_type = self.verify_project_type(params['project'])
+        self.ensure_explicit_destinations(params)
+
+        pkg_id, app_ids, app_host_map = self.get_app_info(params,
+                                                          hostonly=True)
+        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+
+        if not len(filter(None, app_dep_map.itervalues())):
+            self.log.info('Nothing to redeploy for application %r in %s '
+                          'environment', params['project'],
+                          self.envs[params['environment']])
+            return
+
+        dep_id = self.determine_redeployments(pkg_id)
+        self.send_notifications(params)
+        self.perform_redeployments(params, dep_id, app_host_map, app_dep_map)
+
+        Session.commit()
+        self.log.debug('Committed database changes')
+
+
+class Config(Deploy):
+
+    """Commands to manage deployments for supported config applications"""
+
+    valid_project_types = ['tagconfig', 'kafka-config']
+    requires_tier_progression = False
+
+    @tds.utils.debug
+    def create(self, params):
+        # XXX: Replace this with a call to Repository(self.log).add(params)
+        """Add a new config project to the system"""
+
+        self.log.debug('Creating new config project')
+
+        tds.authorize.verify_access(params['user_level'], 'admin')
+
+        # Currently project type matches the project name
+        if params['project'] not in self.valid_project_types:
+            raise WrongProjectTypeError('Project "%s" is not valid for '
+                                        'this command' % params['project'])
+
+        try:
+            self.log.debug(5, 'Adding config project to repository')
+
+            # Project type matches project name
+            repo.add_app_location(params['project'], params['buildtype'],
+                                  params['pkgname'], params['project'],
+                                  params['pkgpath'], params['arch'],
+                                  params['buildhost'], params['env_specific'])
+        except RepoException, e:
+            self.log.error(e)
+            return
+
+        Session.commit()
+        self.log.debug('Committed database changes')
+
+    @tds.utils.debug
+    def delete(self, params):
+        """Remove a config project from the system"""
+        return Repository(self.log).delete(params)
+
+    @tds.utils.debug
+    def push(self, params):
+        super(Config, self).promote(params)
+
+    @tds.utils.debug
+    def repush(self, params):
+        super(Config, self).redeploy(params)
+
+    @tds.utils.debug
+    def revert(self, params):
+        super(Config, self).rollback(params)
