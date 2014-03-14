@@ -1,3 +1,5 @@
+'''tds.model init'''
+
 from .deployment import Deployment
 from .package import Package
 
