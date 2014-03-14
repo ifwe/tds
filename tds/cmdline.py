@@ -1,6 +1,8 @@
+'''Data for command line arguments, subsarguments and options'''
+
 from ordereddict import OrderedDict as odict
 
-repository_data = odict([
+REPOSITORY_DATA = odict([
     ('add', odict([
         ('help', 'Add new project to the repository information'),
         ('subargs', odict([
@@ -56,7 +58,7 @@ repository_data = odict([
     ])),
 ])
 
-package_data = odict([
+PACKAGE_DATA = odict([
     ('add', odict([
         ('help', 'Add new package to deployment system'),
         ('subargs', odict([
@@ -66,6 +68,10 @@ package_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
+            ])),
+            (('--force', '-f'), odict([
+                ('help', 'Allow an existing package to be re-added'),
+                ('action', 'store_true'),
             ])),
         ])),
     ])),
@@ -93,7 +99,7 @@ package_data = odict([
     ])),
 ])
 
-jenkinspackage_data = odict([
+JENKINSPACKAGE_DATA = odict([
     ('add', odict([
         ('help', 'Add new package to deployment system'),
         ('subargs', odict([
@@ -111,7 +117,7 @@ jenkinspackage_data = odict([
     ])),
 ])
 
-config_data = odict([
+CONFIG_DATA = odict([
     ('add-apptype', odict([
         ('help', 'Add app type to a config project'),
         ('subargs', odict([
@@ -303,7 +309,7 @@ config_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
-            (('--force',), odict([
+            (('--force', '-f'), odict([
                 ('help', 'Do validation even when there are bad hosts'),
                 ('action', 'store_true'),
             ])),
@@ -320,7 +326,7 @@ config_data = odict([
     ])),
 ])
 
-deploy_data = odict([
+DEPLOY_DATA = odict([
     ('add-apptype', odict([
         ('help', 'Add app type to a project'),
         ('subargs', odict([
@@ -340,66 +346,6 @@ deploy_data = odict([
             ])),
             (('project',), odict([
                 ('help', 'Name of project in system'),
-            ])),
-        ])),
-    ])),
-    ('force-production', odict([
-        ('help', 'Overriding deployment direct to production'),
-        ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
-            ])),
-            (('version',), odict([
-                ('help', 'Release version number for project'),
-                ('type', int),
-            ])),
-            (('--delay',), odict([
-                ('help', 'Time delay (in seconds) between each deploy'),
-                ('type', int),
-            ])),
-            (('--hosts',), odict([
-                ('help', 'Specific host(s) for deployment'),
-                ('metavar', 'HOST'),
-                ('nargs', '*'),
-            ])),
-            (('--apptypes',), odict([
-                ('help', 'Specific app type(s) for deployment'),
-                ('metavar', 'APPTYPE'),
-                ('nargs', '*'),
-            ])),
-            (('--all-apptypes',), odict([
-                ('help', 'Handle all app types for deployment'),
-                ('action', 'store_true'),
-            ])),
-        ])),
-    ])),
-    ('force-staging', odict([
-        ('help', 'Overriding deployment direct to staging'),
-        ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
-            ])),
-            (('version',), odict([
-                ('help', 'Release version number for project'),
-                ('type', int),
-            ])),
-            (('--delay',), odict([
-                ('help', 'Time delay (in seconds) between each deploy'),
-                ('type', int),
-            ])),
-            (('--hosts',), odict([
-                ('help', 'Specific host(s) for deployment'),
-                ('metavar', 'HOST'),
-                ('nargs', '*'),
-            ])),
-            (('--apptypes',), odict([
-                ('help', 'Specific app type(s) for deployment'),
-                ('metavar', 'APPTYPE'),
-                ('nargs', '*'),
-            ])),
-            (('--all-apptypes',), odict([
-                ('help', 'Handle all app types for deployment'),
-                ('action', 'store_true'),
             ])),
         ])),
     ])),
@@ -433,6 +379,12 @@ deploy_data = odict([
             (('version',), odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
+            ])),
+            (('--force', '-f'), odict([
+                ('help',
+                 'Do deployment without need for validated deployment'
+                 ' in previous environment'),
+                ('action', 'store_true'),
             ])),
             (('--delay',), odict([
                 ('help', 'Time delay (in seconds) between each deploy'),
@@ -564,7 +516,7 @@ deploy_data = odict([
                 ('help', 'Release version number for project'),
                 ('type', int),
             ])),
-            (('--force',), odict([
+            (('--force', '-f'), odict([
                 ('help', 'Do validation even when there are bad hosts'),
                 ('action', 'store_true'),
             ])),
@@ -581,16 +533,16 @@ deploy_data = odict([
     ])),
 ])
 
-parser_data = odict([
-    ('repository', repository_data),
-    ('package', package_data),
-    ('jenkinspackage', jenkinspackage_data),
-    ('config', config_data),
-    ('deploy', deploy_data),
+PARSER_DATA = odict([
+    ('repository', REPOSITORY_DATA),
+    ('package', PACKAGE_DATA),
+    ('jenkinspackage', JENKINSPACKAGE_DATA),
+    ('config', CONFIG_DATA),
+    ('deploy', DEPLOY_DATA),
 ])
 
 
 def parser_info():
     """Return the constructed data for the command line parser"""
 
-    return parser_data
+    return PARSER_DATA

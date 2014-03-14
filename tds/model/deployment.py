@@ -1,7 +1,8 @@
+'''Model module for deployment object'''
 
-class Deployment(object):
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
+from .base import Base
 
-    def __eq__(self, other):
-        return self.__dict__.__eq__(other.__dict__)
+
+class Deployment(Base):
+    'Model class for deployment object'
+    pass

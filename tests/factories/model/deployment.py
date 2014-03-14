@@ -4,6 +4,8 @@ Factories to create various tds.model.deployment.Deployment instances
 import factory
 import tds.model.deployment as d
 
+from .package import PackageFactory
+
 
 class DeploymentFactory(factory.Factory):
     '''
@@ -16,7 +18,7 @@ class DeploymentFactory(factory.Factory):
 
     actor = dict(
         username='fake_user',
-        automated=False
+        automated=False,
     )
 
     action = dict(
@@ -24,14 +26,9 @@ class DeploymentFactory(factory.Factory):
         subcommand='promote',
     )
 
-    project = dict(
-        name='fake_project'
-    )
+    project = factory.LazyAttribute(lambda d: dict(name=d.package.name))
 
-    package = dict(
-        name=project['name'],
-        version='badf00d'
-    )
+    package = factory.SubFactory(PackageFactory)
 
     target = dict(
         environment='test',
@@ -49,3 +46,18 @@ class UnvalidatedDeploymentFactory(DeploymentFactory):
     has not been validated and the unvalidated_deploy_check.py script is run
     '''
     action = dict(command='unvalidated')
+
+
+class PackageAddFactory(DeploymentFactory):
+    '''
+    Package for the following command:
+
+    `tds package add fake_package badf00d`
+    by user 'fake_user'.
+    '''
+    action = dict(
+        command='package',
+        subcommand='add',
+    )
+
+    target = None

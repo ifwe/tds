@@ -1,3 +1,9 @@
-from .deployment import Deployment
+'''tds.model init'''
 
-__all__ = ['Deployment']
+from .deployment import Deployment
+from .package import Package
+
+__all__ = [
+    'Deployment',
+    'Package',
+]
