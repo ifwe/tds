@@ -4,6 +4,8 @@ Factories to create various tds.model.deployment.Deployment instances
 import factory
 import tds.model.deployment as d
 
+from .package import PackageFactory
+
 
 class DeploymentFactory(factory.Factory):
     '''
@@ -24,14 +26,9 @@ class DeploymentFactory(factory.Factory):
         subcommand='promote',
     )
 
-    project = dict(
-        name='fake_project',
-    )
+    project = factory.LazyAttribute(lambda d: dict(name=d.package.name))
 
-    package = dict(
-        name=project['name'],
-        version='badf00d',
-    )
+    package = factory.SubFactory(PackageFactory)
 
     target = dict(
         environment='test',

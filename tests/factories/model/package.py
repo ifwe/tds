@@ -14,7 +14,5 @@ class PackageFactory(factory.Factory):
     '''
     FACTORY_FOR = p.Package
 
-    package = dict(
-        name='fake_package',
-        version='badf00d',
-    )
+    name = 'fake_package'
+    version = 'badf00d'

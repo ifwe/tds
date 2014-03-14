@@ -91,8 +91,8 @@ class Notifier(object):
             'Version %s of package %s in %s app tier\n'
             'has not been validated. Please validate it.\n'
             'Without this, Puppet cannot manage the tier correctly.' % (
-                deployment.package['version'],
-                deployment.package['name'],
+                deployment.package.version,
+                deployment.package.name,
                 ', '.join(deployment.target['apptypes']),
             )
         )
@@ -104,7 +104,7 @@ class Notifier(object):
         log.debug('Creating information for notifications')
 
         # Determine version
-        version = deployment.package['version']
+        version = deployment.package.version
 
         log.debug(5, 'Application version is: %s', version)
 
@@ -127,7 +127,7 @@ class Notifier(object):
         log.debug(5, 'Destinations are: %s', destinations)
 
         msg_subject = '%s of version %s of %s on %s %s in %s' \
-                      % (dep_type, version, deployment.package['name'],
+                      % (dep_type, version, deployment.package.name,
                          dest_type, destinations,
                          self.app_config['env.environment'])
         msg_args = (
