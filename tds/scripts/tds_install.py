@@ -16,18 +16,6 @@ import time
 import psutil
 
 
-# Make sure we're running at least Python 2.6
-# and not running Python 3
-pyvers = sys.version_info[:2]
-
-if pyvers < (2, 6):
-    raise RuntimeError('Python 2.6 is required to use this program')
-
-if pyvers[0] == 3:
-    raise RuntimeError('Python 3.x is not supported at this time, please '
-                       'use Python 2.6+')
-
-
 class ExtCommandError(Exception):
     pass
 
@@ -234,4 +222,14 @@ def main():
 
 
 if __name__ == '__main__':
+    # Make sure we're running at least Python 2.6
+    # and not running Python 3
+    pyvers = sys.version_info[:2]
+
+    if pyvers < (2, 6):
+        raise RuntimeError('Python 2.6 is required to use this program')
+
+    if pyvers[0] == 3:
+        raise RuntimeError('Python 3.x is not supported at this time, please '
+                           'use Python 2.6+')
     main()
