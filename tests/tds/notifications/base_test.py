@@ -1,4 +1,4 @@
-from mock import patch, Mock
+from mock import patch
 import unittest2
 
 import tds.notifications.base as base
