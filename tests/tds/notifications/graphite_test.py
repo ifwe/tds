@@ -37,5 +37,5 @@ class TestGraphiteNotifier(unittest2.TestCase):
         ))
 
         self.graphite.return_value.send.assert_called_with(
-            d.package['name'], 1
+            d.package.name, 1
         )

@@ -1,22 +1,93 @@
-from mock import patch
+from mock import Mock, patch
 from unittest_data_provider import data_provider
 import unittest2
 import logging
 
 from tests.factories.utils.config import DeployConfigFactory
 
+import tagopsdb.deploy.deploy
 import tds.commands
 import tds.model
 import tds.utils.config as tds_config
 
 
-class TestPromoteAndPush(unittest2.TestCase):
+class _Base(unittest2.TestCase):
     def setUp(self):
-
         self.app_config = patch(
             'tds.utils.config.TDSDeployConfig',
             return_value=DeployConfigFactory(),
         )
+        self.session = patch(
+            'tds.commands.Session',
+            **{'commit.return_value': None}
+        ).start()
+        self.tds_authorize = patch(
+            'tds.authorize',
+            **{'verify_access.return_value': True}
+        ).start()
+
+    def tearDown(self):
+        patch.stopall()
+
+    def patch_method(self, obj, key, return_value):
+        patcher = patch.object(obj, key)
+        ptch = patcher.start()
+        ptch.return_value = return_value
+
+    force_provider = staticmethod(lambda: [
+        (True,),
+        (False,),
+    ])
+
+
+class TestPackageAdd(_Base):
+    def setUp(self):
+        super(TestPackageAdd, self).setUp()
+
+        self.package = tds.commands.Package(
+            logging.getLogger(type(self).__name__ + ' Package')
+        )
+
+        package_methods = [
+            ('_queue_rpm', True),
+        ]
+
+        for (key, return_value) in package_methods:
+            for obj in [self.package]:
+                self.patch_method(obj, key, return_value)
+
+    add_provider = lambda: [
+        (True, 'Not_None'),
+        (False, 'Not_None'),
+    ]
+
+    @data_provider(add_provider)
+    def test_add_package(self, force_option_used, pkg_state):
+        self.package_module = patch(
+            'tds.commands.package',
+            **{'add_package.return_value': None,
+               'find_package': Mock(status='completed')}
+        ).start()
+        self.repo_module = patch(
+            'tds.commands.repo',
+            **{'find_app_location': Mock(pkg_name='fake_app', arch='noarch')}
+        ).start()
+        self.patch_method(self.package, 'check_package_state', pkg_state)
+        self.patch_method(self.package, 'wait_for_state_change', None)
+
+        self.package.add(dict(
+            project='fake_app',
+            version='deadbeef',
+            user='fake_user',
+            user_level='fake_access',
+            repo={'incoming': 'fake_path'},
+            force=force_option_used
+        ))
+
+
+class TestPromoteAndPush(_Base):
+    def setUp(self):
+        super(TestPromoteAndPush, self).setUp()
 
         self.deploy = tds.commands.Deploy(
             logging.getLogger(type(self).__name__ + ' Deploy')
@@ -39,22 +110,25 @@ class TestPromoteAndPush(unittest2.TestCase):
             for obj in [self.deploy, self.config]:
                 self.patch_method(obj, key, return_value)
 
-        self.session = patch(
-            'tds.commands.Session',
-            **{'commit.return_value': None}
-        ).start()
-        self.tds_authorize = patch(
-            'tds.authorize',
-            **{'verify_access.return_value': True}
-        ).start()
+    @data_provider(_Base.force_provider)
+    def test_check_previous_environment(self, force_option_used):
+        self.deploy.requires_tier_progression = True
+        self.patch_method(
+            tagopsdb.deploy.deploy,
+            'find_app_deployment',
+            None
+        )
 
-    def tearDown(self):
-        patch.stopall()
+        return_val = self.deploy.check_previous_environment(
+            params={'force': force_option_used,
+                    'environment': 'prod',
+                    'project': 'fake_app',
+                    'version': 'deadbeef'},
+            pkg_id='123',
+            app_id='123',
+        )
 
-    def patch_method(self, obj, key, return_value):
-        patcher = patch.object(obj, key)
-        ptch = patcher.start()
-        ptch.return_value = return_value
+        assert return_val == force_option_used
 
     def test_promote_new_version(self):
         self.patch_method(self.deploy, 'send_notifications', None)
