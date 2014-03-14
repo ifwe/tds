@@ -1,6 +1,8 @@
+'''Data for command line arguments, subsarguments and options'''
+
 from ordereddict import OrderedDict as odict
 
-repository_data = odict([
+REPOSITORY_DATA = odict([
     ('add', odict([
         ('help', 'Add new project to the repository information'),
         ('subargs', odict([
@@ -56,7 +58,7 @@ repository_data = odict([
     ])),
 ])
 
-package_data = odict([
+PACKAGE_DATA = odict([
     ('add', odict([
         ('help', 'Add new package to deployment system'),
         ('subargs', odict([
@@ -97,7 +99,7 @@ package_data = odict([
     ])),
 ])
 
-jenkinspackage_data = odict([
+JENKINSPACKAGE_DATA = odict([
     ('add', odict([
         ('help', 'Add new package to deployment system'),
         ('subargs', odict([
@@ -115,7 +117,7 @@ jenkinspackage_data = odict([
     ])),
 ])
 
-config_data = odict([
+CONFIG_DATA = odict([
     ('add-apptype', odict([
         ('help', 'Add app type to a config project'),
         ('subargs', odict([
@@ -324,7 +326,7 @@ config_data = odict([
     ])),
 ])
 
-deploy_data = odict([
+DEPLOY_DATA = odict([
     ('add-apptype', odict([
         ('help', 'Add app type to a project'),
         ('subargs', odict([
@@ -531,16 +533,16 @@ deploy_data = odict([
     ])),
 ])
 
-parser_data = odict([
-    ('repository', repository_data),
-    ('package', package_data),
-    ('jenkinspackage', jenkinspackage_data),
-    ('config', config_data),
-    ('deploy', deploy_data),
+PARSER_DATA = odict([
+    ('repository', REPOSITORY_DATA),
+    ('package', PACKAGE_DATA),
+    ('jenkinspackage', JENKINSPACKAGE_DATA),
+    ('config', CONFIG_DATA),
+    ('deploy', DEPLOY_DATA),
 ])
 
 
 def parser_info():
     """Return the constructed data for the command line parser"""
 
-    return parser_data
+    return PARSER_DATA
