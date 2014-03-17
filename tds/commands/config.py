@@ -1,3 +1,6 @@
+'''
+Commands to manage config-type projects.
+'''
 import tagopsdb.database.meta
 import tagopsdb.deploy.repo
 import tagopsdb.exceptions
@@ -59,12 +62,18 @@ class Config(Deploy):
 
     @tds.utils.debug
     def push(self, params):
+        'Push a new version of a config project. Same as `deploy promote`'
         super(Config, self).promote(params)
 
     @tds.utils.debug
     def repush(self, params):
+        'Repush a version of a config project. Same as `deploy redeploy`'
         super(Config, self).redeploy(params)
 
     @tds.utils.debug
     def revert(self, params):
+        '''
+        Revert to the previous version of a config project.
+        Same as `deploy rollback`
+        '''
         super(Config, self).rollback(params)
