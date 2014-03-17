@@ -1,5 +1,8 @@
-import os.path
+'Support for adding a package directly from a Jenkins instance'
 
+import os.path
+import jenkinsapi.jenkins
+import jenkinsapi.exceptions
 from .package import Package
 
 
@@ -15,27 +18,28 @@ class Jenkinspackage(Package):
         buildnum = int(params['version'])
         job_name = params['job_name']
 
-        # Late import to prevent hard dependency
-        # XXX: is this really worth it?
-        from jenkinsapi.jenkins import Jenkins
-        from jenkinsapi.exceptions import JenkinsAPIException, NotFound
-
-        J = Jenkins('https://ci.tagged.com/')  # XXX: use config
+        # XXX: use config
+        jenkins = jenkinsapi.jenkins.Jenkins('https://ci.tagged.com/')
 
         try:
-            a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
-            data = a.get_data()
-        except (JenkinsAPIException, KeyError, NotFound) as e:
+            build = jenkins[job_name].get_build(buildnum)
+            artifacts = build.get_artifact_dict()[rpm_name]
+            data = artifacts.get_data()
+        except (
+            KeyError,
+            jenkinsapi.exceptions.JenkinsAPIException,
+            jenkinsapi.exceptions.NotFound
+        ) as e:
             self.log.error(e)
             return False
 
         tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)),
                                'tmp', rpm_name)
 
-        with open(tmpname, 'wb') as f:
-            f.write(data)
-            f.close()
-            os.link(f.name, queued_rpm)
-            os.unlink(f.name)
+        with open(tmpname, 'wb') as tmp_rpm:
+            tmp_rpm.write(data)
+            tmp_rpm.close()
+            os.link(tmp_rpm.name, queued_rpm)
+            os.unlink(tmp_rpm.name)
 
         return True
