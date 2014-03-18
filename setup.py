@@ -57,6 +57,7 @@ setup_args = dict(
         'tds.deploy_strategy',
         'tds.notifications',
         'tds.scripts',
+        'tds.commands',
         'tds.utils'
     ],
     install_requires=REQUIREMENTS,
