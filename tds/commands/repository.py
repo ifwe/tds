@@ -1,3 +1,5 @@
+'Commands to manage the deployment repository'
+
 import tagopsdb.exceptions
 import tagopsdb.deploy.package
 import tagopsdb.deploy.repo
