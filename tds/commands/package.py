@@ -1,3 +1,5 @@
+'Commands to support managing packages in the TDS system'
+
 import os.path
 import socket
 import signal
@@ -12,6 +14,19 @@ import tagopsdb.deploy.package
 import tds.utils
 
 
+def processing_handler(*_args):
+    """This handler is called if the file in the incoming or processing
+       directory is not removed in a given amount of time, meaning the
+       repository server had a failure.
+    """
+
+    raise tagopsdb.exceptions.PackageException(
+        'The file placed in the incoming or '
+        'processing queue was not removed.\n'
+        'Please contact SiteOps for assistance.'
+    )
+
+
 class Package(object):
 
     """Commands to manage packages for supported applications"""
@@ -21,18 +36,6 @@ class Package(object):
 
         self.host = socket.gethostname()
         self.log = logger
-
-    def processing_handler(self, signum, frame):
-        """This handler is called if the file in the incoming or processing
-           directory is not removed in a given amount of time, meaning the
-           repository server had a failure.
-        """
-
-        raise tagopsdb.exceptions.PackageException(
-            'The file placed in the incoming or '
-            'processing queue was not removed.\n'
-            'Please contact SiteOps for assistance.'
-        )
 
     def check_package_state(self, pkg_info):
         """Check state of package in database"""
@@ -91,12 +94,12 @@ class Package(object):
                           src_rpm, build_base)
             return False
 
+        self.log.info('Build host "%s" built RPM successfully',
+                      app.build_host)
+        self.log.info('Linking RPM into incoming directory...')
         try:
-            self.log.info('Build host "%s" built RPM successfully',
-                          app.build_host)
-            self.log.info('Linking RPM into incoming directory...')
             os.link(src_rpm, queued_rpm)
-        except Exception, e:   # Really need to narrow the exception down
+        except OSError as e:
             self.log.error(e)
             return False
 
@@ -156,7 +159,7 @@ class Package(object):
                       'deploy repo...')
 
         self.log.debug(5, 'Setting up signal handler')
-        signal.signal(signal.SIGALRM, self.processing_handler)
+        signal.signal(signal.SIGALRM, processing_handler)
         signal.alarm(120)
 
         self.log.debug(5, 'Waiting for status update in database for package')
