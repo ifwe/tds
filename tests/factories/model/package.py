@@ -1,5 +1,5 @@
 '''
-Factories to create various tds.model.deployment.Deployment instances
+Factories to create various tds.model.package.Package instances
 '''
 import factory
 import tds.model.package as p
