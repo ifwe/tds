@@ -12,6 +12,31 @@ import tds.utils
 import tds.deploy_strategy
 
 
+def create_deployment(params):
+    'Translate the common "params" argument into a Deployment instance'
+    return tds.model.Deployment(
+        actor=dict(
+            username=params.get('user'),
+            automated=False,
+        ),
+        action=dict(
+            command=params.get('command_name'),
+            subcommand=params.get('subcommand_name'),
+        ),
+        project=dict(
+            name=params.get('project'),
+        ),
+        package=dict(
+            name=params.get('project'),
+            version=params.get('version'),
+        ),
+        target=dict(
+            environment=params.get('environment'),
+            apptypes=params.get('apptypes'),
+        ),
+    )
+
+
 class Deploy(object):
 
     """Commands to manage deployments for supported applications"""
@@ -36,6 +61,7 @@ class Deploy(object):
         self.log = logger
         self.app_config = tds.utils.config.TDSDeployConfig()
         self.deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy()
+        self.proj_type = None
 
     @tds.utils.debug
     def check_previous_environment(self, params, pkg_id, app_id):
@@ -228,6 +254,7 @@ class Deploy(object):
 
     @tds.utils.debug
     def restart_host(self, dep_host, app, retry=4):
+        'Restart a host'
         return self.deploy_strategy.restart_host(dep_host, app, retry)
 
     @tds.utils.debug
@@ -395,7 +422,7 @@ class Deploy(object):
                 app_ids.append(app_id)
 
                 if redeploy:
-                    app_dep, app_type, dep_type, pkg = dep_info
+                    app_dep, app_type, _dep_type, pkg = dep_info
 
                     # Don't redeploy to a validated tier
                     if app_dep.status == 'validated':
@@ -477,7 +504,7 @@ class Deploy(object):
                                'application map', app_id)
                 continue
 
-            ok = True
+            valid = True
 
             app_dep, app_type, dep_type, pkg = app_dep_map[app_id]
             self.log.debug(5, 'Application deployment is: %r', app_dep)
@@ -492,18 +519,18 @@ class Deploy(object):
                               'version "%s" for apptype "%s" as that version '
                               'is currently deployed for the apptype',
                               params['project'], params['version'], app_type)
-                ok = False
+                valid = False
 
-            if ok:
+            if valid:
                 if app_dep.status != 'validated':
                     self.log.info('Deployment for application "%s" with '
                                   'version "%s" for apptype "%s" has not '
                                   'been validated in %s environment',
                                   params['project'], params['version'],
                                   app_type, self.envs[params['environment']])
-                    ok = False
+                    valid = False
 
-            if not ok:
+            if not valid:
                 self.log.debug(5, 'Deleting application ID %r from '
                                'deployment/application map', app_id)
                 del app_dep_map[app_id]
@@ -530,9 +557,9 @@ class Deploy(object):
         #   4. If either step 2 or 3 failed, remove host/app type from
         #      relevant mapping to be used for deployments
         for app_id in app_ids:
-            ok = self.check_previous_environment(params, pkg_id, app_id)
+            valid = self.check_previous_environment(params, pkg_id, app_id)
 
-            if ok:
+            if valid:
                 if not app_dep_map[app_id]:
                     self.log.debug(5, 'Application ID %r is not in '
                                    'deployment/application map', app_id)
@@ -551,9 +578,9 @@ class Deploy(object):
                                   'for apptype %r',
                                   params['project'], params['version'],
                                   self.envs[params['environment']], app_type)
-                    ok = False
+                    valid = False
 
-            if not ok:
+            if not valid:
                 if params.get('hosts', None):
                     self.log.debug(5, 'Deleting application ID %r from '
                                    'host/application map', app_id)
@@ -607,7 +634,7 @@ class Deploy(object):
                                'deployment/application map', app_id)
                 continue
 
-            ok = True
+            valid = True
 
             if params.get('hosts', None):
                 prev_dep_info = \
@@ -625,7 +652,7 @@ class Deploy(object):
                               'application "%s" for app type "%s" in %s '
                               'environment', params['project'], app_id,
                               self.envs[params['environment']])
-                ok = False
+                valid = False
             else:
                 prev_app_dep, prev_pkg_id = prev_dep_info
                 self.log.debug(5, 'Previous application deployment is: %r',
@@ -634,7 +661,7 @@ class Deploy(object):
 
                 app_pkg_map[app_id] = prev_pkg_id
 
-            if not ok:
+            if not valid:
                 self.log.debug(5, 'Deleting application ID %r from '
                                'deployment/application map', app_id)
                 del app_dep_map[app_id]
@@ -655,7 +682,7 @@ class Deploy(object):
                                'deployment/application map', app_id)
                 continue
 
-            ok = True
+            valid = True
 
             app_dep, app_type, dep_type, pkg = app_dep_map[app_id]
             self.log.debug(5, 'Application deployment is: %r', app_dep)
@@ -668,9 +695,9 @@ class Deploy(object):
                               'already validated in %s environment',
                               params['project'], app_type,
                               self.envs[params['environment']])
-                ok = False
+                valid = False
 
-            if ok:
+            if valid:
                 # Ensure tier state is consistent
                 result, missing, diffs, not_ok_hostnames = \
                     self.check_tier_state(params, pkg_id, app_dep)
@@ -697,14 +724,14 @@ class Deploy(object):
                     if params['force']:
                         self.log.info('The "--force" option was used, '
                                       'validating regardless')
-                        ok = True
+                        valid = True
                     else:
                         self.log.info('Rejecting validation, please use '
                                       '"--force" if you still want to '
                                       'validate')
-                        ok = False
+                        valid = False
 
-            if not ok:
+            if not valid:
                 self.log.debug(5, 'Deleting application ID %r from '
                                'deployment/application map', app_id)
                 del app_dep_map[app_id]
@@ -1054,7 +1081,7 @@ class Deploy(object):
 
         self.log.debug('Performing invalidations to application tiers')
 
-        for app_id, dep_info in app_dep_map.iteritems():
+        for dep_info in app_dep_map.itervalues():
             app_dep, app_type, dep_type, pkg = dep_info
             self.log.debug(5, 'Application deployment is: %r', app_dep)
             self.log.debug(5, 'Application type is: %s', app_type)
@@ -1145,7 +1172,7 @@ class Deploy(object):
 
         self.log.debug('Performing validations to application tiers')
 
-        for app_id, dep_info in app_dep_map.iteritems():
+        for dep_info in app_dep_map.itervalues():
             app_dep, app_type, dep_type, pkg = dep_info
             self.log.debug(5, 'Application deployment is: %r', app_dep)
             self.log.debug(5, 'Application type is: %s', app_type)
@@ -1230,7 +1257,7 @@ class Deploy(object):
         else:
             self.log.debug(5, 'Restarts are for application tiers...')
 
-            for app_id, dep_info in app_dep_map.iteritems():
+            for app_id in app_dep_map.iterkeys():
                 self.log.debug(5, 'Application ID is: %s', app_id)
 
                 dep_hosts = tagopsdb.deploy.deploy.find_hosts_for_app(
@@ -1245,32 +1272,9 @@ class Deploy(object):
 
         self.log.debug('Sending notifications for given deployment')
 
-        deployment = self.create_deployment(params)
+        deployment = create_deployment(params)
         notification = tds.notifications.Notifications(self.app_config)
         notification.notify(deployment)
-
-    def create_deployment(self, params):
-        return tds.model.Deployment(
-            actor=dict(
-                username=params.get('user'),
-                automated=False,
-            ),
-            action=dict(
-                command=params.get('command_name'),
-                subcommand=params.get('subcommand_name'),
-            ),
-            project=dict(
-                name=params.get('project'),
-            ),
-            package=dict(
-                name=params.get('project'),
-                version=params.get('version'),
-            ),
-            target=dict(
-                environment=params.get('environment'),
-                apptypes=params.get('apptypes'),
-            ),
-        )
 
     @tds.utils.debug
     def show_app_deployments(self, project, app_versions, env):
@@ -1555,7 +1559,7 @@ class Deploy(object):
         self.proj_type = self.verify_project_type(params['project'])
         self.ensure_explicit_destinations(params)
 
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
+        pkg_id, app_ids, _app_host_map = self.get_app_info(params)
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
@@ -1620,7 +1624,7 @@ class Deploy(object):
         self.proj_type = self.verify_project_type(params['project'])
         self.ensure_explicit_destinations(params)
 
-        pkg_id, app_ids, app_host_map = self.get_app_info(params)
+        pkg_id, app_ids, _app_host_map = self.get_app_info(params)
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
