@@ -39,49 +39,38 @@ def pyunit = project.downstreamJob {
     }
 }
 
-def matrixRPMs = project.pythonFPMMatrixJob {
+def tds_update_repo = new FPMPython([
+    FPMCommonArgs.verbose,
+    new FPMArg('-s', 'dir'),
+    FPMCommonArgs.type,
+    FPMCommonArgs.autodirs,
+    new FPMArg('-C', './etc'),
+    new FPMArg('--prefix','/etc/init.d'),
+    new FPMArg('--name', 'tds-update-repo'),
+    new FPMArg('--after-install', 'pkg/rpm/after_install.sh'),
+    new FPMArg('--before-remove', 'pkg/rpm/before_remove.sh'),
+    new FPMArg('--depends',
+    '"$FPM_PYPREFIX_PREFIX$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_ITERATION"',
+    [
+        FPMPythonScripts.fpm_interpreter,
+        FPMPythonScripts.fpm_version_iteration,
+        FPMPythonScripts.fpm_python_tagged_iteration,
+    ]),
+    new FPMArg('--description',
+    "'Daemon to update repository for deployment application'"),
+    FPMPythonArgs.version,
+    FPMPythonArgs.iteration,
+    new FPMArg('$FPM_EXTRAS'),
+    FPMCommonArgs.current_dir
+])
+
+def matrixRPMs = project.pythonFPMMatrixJob([
+    'fpmsteps': [tds_update_repo]
+]) {
     name 'build'
     logRotator(-1, 50)
 
     steps {
-        shell('''
-            #!/bin/bash
-            if [ -n "$rvm_path" -a -f $rvm_path/scripts/rvm ]; then
-                source $rvm_path/scripts/rvm
-                rvm use system
-            fi
-            export GEM_HOME=/usr/lib/ruby/gems/1.8
-            if [ "$os" == "centos54" -a "$interpreter" == "python24" ] ||
-               [ "$os" == "centos64" -a "$interpreter" == "python26" ]; then
-                FPM_INTERPRETER=python
-                FPM_PYPREFIX=python
-            else
-                FPM_INTERPRETER=`echo "$interpreter" | sed -r 's/2/2\\./g'`
-                FPM_PYPREFIX=$interpreter
-            fi
-            if [ "$os" == "centos54" ]; then
-                FPM_CMD_PYTHON=python2.6
-            else
-                FPM_CMD_PYTHON=python
-            fi
-            if [ -f version.py ]; then
-                FPM_PYPKG_VERSION=`$FPM_CMD_PYTHON -c "import version; v = version.__version__; print v.split('-', 1)[0] if '-' in v else v"`
-                FPM_PYPKG_ITERATION=`$FPM_CMD_PYTHON -c "import version, string; v = version.__version__; print '0.' + v.split('-', 1)[1] if '-' in v and v.split('-', 1)[1][0] not in string.digits else '1'"`
-                FPM_VERSION="-v $FPM_PYPKG_VERSION"
-            else
-                FPM_VERSION=""
-                FPM_PYPKG_ITERATION="1"
-            fi
-            if [ "$os" == "centos54" ]; then
-                FPM_PYPKG_ITERATION="$FPM_PYPKG_ITERATION.tagged.el5"
-            elif [ "$os" == "centos64" ]; then
-                FPM_PYPKG_ITERATION="$FPM_PYPKG_ITERATION.tagged.el6"
-            fi
-            FPM_ITERATION="--iteration $FPM_PYPKG_ITERATION"
-            set -x
-            /usr/lib/ruby/gems/1.8/bin/fpm --verbose -s dir --rpm-auto-add-directories -C ./etc --prefix /etc/init.d -n tds-update-repo -t rpm --after-install pkg/rpm/after_install.sh --before-remove pkg/rpm/before_remove.sh -d "$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_PYPKG_ITERATION" --description 'Daemon to update repository for deployment application' $FPM_VERSION $FPM_ITERATION $FPM_EXTRAS .
-            '''.stripIndent().trim())
-
         publishers {
             archiveArtifacts('*.rpm')
         }
