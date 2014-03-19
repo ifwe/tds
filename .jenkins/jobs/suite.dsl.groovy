@@ -3,7 +3,11 @@
 @Grab('com.tagged.build:tagged-fpm-scriptlet:0.0.1')
 
 import com.tagged.build.common.*
-import com.tagged.build.fpm.*
+import com.tagged.build.fpm.FPMPython
+import com.tagged.build.fpm.FPMArg
+import com.tagged.build.fpm.FPMCommonArgs
+import com.tagged.build.fpm.FPMPythonArgs
+import com.tagged.build.fpm.FPMPythonScripts
 
 def project = new PythonFPMMatrixProject(
     jobFactory,
