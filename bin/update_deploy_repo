@@ -241,9 +241,6 @@ class UpdateDeployRepoDaemon(Daemon):
                 finally:
                     Session.commit()
 
-            pkg.status = 'completed'
-            Session.commit()
-
         logger.info('Updating repo...')
         old_umask = os.umask(0002)
 
@@ -264,17 +261,19 @@ class UpdateDeployRepoDaemon(Daemon):
                     Session.commit()
 
                 logger.error('yum database update failed, aborting: %s', e)
+        else:
+            # Yes, making the assumption none of the package finds
+            # will fail...
+            for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
+                pkg = package.find_package(*rpm_info[1:])
+                pkg.status = 'completed'
+                Session.commit()
+        finally:
+            os.umask(old_umask)
+            logger.info('Removing processed files...')
 
-        os.umask(old_umask)
-        logger.info('Removing processed files...')
-        # Yes, making the assumption none of the package finds will fail...
-        # yet again...
-        for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
-            pkg = package.find_package(*rpm_info[1:])
-            pkg.status = 'completed'
-            Session.commit()
-
-            self.remove_file(os.path.join(process_dir, rpm_to_process))
+            for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
+                self.remove_file(os.path.join(process_dir, rpm_to_process))
 
 
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
