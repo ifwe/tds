@@ -233,11 +233,9 @@ class UpdateDeployRepoDaemon(Daemon):
                 finally:
                     Session.commit()
 
-            pkg.status = 'completed'
-            Session.commit()
-
         logger.info('Updating repo...')
         old_umask = os.umask(0002)
+        final_status = 'completed'
 
         try:
             run(['make', '-C', repo_dir])
@@ -248,24 +246,21 @@ class UpdateDeployRepoDaemon(Daemon):
             try:
                 run(['make', '-C', repo_dir])
             except subprocess.CalledProcessError as e:
-                # Yes, making the assumption none of the package finds
-                # will fail...
-                for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
-                    pkg = package.find_package(*rpm_info[1:])
-                    pkg.status = 'failed'
-                    Session.commit()
-
                 logger.error('yum database update failed, aborting: %s', e)
+                final_status = 'failed'
+
+        logger.info('Updating status of packages to: %s' % final_status)
+        # Yes, making the assumption none of the package finds
+        # will fail...
+        for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
+            pkg = package.find_package(*rpm_info[1:])
+            pkg.status = final_status
+            Session.commit()
 
         os.umask(old_umask)
         logger.info('Removing processed files...')
-        # Yes, making the assumption none of the package finds will fail...
-        # yet again...
-        for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
-            pkg = package.find_package(*rpm_info[1:])
-            pkg.status = 'completed'
-            Session.commit()
 
+        for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
             self.remove_file(os.path.join(process_dir, rpm_to_process))
 
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
