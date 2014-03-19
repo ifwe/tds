@@ -1,6 +1,6 @@
 @GrabResolver('https://artifactory.tagged.com/artifactory/libs-release-local/')
-@Grab('com.tagged.build:jenkins-dsl-common:0.1.16')
-@Grab('com.tagged.build:tagged-fpm-scriptlet:0.0.1')
+@Grab('com.tagged.build:jenkins-dsl-common:0.1.17')
+@Grab('com.tagged.build:tagged-fpm-scriptlet:0.0.2')
 
 import com.tagged.build.common.*
 import com.tagged.build.fpm.FPMPython
