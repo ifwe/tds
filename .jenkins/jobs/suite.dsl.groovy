@@ -1,7 +1,9 @@
 @GrabResolver('https://artifactory.tagged.com/artifactory/libs-release-local/')
-@Grab('com.tagged.build:jenkins-dsl-common:0.1.14')
+@Grab('com.tagged.build:jenkins-dsl-common:0.1.15')
+@Grab('com.tagged.build:tagged-fpm-scriptlet:0.0.1')
 
 import com.tagged.build.common.*
+import com.tagged.build.fpm.*
 
 def project = new PythonFPMMatrixProject(
     jobFactory,
