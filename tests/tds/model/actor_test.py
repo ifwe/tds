@@ -1,8 +1,10 @@
 '''Tests for the actor model'''
 
+import os
+import pwd
 import unittest2
 
-from mock import patch, PropertyMock
+from mock import Mock, mock_open, patch
 
 import tds.model
 
@@ -23,20 +25,36 @@ class TestActorModel(unittest2.TestCase):
 
     def test_name(self):
         'Ensure "name" property is functional'
-        actor_name = patch(
-            'tds.model.Actor.name',
-            new_callable=PropertyMock
+        getuid = patch(
+            'os.getuid',
+            return_value = 1234
         ).start()
-        actor_name.return_value = self.actor_properties['name']
+        getpwuid = patch(
+            'pwd.getpwuid',
+            return_value = [self.actor_properties['name']]
+        ).start()
 
         assert self.actor.name == self.actor_properties['name']
 
+    def get_group_names(self, gid):
+        'Method to return fake group name for fake gid'
+        if gid == 501:
+            return Mock(gr_name='fake_group1')
+        elif gid == 502:
+            return Mock(gr_name='fake_group2')
+        else:
+            return None
+
     def test_groups(self):
         'Ensure "groups" property is functional'
-        actor_group = patch(
-            'tds.model.Actor.groups',
-            new_callable=PropertyMock
+        getgroups = patch(
+            'os.getgroups',
+            return_value = [501, 502]
         ).start()
-        actor_group.return_value = self.actor_properties['groups']
+
+        getgrgid = patch(
+            'grp.getgrgid',
+            side_effect = self.get_group_names
+        ).start()
 
         assert self.actor.groups == self.actor_properties['groups']
