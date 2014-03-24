@@ -26,7 +26,6 @@ from tagopsdb.exceptions import RepoException
 
 
 logger = logging.getLogger('update_deploy_repo')
-daemon = None
 
 
 class ExtCommandError(Exception):
@@ -39,10 +38,10 @@ class Zookeeper(object):
     def __init__(self, hostname, servers):
         """Set up election for Zookeeper"""
 
-        self.zk = KazooClient('hosts=%s' % ','.join(servers))
-        self.zk.start()
-        # self.zk.add_listener(self.my_listener)
-        self.election = self.zk.Election('/deployrepo', hostname)
+        self.zoo = KazooClient('hosts=%s' % ','.join(servers))
+        self.zoo.start()
+        # self.zoo.add_listener(self.my_listener)
+        self.election = self.zoo.Election('/deployrepo', hostname)
 
     def my_listener(self, state):
         """Manage connection to Zookeeper"""
@@ -82,10 +81,10 @@ def run(cmd, expect_return_code=0, env=None, shell=False):
         exc.stdout = stdout
         raise exc
 
-    Process = collections.namedtuple('Process',
+    process = collections.namedtuple('Process',
                                      ['stdout', 'stderr', 'returncode'])
 
-    return Process(stdout=stdout, stderr=stderr, returncode=proc.returncode)
+    return process(stdout=stdout, stderr=stderr, returncode=proc.returncode)
 
 
 class UpdateDeployRepoDaemon(Daemon):
@@ -190,9 +189,9 @@ class UpdateDeployRepoDaemon(Daemon):
         msg['From'] = sender_email
         msg['To'] = ', '.join(receiver_emails)
 
-        s = smtplib.SMTP('localhost')
-        s.sendmail(sender, receiver_emails, msg.as_string())
-        s.quit()
+        smtp = smtplib.SMTP('localhost')
+        smtp.sendmail(sender, receiver_emails, msg.as_string())
+        smtp.quit()
 
     def update_repo(self, repo_dir, process_dir):
         """Copy RPMs in processing directory to the repository and run
@@ -330,9 +329,9 @@ class UpdateDeployRepoDaemon(Daemon):
         if 'zookeeper' in data:
             hostname = socket.gethostname()
 
-            zk = Zookeeper(hostname, data['zookeeper'])
-            zk.run(self.process_incoming_directory, repo_dir, incoming_dir,
-                   process_dir)
+            zoo = Zookeeper(hostname, data['zookeeper'])
+            zoo.run(self.process_incoming_directory, repo_dir, incoming_dir,
+                    process_dir)
         else:
             self.process_incoming_directory(repo_dir, incoming_dir,
                                             process_dir)
@@ -358,12 +357,12 @@ def daemon_main():
     # 'logger' set at top of program
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
-    fh = logging.FileHandler(logfile, 'a')
-    fh.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(logfile, 'a')
+    handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
                                   "%b %e %H:%M:%S")
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     daemon = UpdateDeployRepoDaemon(pid,
                                     stdout='/tmp/update_deploy_repo.out',
