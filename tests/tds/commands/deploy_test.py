@@ -3,6 +3,7 @@ from unittest_data_provider import data_provider
 import unittest2
 import logging
 
+from tests.factories.model.deployment import DeploymentFactory
 from tests.factories.utils.config import DeployConfigFactory
 
 import tagopsdb.deploy.deploy
@@ -128,38 +129,18 @@ class TestPromoteAndPush(unittest2.TestCase):
         params = dict(
             user_level='fake_access',
             environment='test',  # TODO: mock BaseDeploy.envs
-            project='fake_app',
+            project='fake_package',
             user='fake_user',
-            apptypes=['whatever'],
+            groups=['engteam'],
+            apptypes=['fake_apptype'],
             subcommand_name='promote',  # TODO: mock BaseDeploy.dep_types
-            command_name='package',
-            version='deadbeef',
+            command_name='deploy',
+            version='badf00d',
         )
 
         getattr(self.deploy, params.get('subcommand_name'))(params)
 
-        deployment = tds.model.Deployment(
-            actor=dict(
-                username='fake_user',
-                automated=False
-            ),
-            action=dict(
-                command='package',
-                subcommand='promote',
-            ),
-            project=dict(
-                name='fake_app'
-            ),
-            package=dict(
-                name='fake_app',  # TODO: make different from project name
-                version='deadbeef'
-            ),
-            target=dict(
-                environment='test',
-                apptypes=['whatever'],
-            )
-        )
-
+        deployment = DeploymentFactory()
         Notifications.assert_called_with(tds_config.TDSDeployConfig())
 
         notify.assert_called_with(deployment)

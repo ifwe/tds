@@ -4,6 +4,7 @@ Factories to create various tds.model.deployment.Deployment instances
 import factory
 import tds.model.deployment as d
 
+from .actor import ActorFactory
 from .package import PackageFactory
 
 
@@ -16,10 +17,7 @@ class DeploymentFactory(factory.Factory):
     '''
     FACTORY_FOR = d.Deployment
 
-    actor = dict(
-        username='fake_user',
-        automated=False,
-    )
+    actor = factory.SubFactory(ActorFactory)
 
     action = dict(
         command='deploy',

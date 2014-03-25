@@ -131,7 +131,7 @@ class Notifier(object):
                          dest_type, destinations,
                          self.app_config['env.environment'])
         msg_args = (
-            deployment.actor['username'], deployment.action['command'],
+            deployment.actor.name, deployment.action['command'],
             deployment.action['subcommand'], dest_type,
             self.app_config['env.environment'], destinations
         )

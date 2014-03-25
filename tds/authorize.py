@@ -3,7 +3,6 @@ import logging
 import tds.utils
 
 from tds.exceptions import AccessError
-from tds.model import Actor
 
 access_levels = ['disabled', 'admin', 'prod', 'stage', 'dev']
 access_mapping = {'disabled': 'root',
@@ -16,16 +15,15 @@ tds_log = logging.getLogger('tds')
 
 
 @tds.utils.debug
-def get_access_level():
+def get_access_level(actor):
     """Find highest access level for user"""
 
     tds_log.debug('Finding user\'s access level')
 
-    user_groups = Actor().groups
-    tds_log.debug(5, 'User\'s groups are: %s', ', '.join(user_groups))
+    tds_log.debug(5, 'User\'s groups are: %s', ', '.join(actor.groups))
 
     for level in access_levels:
-        if access_mapping[level] in user_groups:
+        if access_mapping[level] in actor.groups:
             tds_log.debug(5, 'Returning level: %s', level)
             return level
     else:

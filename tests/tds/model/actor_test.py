@@ -11,12 +11,15 @@ class TestActorModel(unittest2.TestCase):
     'Tests for actor model'
 
     def setUp(self):
-        self.actor = tds.model.Actor()
-
         self.actor_properties = {
             'name': 'fake_user',
             'groups': ['fake_group1', 'fake_group2'],
         }
+
+        self.actor = tds.model.Actor(
+            self.actor_properties['name'],
+            self.actor_properties['groups']
+        )
 
     def tearDown(self):
         patch.stopall()

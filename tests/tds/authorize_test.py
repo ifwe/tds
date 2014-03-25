@@ -2,10 +2,12 @@
 
 import unittest2
 
-from mock import patch, PropertyMock
+from mock import patch
 from unittest_data_provider import data_provider
 
 import tds.authorize
+
+from tests.factories.model.actor import ActorFactory
 
 GROUPS = {
     500: 'invalid_group',
@@ -42,8 +44,7 @@ class TestAuthorization(unittest2.TestCase):
     @data_provider(GROUP_PROVIDER)
     def test_get_access_level(self, gid, auth_level):
         'Ensure proper access level for a given user is retrieved'
-        with patch('tds.authorize.Actor.groups',
-                   new_callable=PropertyMock) as mock_groups:
-            mock_groups.return_value = [GROUPS[gid]]
+        actor = ActorFactory()
+        actor.groups = [GROUPS[gid]]
 
-            assert tds.authorize.get_access_level() == auth_level
+        assert tds.authorize.get_access_level(actor) == auth_level
