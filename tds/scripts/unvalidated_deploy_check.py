@@ -3,7 +3,7 @@ import sys
 import tagopsdb.deploy.deploy as deploy
 import tds.notifications
 import tds.utils.config
-from tds.model import Deployment
+from tds.model import Deployment, LocalActor
 
 from tagopsdb.database import init_session
 from tagopsdb.exceptions import PermissionsException
@@ -40,22 +40,20 @@ def main(*args):
          user, status) = entry
 
         deployment = Deployment(
-            actor=dict(
-                username=user,
-            ),
+            actor=LocalActor(),
             action=dict(
                 command='unvalidated',
             ),
             project=dict(
-                name=pkg_name
+                name=pkg_name,
             ),
             package=dict(
                 name=pkg_name,
-                version=version
+                version=version,
             ),
             target=dict(
                 environment=environment,
-                apptypes=[app_type]
+                apptypes=[app_type],
             )
         )
 
