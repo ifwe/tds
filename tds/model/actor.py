@@ -8,7 +8,7 @@ from .base import Base
 
 
 class Actor(Base):
-    'Model class for simple actor object (to be used for tests)'
+    'Model base class for actor object'
 
     def __init__(self, name, groups):
         ''
@@ -18,7 +18,7 @@ class Actor(Base):
 
 
 class LocalActor(Actor):
-    'Model class for actor object populated with actual required values'
+    'Model class for actor object populated with values from the local OS'
 
     def __init__(self):
         ''
