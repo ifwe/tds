@@ -22,18 +22,10 @@ class TestActorModel(unittest2.TestCase):
         )
 
     def tearDown(self):
-        patch.stopall()
+        pass
 
     def test_name(self):
         'Ensure "name" property is functional'
-        patch(
-            'os.getuid',
-            return_value = 1234
-        ).start()
-        patch(
-            'pwd.getpwuid',
-            return_value = [self.actor_properties['name']]
-        ).start()
 
         assert self.actor.name == self.actor_properties['name']
 
@@ -49,14 +41,5 @@ class TestActorModel(unittest2.TestCase):
 
     def test_groups(self):
         'Ensure "groups" property is functional'
-        patch(
-            'os.getgroups',
-            return_value = [501, 502]
-        ).start()
-
-        patch(
-            'grp.getgrgid',
-            side_effect = self.get_group_names
-        ).start()
 
         assert self.actor.groups == self.actor_properties['groups']

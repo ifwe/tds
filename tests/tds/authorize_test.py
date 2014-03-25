@@ -35,12 +35,6 @@ GROUP_PROVIDER = lambda: [
 class TestAuthorization(unittest2.TestCase):
     'Tests for authorization module'
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        patch.stopall()
-
     @data_provider(GROUP_PROVIDER)
     def test_get_access_level(self, gid, auth_level):
         'Ensure proper access level for a given user is retrieved'
