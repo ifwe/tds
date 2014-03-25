@@ -8,14 +8,21 @@ from .base import Base
 
 
 class Actor(Base):
-    'Model class for actor object'
+    'Model class for simple actor object (to be used for tests)'
 
-    @property
-    def name(self):
-        'Return name of user'
-        return pwd.getpwuid(os.getuid())[0]
+    def __init__(self, name, groups):
+        ''
+        super(Actor, self).__init__()
+        self.name = name
+        self.groups = groups
 
-    @property
-    def groups(self):
-        'Return groups for user'
-        return [grp.getgrgid(group).gr_name for group in os.getgroups()]
+
+class LocalActor(Actor):
+    'Model class for actor object populated with actual required values'
+
+    def __init__(self):
+        ''
+        super(LocalActor, self).__init__(
+            pwd.getpwuid(os.getuid())[0],
+            [grp.getgrgid(group).gr_name for group in os.getgroups()]
+        )

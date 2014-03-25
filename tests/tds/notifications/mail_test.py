@@ -32,17 +32,17 @@ class TestEmailNotifier(unittest2.TestCase):
 
         SMTP.assert_called_with('localhost')
         (sender, recvrs, content), _kw = SMTP.return_value.sendmail.call_args
-        assert sender == deployment.actor['username']
+        assert sender == deployment.actor.name
         self.assertItemsEqual(
             recvrs,
-            [deployment.actor['username']+'@tagged.com',
+            [deployment.actor.name+'@tagged.com',
              receiver]
         )
 
         unfold_header = lambda s: re.sub(r'\n(?:[ \t]+)', r' ', s)
 
         msg = email.message_from_string(content)
-        username = deployment.actor['username']
+        username = deployment.actor.name
         sender_email = username+'@tagged.com'
         ctype = 'text/plain; charset="us-ascii"'
         assert unfold_header(msg.get('content-type')) == ctype
