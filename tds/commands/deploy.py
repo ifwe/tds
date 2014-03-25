@@ -8,6 +8,7 @@ import tagopsdb.deploy.repo
 import tagopsdb.deploy.deploy
 import tagopsdb.deploy.package
 
+import tds.model
 import tds.utils
 import tds.deploy_strategy
 
@@ -15,9 +16,9 @@ import tds.deploy_strategy
 def create_deployment(params):
     'Translate the common "params" argument into a Deployment instance'
     return tds.model.Deployment(
-        actor=dict(
-            username=params.get('user'),
-            automated=False,
+        actor=tds.model.Actor(
+            name=params.get('user'),
+            groups=params.get('groups'),
         ),
         action=dict(
             command=params.get('command_name'),
@@ -26,7 +27,7 @@ def create_deployment(params):
         project=dict(
             name=params.get('project'),
         ),
-        package=dict(
+        package=tds.model.Package(
             name=params.get('project'),
             version=params.get('version'),
         ),

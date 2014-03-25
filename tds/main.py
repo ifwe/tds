@@ -10,6 +10,7 @@ import tds.utils
 from tagopsdb.database import init_session
 from tagopsdb.exceptions import PermissionsException
 from tds.exceptions import AccessError, ConfigurationError
+from tds.model import LocalActor
 
 
 log = logging.getLogger('tds.main')
@@ -48,7 +49,8 @@ class TDS(object):
 
         log.debug('Checking user authorization level')
 
-        self.params['user_level'] = tds.authorize.get_access_level()
+        self.params['user_level'] = \
+            tds.authorize.get_access_level(LocalActor())
         log.debug(5, 'User level is: %s', self.params['user_level'])
 
         if self.params['user_level'] is None:
