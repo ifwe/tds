@@ -19,7 +19,7 @@ class EmailNotifier(Notifier):
         log.debug('Sending email notification(s)')
 
         message = self.message_for_deployment(deployment)
-        sender_addr = '%s@tagged.com' % deployment.actor['username']
+        sender_addr = '%s@tagged.com' % deployment.actor.name
         receiver_emails = [sender_addr, self.receiver]
 
         log.debug(5, 'Receiver\'s email address: %s', self.receiver)
@@ -33,7 +33,7 @@ class EmailNotifier(Notifier):
 
         s = smtplib.SMTP('localhost')
         s.sendmail(
-            deployment.actor['username'],
+            deployment.actor.name,
             receiver_emails,
             msg.as_string()
         )

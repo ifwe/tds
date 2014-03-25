@@ -54,7 +54,7 @@ class TestHipchatNotifier(unittest2.TestCase):
                 'params': {
                     'auth_token': token,
                     'room_id': room,
-                    'from': deployment.actor['username'],
+                    'from': deployment.actor.name,
                     'message': (
                         '<strong>fake subj</strong><br />fake body'
                     ),

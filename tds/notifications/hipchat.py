@@ -44,7 +44,7 @@ class HipchatNotifier(Notifier):
         for room in self.rooms + extra_rooms:
             self.send_hipchat_message(
                 room,
-                deployment.actor['username'],
+                deployment.actor.name,
                 '<strong>%(subject)s</strong><br />%(body)s' % message
             )
 

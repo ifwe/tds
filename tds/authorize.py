@@ -1,6 +1,4 @@
-import grp
 import logging
-import os
 
 import tds.utils
 
@@ -17,16 +15,15 @@ tds_log = logging.getLogger('tds')
 
 
 @tds.utils.debug
-def get_access_level():
+def get_access_level(actor):
     """Find highest access level for user"""
 
     tds_log.debug('Finding user\'s access level')
 
-    user_groups = [grp.getgrgid(group).gr_name for group in os.getgroups()]
-    tds_log.debug(5, 'User\'s groups are: %s', ', '.join(user_groups))
+    tds_log.debug(5, 'User\'s groups are: %s', ', '.join(actor.groups))
 
     for level in access_levels:
-        if access_mapping[level] in user_groups:
+        if access_mapping[level] in actor.groups:
             tds_log.debug(5, 'Returning level: %s', level)
             return level
     else:
