@@ -47,7 +47,7 @@ BuildRequires:  %{pybase}-devel
 
 Requires: %{tagbase}-tagopsdb
 Requires: %{tagbase}-argparse
-Requires: %{tagbase}-ordereddict
+Requires: %{pybase}-ordereddict
 
 
 %description
