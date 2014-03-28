@@ -69,6 +69,9 @@ setup_args = dict(
             'update_deploy_repo = tds.scripts.update_deploy_repo:daemon_main',
         ]
     },
+    data_files = [
+        ('share/tds/salt', ['share/tds_cmd.py']),
+    ],
     test_suite='tests',
     tests_require=REQUIREMENTS + DEV_REQUIREMENTS,
     cmdclass=dict(test=PyTest)
