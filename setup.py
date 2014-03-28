@@ -28,13 +28,18 @@ REQ_BLACKLIST = ['tagopsdb']
 if sys.version_info > (2, 7) or sys.version_info > (3, 2):
     REQ_BLACKLIST.extend(['argparse', 'ordereddict'])
 
-def load_requirements(fname):
-    requirements = []
+def reqfile_read(fname):
     with open(fname, 'r') as reqfile:
         reqs = reqfile.read()
 
-    for req in filter(None, reqs.strip().splitlines()):
-        if req.startswith('git+'):
+    return filter(None, reqs.strip().splitlines())
+
+
+def load_requirements(fname):
+    requirements = []
+
+    for req in reqfile_read(fname):
+        if 'git+' in req:
             req = '>='.join(req.rsplit('=')[-1].split('-', 3)[:2])
         if any(req.startswith(bl) for bl in REQ_BLACKLIST):
             continue
@@ -42,9 +47,22 @@ def load_requirements(fname):
 
     return requirements
 
-REQUIREMENTS = load_requirements('requirements.txt')
-REQUIREMENTS.append('tagopsdb>0.7')
-DEV_REQUIREMENTS = load_requirements('requirements-dev.txt')
+REQUIREMENTS = {}
+REQUIREMENTS['install'] = load_requirements('requirements.txt')
+REQUIREMENTS['install'].append('tagopsdb>0.7')
+REQUIREMENTS['tests'] = load_requirements('requirements-dev.txt')
+
+def load_github_dependency_links(fname):
+    dep_links = []
+    for req in reqfile_read(fname):
+        if 'git+' in req and 'github' in req:  # not exactly precise...
+            url, ref_egg = req.split('git+', 1)[-1].rsplit('@', 1)
+            dep_links.append(url + '/tarball/' + ref_egg)
+
+    return dep_links
+
+DEPENDENCY_LINKS = load_github_dependency_links('requirements.txt')
+DEPENDENCY_LINKS.extend(load_github_dependency_links('requirements-dev.txt'))
 
 setup_args = dict(
     name='TDS',
@@ -62,7 +80,7 @@ setup_args = dict(
         'tds.commands',
         'tds.utils'
     ],
-    install_requires=REQUIREMENTS,
+    install_requires=REQUIREMENTS['install'],
     entry_points={
         'console_scripts': [
             'tds = tds.scripts.tds_prog:main',
@@ -71,11 +89,12 @@ setup_args = dict(
             'update_deploy_repo = tds.scripts.update_deploy_repo:daemon_main',
         ]
     },
-    data_files = [
+    data_files=[
         ('share/tds/salt', ['share/tds_cmd.py']),
     ],
     test_suite='tests',
-    tests_require=REQUIREMENTS + DEV_REQUIREMENTS,
+    tests_require=REQUIREMENTS['install'] + REQUIREMENTS['tests'],
+    dependency_links=DEPENDENCY_LINKS,
     cmdclass=dict(test=PyTest)
 )
 
