@@ -12,7 +12,7 @@ log = logging.getLogger('tds')
 
 class TDSMCODeployStrategy(DeployStrategy):
     @tds.utils.debug
-    def process_mco_command(self, mco_cmd, retry):
+    def _process_mco_command(self, mco_cmd, retry):
         """Run a given MCollective 'mco' command"""
 
         log.debug('Running MCollective command')
@@ -61,7 +61,7 @@ class TDSMCODeployStrategy(DeployStrategy):
         # active. Subsequent retries after a timeout work better.
         if m.group(2) == '0' and retry > 0:
             log.debug('Discovery failure, trying again.')
-            return self.process_mco_command(mco_cmd, retry-1)
+            return self._process_mco_command(mco_cmd, retry-1)
 
         for host, hostinfo in mc_output.iteritems():
             if hostinfo['exitcode'] != 0:
@@ -82,7 +82,7 @@ class TDSMCODeployStrategy(DeployStrategy):
                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                    app, 'restart']
 
-        return self.process_mco_command(mco_cmd, retry)
+        return self._process_mco_command(mco_cmd, retry)
 
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
@@ -92,4 +92,4 @@ class TDSMCODeployStrategy(DeployStrategy):
                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                    app, version]
 
-        return self.process_mco_command(mco_cmd, retry)
+        return self._process_mco_command(mco_cmd, retry)
