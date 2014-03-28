@@ -182,6 +182,7 @@ def verify_install(app, version):
 
 def do_install(app, version):
     'TDS install install'
+    app_check(app)
     try:
         inst_version = get_version(app)
     except ExtCommandError:
@@ -195,11 +196,13 @@ def do_install(app, version):
 
 
 def do_uninstall(app):
+    app_check(app)
     stop_puppet()
     app_uninstall(app)
 
 
-def do_restart():
+def do_restart(app):
+    app_check(app)
     manage_services('restart')
 
 
@@ -225,10 +228,9 @@ def main():
     action = parse_args(sys.argv)
 
     app, version = sys.argv[1:]
-    app_check(app)
 
     if action == 'restart':
-        do_restart()
+        do_restart(app)
     elif action == 'uninstall':
         do_uninstall(app)
     elif action == 'install':
