@@ -196,12 +196,14 @@ def do_install(app, version):
 
 
 def do_uninstall(app):
+    """uninstall app after check"""
     app_check(app)
     stop_puppet()
     app_uninstall(app)
 
 
 def do_restart(app):
+    """restart app after check"""
     app_check(app)
     manage_services('restart')
 
