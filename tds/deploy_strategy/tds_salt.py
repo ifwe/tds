@@ -12,7 +12,8 @@ logger = logging.getLogger('tds')
 class TDSSaltDeployStrategy(DeployStrategy):
     """Salt (master publish.publish) based DeployStrategy"""
 
-    def _publish(self, host, cmd, app):
+    @staticmethod
+    def _publish(host, cmd, app):
         """dispatch to salt master"""
         caller = salt.client.Caller()
         return caller.function('publish.publish', host, cmd, app)
