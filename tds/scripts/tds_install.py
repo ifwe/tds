@@ -194,6 +194,15 @@ def do_install(app, version):
     verify_install(app, version)
 
 
+def do_uninstall(app):
+    stop_puppet()
+    app_uninstall(app)
+
+
+def do_restart():
+    manage_services('restart')
+
+
 def parse_args(args):
     'TDS install argument parsing'
 
@@ -219,10 +228,9 @@ def main():
     app_check(app)
 
     if action == 'restart':
-        manage_services('restart')
+        do_restart()
     elif action == 'uninstall':
-        stop_puppet()
-        app_uninstall(app)
+        do_uninstall(app)
     elif action == 'install':
         do_install(app, version)
 
