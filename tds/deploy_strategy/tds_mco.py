@@ -6,14 +6,17 @@ import tds.utils
 
 from .base import DeployStrategy
 
+import logging
+log = logging.getLogger('tds')
+
 
 class TDSMCODeployStrategy(DeployStrategy):
     @tds.utils.debug
     def process_mco_command(self, mco_cmd, retry):
         """Run a given MCollective 'mco' command"""
 
-        self.log.debug('Running MCollective command')
-        self.log.debug(5, 'Command is: %s' % ' '.join(mco_cmd))
+        log.debug('Running MCollective command')
+        log.debug(5, 'Command is: %s' % ' '.join(mco_cmd))
 
         proc = subprocess.Popen(
             mco_cmd,
@@ -47,7 +50,7 @@ class TDSMCODeployStrategy(DeployStrategy):
             return (False, 'No output or summary information returned '
                            'from mco process')
 
-        self.log.debug(summary)
+        log.debug(summary)
         m = re.search(r'processing (\d+) / (\d+) ', summary)
 
         if m is None:
@@ -57,7 +60,7 @@ class TDSMCODeployStrategy(DeployStrategy):
         # because vmware is slow to respond when the hosts are not
         # active. Subsequent retries after a timeout work better.
         if m.group(2) == '0' and retry > 0:
-            self.log.debug('Discovery failure, trying again.')
+            log.debug('Discovery failure, trying again.')
             return self.process_mco_command(mco_cmd, retry-1)
 
         for host, hostinfo in mc_output.iteritems():
@@ -73,7 +76,7 @@ class TDSMCODeployStrategy(DeployStrategy):
     def restart_host(self, dep_host, app, retry=4):
         """Restart application on a given host"""
 
-        self.log.debug('Restarting application on host %r', dep_host)
+        log.debug('Restarting application on host %r', dep_host)
 
         mco_cmd = ['/usr/bin/mco', 'tds', '--discovery-timeout', '4',
                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
@@ -83,7 +86,7 @@ class TDSMCODeployStrategy(DeployStrategy):
 
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
-        self.log.debug('Deploying to host %r' % dep_host)
+        log.debug('Deploying to host %r' % dep_host)
 
         mco_cmd = ['/usr/bin/mco', 'tds', '--discovery-timeout', '4',
                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,

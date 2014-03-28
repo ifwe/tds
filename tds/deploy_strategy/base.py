@@ -1,7 +1,4 @@
 class DeployStrategy(object):
-    def __init__(self, log):
-        self.log = log
-
     def deploy_to_host(self, dep_host, app, version, retry=4):
         raise NotImplementedError
 
