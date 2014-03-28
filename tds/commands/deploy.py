@@ -61,7 +61,7 @@ class Deploy(object):
 
         self.log = logger
         self.app_config = tds.utils.config.TDSDeployConfig()
-        self.deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy(self.log)
+        self.deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy()
         self.proj_type = None
 
     @tds.utils.debug
