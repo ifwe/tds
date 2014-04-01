@@ -25,7 +25,7 @@ from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException
 
 
-logger = logging.getLogger('update_deploy_repo')
+log = logging.getLogger('update_deploy_repo')
 
 
 class ExtCommandError(Exception):
@@ -51,7 +51,7 @@ class Zookeeper(object):
     def run(self, elect_method, *args):
         """Run passed method with given arguments when election is won"""
 
-        logger.info('Acquiring lock for processing...')
+        log.info('Acquiring lock for processing...')
         self.election.run(elect_method, *args)
 
 
@@ -98,7 +98,7 @@ class UpdateDeployRepoDaemon(Daemon):
         try:
             os.unlink(rpm)
         except OSError as e:
-            logger.error('Unable to remove file %s: %s', (rpm, e))
+            log.error('Unable to remove file %s: %s', (rpm, e))
 
     def check_rpm_file(self, rpm_to_process):
         """ """
@@ -111,12 +111,12 @@ class UpdateDeployRepoDaemon(Daemon):
         try:
             rpm_info = run(cmd)
         except subprocess.CalledProcessError as e:
-            logger.error('rpm command failed: %s', e)
+            log.error('rpm command failed: %s', e)
 
             try:
                 self.email_for_invalid_rpm(rpm_to_process)
             except Exception as e:   # Email send failed?  Tough noogies.
-                logger.error('Email send failed: %s', e)
+                log.error('Email send failed: %s', e)
 
         if rpm_info is not None:
             # Contains arch type, package name, version and release
@@ -127,8 +127,8 @@ class UpdateDeployRepoDaemon(Daemon):
     def prepare_rpms(self, incoming_dir, process_dir, files):
         """Move RPMs in incoming directory to the processing directory"""
 
-        logger.info('Moving files in incoming directory to processing '
-                    'directory...')
+        log.info('Moving files in incoming directory to processing '
+                 'directory...')
 
         self.valid_rpms = dict()
 
@@ -142,7 +142,7 @@ class UpdateDeployRepoDaemon(Daemon):
             rpm_info = self.check_rpm_file(src_rpm)
 
             if rpm_info is None:
-                logger.error('Unable to process RPM file')
+                log.error('Unable to process RPM file')
 
                 self.remove_file(src_rpm)
 
@@ -165,8 +165,8 @@ class UpdateDeployRepoDaemon(Daemon):
             try:
                 os.rename(src_rpm, dst_rpm)
             except OSError as e:
-                logger.error('Unable to move file "%s" to "%s": %s',
-                             (src_rpm, process_dir, e))
+                log.error('Unable to move file "%s" to "%s": %s',
+                          (src_rpm, process_dir, e))
                 pkg.status = 'failed'
                 self.remove_file(src_rpm)
                 del self.valid_rpms[rpm]
@@ -202,8 +202,8 @@ class UpdateDeployRepoDaemon(Daemon):
             rpm_to_process = os.path.join(process_dir, rpm)
             rpm_info = self.valid_rpms[rpm]
 
-            logger.info('Verifying file %s and if valid moving to repository',
-                        rpm_to_process)
+            log.info('Verifying file %s and if valid moving to repository',
+                     rpm_to_process)
 
             pkg = package.find_package(*rpm_info[1:])
 
@@ -232,23 +232,23 @@ class UpdateDeployRepoDaemon(Daemon):
                 finally:
                     Session.commit()
 
-        logger.info('Updating repo...')
+        log.info('Updating repo...')
         old_umask = os.umask(0002)
         final_status = 'completed'
 
         try:
             run(['make', '-C', repo_dir])
         except subprocess.CalledProcessError as e:
-            logger.error('yum database update failed, retrying: %s', e)
+            log.error('yum database update failed, retrying: %s', e)
             time.sleep(5)   # Short delay before re-attempting
 
             try:
                 run(['make', '-C', repo_dir])
             except subprocess.CalledProcessError as e:
-                logger.error('yum database update failed, aborting: %s', e)
+                log.error('yum database update failed, aborting: %s', e)
                 final_status = 'failed'
 
-        logger.info('Updating status of packages to: %s' % final_status)
+        log.info('Updating status of packages to: %s' % final_status)
         # Yes, making the assumption none of the package finds
         # will fail...
         for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
@@ -257,7 +257,7 @@ class UpdateDeployRepoDaemon(Daemon):
             Session.commit()
 
         os.umask(old_umask)
-        logger.info('Removing processed files...')
+        log.info('Removing processed files...')
 
         for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
             self.remove_file(os.path.join(process_dir, rpm_to_process))
@@ -265,16 +265,16 @@ class UpdateDeployRepoDaemon(Daemon):
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
         """"""
 
-        logger.info('Checking for incoming files...')
+        log.info('Checking for incoming files...')
 
         while True:
             files = os.listdir(incoming_dir)
 
             if files:
-                logger.info('Files found, processing them...')
+                log.info('Files found, processing them...')
                 self.prepare_rpms(incoming_dir, process_dir, files)
                 self.update_repo(repo_dir, process_dir)
-                logger.info('Done processing, checking for incoming files...')
+                log.info('Done processing, checking for incoming files...')
 
             time.sleep(1.0)
 
@@ -286,7 +286,7 @@ class UpdateDeployRepoDaemon(Daemon):
 
         data = None
 
-        logger.info('Reading database access (dbaccess.admin.yml) file')
+        log.info('Reading database access (dbaccess.admin.yml) file')
 
         with open('/etc/tagops/dbaccess.admin.yml') as db_file:
             try:
@@ -304,10 +304,10 @@ class UpdateDeployRepoDaemon(Daemon):
             raise RuntimeError('YAML configuration missing necessary '
                                'parameter in "db" section: %s' % e)
 
-        logger.info('Initializing database session')
+        log.info('Initializing database session')
         init_session(db_user, db_password)
 
-        logger.info('Reading configuration (deploy.yml) file')
+        log.info('Reading configuration (deploy.yml) file')
 
         with open('/etc/tagops/deploy.yml') as conf_file:
             try:
@@ -346,7 +346,7 @@ class UpdateDeployRepoDaemon(Daemon):
         except:
             value = sys.exc_info()[1]
             e = "Unhandled exception: %s.  Daemon exiting." % value
-            logger.error(e)
+            log.error(e)
             sys.exit(1)
 
 
@@ -355,14 +355,14 @@ def daemon_main():
     logfile = '/var/log/update_deploy_repo.log'
 
     # 'logger' set at top of program
-    logger.setLevel(logging.DEBUG)
-    logger.propagate = False
+    log.setLevel(logging.DEBUG)
+    log.propagate = False
     handler = logging.FileHandler(logfile, 'a')
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
                                   "%b %e %H:%M:%S")
     handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    log.addHandler(handler)
 
     daemon = UpdateDeployRepoDaemon(pid,
                                     stdout='/tmp/update_deploy_repo.out',
@@ -372,13 +372,13 @@ def daemon_main():
         cmd, arg = sys.argv
 
         if arg == 'start':
-            logger.info('Starting %s daemon' % cmd)
+            log.info('Starting %s daemon' % cmd)
             daemon.start()
         elif arg == 'stop':
-            logger.info('Stopping %s daemon' % cmd)
+            log.info('Stopping %s daemon' % cmd)
             daemon.stop()
         elif arg == 'restart':
-            logger.info('Restarting %s daemon' % cmd)
+            log.info('Restarting %s daemon' % cmd)
             daemon.restart()
         else:
             print 'Invalid argument'
