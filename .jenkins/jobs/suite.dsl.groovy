@@ -52,7 +52,7 @@ def tds_update_repo = new FPMPython([
     FPMCommonArgs.autodirs,
     new FPMArg('-C', './etc'),
     new FPMArg('--prefix','/etc/init.d'),
-    new FPMArg('--name', 'tds-update-repo'),
+    new FPMArg('--name', 'tds-update-yum-repo'),
     new FPMArg('--after-install', 'pkg/rpm/after_install.sh'),
     new FPMArg('--before-remove', 'pkg/rpm/before_remove.sh'),
     new FPMArg('--depends',
