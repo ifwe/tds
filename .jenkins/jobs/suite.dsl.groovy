@@ -49,7 +49,6 @@ def tds_update_repo = new FPMPython([
     FPMCommonArgs.verbose,
     new FPMArg('-s', 'dir'),
     FPMCommonArgs.type,
-    FPMCommonArgs.autodirs,
     new FPMArg('-C', './etc'),
     new FPMArg('--prefix','/etc/init.d'),
     new FPMArg('--name', 'tds-update-yum-repo'),
