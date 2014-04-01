@@ -360,7 +360,7 @@ def delete_stream(logger, fh_name):
         logger.stream_handlers.pop(fh_name, None)
 
 
-if __name__ == "__main__":
+def main():
     prefix = False   # Set to True for streams to have log level prefix
 
     logger = Logger('log_testing')
@@ -378,3 +378,7 @@ if __name__ == "__main__":
 
     #for idx in xrange(0, 10):
     #    logger.debug(idx, 'This is log level %d', logging.DEBUG - idx)
+
+
+if __name__ == "__main__":
+    main()

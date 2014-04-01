@@ -6,7 +6,7 @@ import tds.utils
 from .base import DeployStrategy
 
 import logging
-logger = logging.getLogger('tds')
+log = logging.getLogger('tds')
 
 
 class TDSSaltDeployStrategy(DeployStrategy):
@@ -21,7 +21,7 @@ class TDSSaltDeployStrategy(DeployStrategy):
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
         """Deploy an application to a given host"""
-        logger.debug('Deploying to host %r', dep_host)
+        log.debug('Deploying to host %r', dep_host)
         return self._publish(dep_host, 'tds_cmd.install', app)
 
     @tds.utils.debug
