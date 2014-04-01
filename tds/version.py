@@ -1,2 +1,2 @@
 # Update this file for version changes
-__version__ = '1.5.7'
+__version__ = '2.0.0-alpha.1'
