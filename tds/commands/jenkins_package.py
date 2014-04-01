@@ -2,7 +2,11 @@
 
 import os.path
 import jenkinsapi.jenkins
-import jenkinsapi.custom_exceptions
+try:
+    from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
+except ImportError:
+    from jenkinsapi.exceptions import JenkinsAPIException, NotFound
+
 from .package import Package
 
 
@@ -27,8 +31,8 @@ class Jenkinspackage(Package):
             data = artifacts.get_data()
         except (
             KeyError,
-            jenkinsapi.custom_exceptions.JenkinsAPIException,
-            jenkinsapi.custom_exceptions.NotFound
+            JenkinsAPIException,
+            NotFound
         ) as e:
             self.log.error(e)
             return False
