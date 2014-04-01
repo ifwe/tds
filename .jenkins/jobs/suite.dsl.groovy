@@ -29,7 +29,7 @@ def pylint = project.downstreamJob {
     publishers {
         warnings([], ['Pyflakes': 'reports/pyflakes.log'])
         violations {
-            pylint(194, 195, 194, "reports/pylint.log")
+            pylint(187, 188, 187, "reports/pylint.log")
         }
     }
 }
