@@ -23,8 +23,10 @@ class PyTest(TestCommand):
             raise SystemExit("Test failures (errno=%d)", errno)
 
 
-PYTHON27_REQ_BLACKLIST = ['argparse', 'ordereddict']
+REQ_BLACKLIST = ['tagopsdb']
 
+if sys.version_info > (2, 7) or sys.version_info > (3, 2):
+    REQ_BLACKLIST.extend(['argparse', 'ordereddict'])
 
 def load_requirements(fname):
     requirements = []
@@ -34,14 +36,14 @@ def load_requirements(fname):
     for req in filter(None, reqs.strip().splitlines()):
         if req.startswith('git+'):
             req = '>='.join(req.rsplit('=')[-1].split('-', 3)[:2])
-        if sys.version_info > (2, 7) or sys.version_info > (3, 2):
-            if any(req.startswith(bl) for bl in PYTHON27_REQ_BLACKLIST):
-                continue
+        if any(req.startswith(bl) for bl in REQ_BLACKLIST):
+            continue
         requirements.append(req)
 
     return requirements
 
 REQUIREMENTS = load_requirements('requirements.txt')
+REQUIREMENTS.append('tagopsdb>0.7')
 DEV_REQUIREMENTS = load_requirements('requirements-dev.txt')
 
 setup_args = dict(
