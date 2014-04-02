@@ -168,18 +168,29 @@ class TDSConfig(YAMLConfig, VerifyingConfig):
 class TDSDatabaseConfig(TDSConfig):
     """Handle TDS database configuration file"""
 
+    default_base_name_fragment = 'tagopsdb'
     default_name_fragment = 'dbaccess'
     schema = {
         'db': ['user', 'password', ],
     }
 
-    def __init__(self, access_level, name_fragment=default_name_fragment,
-                 conf_dir=TDSConfig.default_conf_dir):
+    def __init__(
+        self,
+        access_level,
+        base_name_fragment=default_base_name_fragment,
+        name_fragment=default_name_fragment,
+        conf_dir=TDSConfig.default_conf_dir
+    ):
         """ """
 
-        super(TDSDatabaseConfig, self).__init__(
-            '%s.%s.yml' % (name_fragment, access_level), conf_dir=conf_dir
+        basic = TDSConfig('%s.yml' % (base_name_fragment,), conf_dir=conf_dir)
+        access = TDSConfig(
+            '%s.%s.yml' % (name_fragment, access_level),
+            conf_dir=conf_dir
         )
+        self.filename = access.filename
+        self.update(basic)
+        self.update(access)
 
 
 class TDSDeployConfig(TDSConfig):
