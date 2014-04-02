@@ -1,6 +1,6 @@
 PyYAML==3.10
 SQLAlchemy==0.8.1
-argcomplete==0.6.9
+argcomplete>=0.3.7
 argparse==1.2.1
 graphiteudp==0.0.2
 jenkinsapi>=0.2.12
