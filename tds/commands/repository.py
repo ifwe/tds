@@ -1,4 +1,5 @@
 'Commands to manage the deployment repository'
+import logging
 
 import elixir
 import tagopsdb.exceptions
@@ -7,15 +8,15 @@ import tagopsdb.deploy.repo
 
 import tds.utils
 
+log = logging.getLogger('tds')
+
 
 class Repository(object):
 
     """Commands to manage the deployment repository"""
 
-    def __init__(self, logger):
-        """Basic initialization"""
-
-        self.log = logger
+    def __init__(self, logger=None):
+        log.warning('Extra argument "logger" ignored in commands.repository')
 
     @tds.utils.debug
     def add(self, params):
@@ -104,8 +105,7 @@ class Repository(object):
         elixir.session.commit()
         self.log.debug('Committed database changes')
 
-    @tds.utils.debug
-    def list(self, params):
+    def list(self, *projects):
         """Show information for requested projects (or all projects)"""
 
         self.log.debug('Listing information for requested application(s) '

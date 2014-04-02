@@ -5,6 +5,7 @@ import logging
 
 import tds.authorize
 import tds.commands
+import tds.views
 import tds.utils
 
 import tagopsdb
@@ -20,6 +21,12 @@ class TDS(object):
 
     _config = None
     _dbconfig = None
+
+    view = tds.views.CLI
+
+    command_map = {
+        ('repository', 'list'): 'exec_repository_list',
+    }
 
     def __init__(self, params):
         """Basic initialization"""
@@ -143,9 +150,22 @@ class TDS(object):
         """Run the requested command for TDS"""
 
         log.debug('Running the requested command')
+        command = (self.params['command_name'], self.params['subcommand_name'])
+        handler_name = self.command_map.get(command, None)
+        if handler_name is None:
+            handler_name = 'exec_command_default'
+        handler = getattr(self, handler_name, None)
+
+        if handler is None:
+            self.exec_command_default()
+        else:
+            handler()
+
+    def exec_command_default(self):
 
         log.debug(5, 'Instantiating class %r',
                   self.params['command_name'].capitalize())
+
         cmd = getattr(tds.commands,
                       self.params['command_name'].capitalize())(log)
 
@@ -158,3 +178,14 @@ class TDS(object):
             )(self.params)
         except:
             raise   # Just pass error up to top level
+
+    def exec_repository_list(self):
+        tds.authorize.verify_access_level(self.params['user_level'], 'dev')
+
+        controller = tds.commands.Repository()
+        projects = controller.list(*(self.params.get('projects') or []))
+
+        return self.render(dict(projects=projects))
+
+    def render(self, *args, **kwargs):
+        return self.view().generate_result(*args, **kwargs)
