@@ -37,7 +37,8 @@ class Package(object):
         self.host = socket.gethostname()
         self.log = logger
 
-    def check_package_state(self, pkg_info):
+    @staticmethod
+    def check_package_state(pkg_info):
         """Check state of package in database"""
 
         return tagopsdb.deploy.package.find_package(

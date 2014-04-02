@@ -12,7 +12,6 @@ class Application(Base):
     # build_host
     # environment
     # packages / versions
-    pass
 
     @classmethod
     def from_db(cls, row):
