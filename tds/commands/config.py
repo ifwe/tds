@@ -1,7 +1,7 @@
 '''
 Commands to manage config-type projects.
 '''
-import tagopsdb.database.meta
+import elixir
 import tagopsdb.deploy.repo
 import tagopsdb.exceptions
 
@@ -52,7 +52,7 @@ class Config(Deploy):
             self.log.error(e)
             return
 
-        tagopsdb.database.meta.Session.commit()
+        elixir.session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug

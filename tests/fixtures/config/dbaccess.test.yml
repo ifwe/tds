@@ -1,2 +1,2 @@
 ---
-db: {password: superpassword, user: fakityfake}
+db: {password: superpassword, user: fakityfake, hostname: opsdb.tagged.com, db_name: TagOpsDB}
