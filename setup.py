@@ -33,7 +33,7 @@ def load_requirements(fname):
 
     for req in filter(None, reqs.strip().splitlines()):
         if req.startswith('git+'):
-            req = '>='.join(req.rsplit('=')[-1].rsplit('-', 1))
+            req = '>='.join(req.rsplit('=')[-1].split('-', 3)[:2])
         if sys.version_info > (2, 7) or sys.version_info > (3, 2):
             if any(req.startswith(bl) for bl in PYTHON27_REQ_BLACKLIST):
                 continue
