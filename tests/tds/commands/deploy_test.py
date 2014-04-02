@@ -19,7 +19,7 @@ class TestPromoteAndPush(unittest2.TestCase):
             return_value=DeployConfigFactory(),
         )
         self.session = patch(
-            'tagopsdb.database.meta.Session',
+            'elixir.session',
             **{'commit.return_value': None}
         ).start()
         self.tds_authorize = patch(
@@ -65,7 +65,7 @@ class TestPromoteAndPush(unittest2.TestCase):
             None
         )
         self.session = patch(
-            'tagopsdb.database.meta.Session',
+            'elixir.session',
             **{'commit.return_value': None}
         ).start()
         self.tds_authorize = patch(

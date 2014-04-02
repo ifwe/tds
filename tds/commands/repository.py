@@ -1,5 +1,6 @@
 'Commands to manage the deployment repository'
 
+import elixir
 import tagopsdb.exceptions
 import tagopsdb.deploy.package
 import tagopsdb.deploy.repo
@@ -82,7 +83,7 @@ class Repository(object):
                 self.log.error(e)
                 return
 
-        tagopsdb.database.meta.Session.commit()
+        elixir.session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -100,7 +101,7 @@ class Repository(object):
             self.log.error(e)
             return
 
-        tagopsdb.database.meta.Session.commit()
+        elixir.session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug

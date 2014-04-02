@@ -18,10 +18,9 @@ import yaml.parser
 from kazoo.client import KazooClient   # , KazooState
 from simpledaemon import Daemon
 
+import elixir
+import tagopsdb
 import tagopsdb.deploy.package as package
-
-from tagopsdb.database import init_session
-from tagopsdb.database.meta import Session
 from tagopsdb.exceptions import RepoException
 
 
@@ -173,7 +172,7 @@ class UpdateDeployRepoDaemon(Daemon):
             else:
                 pkg.status = 'processing'
             finally:
-                Session.commit()
+                elixir.session.commit()
 
     def email_for_invalid_rpm(self, rpm_file):
         """Send an email to engineering if a bad RPM is found"""
@@ -230,7 +229,7 @@ class UpdateDeployRepoDaemon(Daemon):
                     del self.valid_rpms[rpm]
                     continue
                 finally:
-                    Session.commit()
+                    elixir.session.commit()
 
         log.info('Updating repo...')
         old_umask = os.umask(0002)
@@ -254,7 +253,7 @@ class UpdateDeployRepoDaemon(Daemon):
         for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
             pkg = package.find_package(*rpm_info[1:])
             pkg.status = final_status
-            Session.commit()
+            elixir.session.commit()
 
         os.umask(old_umask)
         log.info('Removing processed files...')
@@ -298,14 +297,24 @@ class UpdateDeployRepoDaemon(Daemon):
             raise RuntimeError('YAML configuration missing "db" section')
 
         try:
-            db_user = data['db']['user']
-            db_password = data['db']['password']
+            dbconfig = data['db']
+            if None in (dbconfig.get('user'), dbconfig.get('password')):
+                raise KeyError
         except KeyError as e:
             raise RuntimeError('YAML configuration missing necessary '
                                'parameter in "db" section: %s' % e)
 
         log.info('Initializing database session')
-        init_session(db_user, db_password)
+
+        tagopsdb.init(dict(
+            url=dict(
+                username=dbconfig['user'],
+                password=dbconfig['password'],
+                host=dbconfig['hostname'],
+                database=dbconfig['db_name'],
+            ),
+            pool_recycle=3600)
+        )
 
         log.info('Reading configuration (deploy.yml) file')
 

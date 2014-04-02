@@ -5,10 +5,7 @@ import tds.notifications
 import tds.utils.config
 from tds.model import Deployment, LocalActor
 
-from tagopsdb.database import init_session
-from tagopsdb.exceptions import PermissionsException
-
-
+import tagopsdb
 envs = {'dev': 'development',
         'stage': 'staging',
         'prod': 'production', }
@@ -18,15 +15,15 @@ def main(*args):
     config = tds.utils.config.TDSDeployConfig()
     dbconfig = tds.utils.config.TDSDatabaseConfig('admin')
 
-    db_user = dbconfig['db.user']
-    db_password = dbconfig['db.password']
-
-    try:
-        init_session(db_user, db_password)
-    except PermissionsException, e:
-        print 'Access issue with database:'
-        print e
-        return 1
+    tagopsdb.init(dict(
+        url=dict(
+            username=dbconfig['db.user'],
+            password=dbconfig['db.password'],
+            host=dbconfig['db.hostname'],
+            database=dbconfig['db.db_name'],
+        ),
+        pool_recycle=3600)
+    )
 
     env = config['env.environment']
     validation_time = config['notifications.validation_time']
