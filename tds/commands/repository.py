@@ -18,7 +18,6 @@ class Repository(object):
     def __init__(self, logger=None):
         log.warning('Extra argument "logger" ignored in commands.repository')
 
-    @tds.utils.debug
     def add(self, params):
         """Add a given project to the repository"""
 
@@ -87,8 +86,9 @@ class Repository(object):
         elixir.session.commit()
         self.log.debug('Committed database changes')
 
+    @staticmethod
     @tds.utils.debug
-    def delete(self, params):
+    def delete(params):
         """Remove a given project from the repository"""
 
         self.log.debug('Removing application %r from repository',
@@ -105,7 +105,8 @@ class Repository(object):
         elixir.session.commit()
         self.log.debug('Committed database changes')
 
-    def list(self, *projects):
+    @staticmethod
+    def list(*projects):
         """Show information for requested projects (or all projects)"""
 
         self.log.debug('Listing information for requested application(s) '
