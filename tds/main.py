@@ -7,8 +7,7 @@ import tds.authorize
 import tds.commands
 import tds.utils
 
-from tagopsdb.database import init_session
-from tagopsdb.exceptions import PermissionsException
+import tagopsdb
 from tds.exceptions import AccessError, ConfigurationError
 from tds.model import LocalActor
 
@@ -116,13 +115,15 @@ class TDS(object):
             db_user = self.dbconfig['db.user']
             db_password = self.dbconfig['db.password']
 
-        log.debug(5, 'DB user is: %s, DB password is: %s',
-                  db_user, db_password)
-
-        try:
-            init_session(db_user, db_password)
-        except PermissionsException, e:
-            raise AccessError('Access issue with database:\n%s' % e)
+        tagopsdb.init(dict(
+            url=dict(
+                username=db_user,
+                password=db_password,
+                host=self.dbconfig['db.hostname'],
+                database=self.dbconfig['db.db_name'],
+            ),
+            pool_recycle=3600)
+        )
 
     @tds.utils.debug
     def execute_command(self):
