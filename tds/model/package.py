@@ -4,5 +4,7 @@ from .base import Base
 
 
 class Package(Base):
-    'Model class for package object'
-    pass
+    'Represents a deployable package for a version of an application'
+    # name
+    # version
+    # application
