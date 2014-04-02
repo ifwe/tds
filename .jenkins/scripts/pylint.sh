@@ -1,7 +1,7 @@
 #!/bin/bash
 
 scripts=$( dirname "${BASH_SOURCE-$0}" )
-source $scripts/python-setup.sh
+source "$scripts/python-setup.sh"
 
 for d in tds tests ; do
     pylint --rcfile=.pylintrc -f parseable -r n --disable=similarities $d >> reports/pylint.log || :
