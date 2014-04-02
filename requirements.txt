@@ -1,5 +1,5 @@
 PyYAML==3.10
-SQLAlchemy==0.8.1
+SQLAlchemy>=0.8.0
 argcomplete>=0.3.7
 argparse==1.2.1
 graphiteudp==0.0.2
