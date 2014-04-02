@@ -6,6 +6,7 @@ class Base(object):
     delegate = None
 
     def __init__(self, **kwds):
+        super(Base, self).__init__()
         self.__dict__.update(kwds)
 
     def __eq__(self, other):
@@ -19,6 +20,10 @@ class Base(object):
 
     @classmethod
     def from_db(cls, row):
+        '''
+        Convert a tagopsdb object (usually an instance of self.delegate)
+        into an object of this type.
+        '''
         raise NotImplementedError
 
     @classmethod
@@ -33,13 +38,10 @@ class Base(object):
         return map(cls.from_db, rows)
 
     @classmethod
-    def get(cls, **kwds):
-        'Return the first instance of this class matching kwds'
-        raise NotImplementedError
-
-    @classmethod
     def get_by(cls, *a, **k):
+        'Return the first instance of this class matching kwds'
         row = cls.delegate.get_by(*a, **k)
         if row is None:
             return None
         return cls.from_db(row)
+    get = get_by

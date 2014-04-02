@@ -1,3 +1,6 @@
+'''
+Command and view resolver for TDS.
+'''
 import getpass
 import os
 import pwd
@@ -17,7 +20,7 @@ log = logging.getLogger('tds.main')
 
 
 class TDS(object):
-    """ """
+    """TDS main class"""
 
     _config = None
     _dbconfig = None
@@ -47,7 +50,8 @@ class TDS(object):
         return self._dbconfig
 
     @staticmethod
-    def _load_config(params):
+    def _load_config(*_args):
+        'Load app config'
         config = tds.utils.config.TDSDeployConfig()
         config.load()
 
@@ -55,8 +59,9 @@ class TDS(object):
 
     @staticmethod
     def _load_dbconfig(params):
+        'Load database config'
         dbconfig = tds.utils.config.TDSDatabaseConfig(
-            params.get('user_level')
+            params.get('user_level', 'dev')
         )
         dbconfig.load()
 
@@ -70,7 +75,7 @@ class TDS(object):
 
         self.params['user_level'] = \
             tds.authorize.get_access_level(LocalActor())
-        log.debug(5, 'User level is: %s', self.params['user_level'])
+        log.log(5, 'User level is: %s', self.params['user_level'])
 
         if self.params['user_level'] is None:
             raise AccessError('Your account (%s) is not allowed to run this '
@@ -101,7 +106,7 @@ class TDS(object):
         else:
             self.params['explicit'] = True
 
-        log.debug(5, '"explicit" parameter is: %(explicit)s', self.params)
+        log.log(5, '"explicit" parameter is: %(explicit)s', self.params)
 
     @tds.utils.debug
     def update_program_parameters(self):
@@ -110,15 +115,15 @@ class TDS(object):
         log.debug('Adding several additional parameters for program')
 
         self.params['user'] = pwd.getpwuid(os.getuid()).pw_name
-        log.debug(5, 'User is: %s', self.params['user'])
+        log.log(5, 'User is: %s', self.params['user'])
         self.check_user_auth()
 
         self.params['environment'] = self.config['env.environment']
-        log.debug(5, 'Environment is: %s', self.params['environment'])
+        log.log(5, 'Environment is: %s', self.params['environment'])
 
         self.params['repo'] = self.config['repo']
 
-        log.debug(5, '"repo" parameter values are: %r', self.params['repo'])
+        log.log(5, '"repo" parameter values are: %r', self.params['repo'])
 
     @tds.utils.debug
     def initialize_db(self):
@@ -163,15 +168,15 @@ class TDS(object):
 
     def exec_command_default(self):
 
-        log.debug(5, 'Instantiating class %r',
-                  self.params['command_name'].capitalize())
+        log.log(5, 'Instantiating class %r',
+                self.params['command_name'].capitalize())
 
         cmd = getattr(tds.commands,
                       self.params['command_name'].capitalize())(log)
 
         try:
-            log.debug(5, 'Executing subcommand %r',
-                      self.params['subcommand_name'].replace('-', '_'))
+            log.log(5, 'Executing subcommand %r',
+                    self.params['subcommand_name'].replace('-', '_'))
             getattr(
                 cmd,
                 self.params['subcommand_name'].replace('-', '_')
@@ -180,7 +185,7 @@ class TDS(object):
             raise   # Just pass error up to top level
 
     def exec_repository_list(self):
-        tds.authorize.verify_access_level(self.params['user_level'], 'dev')
+        tds.authorize.verify_access(self.params.get('user_level', 'disabled'), 'dev')
 
         controller = tds.commands.Repository()
         projects = controller.list(*(self.params.get('projects') or []))

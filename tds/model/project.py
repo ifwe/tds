@@ -6,6 +6,7 @@ from tagopsdb import Project as DBProject
 
 
 class Project(Base):
+    'A project links applications together in a deployable group'
     # name
     # type
     # applications
