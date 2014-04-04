@@ -74,10 +74,11 @@ setup_args = dict(
     license='MIT',
     packages=[
         'tds',
+        'tds.commands',
         'tds.deploy_strategy',
+        'tds.model',
         'tds.notifications',
         'tds.scripts',
-        'tds.commands',
         'tds.utils'
     ],
     install_requires=REQUIREMENTS['install'],
