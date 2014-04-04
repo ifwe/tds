@@ -128,14 +128,14 @@ class TDS(object):
             db_user = self.dbconfig['db.user']
             db_password = self.dbconfig['db.password']
 
-        tagopsdb.init(dict(
+        tagopsdb.init(
             url=dict(
                 username=db_user,
                 password=db_password,
                 host=self.dbconfig['db.hostname'],
                 database=self.dbconfig['db.db_name'],
             ),
-            pool_recycle=3600)
+            pool_recycle=3600
         )
 
     @tds.utils.debug
