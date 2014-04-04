@@ -18,13 +18,26 @@ log = logging.getLogger('tds.main')
 class TDS(object):
     """ """
 
+    _config = None
+    _dbconfig = None
+
     def __init__(self, params):
         """Basic initialization"""
 
         self.params = params
         self.params['deployment'] = True
-        self.config = self._load_config(params)
-        self.dbconfig = self._load_dbconfig(params)
+
+    @property
+    def config(self):
+        if self._config is None:
+            self._config = self._load_config(self.params)
+        return self._config
+
+    @property
+    def dbconfig(self):
+        if self._dbconfig is None:
+            self._dbconfig = self._load_dbconfig(self.params)
+        return self._dbconfig
 
     @staticmethod
     def _load_config(params):
