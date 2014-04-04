@@ -192,14 +192,18 @@ class TDSDatabaseConfig(TDSConfig):
     ):
         """ """
 
-        basic = TDSConfig('%s.yml' % (base_name_fragment,), conf_dir=conf_dir)
-        access = TDSConfig(
+        self.basic = TDSConfig('%s.yml' % (base_name_fragment,), conf_dir=conf_dir)
+        self.access = TDSConfig(
             '%s.%s.yml' % (name_fragment, access_level),
             conf_dir=conf_dir
         )
         self.filename = access.filename
-        update_recurse(self, basic)
-        update_recurse(self, access)
+
+    def load(self, logger=None):
+        self.basic.load(logger)
+        self.access.load(logger)
+        update_recurse(self, self.basic)
+        update_recurse(self, self.access)
 
 
 class TDSDeployConfig(TDSConfig):
