@@ -197,7 +197,7 @@ class TDSDatabaseConfig(TDSConfig):
             '%s.%s.yml' % (name_fragment, access_level),
             conf_dir=conf_dir
         )
-        self.filename = access.filename
+        self.filename = self.access.filename
 
     def load(self, logger=None):
         self.basic.load(logger)
