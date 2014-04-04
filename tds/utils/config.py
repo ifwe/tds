@@ -1,3 +1,4 @@
+import collections
 import os.path
 import logging
 import yaml
@@ -14,6 +15,14 @@ __all__ = [
 
 log = logging.getLogger('tds.util.config')
 
+#http://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+def update_recurse(d, u):
+    for k, v in u.iteritems():
+        if isinstance(v, collections.Mapping):
+            d[k] = update_recurse(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
 
 class DottedDict(dict):
     """Allow dictionary keys to be accessed like attributes"""
@@ -189,8 +198,8 @@ class TDSDatabaseConfig(TDSConfig):
             conf_dir=conf_dir
         )
         self.filename = access.filename
-        self.update(basic)
-        self.update(access)
+        update_recurse(self, basic)
+        update_recurse(self, access)
 
 
 class TDSDeployConfig(TDSConfig):
