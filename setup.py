@@ -74,10 +74,11 @@ setup_args = dict(
     license='Apache License, Version 2.0',
     packages=[
         'tds',
+        'tds.commands',
         'tds.deploy_strategy',
+        'tds.model',
         'tds.notifications',
         'tds.scripts',
-        'tds.commands',
         'tds.utils'
     ],
     install_requires=REQUIREMENTS['install'],
