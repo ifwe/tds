@@ -42,7 +42,7 @@ class FileConfigLoader(object):
         with mock.patch('__builtin__.open', m, create=True):
             c.load(logger=None)
 
-        m.assert_called_once_with(c.filename)
+        m.assert_called_with(c.filename)
 
 
 class TestFileConfig(unittest2.TestCase, FileConfigLoader):

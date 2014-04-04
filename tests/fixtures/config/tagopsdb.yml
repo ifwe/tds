@@ -1,0 +1,2 @@
+---
+db: {hostname: opsdb.tagged.com, db_name: TagOpsDB}
