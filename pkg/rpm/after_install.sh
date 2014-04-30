@@ -1,2 +1,2 @@
-/sbin/chkconfig --add %{update_init}
+/sbin/chkconfig --add <%= update_init %>
 
