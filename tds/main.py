@@ -188,9 +188,9 @@ class TDS(object):
         tds.authorize.verify_access(self.params.get('user_level', 'disabled'), 'dev')
 
         controller = tds.commands.Repository()
-        projects = controller.list(*(self.params.get('projects') or []))
+        result = controller.list(*(self.params.get('projects') or []))
 
-        return self.render(dict(projects=projects))
+        return self.render('projects', result)
 
     def render(self, *args, **kwargs):
         return self.view().generate_result(*args, **kwargs)

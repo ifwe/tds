@@ -113,6 +113,6 @@ class Repository(object):
         """Show information for requested projects (or all projects)"""
 
         if projects:
-            return filter(None, [Project.get(name=p) for p in projects])
+            return dict(result=filter(None, [Project.get(name=p) for p in projects]))
         else:
-            return Project.all()
+            return dict(result=Project.all())
