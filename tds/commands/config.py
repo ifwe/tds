@@ -6,7 +6,8 @@ import tagopsdb.exceptions
 
 import tds.utils
 import tds.exceptions
-from .repository import Repository
+# TODO: this should be a subclass of ApplicationController (or removed)
+from .project import ProjectController
 from .deploy import Deploy
 
 
@@ -19,7 +20,7 @@ class Config(Deploy):
 
     @tds.utils.debug
     def create(self, params):
-        # XXX: Replace this with a call to Repository(self.log).add(params)
+        # XXX: Replace this with a call to ApplicationController(self.log).add(params)
         """Add a new config project to the system"""
 
         self.log.debug('Creating new config project')
@@ -57,7 +58,7 @@ class Config(Deploy):
     @tds.utils.debug
     def delete(self, params):
         """Remove a config project from the system"""
-        return Repository(self.log).delete(params)
+        return ProjectController().delete(params)
 
     @tds.utils.debug
     def push(self, params):

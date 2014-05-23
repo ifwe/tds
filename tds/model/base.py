@@ -1,12 +1,14 @@
 '''Base module for TDS objects'''
+import tagopsdb
 
 
 class Base(object):
     'Base class for TDS objects'
     delegate = None
 
-    def __init__(self, **kwds):
+    def __init__(self, row, **kwds):
         super(Base, self).__init__()
+        self.row = row
         self.__dict__.update(kwds)
 
     def __eq__(self, other):
@@ -17,6 +19,22 @@ class Base(object):
             class_name=type(self).__name__,
             fields_str=' '.join('%s=%r' % i for i in vars(self).items()),
         )
+
+    def delete(self, commit=True, *args, **kwargs):
+        if self.row is not None:
+            self.row.delete(*args, **kwargs)
+            self.row = None
+            if commit:
+                tagopsdb.Session.commit()
+
+    @classmethod
+    def create(cls, commit=True, **kwargs):
+        row = cls.delegate(**kwargs)
+        # TODO: make this a method on tagopsdb.Base
+        tagopsdb.Session.add(row)
+        if commit:
+            tagopsdb.Session.commit()
+        return cls.from_db(row)
 
     @classmethod
     def from_db(cls, row):

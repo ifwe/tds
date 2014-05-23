@@ -15,7 +15,7 @@ class Application(Base):
 
     @classmethod
     def from_db(cls, row):
-        return cls(
+        return cls(row,
             name=row.pkg_name,
             path=row.path,
             build_host=row.build_host,

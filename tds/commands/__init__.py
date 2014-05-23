@@ -1,13 +1,13 @@
 'Implementation of tds command line options'
 
-from .repository import Repository
+from .project import ProjectController
 from .package import Package
 from .jenkins_package import Jenkinspackage
 from .deploy import Deploy
 from .config import Config
 
 __all__ = [
-    'Repository',
+    'ProjectController',
     'Package',
     'Jenkinspackage',
     'Deploy',
