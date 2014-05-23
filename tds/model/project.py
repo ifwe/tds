@@ -15,7 +15,7 @@ class Project(Base):
 
     @classmethod
     def from_db(cls, row):
-        return cls(
+        return cls(row,
             name=row.name,
             applications=map(Application.from_db, row.package_definitions),
         )
