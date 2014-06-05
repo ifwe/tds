@@ -13,7 +13,7 @@ envs = {'dev': 'development',
 
 def main(*args):
     config = tds.utils.config.TDSDeployConfig()
-    dbconfig = tds.utils.config.TDSDatabaseConfig('admin')
+    dbconfig = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
 
     tagopsdb.init(dict(
         url=dict(
