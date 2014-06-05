@@ -1,9 +1,13 @@
+'''
+Base class and functionality for notifications sent from TDS
+'''
 import logging
 log = logging.getLogger('tds')
 
 import tds.utils
 import tds.model
 
+__all__ = ['Notifications', 'Notifier']
 
 class Notifications(object):
     """Manage various notification mechanisms for deployments"""
@@ -12,7 +16,11 @@ class Notifications(object):
 
     @classmethod
     def add(cls, name):
+        '''
+        Add a new notifier type
+        '''
         def notifier_add(notifier_factory):
+            'Takes a callable that will be used for the notifier'
             if cls._notifiers is None:
                 cls._notifiers = {}
 
@@ -33,10 +41,10 @@ class Notifications(object):
         self.enabled_methods = self.config.get('enabled_methods', [])
         self.validation_time = self.config.get('validation_time', 30 * 60)
 
-        log.debug(5, 'Enabled notification methods: %s',
-                  ', '.join(self.enabled_methods))
-        log.debug(5, 'Validation timeout (in seconds): %s',
-                  self.validation_time)
+        log.log(5, 'Enabled notification methods: %s',
+                ', '.join(self.enabled_methods))
+        log.log(5, 'Validation timeout (in seconds): %s',
+                self.validation_time)
 
     @tds.utils.debug
     def notify(self, deployment):
@@ -55,11 +63,15 @@ class Notifications(object):
 
 
 class Notifier(object):
+    '''
+    Base class for a Notifier
+    '''
     def __init__(self, app_config, config):
         self.app_config = app_config
         self.config = config
 
     def notify(self, deployment):
+        'Send a notification'
         raise NotImplementedError
 
     def message_for_deployment(self, deployment):
@@ -71,15 +83,19 @@ class Notifier(object):
         method_name = 'message_for_%s' % deployment.action['command']
         return getattr(self, method_name, self.message_for_default)(deployment)
 
-    def message_for_default(self, d):
+    def message_for_default(self, deployment):
         '''Return message object for the deployment. Dispatches
             on the deployment's action's "subcommand" property, or uses
             the default method, "message_for_default_default".
         '''
-        method_name = 'message_for_default_%s' % d.action['subcommand']
-        return getattr(self, method_name, self.message_for_default_default)(d)
+        method_name = 'message_for_default_%s' % deployment.action['subcommand']
+        return getattr(
+            self, method_name, self.message_for_default_default
+        )(deployment)
 
-    def message_for_unvalidated(self, deployment):
+    @staticmethod
+    def message_for_unvalidated(deployment):
+        'Returns the message for an unvalidated deployment'
         subject = (
             'ATTENTION: %s in %s for %s app tier needs validation!' % (
                 deployment.project['name'],
@@ -100,13 +116,13 @@ class Notifier(object):
         return dict(subject=subject, body=body)
 
     def message_for_default_default(self, deployment):
-
+        'Default message that will be used unless another handler is found'
         log.debug('Creating information for notifications')
 
         # Determine version
         version = deployment.package.version
 
-        log.debug(5, 'Application version is: %s', version)
+        log.log(5, 'Application version is: %s', version)
 
         dep_type = deployment.action['subcommand'].capitalize()
 
@@ -119,11 +135,12 @@ class Notifier(object):
         else:
             dest_type = 'app tier(s)'
 
-            targets = tds.model.Project.get(name=deployment.project['name']).targets
+            project = tds.model.Project.get(name=deployment.project['name'])
+            targets = getattr(project, 'targets', None)
             destinations = ', '.join(x.app_type for x in targets)
 
-        log.debug(5, 'Destination type is: %s', dest_type)
-        log.debug(5, 'Destinations are: %s', destinations)
+        log.log(5, 'Destination type is: %s', dest_type)
+        log.log(5, 'Destinations are: %s', destinations)
 
         msg_subject = '%s of version %s of %s on %s %s in %s' \
                       % (dep_type, version, deployment.package.name,
