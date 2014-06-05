@@ -1,12 +1,15 @@
-from mock import patch
-import unittest2
+from mock import patch, Mock
+from unittest_data_provider import data_provider
 
+import unittest2
 import tds.notifications.base as base
 
 from tests.factories.utils.config import DeployConfigFactory
 from tests.factories.model.deployment import (
     DeploymentFactory,
     UnvalidatedDeploymentFactory,
+    HostDeploymentFactory,
+    AllApptypesDeploymentFactory,
 )
 
 APP_CONFIG = DeployConfigFactory()
@@ -54,26 +57,52 @@ class TestNotifierClass(unittest2.TestCase):
             deployment=object()
         )
 
-    def test_message_for_deploy_promote(self):
-        n = base.Notifier(
-            APP_CONFIG,
-            APP_CONFIG['notifications']
-        )
-        message = n.message_for_deployment(DeploymentFactory())
-
-        assert isinstance(message['subject'], basestring)
-        assert isinstance(message['body'], basestring)
-
-        # are these assertions really necessary?
-        assert message['subject'] == (
+    deployment_factory_provider = lambda *a: [
+        (
+            DeploymentFactory,
             'Promote of version badf00d of fake_package on app tier(s)'
-            ' fake_apptype in fakedev'
-        )
-        assert message['body'] == (
-            'fake_user performed a "tds deploy promote" for the following app '
-            'tier(s) in fakedev:\n'
+            ' fake_apptype in fakedev',
+            'fake_user performed a "tds deploy promote" for the following app'
+            ' tier(s) in fakedev:\n'
             '    fake_apptype'
-        )
+        ),
+        (
+            HostDeploymentFactory,
+            'Promote of version badf00d of fake_package on hosts'
+            ' whatever.example.com in fakedev',
+            'fake_user performed a "tds deploy promote" for the following'
+            ' hosts in fakedev:\n'
+            '    whatever.example.com'
+        ),
+        (
+            AllApptypesDeploymentFactory,
+            'Promote of version badf00d of fake_package on app tier(s)'
+            ' fake_apptype1, fake_apptype2 in fakedev',
+            'fake_user performed a "tds deploy promote" for the following app'
+            ' tier(s) in fakedev:\n'
+            '    fake_apptype1, fake_apptype2'
+        ),
+    ]
+
+    @data_provider(deployment_factory_provider)
+    def test_message_for_deploy_promote(self, deployment_factory, subject, body):
+        with patch('tds.model.Project') as Project:
+            Project.get.return_value.targets = [
+                Mock(app_type=x) for x in ('fake_apptype1', 'fake_apptype2')
+            ]
+
+            n = base.Notifier(
+                APP_CONFIG,
+                APP_CONFIG['notifications']
+            )
+            message = n.message_for_deployment(deployment_factory())
+
+            assert isinstance(message['subject'], basestring)
+            assert isinstance(message['body'], basestring)
+
+            # are these assertions really necessary?
+            assert message['subject'] == subject
+            assert message['body'] == body
 
     def test_message_for_unvalidated(self):
         n = base.Notifier(
