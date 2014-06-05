@@ -63,7 +63,8 @@ class TDS(object):
     def _load_dbconfig(params):
         'Load database config'
         dbconfig = tds.utils.config.TDSDatabaseConfig(
-            params.get('user_level', 'dev')
+            params.get('user_level', 'dev'),
+            base_name_fragment='tagopsdb'
         )
         dbconfig.load()
 
