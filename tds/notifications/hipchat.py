@@ -4,6 +4,7 @@ import tagopsdb.deploy.deploy as deploy
 import logging
 log = logging.getLogger('tds')
 
+import tds.model
 from .base import Notifications, Notifier
 
 
@@ -31,10 +32,10 @@ class HipchatNotifier(Notifier):
 
         # Query DB for any additional HipChat rooms
         log.debug('Looking for additional HipChat rooms to be notified')
-        extra_rooms = deploy.find_hipchat_rooms_for_app(
-            deployment.project['name'],
-            deployment.target['apptypes'],
-        )
+        project = tds.model.Project.get(name=deployment.project['name'])
+        hipchats = sum((t.hipchats for t in project.targets), [])
+        extra_rooms = [x.room_name for x in hipchats]
+
         log.debug(5, 'HipChat rooms to notify: %s',
                   ', '.join(self.rooms))
         log.debug(5, 'HipChat token: %s', self.token)
