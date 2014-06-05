@@ -4,7 +4,7 @@ from .base import Base
 from tagopsdb import Project as DBProject
 
 
-class Project(Base, DBProject):
+class TDSProject(Base, DBProject):
     'A project links applications together in a deployable group'
     # name
     # type
@@ -13,3 +13,6 @@ class Project(Base, DBProject):
     @property
     def applications(self):
         return self.package_definitions
+
+# For sqlalchemy class lookup
+Project = TDSProject
