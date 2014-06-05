@@ -17,6 +17,7 @@ APP_TEMPLATE = (
 )
 TARGET_TEMPLATE = ('App types: {s}\n')
 
+
 def format_project(project):
     output = []
     output.append(PROJECT_TEMPLATE.format(self=project))
@@ -32,6 +33,7 @@ def format_project(project):
     output.append('\n')
 
     return ''.join(output)
+
 
 class CLI(Base):
     '''
@@ -51,10 +53,11 @@ class CLI(Base):
 
     @staticmethod
     def generate_default_result(**kwds):
+        'This is called if no matching handler is found'
         raise NotImplementedError
 
     @staticmethod
-    def generate_project_list_result(result=None, **kwds):
+    def generate_project_list_result(result=None, **_kwds):
         '''
         Show the view for a list of project objects
         '''
@@ -64,19 +67,27 @@ class CLI(Base):
         print ''.join(output)
 
     @staticmethod
-    def generate_project_delete_result(result=None, error=None, **kwds):
+    def generate_project_delete_result(result=None, error=None, **_kwds):
+        'Render view for a deleted project'
         if result:
             print '%(name)s was successfully deleted.' % dict(name=result.name)
-        elif error:
+        elif error is not None:
             message, name = error.args[:2]
-            print 'Could not delete %(name)s: %(message)s' % dict(name=name, message=message)
+            print 'Could not delete %(name)s: %(message)s' % dict(
+                name=name,
+                message=message
+            )
             raise error
 
     @staticmethod
-    def generate_project_create_result(result=None, error=None, **kwds):
+    def generate_project_create_result(result=None, error=None, **_kwds):
+        'Render view for a created project'
         if result:
             print 'Created %(name)s:' % dict(name=result.name)
             print format_project(result)
         elif error:
             message, name = error.args[:2]
-            print 'Could not create %(name)s: %(message)s' % dict(name=name, message=message)
+            print 'Could not create %(name)s: %(message)s' % dict(
+                name=name,
+                message=message
+            )
