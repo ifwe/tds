@@ -2,7 +2,7 @@ import logging
 log = logging.getLogger('tds')
 
 import tds.utils
-import tagopsdb.deploy.repo as repo
+import tds.model
 
 
 class Notifications(object):
@@ -118,10 +118,9 @@ class Notifier(object):
             destinations = ', '.join(deployment.target['apptypes'])
         else:
             dest_type = 'app tier(s)'
-            app_pkgs = repo.find_app_packages_mapping(
-                deployment.project['name']
-            )
-            destinations = ', '.join(x.app_type for x in app_pkgs)
+
+            targets = tds.model.Project.get(name=deployment.project['name']).targets
+            destinations = ', '.join(x.app_type for x in targets)
 
         log.debug(5, 'Destination type is: %s', dest_type)
         log.debug(5, 'Destinations are: %s', destinations)
