@@ -1,3 +1,4 @@
+'Utilities for determining authorization level of actors'
 import logging
 
 import tds.utils
@@ -11,31 +12,31 @@ access_mapping = {'disabled': 'root',
                   'stage': 'stagesupport',
                   'dev': 'engteam', }
 
-tds_log = logging.getLogger('tds')
+log = logging.getLogger('tds')
 
 
 @tds.utils.debug
 def get_access_level(actor):
     """Find highest access level for user"""
 
-    tds_log.debug('Finding user\'s access level')
+    log.debug('Finding user\'s access level')
 
-    tds_log.debug(5, 'User\'s groups are: %s', ', '.join(actor.groups))
+    log.log(5, 'User\'s groups are: %s', ', '.join(actor.groups))
 
     for level in access_levels:
         if access_mapping[level] in actor.groups:
-            tds_log.debug(5, 'Returning level: %s', level)
+            log.log(5, 'Returning level: %s', level)
             return level
-    else:
-        tds_log.debug(5, 'No matching level found for user')
-        return None
+
+    log.log(5, 'No matching level found for user')
+    return None
 
 
 @tds.utils.debug
 def verify_access(user_level, access_level):
     """Ensure user has appropriate access"""
 
-    tds_log.debug('Ensuring user has necessary access')
+    log.debug('Ensuring user has necessary access')
 
     if access_levels.index(user_level) > access_levels.index(access_level):
         raise AccessError('Your account does not have the appropriate '
