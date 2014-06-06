@@ -2,10 +2,18 @@
 import tagopsdb
 
 
-class Base(object):
+class _Base(object):
+    'base class for Base to absorb all kwds'
+    def __init__(self, **_kwds):
+        super(_Base, self).__init__()
+
+class Base(_Base):
     'Base class for TDS objects'
 
     def __init__(self, **kwds):
+        for key, val in kwds.iteritems():
+            setattr(self, key, val)
+
         super(Base, self).__init__(**kwds)
 
     def __eq__(self, other):
@@ -18,12 +26,14 @@ class Base(object):
     #     )
 
     def delete(self, commit=True, *args, **kwargs):
+        'Delete action with default auto-commit'
         super(Base, self).delete(*args, **kwargs)
         if commit:
             tagopsdb.Session.commit()
 
     @classmethod
     def create(cls, commit=True, **kwargs):
+        'Create action with default auto-commit'
         self = cls(**kwargs)
         tagopsdb.Session.add(self)
         if commit:
