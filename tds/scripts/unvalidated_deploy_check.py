@@ -1,62 +1,79 @@
 import sys
 
-import tagopsdb.deploy.deploy as deploy
+from datetime import timedelta, datetime
 import tds.notifications
 import tds.utils.config
-from tds.model import Deployment, LocalActor
 
 import tagopsdb
-envs = {'dev': 'development',
-        'stage': 'staging',
-        'prod': 'production', }
+import tds.model
 
 
-def main(*args):
-    config = tds.utils.config.TDSDeployConfig()
-    dbconfig = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
+def should_be_validated(dep, validation_grace_duration):
+    'Determines if an AppDeployment should be validated or not'
+    validation_grace_td = timedelta(seconds=validation_grace_duration)
+    needs_validation_after = dep.realized + validation_grace_td
+    return datetime.now() >= needs_validation_after
 
+
+def init_database(config):
+    'Connect tagopsdb lib to database'
     tagopsdb.init(dict(
         url=dict(
-            username=dbconfig['db.user'],
-            password=dbconfig['db.password'],
-            host=dbconfig['db.hostname'],
-            database=dbconfig['db.db_name'],
+            username=config['user'],
+            password=config['password'],
+            host=config['hostname'],
+            database=config['db_name'],
         ),
         pool_recycle=3600)
     )
 
-    env = config['env.environment']
-    validation_time = config['notifications.validation_time']
 
-    not_validated = deploy.find_unvalidated_versions(
-        validation_time, envs[env]
+def deployment_for_entry(entry):
+    package = entry.deployment.package
+
+    return tds.model.Deployment(
+        actor=tds.model.LocalActor(),
+        action=dict(
+            command='unvalidated',
+        ),
+        project=dict(
+            # TODO: deployments should be for projects, not packages
+            name=package.name,
+        ),
+        package=dict(
+            name=package.name,
+            version=package.version,
+        ),
+        target=dict(
+            environment=entry.deployment.environment,
+            apptypes=[entry.application.app_type],
+        )
     )
 
-    for entry in not_validated:
-        (pkg_name, version, revision, app_type, environment, realized,
-         user, status) = entry
 
-        deployment = Deployment(
-            actor=LocalActor(),
-            action=dict(
-                command='unvalidated',
-            ),
-            project=dict(
-                name=pkg_name,
-            ),
-            package=dict(
-                name=pkg_name,
-                version=version,
-            ),
-            target=dict(
-                environment=environment,
-                apptypes=[app_type],
-            )
-        )
+def notify_for_entry(config, entry):
+    deployment = deployment_for_entry(entry)
+    tds.notifications.Notifications(config).notify(deployment)
 
-        tds.notifications.Notifications(config).notify(deployment)
+
+def main():
+    config = tds.utils.config.TDSDeployConfig()
+    dbconfig = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
+
+    init_database(dbconfig['db'])
+    validation_grace_duration = config['notifications.validation_time']
+
+    needs_validation = [
+        x for x in tds.model.AppDeployment.find(
+            environment=config['env.environment'],
+            needs_validation=True
+        ) if should_be_validated(x, validation_grace_duration)
+    ]
+
+    for entry in needs_validation:
+        notify_for_entry(config, entry)
 
     return 0
 
 if __name__ == '__main__':
-    sys.exit(main(*sys.argv[1:]))
+    sys.exit(main())
