@@ -17,4 +17,3 @@ pytest-cov==1.6
 unittest-data-provider==1.0.1
 unittest2==0.5.1
 zope.interface==4.1.0
-git+https://github.com/tagged/elixir@master#egg=Elixir-0.8.1
