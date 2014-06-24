@@ -1,3 +1,4 @@
+'Notify about unvalidated deployments'
 import sys
 
 from datetime import timedelta, datetime
@@ -8,7 +9,8 @@ import tagopsdb
 import tds.model
 
 
-class UnvalidateDeploymentNotifer(tds.notifications.Notifications):
+class UnvalidatedDeploymentNotifier(tds.notifications.Notifications):
+    'Bridge unvalidated tagopsdb AppDeployments and tds.Notifications'
     @staticmethod
     def convert_deployment(app_deployment):
         'Create a TDS Deployment instance for a tagopsdb AppDeployment'
@@ -46,19 +48,21 @@ class TagopsdbDeploymentProvider(object):
     def __init__(self, config):
         self.config = config
 
-    def init_database(self):
-        db = self.config['db']
+    def init(self):
+        'Initialize database connection'
+        dbconf = self.config['db']
         tagopsdb.init(dict(
             url=dict(
-                username=db['user'],
-                password=db['password'],
-                host=db['hostname'],
-                database=db['db_name'],
+                username=dbconf['user'],
+                password=dbconf['password'],
+                host=dbconf['hostname'],
+                database=dbconf['db_name'],
             ),
             pool_recycle=3600)
         )
 
     def get_all(self, environment):
+        'Get all unvalidated deployments for `environment`'
         return tds.model.AppDeployment.find(
             environment=environment,
             needs_validation=True
@@ -66,6 +70,7 @@ class TagopsdbDeploymentProvider(object):
 
 
 class ValidationMonitor(object):
+    'Determine what deployments have been unvalidated for too long'
     def __init__(self, config, dep_provider):
         self.config = config
         self.deployment_provider = dep_provider
@@ -100,15 +105,14 @@ class ValidationMonitor(object):
 
 def main():
     'Load config, create ValidationMonitor instance, and process notifications'
-    dep_provider = TagopsdbDeploymentProvider(
-        tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
-    )
-    dep_provider.init_database()
-
     config = tds.utils.config.TDSDeployConfig()
-    vmon = ValidationMonitor(config, dep_provider)
+    db_config = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
 
+    dep_provider = TagopsdbDeploymentProvider(db_config)
+    vmon = ValidationMonitor(config, dep_provider)
     notifier = UnvalidateDeploymentNotifer(config)
+
+    dep_provider.init()
     notifier.notify(vmon.get_deployments_requiring_validation())
 
     return 0
