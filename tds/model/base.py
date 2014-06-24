@@ -19,11 +19,11 @@ class Base(_Base):
     def __eq__(self, other):
         return self.__dict__.__eq__(other.__dict__)
 
-    # def __repr__(self):
-    #     return '<%(class_name)s %(fields_str)s>' % dict(
-    #         class_name=type(self).__name__,
-    #         fields_str=' '.join('%s=%r' % i for i in vars(self).items()),
-    #     )
+    def __repr__(self):
+        return '<%(class_name)s %(fields_str)s>' % dict(
+            class_name=type(self).__name__,
+            fields_str=' '.join('%s=%r' % i for i in vars(self).items()),
+        )
 
     def delete(self, commit=True, *args, **kwargs):
         'Delete action with default auto-commit'
