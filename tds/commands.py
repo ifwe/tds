@@ -377,9 +377,22 @@ class Jenkinspackage(Package):
 
         J = Jenkins('https://ci.tagged.com/')   #TODO: use config
 
+        matrix_name = None
+        #assume matrix build
+        if '/' in job_name:
+            job_name, matrix_name = job_name.split('/', 1)
         try:
-            a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
-            data = a.get_data()
+            build = J[job_name].get_build(buildnum)
+            if matrix_name is not None:
+                for run in build.get_matrix_runs():
+                    if matrix_name in run.baseurl:
+                        build = run
+                        break
+                else:
+                    self.log.error('could not find matrix run %s', matrix_name)
+                    return False
+            rpm = build.get_artifact_dict()[rpm_name]
+            data = rpm.get_data()
         except (JenkinsAPIException, KeyError, NotFound) as e:
             self.log.error(e)
             return False
