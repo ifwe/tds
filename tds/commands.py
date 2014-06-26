@@ -400,7 +400,9 @@ class Jenkinspackage(Package):
                     self.log.error('could not find matrix run %s', matrix_name)
                     return False
             self.log.debug('rpm_name: %r', rpm_name)
-            rpm = build.get_artifact_dict()[rpm_name]
+            artifacts = build.get_artifact_dict()
+            self.log.debug('artifacts: %r', artifacts)
+            rpm = artifacts[rpm_name]
             self.log.debug('downloading rpm')
             data = rpm.get_data()
             self.log.debug('done downloading rpm, len: %s', len(data))
