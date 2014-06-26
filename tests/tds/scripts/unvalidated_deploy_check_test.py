@@ -8,7 +8,7 @@ from tests.factories.model.actor import ActorFactory
 from tests.factories.model.package import PackageFactory
 
 
-class TestUnvalidateDeploymentNotifer(unittest2.TestCase):
+class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
     def test_convert_deployment(self):
         actor = ActorFactory()
         package = PackageFactory()

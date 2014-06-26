@@ -40,7 +40,7 @@ class UnvalidatedDeploymentNotifier(tds.notifications.Notifications):
     def notify(self, app_deployments):
         for app_dep in app_deployments:
             deployment = self.convert_deployment(app_dep)
-            super(UnvalidateDeploymentNotifer, self).notify(deployment)
+            super(UnvalidatedDeploymentNotifier, self).notify(deployment)
 
 
 class TagopsdbDeploymentProvider(object):
@@ -110,7 +110,7 @@ def main():
 
     dep_provider = TagopsdbDeploymentProvider(db_config)
     vmon = ValidationMonitor(config, dep_provider)
-    notifier = UnvalidateDeploymentNotifer(config)
+    notifier = UnvalidatedDeploymentNotifier(config)
 
     dep_provider.init()
     notifier.notify(vmon.get_deployments_requiring_validation())
