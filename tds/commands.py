@@ -373,7 +373,10 @@ class Jenkinspackage(Package):
 
         # Late import to prevent hard dependency
         from jenkinsapi.jenkins import Jenkins
-        from jenkinsapi.exceptions import JenkinsAPIException, NotFound
+        try: #0.2.15+
+            from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
+        except ImportError:
+            from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
         J = Jenkins('https://ci.tagged.com/')   #TODO: use config
 
