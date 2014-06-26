@@ -391,7 +391,7 @@ class Jenkinspackage(Package):
             self.log.debug('build: %r', build)
             if matrix_name is not None:
                 for run in build.get_matrix_runs():
-                    self.log.debug('run: %r', run.baseurl)
+                    self.log.debug('examining run: %r', run.baseurl)
                     if matrix_name in run.baseurl:
                         build = run
                         self.log.debug('found: %r', run.baseurl)
@@ -402,7 +402,11 @@ class Jenkinspackage(Package):
             self.log.debug('rpm_name: %r', rpm_name)
             artifacts = build.get_artifact_dict()
             self.log.debug('artifacts: %r', artifacts)
-            rpm = artifacts[rpm_name]
+            try:
+                rpm = artifacts[rpm_name]
+            except KeyError, e:
+                self.log.error('could not find artifact %r', rpm_name)
+                return False
             self.log.debug('downloading rpm')
             data = rpm.get_data()
             self.log.debug('done downloading rpm, len: %s', len(data))
