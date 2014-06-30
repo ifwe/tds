@@ -289,6 +289,7 @@ class Package(object):
 
             pending_rpm = os.path.join(incoming_dir, rpm_name)
             self.log.debug(5, 'Pending RPM is: %s', pending_rpm)
+            self.log.debug(5, 'Target RPM is: %s', rpm_name)
 
             if not self._queue_rpm(params, pending_rpm, rpm_name, app):
                 self.log.info('Failed to copy RPM into incoming directory')
@@ -373,13 +374,42 @@ class Jenkinspackage(Package):
 
         # Late import to prevent hard dependency
         from jenkinsapi.jenkins import Jenkins
-        from jenkinsapi.exceptions import JenkinsAPIException, NotFound
+        try: #0.2.15+
+            from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
+        except ImportError:
+            from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
         J = Jenkins('https://ci.tagged.com/')   #TODO: use config
 
+        matrix_name = None
+        #assume matrix build
+        if '/' in job_name:
+            job_name, matrix_name = job_name.split('/', 1)
+        self.log.debug('job_name: %r, matrix_name: %r', job_name, matrix_name)
         try:
-            a = J[job_name].get_build(buildnum).get_artifact_dict()[rpm_name]
-            data = a.get_data()
+            build = J[job_name].get_build(buildnum)
+            self.log.debug('build: %r', build)
+            if matrix_name is not None:
+                for run in build.get_matrix_runs():
+                    self.log.debug('examining run: %r', run.baseurl)
+                    if matrix_name in run.baseurl:
+                        build = run
+                        self.log.debug('found: %r', run.baseurl)
+                        break
+                else:
+                    self.log.error('could not find matrix run %s', matrix_name)
+                    return False
+            self.log.debug('rpm_name: %r', rpm_name)
+            artifacts = build.get_artifact_dict()
+            self.log.debug('artifacts: %r', artifacts)
+            try:
+                rpm = artifacts[rpm_name]
+            except KeyError, e:
+                self.log.error('could not find artifact %r', rpm_name)
+                return False
+            self.log.debug('downloading rpm')
+            data = rpm.get_data()
+            self.log.debug('done downloading rpm, len: %s', len(data))
         except (JenkinsAPIException, KeyError, NotFound) as e:
             self.log.error(e)
             return False
@@ -387,12 +417,16 @@ class Jenkinspackage(Package):
         tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)),
                                'tmp', rpm_name)
 
+        self.log.debug('relinking %r as %r', tmpname, queued_rpm)
         with open(tmpname, 'wb') as f:
             f.write(data)
             f.close()
+            self.log.debug('wrote temp file')
             os.link(f.name, queued_rpm)
+            self.log.debug('linked queued file')
             os.unlink(f.name)
-
+            self.log.debug('unlinked temp file')
+        self.log.debug('done relinking')
         return True
 
 
