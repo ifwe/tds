@@ -6,7 +6,7 @@ import tds.scripts.unvalidated_deploy_check as UDC
 
 from tests.factories.model.actor import ActorFactory
 from tests.factories.model.package import PackageFactory
-
+from tests.factories.utils.config import DatabaseTestConfigFactory
 
 class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
     def get_mock_app_dep(self, actor, package):
@@ -53,3 +53,22 @@ class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
             udn = UDC.UnvalidatedDeploymentNotifier(dict())
             udn.notify(deployments)
             assert base.notify.call_count == n
+
+
+class TestTagopsdbDeploymentProvider(unittest2.TestCase):
+    def test_init(self):
+        dbconfig = DatabaseTestConfigFactory()
+
+        init_session = patch('tagopsdb.init', return_value=None)
+        with init_session as p:
+            tdp = UDC.TagopsdbDeploymentProvider(dbconfig)
+            tdp.init()
+
+            assert len(p.call_args_list) == 1
+            (options,), _kwargs = p.call_args_list[0]
+            assert options.get('url', None) == dict(
+                    username=dbconfig['db']['user'],
+                    password=dbconfig['db']['password'],
+                    host=dbconfig['db']['hostname'],
+                    database=dbconfig['db']['db_name'],
+                )
