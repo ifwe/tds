@@ -45,7 +45,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 BuildRequires:  %{pybase}-devel
 
-Requires: %{tagbase}-tagopsdb
+Requires: %{pybase}-tagopsdb
 Requires: %{tagbase}-argparse
 Requires: %{pybase}-ordereddict
 
@@ -76,7 +76,7 @@ rm -rf $RPM_BUILD_ROOT
 Summary: Update repository daemon for deployment
 Group: Applications/Python
 
-Requires: %{tagbase}-tagopsdb
+Requires: %{pybase}-tagopsdb
 Requires: %{pybase}-simpledaemon
 
 Requires(post): chkconfig
