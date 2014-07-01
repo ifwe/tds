@@ -6,7 +6,8 @@ from .application import Application
 from .project import Project
 from .package import Package
 
-from tagopsdb import Environment
+import tagopsdb
+Environment = tagopsdb.Environment
 
 __all__ = [
     'Actor',

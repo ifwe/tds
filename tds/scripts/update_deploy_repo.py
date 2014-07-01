@@ -20,7 +20,7 @@ from simpledaemon import Daemon
 
 import tagopsdb
 import tagopsdb.deploy.package as package
-from tagopsdb.exceptions import RepoException
+import tagopsdb.exceptions
 
 
 log = logging.getLogger('update_deploy_repo')
@@ -154,9 +154,11 @@ class UpdateDeployRepoDaemon(Daemon):
 
             if pkg is None:
                 name, version, release = rpm_info[1:]
-                raise RepoException('Missing entry for package "%s", '
-                                    'version %s, revision %s in database'
-                                    % (name, version, release))
+                raise tagopsdb.exceptions.RepoException(
+                    'Missing entry for package "%s", '
+                    'version %s, revision %s in database'
+                    % (name, version, release)
+                )
 
             self.valid_rpms[rpm] = rpm_info
 
@@ -207,9 +209,11 @@ class UpdateDeployRepoDaemon(Daemon):
 
             if pkg is None:
                 name, version, release = rpm_info[1:]
-                raise RepoException('Missing entry for package "%s", '
-                                    'version %s, revision %s in database'
-                                    % (name, version, release))
+                raise tagopsdb.exceptions.RepoException(
+                    'Missing entry for package "%s", '
+                    'version %s, revision %s in database'
+                    % (name, version, release)
+                )
 
             # TODO: ensure package is valid (security purposes)
 
@@ -321,7 +325,9 @@ class UpdateDeployRepoDaemon(Daemon):
             try:
                 data = yaml.load(conf_file.read())
             except yaml.parser.ParserError, e:
-                raise RepoException('YAML parse error: %s' % e)
+                raise tagopsdb.exceptions.RepoException(
+                    'YAML parse error: %s' % e
+                )
 
         if 'yum' not in data:
             raise RuntimeError('YAML configuration missing "yum" section')
