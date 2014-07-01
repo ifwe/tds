@@ -7,5 +7,6 @@ source "$scripts/python-setup.sh"
     -v \
     --junitxml=reports/pyunit.xml \
     --cov-report=xml \
+    --cov-config=coverage.rc
     --cov=tds \
     --ignore="$VIRTUAL_ENV" ||:
