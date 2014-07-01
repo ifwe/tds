@@ -1,10 +1,10 @@
 '''Model module for project object'''
 
 from .base import Base
-from tagopsdb import Project as DBProject
+import tagopsdb
 
 
-class TDSProject(Base, DBProject):
+class TDSProject(Base, tagopsdb.Project):
     'A project links applications together in a deployable group'
     # name
     # type
