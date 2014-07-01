@@ -85,3 +85,11 @@ class PackageAddFactory(DeploymentFactory):
     )
 
     target = None
+
+
+class AppDeploymentFactory(factory.Factory):
+    FACTORY_FOR = d.AppDeployment
+
+    environment = 'test'
+    status = 'complete'
+

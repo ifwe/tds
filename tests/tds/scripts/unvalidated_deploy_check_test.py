@@ -6,6 +6,7 @@ import tds.scripts.unvalidated_deploy_check as UDC
 
 from tests.factories.model.actor import ActorFactory
 from tests.factories.model.package import PackageFactory
+from tests.factories.model.deployment import AppDeploymentFactory
 from tests.factories.utils.config import DatabaseTestConfigFactory
 
 class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
@@ -56,19 +57,24 @@ class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
 
 
 class TestTagopsdbDeploymentProvider(unittest2.TestCase):
-    def test_init(self):
+    def test_init_and_get_all(self):
         dbconfig = DatabaseTestConfigFactory()
+        app_deps = [AppDeploymentFactory(), AppDeploymentFactory()]
 
-        init_session = patch('tagopsdb.init', return_value=None)
-        with init_session as p:
+        with patch('tds.model.AppDeployment') as app_dep_mock, \
+            patch('tagopsdb.init', return_value=None) as init_session:
+            app_dep_mock.find.return_value = app_deps
+
             tdp = UDC.TagopsdbDeploymentProvider(dbconfig)
             tdp.init()
 
-            assert len(p.call_args_list) == 1
-            (options,), _kwargs = p.call_args_list[0]
+            assert len(init_session.call_args_list) == 1
+            (options,), _kwargs = init_session.call_args_list[0]
             assert options.get('url', None) == dict(
                     username=dbconfig['db']['user'],
                     password=dbconfig['db']['password'],
                     host=dbconfig['db']['hostname'],
                     database=dbconfig['db']['db_name'],
                 )
+
+            assert tdp.get_all(app_deps[0].environment) == app_deps
