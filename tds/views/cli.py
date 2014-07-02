@@ -51,7 +51,7 @@ class CLI(Base):
                 app_info = APP_TEMPLATE.format(self=app)
                 app_result.extend(app_info.splitlines())
                 target_group_info = TARGET_TEMPLATE.format(
-                    s=repr([x.encode('utf8') for x in app.target_groups])
+                    s=', '.join(x.encode('utf8') for x in app.target_groups)
                 )
                 app_result.append(target_group_info)
                 output.append('\n\t'.join(app_result))
