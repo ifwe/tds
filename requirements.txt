@@ -11,4 +11,3 @@ pytz>=2012j
 requests==1.2.3
 git+https://github.tagged.com/siteops/tagopsdb@v0.8.0-alpha.2.05#egg=tagopsdb-0.8.0
 git+https://github.tagged.com/siteops/python-simpledaemon@master#egg=simpledaemon-1.0
-git+https://github.com/tagged/elixir@master#egg=Elixir-0.8.1

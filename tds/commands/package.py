@@ -6,7 +6,6 @@ import signal
 import time
 
 import tagopsdb.exceptions
-import elixir
 import tagopsdb.deploy.repo
 import tagopsdb.deploy.deploy
 import tagopsdb.deploy.package
@@ -76,7 +75,7 @@ class Package(object):
 
                 # The following line should reset the transaction
                 # so the next query is re-read from the database
-                elixir.session.remove()
+                tagopsdb.Session.remove()
                 time.sleep(0.5)
 
     def _queue_rpm(self, params, queued_rpm, rpm_name, app):
@@ -135,7 +134,7 @@ class Package(object):
                 self.log.error(e)
                 return
 
-            elixir.session.commit()
+            tagopsdb.Session.commit()
             self.log.debug('Committed database changes')
 
             # Get repo information for package
@@ -190,7 +189,7 @@ class Package(object):
             self.log.error(e)
             return
 
-        elixir.session.commit()
+        tagopsdb.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug

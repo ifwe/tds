@@ -18,7 +18,6 @@ import yaml.parser
 from kazoo.client import KazooClient   # , KazooState
 from simpledaemon import Daemon
 
-import elixir
 import tagopsdb
 import tagopsdb.deploy.package as package
 from tagopsdb.exceptions import RepoException
@@ -172,7 +171,7 @@ class UpdateDeployRepoDaemon(Daemon):
             else:
                 pkg.status = 'processing'
             finally:
-                elixir.session.commit()
+                tagopsdb.Session.commit()
 
     def email_for_invalid_rpm(self, rpm_file):
         """Send an email to engineering if a bad RPM is found"""
@@ -229,7 +228,7 @@ class UpdateDeployRepoDaemon(Daemon):
                     del self.valid_rpms[rpm]
                     continue
                 finally:
-                    elixir.session.commit()
+                    tagopsdb.Session.commit()
 
         log.info('Updating repo...')
         old_umask = os.umask(0002)
@@ -253,7 +252,7 @@ class UpdateDeployRepoDaemon(Daemon):
         for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
             pkg = package.find_package(*rpm_info[1:])
             pkg.status = final_status
-            elixir.session.commit()
+            tagopsdb.Session.commit()
 
         os.umask(old_umask)
         log.info('Removing processed files...')

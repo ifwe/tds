@@ -3,7 +3,6 @@ import time
 from datetime import datetime, timedelta
 
 import tagopsdb.exceptions
-import elixir
 import tagopsdb.deploy.repo
 import tagopsdb.deploy.deploy
 import tagopsdb.deploy.package
@@ -301,7 +300,7 @@ class Deploy(object):
 
                     # Commit to DB immediately
                     host_dep.status = 'ok'
-                    elixir.session.commit()
+                    tagopsdb.Session.commit()
 
                     self.log.debug(5, 'Committed database (nested) change')
                 else:
@@ -337,14 +336,14 @@ class Deploy(object):
 
                     # Commit to DB immediately
                     host_dep.status = 'ok'
-                    elixir.session.commit()
+                    tagopsdb.Session.commit()
                 else:
                     self.log.debug(5, 'Deployment to host %r failed',
                                    dep_host.hostname)
 
                     # Commit to DB immediately
                     host_dep.status = 'failed'
-                    elixir.session.commit()
+                    tagopsdb.Session.commit()
 
                     failed_hosts.append((dep_host.hostname, info))
 
@@ -1153,7 +1152,7 @@ class Deploy(object):
                 else:
                     app_dep.status = 'inprogress'
 
-                elixir.session.commit()
+                tagopsdb.Session.commit()
 
                 dep_id = app_dep.deployment_id
 
@@ -1182,7 +1181,7 @@ class Deploy(object):
 
             # Commit to DB immediately
             app_dep.status = 'validated'
-            elixir.session.commit()
+            tagopsdb.Session.commit()
 
             self.log.debug(5, 'Committed database (nested) change')
 
@@ -1491,7 +1490,7 @@ class Deploy(object):
             self.log.error(e)
             return
 
-        elixir.session.commit()
+        tagopsdb.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1514,7 +1513,7 @@ class Deploy(object):
             self.log.error(e)
             return
 
-        elixir.session.commit()
+        tagopsdb.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1542,7 +1541,7 @@ class Deploy(object):
         self.send_notifications(params)
         self.perform_deployments(params, pkg_id, app_host_map, app_dep_map)
 
-        elixir.session.commit()
+        tagopsdb.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1574,7 +1573,7 @@ class Deploy(object):
                                                    app_dep_map)
         self.perform_invalidations(app_dep_map)
 
-        elixir.session.commit()
+        tagopsdb.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1638,7 +1637,7 @@ class Deploy(object):
                                                  app_dep_map)
         self.perform_validations(params, app_dep_map)
 
-        elixir.session.commit()
+        tagopsdb.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1680,7 +1679,7 @@ class Deploy(object):
             # Note this is only done for tiers
             self.perform_invalidations(orig_app_dep_map)
 
-        elixir.session.commit()
+        tagopsdb.Session.commit()
         self.log.debug('Committed database changes')
 
     @tds.utils.debug
@@ -1736,5 +1735,5 @@ class Deploy(object):
         self.send_notifications(params)
         self.perform_redeployments(params, dep_id, app_host_map, app_dep_map)
 
-        elixir.session.commit()
+        tagopsdb.Session.commit()
         self.log.debug('Committed database changes')
