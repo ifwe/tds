@@ -16,7 +16,7 @@ class TestPackageAdd(unittest2.TestCase):
             return_value=DeployConfigFactory(),
         )
         self.session = patch(
-            'elixir.session',
+            'tagopsdb.Session',
             **{'commit.return_value': None}
         ).start()
         self.tds_authorize = patch(
