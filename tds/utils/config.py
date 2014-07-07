@@ -192,7 +192,10 @@ class TDSDatabaseConfig(TDSConfig):
     ):
         """ """
 
-        self.basic = TDSConfig('%s.yml' % (base_name_fragment,), conf_dir=conf_dir)
+        self.basic = TDSConfig(
+            '%s.yml' % (base_name_fragment,),
+            conf_dir=conf_dir
+        )
         self.access = TDSConfig(
             '%s.%s.yml' % (name_fragment, access_level),
             conf_dir=conf_dir
