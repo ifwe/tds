@@ -187,29 +187,40 @@ class TDS(object):
             raise   # Just pass error up to top level
 
     def exec_project_list(self):
-        tds.authorize.verify_access(self.params.get('user_level', 'disabled'), 'dev')
-
-        controller = tds.commands.ProjectController()
-        result = controller.list(*(self.params.get('projects') or []))
-
-        return self.render('project_list', result)
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ProjectController,
+            action='list',
+            view='project_list',
+            access_level='dev'
+        )
 
     def exec_project_delete(self):
-        tds.authorize.verify_access(self.params.get('user_level', 'disabled'), 'admin')
-
-        controller = tds.commands.ProjectController()
-        result = controller.delete(self.params.get('project'))
-
-        return self.render('project_delete', result)
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ProjectController,
+            action='delete',
+            view='project_delete',
+            access_level='admin'
+        )
 
     def exec_project_create(self):
-        tds.authorize.verify_access(self.params.get('user_level', 'disabled'), 'admin')
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ProjectController,
+            action='create',
+            view='project_create',
+            access_level='admin'
+        )
 
-        controller = tds.commands.ProjectController()
-        result = controller.create(self.params.get('project'))
+    def exec_controller_default(self, ControllerClass, action, view, access_level=None):
+        if access_level is not None:
+            tds.authorize.verify_access(
+                self.params.get('user_level', 'disabled'),
+                access_level
+            )
 
-        return self.render('project_create', result)
+        controller = ControllerClass()
+        result = getattr(controller, action)(**self.params)
 
+        return self.render(view, result)
 
     def render(self, *args, **kwargs):
         return self.view().generate_result(*args, **kwargs)
