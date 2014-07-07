@@ -14,7 +14,7 @@ class ProjectController(object):
         log.warning('Extra argument "logger" ignored in commands.project')
 
     @staticmethod
-    def create(project, **kwds):
+    def create(project, **_kwds):
         """Add a project"""
         project_name = project
         project = Project.get(name=project_name)
@@ -25,7 +25,7 @@ class ProjectController(object):
         return dict(result=Project.create(name=project_name))
 
     @staticmethod
-    def delete(project, **kwds):
+    def delete(project, **_kwds):
         """Remove a given project"""
 
         project_name = project
@@ -39,11 +39,16 @@ class ProjectController(object):
         return dict(result=project)
 
     @staticmethod
-    def list(projects=(), **kwds):
+    def list(projects=(), **_kwds):
         """Show information for requested projects (or all projects)"""
         project_names = projects
 
         if project_names:
-            return dict(result=filter(None, [Project.get(name=p) for p in project_names]))
+            return dict(
+                result=filter(
+                    None,
+                    [Project.get(name=p) for p in project_names]
+                )
+            )
         else:
             return dict(result=Project.all())
