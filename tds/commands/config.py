@@ -58,7 +58,7 @@ class Config(Deploy):
     @tds.utils.debug
     def delete(self, params):
         """Remove a config project from the system"""
-        return ProjectController().delete(params)
+        return ProjectController().delete(**params)
 
     @tds.utils.debug
     def push(self, params):
