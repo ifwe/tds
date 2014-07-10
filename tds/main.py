@@ -28,7 +28,9 @@ class TDS(object):
     view = tds.views.CLI
 
     command_map = {
-        ('repository', 'list'): 'exec_repository_list',
+        ('project', 'list'): 'exec_project_list',
+        ('project', 'delete'): 'exec_project_delete',
+        ('project', 'create'): 'exec_project_create',
     }
 
     def __init__(self, params):
@@ -184,13 +186,41 @@ class TDS(object):
         except:
             raise   # Just pass error up to top level
 
-    def exec_repository_list(self):
-        tds.authorize.verify_access(self.params.get('user_level', 'disabled'), 'dev')
+    def exec_project_list(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ProjectController,
+            action='list',
+            view='project_list',
+            access_level='dev'
+        )
 
-        controller = tds.commands.Repository()
-        result = controller.list(*(self.params.get('projects') or []))
+    def exec_project_delete(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ProjectController,
+            action='delete',
+            view='project_delete',
+            access_level='admin'
+        )
 
-        return self.render('projects', result)
+    def exec_project_create(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ProjectController,
+            action='create',
+            view='project_create',
+            access_level='admin'
+        )
+
+    def exec_controller_default(self, ControllerClass, action, view, access_level=None):
+        if access_level is not None:
+            tds.authorize.verify_access(
+                self.params.get('user_level', 'disabled'),
+                access_level
+            )
+
+        controller = ControllerClass()
+        result = getattr(controller, action)(**self.params)
+
+        return self.render(view, result)
 
     def render(self, *args, **kwargs):
         return self.view().generate_result(*args, **kwargs)
