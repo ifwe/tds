@@ -18,19 +18,45 @@ class DeploymentFactory(factory.Factory):
     FACTORY_FOR = d.Deployment
 
     actor = factory.SubFactory(ActorFactory)
+    package = factory.SubFactory(PackageFactory)
 
     action = dict(
         command='deploy',
         subcommand='promote',
     )
 
-    project = factory.LazyAttribute(lambda d: dict(name=d.package.name))
-
-    package = factory.SubFactory(PackageFactory)
+    project = factory.LazyAttribute(lambda x: dict(name=x.package.name))
 
     target = dict(
         environment='test',
         apptypes=['fake_apptype'],
+    )
+
+
+class HostDeploymentFactory(DeploymentFactory):
+    '''
+    Deployment for the following command:
+
+    `tds deploy promote fake_project --hosts=whatever.example.com`
+    by user 'fake_user' in the 'test' tier.
+    '''
+
+    target = dict(
+        environment='test',
+        hosts=['whatever.example.com'],
+    )
+
+
+class AllApptypesDeploymentFactory(DeploymentFactory):
+    '''
+    Deployment for the following command:
+
+    `tds deploy promote fake_project --all-apptypes`
+    by user 'fake_user' in the 'test' tier.
+    '''
+
+    target = dict(
+        environment='test',
     )
 
 

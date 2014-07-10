@@ -1,4 +1,4 @@
-from mock import patch
+from mock import patch, Mock
 import unittest2
 
 import tds.notifications.hipchat as hipchat
@@ -12,11 +12,11 @@ APP_CONFIG = DeployConfigFactory()
 class TestHipchatNotifier(unittest2.TestCase):
     def setUp(self):
         self.project_rooms = ['fakeroom1', 'fakeroom2']
-        notifications_deploy = patch('tds.notifications.hipchat.deploy', **{
-            'find_hipchat_rooms_for_app.return_value': self.project_rooms[:]
-        })
 
-        notifications_deploy.start()
+        project_class_mock = patch('tds.model.Project').start()
+        hipchats = [Mock(room_name=r) for r in self.project_rooms]
+        target = Mock(hipchats=hipchats)
+        project_class_mock.get.return_value.targets = [target]
 
     def tearDown(self):
         patch.stopall()
