@@ -39,8 +39,11 @@ class HipchatNotifier(Notifier):
         # Query DB for any additional HipChat rooms
         log.debug('Looking for additional HipChat rooms to be notified')
         project = tds.model.Project.get(name=deployment.project['name'])
-        hipchats = sum((t.hipchats for t in project.targets), [])
-        extra_rooms = [x.room_name for x in hipchats]
+        extra_rooms = [
+            hipchat.room_name
+            for target in project.targets
+            for hipchat in target.hipchats
+        ]
 
         log.log(5, 'HipChat rooms to notify: %s',
                   ', '.join(self.rooms))
