@@ -29,3 +29,4 @@ class DatabaseTestConfigFactory(ConfigFactory):
     FACTORY_FOR = tds.utils.config.TDSDatabaseConfig
 
     access_level = 'test'
+    base_name_fragment = 'tagopsdb'
