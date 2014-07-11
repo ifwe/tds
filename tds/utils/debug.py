@@ -2,6 +2,8 @@ import logging
 
 __all__ = ['debug']
 
+log = logging.getLogger('tds.utils.debug')
+
 
 def debug(func):
     """Decorator method to handle debug-level logging of code flow
@@ -11,10 +13,7 @@ def debug(func):
     do_depth = 1
 
     def wrapper(*a, **k):
-        logger = k.get('logger', None)
-
-        if logger is None:
-            logger = logging.getLogger('tds')
+        logger = k.get('logger', log)
 
         name = func.func_name
         filename = func.func_code.co_filename
