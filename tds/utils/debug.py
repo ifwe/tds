@@ -13,7 +13,7 @@ def debug(func):
     do_depth = 1
 
     def wrapper(*a, **k):
-        logger = k.get('logger', log)
+        logger = k.get('logger', None) or log
 
         name = func.func_name
         filename = func.func_code.co_filename
