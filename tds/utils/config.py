@@ -177,7 +177,6 @@ class TDSConfig(YAMLConfig, VerifyingConfig):
 class TDSDatabaseConfig(TDSConfig):
     """Handle TDS database configuration file"""
 
-    default_base_name_fragment = 'tagopsdb'
     default_name_fragment = 'dbaccess'
     schema = {
         'db': ['user', 'password', ],
@@ -186,7 +185,7 @@ class TDSDatabaseConfig(TDSConfig):
     def __init__(
         self,
         access_level,
-        base_name_fragment=default_base_name_fragment,
+        base_name_fragment,
         name_fragment=default_name_fragment,
         conf_dir=TDSConfig.default_conf_dir
     ):

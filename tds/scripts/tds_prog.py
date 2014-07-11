@@ -45,7 +45,7 @@ def parse_command_line():
                         help='Show more information (more used shows greater '
                              'information)')
     parser.add_argument('--dbuser',
-                        help='Specify user to use to connect to TagOpsDB',
+                        help='Specify user to use to connect to database',
                         default=None)
     parser.add_argument('--disable-color', dest='use_color',
                         action='store_false',

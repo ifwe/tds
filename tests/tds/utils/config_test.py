@@ -208,18 +208,27 @@ class TestTDSConfig(unittest2.TestCase):
 class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
     constructor_kwargs_expected = lambda: [
         (
-            dict(access_level='foo'),
+            dict(access_level='foo', base_name_fragment='bar'),
             '%s/%s.foo.yml' % (
                 config.TDSDatabaseConfig.default_conf_dir,
                 config.TDSDatabaseConfig.default_name_fragment
             )
         ),
         (
-            dict(access_level='foo', name_fragment='whatever'),
-            '%s/whatever.foo.yml' % config.TDSDatabaseConfig.default_conf_dir
+            dict(
+                access_level='foo',
+                name_fragment='whatever',
+                base_name_fragment='bar',
+            ),
+            ('%s/%s.foo.yml' %
+                (config.TDSDatabaseConfig.default_conf_dir, 'whatever'))
         ),
         (
-            dict(access_level='foo', conf_dir='/fake/dir'),
+            dict(
+                access_level='foo',
+                conf_dir='/fake/dir',
+                base_name_fragment='bar',
+            ),
             ('/fake/dir/%s.foo.yml' %
                 config.TDSDatabaseConfig.default_name_fragment)
         ),
@@ -227,7 +236,8 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
             dict(
                 access_level='foo',
                 conf_dir='/fake/dir',
-                name_fragment='whatever'
+                name_fragment='whatever',
+                base_name_fragment='bar',
             ),
             '/fake/dir/whatever.foo.yml'
         ),
@@ -240,7 +250,7 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         assert c.filename == expected
 
     def test_schema_success(self):
-        c = config.TDSDatabaseConfig('foo')
+        c = config.TDSDatabaseConfig('foo', 'bar')
         self.load_fake_config(c, 'dbaccess.test')
 
         fake_config = config_factories.DatabaseTestConfigFactory()
@@ -249,7 +259,7 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         assert c['db.password'] == fake_config['db']['password']
 
     def test_schema_failure(self):
-        c = config.TDSDatabaseConfig('foo')
+        c = config.TDSDatabaseConfig('foo', 'bar')
         self.load_fake_config(c, 'dbaccess.test')
         c['db'].pop('user')
         self.assertRaises(config.ConfigurationError, c.verify, None)
