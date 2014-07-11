@@ -1,6 +1,7 @@
 '''
 Factories to create various tds.model.deployment.Deployment instances
 '''
+import datetime
 import factory
 import tds.model.deployment as d
 
@@ -85,3 +86,14 @@ class PackageAddFactory(DeploymentFactory):
     )
 
     target = None
+
+
+class AppDeploymentFactory(factory.Factory):
+    FACTORY_FOR = d.AppDeployment
+    FACTORY_STRATEGY = factory.STUB_STRATEGY
+
+    environment = 'test'
+    status = 'complete'
+
+    needs_validation = False
+    realized = factory.LazyAttribute(lambda o: datetime.datetime.utcnow())
