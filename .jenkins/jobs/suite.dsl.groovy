@@ -45,6 +45,14 @@ def pyunit = project.downstreamJob {
     }
 }
 
+// Run behave tests and record results
+def features = project.downstreamJob {
+    name 'features'
+    label 'python26 && centos6'
+    steps { shell '.jenkins/scripts/features.sh' }
+    publishers { archiveJunit "reports/*.xml" }
+}
+
 def tds_update_repo = new FPMPython([
     FPMCommonArgs.verbose,
     new FPMArg('-s', 'dir'),
