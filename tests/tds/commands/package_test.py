@@ -44,7 +44,7 @@ class TestPackageAdd(unittest2.TestCase):
             **{'verify_access.return_value': True}
         ).start()
 
-        self.package = tds.commands.Package()
+        self.package = tds.commands.PackageController()
 
         package_methods = [
             ('_queue_rpm', True),
