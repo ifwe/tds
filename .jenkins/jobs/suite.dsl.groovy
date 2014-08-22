@@ -50,7 +50,10 @@ def features = project.downstreamJob {
     name 'features'
     label 'python26 && centos6'
     steps { shell '.jenkins/scripts/features.sh' }
-    publishers { archiveJunit "reports/*.xml" }
+    publishers {
+        archiveJunit "reports/*.xml"
+        cobertura 'coverage.xml'
+    }
 }
 
 def tds_update_repo = new FPMPython([
