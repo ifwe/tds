@@ -1,4 +1,5 @@
 'Notify about unvalidated deployments'
+
 import sys
 
 import tds.utils.config
@@ -9,8 +10,12 @@ from ..utils.script_helpers import (
     ValidationMonitor
 )
 
+
 def main():
-    'Load config, create ValidationMonitor instance, and process notifications'
+    '''
+    Load config, create ValidationMonitor instance, and process notifications
+    '''
+
     config = tds.utils.config.TDSDeployConfig()
     db_config = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
 

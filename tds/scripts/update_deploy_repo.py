@@ -1,8 +1,10 @@
-import collections
+"""Program to run a daemon on yum repository servers to manage
+   new packages being added to the deploy repository for TDS
+"""
+
 import logging
 import os
 import os.path
-import shlex
 import shutil
 import smtplib
 import socket
@@ -22,16 +24,19 @@ import tagopsdb
 import tagopsdb.deploy.package as package
 import tagopsdb.exceptions
 
+import tds.utils as utils
 
 log = logging.getLogger('update_deploy_repo')
 
 
 class ExtCommandError(Exception):
+    """Custom exception for external command errors"""
+
     pass
 
 
 class Zookeeper(object):
-    """ """
+    """Zookeeper management object"""
 
     def __init__(self, hostname, servers):
         """Set up election for Zookeeper"""
@@ -53,53 +58,22 @@ class Zookeeper(object):
         self.election.run(elect_method, *args)
 
 
-def run(cmd, expect_return_code=0, env=None, shell=False):
-    """Wrapper to run external command"""
-
-    if isinstance(cmd, basestring):
-        args = shlex.split(cmd.replace('\\', '\\\\'))
-    else:
-        args = cmd
-
-    try:
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, env=env, shell=shell)
-    except OSError as e:
-        exc = subprocess.CalledProcessError(1, args)
-        exc.stderr = 'Error using Popen: %s' % e
-        exc.stdout = None
-        raise exc
-
-    stdout, stderr = proc.communicate()
-
-    if not (expect_return_code is None or
-            expect_return_code == proc.returncode):
-        exc = subprocess.CalledProcessError(proc.returncode, args)
-        exc.stderr = stderr
-        exc.stdout = stdout
-        raise exc
-
-    process = collections.namedtuple('Process',
-                                     ['stdout', 'stderr', 'returncode'])
-
-    return process(stdout=stdout, stderr=stderr, returncode=proc.returncode)
-
-
 class UpdateDeployRepoDaemon(Daemon):
-    """"""
+    """Daemon to manage updating the deploy repository with new packages"""
 
     valid_rpms = None
 
-    def remove_file(self, rpm):
-        """ """
+    @staticmethod
+    def remove_file(rpm):
+        """Remove file from system"""
 
         try:
             os.unlink(rpm)
-        except OSError as e:
-            log.error('Unable to remove file %s: %s', (rpm, e))
+        except OSError as exc:
+            log.error('Unable to remove file %s: %s', rpm, exc)
 
     def check_rpm_file(self, rpm_to_process):
-        """ """
+        """Ensure file is a valid RPM"""
 
         rpm_info = None
         cmd = ['rpm', '-qp', '--queryformat',
@@ -107,14 +81,14 @@ class UpdateDeployRepoDaemon(Daemon):
                rpm_to_process]
 
         try:
-            rpm_info = run(cmd)
-        except subprocess.CalledProcessError as e:
-            log.error('rpm command failed: %s', e)
+            rpm_info = utils.run(cmd)
+        except subprocess.CalledProcessError as exc:
+            log.error('rpm command failed: %s', exc)
 
             try:
                 self.email_for_invalid_rpm(rpm_to_process)
-            except Exception as e:   # Email send failed?  Tough noogies.
-                log.error('Email send failed: %s', e)
+            except Exception as exc:   # Email send failed?  Tough noogies.
+                log.error('Email send failed: %s', exc)
 
         if rpm_info is not None:
             # Contains arch type, package name, version and release
@@ -166,7 +140,7 @@ class UpdateDeployRepoDaemon(Daemon):
                 os.rename(src_rpm, dst_rpm)
             except OSError as e:
                 log.error('Unable to move file "%s" to "%s": %s',
-                          (src_rpm, process_dir, e))
+                          src_rpm, process_dir, e)
                 pkg.status = 'failed'
                 self.remove_file(src_rpm)
                 del self.valid_rpms[rpm]
@@ -175,7 +149,8 @@ class UpdateDeployRepoDaemon(Daemon):
             finally:
                 tagopsdb.Session.commit()
 
-    def email_for_invalid_rpm(self, rpm_file):
+    @staticmethod
+    def email_for_invalid_rpm(rpm_file):
         """Send an email to engineering if a bad RPM is found"""
 
         sender = 'siteops'
@@ -221,12 +196,12 @@ class UpdateDeployRepoDaemon(Daemon):
 
             try:
                 shutil.copy(rpm_to_process, dest_dir)
-            except IOError as e:
+            except IOError:
                 time.sleep(2)   # Short delay before re-attempting
 
                 try:
                     shutil.copy(rpm_to_process, dest_dir)
-                except IOError as e:
+                except IOError:
                     pkg.status = 'failed'
                     self.remove_file(rpm_to_process)
                     del self.valid_rpms[rpm]
@@ -239,18 +214,18 @@ class UpdateDeployRepoDaemon(Daemon):
         final_status = 'completed'
 
         try:
-            run(['make', '-C', repo_dir])
-        except subprocess.CalledProcessError as e:
-            log.error('yum database update failed, retrying: %s', e)
+            utils.run(['make', '-C', repo_dir])
+        except subprocess.CalledProcessError as exc:
+            log.error('yum database update failed, retrying: %s', exc)
             time.sleep(5)   # Short delay before re-attempting
 
             try:
-                run(['make', '-C', repo_dir])
-            except subprocess.CalledProcessError as e:
-                log.error('yum database update failed, aborting: %s', e)
+                utils.run(['make', '-C', repo_dir])
+            except subprocess.CalledProcessError as exc:
+                log.error('yum database update failed, aborting: %s', exc)
                 final_status = 'failed'
 
-        log.info('Updating status of packages to: %s' % final_status)
+        log.info('Updating status of packages to: %s', final_status)
         # Yes, making the assumption none of the package finds
         # will fail...
         for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
@@ -265,7 +240,7 @@ class UpdateDeployRepoDaemon(Daemon):
             self.remove_file(os.path.join(process_dir, rpm_to_process))
 
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
-        """"""
+        """Look for files in 'incoming' directory and handle them"""
 
         log.info('Checking for incoming files...')
 
@@ -324,9 +299,9 @@ class UpdateDeployRepoDaemon(Daemon):
         with open('/etc/tagops/deploy.yml') as conf_file:
             try:
                 data = yaml.load(conf_file.read())
-            except yaml.parser.ParserError, e:
+            except yaml.parser.ParserError as exc:
                 raise tagopsdb.exceptions.RepoException(
-                    'YAML parse error: %s' % e
+                    'YAML parse error: %s' % exc
                 )
 
         if 'yum' not in data:
@@ -336,9 +311,9 @@ class UpdateDeployRepoDaemon(Daemon):
             repo_dir = data['yum']['repo_location']
             incoming_dir = data['yum']['incoming']
             process_dir = data['yum']['processing']
-        except KeyError as e:
+        except KeyError as exc:
             raise RuntimeError('YAML configuration missing necessary '
-                               'parameter in "yum" section: %s' % e)
+                               'parameter in "yum" section: %s' % exc)
 
         if 'zookeeper' in data:
             hostname = socket.gethostname()
@@ -357,14 +332,16 @@ class UpdateDeployRepoDaemon(Daemon):
 
         try:
             self.main()
-        except:
+        except Exception:
             value = sys.exc_info()[1]
-            e = "Unhandled exception: %s.  Daemon exiting." % value
-            log.error(e)
+            exc = "Unhandled exception: %s.  Daemon exiting." % value
+            log.error(exc)
             sys.exit(1)
 
 
 def daemon_main():
+    """Prepare logging then initialize daemon"""
+
     pid = '/var/run/update_deploy_repo.pid'
     logfile = '/var/log/update_deploy_repo.log'
 
@@ -386,13 +363,13 @@ def daemon_main():
         cmd, arg = sys.argv
 
         if arg == 'start':
-            log.info('Starting %s daemon' % cmd)
+            log.info('Starting %s daemon', cmd)
             daemon.start()
         elif arg == 'stop':
-            log.info('Stopping %s daemon' % cmd)
+            log.info('Stopping %s daemon', cmd)
             daemon.stop()
         elif arg == 'restart':
-            log.info('Restarting %s daemon' % cmd)
+            log.info('Restarting %s daemon', cmd)
             daemon.restart()
         else:
             print 'Invalid argument'
