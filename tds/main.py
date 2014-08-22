@@ -28,15 +28,6 @@ class TDS(object):
 
     view = tds.views.CLI
 
-    command_map = {
-        ('project', 'create'): 'exec_project_create',
-        ('project', 'delete'): 'exec_project_delete',
-        ('project', 'list'): 'exec_project_list',
-        ('repository', 'add'): 'exec_repository_add',
-        ('repository', 'delete'): 'exec_project_delete',
-        ('repository', 'list'): 'exec_project_list',
-    }
-
     views = {
         ('jenkinspackage', 'add'): 'package_add',
         ('deploy', 'redeploy'): 'deploy_promote',
@@ -49,6 +40,9 @@ class TDS(object):
         ('config', 'validate'): 'deploy_validate',
         ('config', 'repush'): 'deploy_promote',
         ('config', 'revert'): 'deploy_rollback',
+        ('repository', 'add'): 'project_create',
+        ('repository', 'delete'): 'project_delete',
+        ('repository', 'list'): 'project_list',
     }
 
     def __init__(self, params):
@@ -203,68 +197,6 @@ class TDS(object):
         """Run the requested command for TDS"""
 
         log.debug('Running the requested command')
-        command = (self.params['command_name'], self.params['subcommand_name'])
-        handler_name = self.command_map.get(command, None)
-        if handler_name is None:
-            handler_name = 'exec_command_default'
-        handler = getattr(self, handler_name, None)
-
-        if handler is None:
-            self.exec_command_default()
-        else:
-            handler()
-
-
-    def exec_project_list(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ProjectController,
-            action='list',
-            view='project_list',
-            access_level='dev'
-        )
-
-    def exec_project_delete(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ProjectController,
-            action='delete',
-            view='project_delete',
-            access_level='admin'
-        )
-
-    def exec_project_create(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ProjectController,
-            action='create',
-            view='project_create',
-            access_level='admin'
-        )
-
-    def exec_repository_add(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.RepositoryController,
-            action='add',
-            view='project_create',
-            access_level='admin'
-        )
-
-    def exec_controller_default(self, ControllerClass, action, view, access_level=None):
-        '''
-        This is for new-style controllers that don't have BaseController
-        as a base class
-        '''
-        controller = ControllerClass(self.config)
-        # XXX: access levels need to be moved into controller classes
-        if access_level is not None:
-            tds.authorize.verify_access(
-                self.params.get('user_level', 'disabled'),
-                access_level
-            )
-
-        result = getattr(controller, action)(**self.params)
-        return self.render(view, result)
-
-    def exec_command_default(self):
-        '''This is for controllers with BaseController as a base class'''
         command = self.params['command_name'].replace('-', '_')
         subcommand = self.params['subcommand_name'].replace('-', '_')
         full_command = (command, subcommand)
@@ -282,7 +214,6 @@ class TDS(object):
         result = controller.action(subcommand, **self.params)
 
         return self.render(view_name, result)
-
 
     def render(self, *args, **kwargs):
         return self.view().generate_result(*args, **kwargs)
