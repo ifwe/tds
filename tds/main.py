@@ -29,15 +29,6 @@ class TDS(object):
     view = tds.views.CLI
 
     command_map = {
-        ('config', 'add-apptype'): 'exec_config_add_apptype',
-        ('config', 'create'): 'exec_config_create',
-        ('config', 'delete-apptype'): 'exec_config_delete_apptype',
-        ('config', 'invalidate'): 'exec_config_invalidate',
-        ('config', 'push'): 'exec_config_push',
-        ('config', 'show'): 'exec_config_show',
-        ('config', 'validate'): 'exec_config_validate',
-        ('config', 'repush'): 'exec_deploy_redeploy',
-        ('config', 'revert'): 'exec_deploy_rollback',
         ('jenkinspackage', 'add'): 'exec_jenkinspackage_add',
         ('package', 'add'): 'exec_package_add',
         ('package', 'delete'): 'exec_package_delete',
@@ -52,6 +43,15 @@ class TDS(object):
 
     views = {
         ('deploy', 'redeploy'): 'deploy_promote',
+        ('config', 'add_apptype'): 'deploy_add_apptype',
+        ('config', 'create'): 'project_create',
+        ('config', 'delete_apptype'): 'deploy_delete_apptype',
+        ('config', 'invalidate'): 'deploy_invalidate',
+        ('config', 'push'): 'deploy_promote',
+        ('config', 'show'): 'deploy_show',
+        ('config', 'validate'): 'deploy_validate',
+        ('config', 'repush'): 'deploy_promote',
+        ('config', 'revert'): 'deploy_rollback',
     }
 
     def __init__(self, params):
@@ -250,68 +250,12 @@ class TDS(object):
             access_level='admin'
         )
 
-    def exec_config_create(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ConfigController,
-            action='create',
-            view='project_create',
-            access_level='admin'
-        )
-
-    def exec_config_add_apptype(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ConfigController,
-            action='add_apptype',
-            view='deploy_add_apptype',
-            access_level='admin'
-        )
-
-    def exec_config_delete_apptype(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ConfigController,
-            action='delete_apptype',
-            view='deploy_delete_apptype',
-            access_level='admin'
-        )
-
-    def exec_config_invalidate(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ConfigController,
-            action='invalidate',
-            view='deploy_invalidate',
-            access_level=self.params['environment']
-        )
-
-    def exec_config_show(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ConfigController,
-            action='show',
-            view='deploy_show',
-            access_level=self.params['environment']
-        )
-
-    def exec_config_validate(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ConfigController,
-            action='validate',
-            view='deploy_invalidate',
-            access_level=self.params['environment']
-        )
-
     def exec_jenkinspackage_add(self):
         return self.exec_controller_default(
             ControllerClass=tds.commands.JenkinspackageController,
             action='add',
             view='package_add',
             access_level='dev'
-        )
-
-    def exec_config_push(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.ConfigController,
-            action='push',
-            view='deploy_promote',
-            access_level=self.params['environment']
         )
 
     def exec_package_add(self):
@@ -337,7 +281,6 @@ class TDS(object):
             view='package_list',
             access_level='dev'
         )
-
 
     def exec_controller_default(self, ControllerClass, action, view, access_level=None):
         '''

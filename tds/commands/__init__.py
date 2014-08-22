@@ -6,7 +6,7 @@ from .project import ProjectController
 from .package import Package, PackageController
 from .jenkins_package import Jenkinspackage, JenkinspackageController
 from .deploy import DeployController
-from .config import Config, ConfigController
+from .config import ConfigController
 
 __all__ = [
     'BaseController',
@@ -16,7 +16,6 @@ __all__ = [
     'Jenkinspackage',
     'JenkinspackageController',
     'DeployController',
-    'Config',
     'ConfigController',
     'RepositoryController',
 ]
