@@ -23,6 +23,6 @@ class LocalActor(Actor):
     def __init__(self):
         ''
         super(LocalActor, self).__init__(
-            pwd.getpwuid(os.getuid())[0],
+            pwd.getpwuid(os.getuid()).pw_name,
             [grp.getgrgid(group).gr_name for group in os.getgroups()]
         )

@@ -1,3 +1,6 @@
+'''
+Notifier and helpers for sending notifications via email
+'''
 import logging
 log = logging.getLogger('tds')
 
@@ -9,6 +12,9 @@ from .base import Notifications, Notifier
 
 @Notifications.add('email')
 class EmailNotifier(Notifier):
+    '''
+    Send email notification via smtp
+    '''
     def __init__(self, app_config, config):
         super(EmailNotifier, self).__init__(app_config, config)
         self.receiver = config.get('receiver')
@@ -22,8 +28,8 @@ class EmailNotifier(Notifier):
         sender_addr = '%s@tagged.com' % deployment.actor.name
         receiver_emails = [sender_addr, self.receiver]
 
-        log.debug(5, 'Receiver\'s email address: %s', self.receiver)
-        log.debug(5, 'Sender\'s email address is: %s', sender_addr)
+        log.log(5, 'Receiver\'s email address: %s', self.receiver)
+        log.log(5, 'Sender\'s email address is: %s', sender_addr)
 
         msg = MIMEText(message['body'])
 
@@ -31,10 +37,10 @@ class EmailNotifier(Notifier):
         msg['From'] = sender_addr
         msg['To'] = ', '.join(receiver_emails)
 
-        s = smtplib.SMTP('localhost')
-        s.sendmail(
+        smtp = smtplib.SMTP('localhost')
+        smtp.sendmail(
             deployment.actor.name,
             receiver_emails,
             msg.as_string()
         )
-        s.quit()
+        smtp.quit()

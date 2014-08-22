@@ -82,12 +82,12 @@ class TestTDS(unittest2.TestCase):
 
     def test_check_user_auth_failure(self):
         t = tds.main.TDS(dict(user='someone'))
-        with mock.patch('tds.authorize.get_access_level', return_value=None):
+        with mock.patch.object(t.authconfig, 'get_access_level', return_value=None):
             self.assertRaises(tds.main.AccessError, t.check_user_auth)
 
     def test_check_user_auth_succes(self):
         t = tds.main.TDS(dict(user='someone'))
-        with mock.patch('tds.authorize.get_access_level', return_value='yay'):
+        with mock.patch.object(t.authconfig, 'get_access_level', return_value='yay'):
             t.check_user_auth()
             assert t.params['user_level'] == 'yay'
 

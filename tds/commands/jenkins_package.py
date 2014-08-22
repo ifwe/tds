@@ -7,11 +7,14 @@ try:
 except ImportError:
     from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
-from .package import Package
+from .package import PackageController
+
+import logging
+
+log = logging.getLogger('tds')
 
 
-class Jenkinspackage(Package):
-
+class Jenkinspackage(PackageController):
     """Temporary class to manage packages for supported applications
        via direct access to Jenkins build (artifactory)
     """
@@ -22,28 +25,71 @@ class Jenkinspackage(Package):
         buildnum = int(params['version'])
         job_name = params['job_name']
 
-        # XXX: use config
-        jenkins = jenkinsapi.jenkins.Jenkins('https://ci.tagged.com/')
+        try:
+            jenkins = jenkinsapi.jenkins.Jenkins(params['jenkins_url'])
+        except Exception:
+            raise Exception(
+                'Unable to contact Jenkins server "%s"',
+                params['jenkins_url']
+            )
 
         try:
-            build = jenkins[job_name].get_build(buildnum)
+            job = jenkins[job_name]
+        except Exception:
+            raise Exception('Job "%s" not found', job_name)
+
+        try:
+            build = job.get_build(buildnum)
+        except (
+            KeyError,
+            JenkinsAPIException,
+            NotFound
+        ) as exc:
+            log.error(exc)
+            raise Exception(
+                'Build "%s@%s" does not exist on %s',
+                params['job_name'],
+                params['version'],
+                params['jenkins_url']
+            )
+
+        try:
             artifacts = build.get_artifact_dict()[rpm_name]
             data = artifacts.get_data()
         except (
             KeyError,
             JenkinsAPIException,
             NotFound
-        ) as e:
-            self.log.error(e)
-            return False
+        ):
+            raise Exception(
+                'Artifact not found for "%s@%s" on %s',
+                params['job_name'],
+                params['version'],
+                params['jenkins_url']
+            )
 
         tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)),
                                'tmp', rpm_name)
 
+        for tmpfile in (tmpname, queued_rpm):
+            tmpdir = os.path.dirname(tmpfile)
+            if not os.path.isdir(tmpdir):
+                os.makedirs(tmpdir)
+
         with open(tmpname, 'wb') as tmp_rpm:
             tmp_rpm.write(data)
-            tmp_rpm.close()
-            os.link(tmp_rpm.name, queued_rpm)
-            os.unlink(tmp_rpm.name)
+
+        os.link(tmpname, queued_rpm)
+        os.unlink(tmpname)
 
         return True
+
+
+class JenkinspackageController(Jenkinspackage):
+    """Controller for jenkinspackage command"""
+
+    def add(self, **params):
+        try:
+            return super(JenkinspackageController, self).add(**params)
+        except Exception as exc:
+            return dict(error=exc)

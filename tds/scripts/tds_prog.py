@@ -1,3 +1,5 @@
+'''Main file for TDS application'''
+
 import argparse
 import sys
 
@@ -34,7 +36,7 @@ def create_subparsers(parser):
                 subcmd_parser.add_argument(*args, **kwargs)
 
 
-def parse_command_line():
+def parse_command_line(sysargs):
     """Parse the command line and return the parser to the main program"""
 
     parser = argparse.ArgumentParser(description='TagOps Deployment System')
@@ -50,18 +52,30 @@ def parse_command_line():
     parser.add_argument('--disable-color', dest='use_color',
                         action='store_false',
                         help='Disable color coding when in verbose mode(s)')
+    parser.add_argument('--auth-config',
+                        help='Specify authorization config file',
+                        default=None)
+    parser.add_argument('--config-dir',
+                        help='Specify directory containing app config',
+                        default='/etc/tagops/')
 
     create_subparsers(parser)
     argcomplete.autocomplete(parser)
 
-    return parser.parse_args()
+    return parser.parse_args(sysargs)
 
 
-def main():
-    args = parse_command_line()
+def main(sysargs):
+    """Parse command line, configure logging and initialize application,
+       then run specified command
+    """
+    args = parse_command_line(sysargs)
     tds_params = vars(args)
-    tds_params['log'] = conflog.configure_logging(tds_params['verbose'],
-                                                  tds_params['use_color'])
+    tds_params['log'] = conflog.configure_logging(
+        tds_params['config_dir'],
+        tds_params['verbose'],
+        tds_params['use_color']
+    )
     tds_params['log'].debug(5, 'Program parameters: %r',
                             sorted(tds_params.iteritems()))
 
@@ -81,4 +95,4 @@ def main():
         sys.exit(1)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

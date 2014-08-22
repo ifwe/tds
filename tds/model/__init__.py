@@ -5,9 +5,9 @@ from .deployment import Deployment, AppDeployment
 from .application import Application
 from .project import Project
 from .package import Package
+from .deploy_target import DeployTarget
 
-import tagopsdb
-Environment = tagopsdb.Environment
+from tagopsdb import Environment
 
 __all__ = [
     'Actor',
@@ -18,4 +18,5 @@ __all__ = [
     'Project',
     'Application',
     'Environment',
+    'DeployTarget',
 ]
