@@ -1,3 +1,4 @@
+'Stuff only needed for tds.scripts, and so far nowhere else'
 from datetime import timedelta, datetime
 
 import tagopsdb
@@ -47,17 +48,18 @@ class TagopsdbDeploymentProvider(object):
     def init(self):
         'Initialize database connection'
         dbconf = self.config['db']
-        tagopsdb.init(dict(
+        tagopsdb.init(
             url=dict(
                 username=dbconf['user'],
                 password=dbconf['password'],
                 host=dbconf['hostname'],
                 database=dbconf['db_name'],
             ),
-            pool_recycle=3600)
+            pool_recycle=3600
         )
 
-    def get_all(self, environment):
+    @staticmethod
+    def get_all(environment):
         'Get all unvalidated deployments for `environment`'
         return tds.model.AppDeployment.find(
             environment=environment,

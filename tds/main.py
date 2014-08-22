@@ -24,13 +24,39 @@ class TDS(object):
 
     _config = None
     _dbconfig = None
+    _authconfig = None
 
     view = tds.views.CLI
 
     command_map = {
-        ('project', 'list'): 'exec_project_list',
-        ('project', 'delete'): 'exec_project_delete',
+        ('config', 'add-apptype'): 'exec_config_add_apptype',
+        ('config', 'create'): 'exec_config_create',
+        ('config', 'delete-apptype'): 'exec_config_delete_apptype',
+        ('config', 'invalidate'): 'exec_config_invalidate',
+        ('config', 'push'): 'exec_config_push',
+        ('config', 'show'): 'exec_config_show',
+        ('config', 'validate'): 'exec_config_validate',
+        ('config', 'repush'): 'exec_deploy_redeploy',
+        ('config', 'revert'): 'exec_deploy_rollback',
+        ('deploy', 'add-apptype'): 'exec_deploy_add_apptype',
+        ('deploy', 'delete-apptype'): 'exec_deploy_delete_apptype',
+        ('deploy', 'invalidate'): 'exec_deploy_invalidate',
+        ('deploy', 'promote'): 'exec_deploy_promote',
+        ('deploy', 'redeploy'): 'exec_deploy_redeploy',
+        ('deploy', 'restart'): 'exec_deploy_restart',
+        ('deploy', 'rollback'): 'exec_deploy_rollback',
+        ('deploy', 'show'): 'exec_deploy_show',
+        ('deploy', 'validate'): 'exec_deploy_validate',
+        ('jenkinspackage', 'add'): 'exec_jenkinspackage_add',
+        ('package', 'add'): 'exec_package_add',
+        ('package', 'delete'): 'exec_package_delete',
+        ('package', 'list'): 'exec_package_list',
         ('project', 'create'): 'exec_project_create',
+        ('project', 'delete'): 'exec_project_delete',
+        ('project', 'list'): 'exec_project_list',
+        ('repository', 'add'): 'exec_repository_add',
+        ('repository', 'delete'): 'exec_project_delete',
+        ('repository', 'list'): 'exec_project_list',
     }
 
     def __init__(self, params):
@@ -51,10 +77,21 @@ class TDS(object):
             self._dbconfig = self._load_dbconfig(self.params)
         return self._dbconfig
 
+    @property
+    def authconfig(self):
+        if self._authconfig is None:
+            self._authconfig = self._load_authconfig(self.params)
+        return self._authconfig
+
     @staticmethod
-    def _load_config(*_args):
+    def _load_config(params):
         'Load app config'
-        config = tds.utils.config.TDSDeployConfig()
+        config = tds.utils.config.TDSDeployConfig(
+            conf_dir=params.get(
+                'config_dir',
+                tds.utils.config.TDSDatabaseConfig.default_conf_dir
+            )
+        )
         config.load()
 
         return config
@@ -64,11 +101,24 @@ class TDS(object):
         'Load database config'
         dbconfig = tds.utils.config.TDSDatabaseConfig(
             params.get('user_level', 'dev'),
-            base_name_fragment='tagopsdb'
+            base_name_fragment='tagopsdb',
+            conf_dir=params.get(
+                'config_dir',
+                tds.utils.config.TDSDatabaseConfig.default_conf_dir
+            )
         )
         dbconfig.load()
 
         return dbconfig
+
+    @staticmethod
+    def _load_authconfig(params):
+        'Load auth config'
+        authconfig = tds.authorize.TDSAuthConfig(
+            params.get('auth_config', '/etc/tagops/tds_auth.yml')
+        )
+        authconfig.load()
+        return authconfig
 
     @tds.utils.debug
     def check_user_auth(self):
@@ -76,8 +126,7 @@ class TDS(object):
 
         log.debug('Checking user authorization level')
 
-        self.params['user_level'] = \
-            tds.authorize.get_access_level(LocalActor())
+        self.params['user_level'] = self.authconfig.get_access_level(LocalActor())
         log.log(5, 'User level is: %s', self.params['user_level'])
 
         if self.params['user_level'] is None:
@@ -125,6 +174,10 @@ class TDS(object):
         log.log(5, 'Environment is: %s', self.params['environment'])
 
         self.params['repo'] = self.config['repo']
+        self.params['jenkins_url'] = self.config['jenkins.url']
+
+        self.params['package_add_timeout'] = self.config['repo.update_timeout']
+        self.params['mco_bin'] = self.config['mco.bin']
 
         log.log(5, '"repo" parameter values are: %r', self.params['repo'])
 
@@ -211,6 +264,174 @@ class TDS(object):
             access_level='admin'
         )
 
+    def exec_repository_add(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.RepositoryController,
+            action='add',
+            view='project_create',
+            access_level='admin'
+        )
+
+    def exec_config_create(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ConfigController,
+            action='create',
+            view='project_create',
+            access_level='admin'
+        )
+
+    def exec_deploy_add_apptype(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='add_apptype',
+            view='deploy_add_apptype',
+            access_level='admin'
+        )
+
+    def exec_config_add_apptype(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ConfigController,
+            action='add_apptype',
+            view='deploy_add_apptype',
+            access_level='admin'
+        )
+
+    def exec_deploy_delete_apptype(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='delete_apptype',
+            view='deploy_delete_apptype',
+            access_level='admin'
+        )
+
+    def exec_config_delete_apptype(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ConfigController,
+            action='delete_apptype',
+            view='deploy_delete_apptype',
+            access_level='admin'
+        )
+
+    def exec_deploy_invalidate(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='invalidate',
+            view='deploy_invalidate',
+            access_level=self.params['environment']
+        )
+
+    def exec_config_invalidate(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ConfigController,
+            action='invalidate',
+            view='deploy_invalidate',
+            access_level=self.params['environment']
+        )
+
+    def exec_deploy_show(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='show',
+            view='deploy_show',
+            access_level=self.params['environment']
+        )
+
+    def exec_config_show(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ConfigController,
+            action='show',
+            view='deploy_show',
+            access_level=self.params['environment']
+        )
+
+    def exec_deploy_validate(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='validate',
+            view='deploy_validate',
+            access_level=self.params['environment']
+        )
+
+    def exec_config_validate(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ConfigController,
+            action='validate',
+            view='deploy_invalidate',
+            access_level=self.params['environment']
+        )
+
+    def exec_jenkinspackage_add(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.JenkinspackageController,
+            action='add',
+            view='package_add',
+            access_level='dev'
+        )
+
+    def exec_config_push(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.ConfigController,
+            action='push',
+            view='deploy_promote',
+            access_level=self.params['environment']
+        )
+
+    def exec_deploy_promote(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='promote',
+            view='deploy_promote',
+            access_level=self.params['environment']
+        )
+
+    def exec_package_add(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.PackageController,
+            action='add',
+            view='package_add',
+            access_level='dev'
+        )
+
+    def exec_package_delete(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.PackageController,
+            action='delete',
+            view='package_delete',
+            access_level='dev'
+        )
+
+    def exec_package_list(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.PackageController,
+            action='list',
+            view='package_list',
+            access_level='dev'
+        )
+
+    def exec_deploy_redeploy(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='redeploy',
+            view='deploy_promote',
+            access_level=self.params['environment']
+        )
+
+    def exec_deploy_restart(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='restart',
+            view='deploy_restart',
+            access_level=self.params['environment']
+        )
+
+    def exec_deploy_rollback(self):
+        return self.exec_controller_default(
+            ControllerClass=tds.commands.DeployController,
+            action='rollback',
+            view='deploy_rollback',
+            access_level=self.params['environment']
+        )
+
     def exec_controller_default(self, ControllerClass, action, view, access_level=None):
         if access_level is not None:
             tds.authorize.verify_access(
@@ -218,7 +439,7 @@ class TDS(object):
                 access_level
             )
 
-        controller = ControllerClass()
+        controller = ControllerClass(self.config)
         result = getattr(controller, action)(**self.params)
 
         return self.render(view, result)

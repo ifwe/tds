@@ -98,8 +98,8 @@ class TestTagopsdbDeploymentProvider(DefaultTDPProvider):
             tdp = self.get_tdp()
             tdp.init()
             assert len(init_session.call_args_list) == 1
-            (options,), _kwargs = init_session.call_args_list[0]
-            assert options.get('url', None) == dict(
+            _args, kwargs = init_session.call_args_list[0]
+            assert kwargs.get('url', None) == dict(
                 username=self.dbconfig['db']['user'],
                 password=self.dbconfig['db']['password'],
                 host=self.dbconfig['db']['hostname'],

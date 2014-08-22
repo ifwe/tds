@@ -3,6 +3,7 @@ Factories for tds.util.config classes. They are backed by files in
 tests/fixtures/config.
 '''
 
+import tds.authorize
 import tds.utils.config
 import factory
 
@@ -30,3 +31,9 @@ class DatabaseTestConfigFactory(ConfigFactory):
 
     access_level = 'test'
     base_name_fragment = 'tagopsdb'
+
+
+class AuthConfigFactory(factory.Factory):
+    FACTORY_FOR = tds.authorize.TDSAuthConfig
+    filename = join(FIXTURES_PATH, 'config', 'auth.yml')
+    __loaded = factory.PostGenerationMethodCall('load')

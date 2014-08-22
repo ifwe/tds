@@ -9,17 +9,16 @@ import tds.logging_wrapper as log_wrap
 from tds.exceptions import ConfigurationError
 
 
-conf_dir = '/etc/tagops'
 conf_log_params = ['syslog_facility', 'syslog_priority', ]
 
 
-def verify_logging_conf_file_info():
+def verify_logging_conf_file_info(config_dir):
     """Customized version of verify_conf_file_section() in tds.utils
        to avoid circular dependencies with logging configuration
     """
 
     try:
-        with open(os.path.join(conf_dir, 'deploy.yml')) as fh:
+        with open(os.path.join(config_dir, 'deploy.yml')) as fh:
             try:
                 data = yaml.load(fh.read())
             except yaml.parser.ParserError, e:
@@ -39,7 +38,7 @@ def verify_logging_conf_file_info():
     return [data['logging'][x] for x in conf_log_params]
 
 
-def configure_logging(verbosity, use_color, daemon=False):
+def configure_logging(config_dir, verbosity, use_color, daemon=False):
     """Configure logging for the application; this will set up
        the initial syslog and console loggers and handlers for
        the application
@@ -61,15 +60,15 @@ def configure_logging(verbosity, use_color, daemon=False):
         level = 1
         sqla_level = 1   # Ensure SQLAlchemy gives full log info
 
-    syslog_facility, syslog_priority = verify_logging_conf_file_info()
+    syslog_facility, syslog_priority = verify_logging_conf_file_info(config_dir)
 
     logging.setLoggerClass(log_wrap.Logger)
 
     logger = logging.getLogger()
     logger.setLevel(1)
     log_wrap.add_syslog(logger, 'syslog',
-                        facility=log_wrap.facilities[syslog_facility],
-                        priority=log_wrap.priorities[syslog_priority])
+                        facility=log_wrap.facilities.get(syslog_facility, log_wrap.LOG_LOCAL4),
+                        priority=log_wrap.priorities.get(syslog_priority, log_wrap.LOG_DEBUG))
 
     if not daemon:
         log_wrap.add_stream(logger, 'stderr', stream=sys.stderr,

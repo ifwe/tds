@@ -1,2 +1,2 @@
 ---
-db: {hostname: opsdb.tagged.com, db_name: TagOpsDB}
+db: {hostname: all-the-data.example.org, db_name: aint-here}

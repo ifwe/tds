@@ -6,7 +6,7 @@ proxy:
   fakeproto: svn://svn.example.com:12345
 notifications:
   email: {receiver: fake@example.com}
-  enabled_methods: [email, hipchat]
+  enabled_methods: []
   hipchat:
     rooms: [fakeroom]
     token: deadbeef
@@ -15,4 +15,12 @@ notifications:
     port: 9999
     prefix: 'tagged.deploy'
   validation_time: 10
-repo: {build_base: /fake/mnt/deploy/builds, incoming: /fake/mnt/deploy/incoming, processing: /fake/mnt/deploy/processing}
+repo:
+    build_base: /fake/mnt/deploy/builds
+    incoming: /fake/mnt/deploy/incoming
+    processing: /fake/mnt/deploy/processing
+    update_timeout: 15
+jenkins:
+    url: "https://example.org:8080"
+mco:
+    bin: 'mco'

@@ -6,9 +6,7 @@ import tagopsdb
 class Deployment(Base):
     'Model class for deployment object'
 
-class TDSAppDeployment(Deployment, tagopsdb.AppDeployment):
+class AppDeployment(Deployment):
     'Model class for deployment of an application'
 
-
-# Class name shuffle to make sqlalchemy happy
-AppDeployment = TDSAppDeployment
+    delegate = tagopsdb.AppDeployment
