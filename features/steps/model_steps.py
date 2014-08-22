@@ -292,7 +292,7 @@ def given_the_package_version_is_deployed_on_the_deploy_targets(context, env):
     if tagopsdb.Environment.get(env=env) is None:
         tagopsdb.Session.add(tagopsdb.Environment(
             env=env,
-            environment=tds.commands.Deploy.envs.get(env, env),
+            environment=tds.commands.DeployController.envs.get(env, env),
             domain=env + 'example.com',
             prefix=env[0]
         ))
