@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+
+import sys
+import os
+import os.path
+import json
+import optparse
+
+INPUT_FILE = 'mco-input.json'
+RESULTS_FILE = 'mco-results.json'
+
+def record_results(stuff):
+    work_dir = os.environ.get('BEHAVE_WORK_DIR', os.getcwd())
+    results_file = os.path.join(work_dir, RESULTS_FILE)
+
+    old_data = []
+
+    if os.path.isfile(results_file):
+        with open(results_file) as f:
+            old_data = json.loads(f.read())
+
+    old_data.extend(stuff)
+
+    with open(results_file, 'wb') as f:
+        f.write(json.dumps(old_data))
+
+def read_input():
+    work_dir = os.environ.get('BEHAVE_WORK_DIR', os.getcwd())
+    input_file = os.path.join(work_dir, INPUT_FILE)
+
+    input_data = {}
+    if os.path.isfile(input_file):
+        with open(input_file) as f:
+            input_data = json.loads(f.read())
+
+    return input_data
+
+def build_parser():
+    parser = optparse.OptionParser()
+
+    parser.add_option('--discovery-timeout', type=int)
+    parser.add_option('--timeout', type=int)
+    parser.add_option('-W', '--with', dest='with_filter')
+
+    return parser
+
+def main(tds, *args):
+    assert tds == 'tds', tds
+
+    parser = build_parser()
+    options, args = parser.parse_args(list(args))
+
+    package_name, version = args
+
+    assert len(options.with_filter.split()) == 1, options.with_filter
+
+    with_fact = dict([options.with_filter.split('=')])
+    assert 'hostname' in with_fact, with_fact
+
+    input = read_input()
+
+    if with_fact['hostname'] in input:
+        result = input[with_fact['hostname']]
+    else:
+        restart = False
+        if version == 'restart':
+            version = None
+            restart = True
+
+        result = dict(
+            hostname=with_fact['hostname'],
+            package=package_name,
+            version=version,
+            restart=restart,
+            exitcode=0
+        )
+
+    record_results([result])
+
+    print json.dumps({with_fact['hostname']: result})
+    print "Finished processing 1 / 1 things"
+
+
+if __name__ == '__main__':
+    try:
+        return_code = main(*sys.argv[1:])
+        if return_code is None:
+            return_code = 0
+    except Exception as exc:
+        return_code = 1
+        import traceback
+        traceback.print_exc()
+
+    sys.exit(return_code)
