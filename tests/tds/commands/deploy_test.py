@@ -1,4 +1,4 @@
-from mock import patch
+from mock import patch, Mock
 from unittest_data_provider import data_provider
 import unittest2
 import logging
@@ -6,18 +6,15 @@ import logging
 from tests.factories.model.deployment import DeploymentFactory
 from tests.factories.utils.config import DeployConfigFactory
 
+import tagopsdb
 import tagopsdb.deploy.deploy
 import tds.commands
 import tds.model
 import tds.utils.config as tds_config
 
 
-class TestPromoteAndPush(unittest2.TestCase):
+class DeploySetUp(unittest2.TestCase):
     def setUp(self):
-        self.app_config = patch(
-            'tds.utils.config.TDSDeployConfig',
-            return_value=DeployConfigFactory(),
-        )
         self.session = patch(
             'tagopsdb.Session',
             **{'commit.return_value': None}
@@ -27,20 +24,16 @@ class TestPromoteAndPush(unittest2.TestCase):
             **{'verify_access.return_value': True}
         ).start()
 
-        self.deploy = tds.commands.Deploy(
-            logging.getLogger(type(self).__name__ + ' Deploy')
-        )
-        self.config = tds.commands.Config(
-            logging.getLogger(type(self).__name__ + ' Config')
-        )
+        app_config = DeployConfigFactory()
+        self.deploy = tds.commands.DeployController(app_config)
+        self.config = tds.commands.ConfigController(app_config)
 
         deploy_methods = [
-            ('get_app_info', (None, None, None)),
+            ('get_app_info', (1, [1], {})),
             ('perform_deployments', None),
-            ('verify_project_type', 'fake_app'),
             ('find_app_deployments', {}),
             ('ensure_newer_versions', False),
-            ('determine_new_deployments', (None, None)),
+            ('determine_new_deployments', ({}, {})),
             ('ensure_explicit_destinations', None),
         ]
 
@@ -56,13 +49,15 @@ class TestPromoteAndPush(unittest2.TestCase):
         ptch = patcher.start()
         ptch.return_value = return_value
 
+
+class TestPromoteAndPush(DeploySetUp):
     @data_provider(lambda: [(True,), (False,)])
     def test_check_previous_environment(self, force_option_used):
         self.deploy.requires_tier_progression = True
         self.patch_method(
             tagopsdb.deploy.deploy,
             'find_app_deployment',
-            None
+            [(None,None,None,None)]
         )
         self.session = patch(
             'tagopsdb.Session',
@@ -71,6 +66,11 @@ class TestPromoteAndPush(unittest2.TestCase):
         self.tds_authorize = patch(
             'tds.authorize',
             **{'verify_access.return_value': True}
+        ).start()
+
+        self.tds_dep_target = patch(
+            'tds.model.DeployTarget',
+            **{'get.return_value': Mock(name='fake_target')}
         ).start()
 
         return_val = self.deploy.check_previous_environment(
@@ -88,11 +88,11 @@ class TestPromoteAndPush(unittest2.TestCase):
         self.patch_method(self.deploy, 'send_notifications', None)
         self.deploy.ensure_newer_versions.return_value = True
 
-        self.deploy.promote(dict(
+        self.deploy.promote(
             user_level='fake_access',
             environment='fake_env',
             project='fake_app'
-        ))
+        )
 
         assert self.deploy.perform_deployments.called
 
@@ -101,11 +101,11 @@ class TestPromoteAndPush(unittest2.TestCase):
         self.patch_method(self.deploy, 'send_notifications', None)
         self.deploy.ensure_newer_versions.return_value = version_is_new
 
-        self.deploy.promote(dict(
+        self.deploy.promote(
             user_level='fake_access',
             environment='fake_env',
             project='fake_app'
-        ))
+        )
 
         assert self.deploy.perform_deployments.called
 
@@ -113,11 +113,11 @@ class TestPromoteAndPush(unittest2.TestCase):
         self.patch_method(self.config, 'send_notifications', None)
         self.config.ensure_newer_versions.return_value = False
 
-        self.config.push(dict(
+        self.config.push(
             user_level='fake_access',
             environment='fake_env',
             project='fake_app'
-        ))
+        )
 
         assert self.config.perform_deployments.called
 
@@ -138,9 +138,62 @@ class TestPromoteAndPush(unittest2.TestCase):
             version='badf00d',
         )
 
-        getattr(self.deploy, params.get('subcommand_name'))(params)
+        getattr(self.deploy, params.get('subcommand_name'))(**params)
 
         deployment = DeploymentFactory()
-        Notifications.assert_called_with(tds_config.TDSDeployConfig())
+        Notifications.assert_called_with(DeployConfigFactory())
 
         notify.assert_called_with(deployment)
+
+
+class TestAddApptype(DeploySetUp):
+    @patch(
+        'tagopsdb.deploy.repo.find_app_location',
+        side_effect=tagopsdb.exceptions.RepoException)
+    def test_missing_project(self, mock_app_loc):
+        params = dict(
+            user_level='fake_access',
+            environment='test',  # TODO: mock BaseDeploy.envs
+            project='fake_package',
+            user='fake_user',
+            groups=['engteam'],
+            apptypes=['fake_apptype'],
+            subcommand_name='add-apptype',  # TODO: mock BaseDeploy.dep_types
+            command_name='deploy',
+            version='badf00d',
+        )
+
+        res = self.deploy.add_apptype(**params)
+        err = res.get('error', None)
+        assert isinstance(err, Exception)
+        assert 'fake_package' in err.args[1:]
+
+    @patch(
+        'tagopsdb.deploy.repo.find_app_location',
+        return_value=None)
+    @patch(
+        'tagopsdb.deploy.package.find_package_definition',
+        return_value=None)
+    @patch(
+        'tagopsdb.deploy.repo.find_project',
+        return_value=Mock(id='foo'))
+    @patch(
+        'tagopsdb.deploy.repo.add_app_packages_mapping',
+        side_effect=tagopsdb.exceptions.RepoException)
+    def test_missing_apptype(self, *args):
+        params = dict(
+            user_level='fake_access',
+            environment='test',  # TODO: mock BaseDeploy.envs
+            project='fake_package',
+            user='fake_user',
+            groups=['engteam'],
+            apptype='fake_apptype',
+            subcommand_name='add-apptype',  # TODO: mock BaseDeploy.dep_types
+            command_name='deploy',
+            version='badf00d',
+        )
+
+        res = self.deploy.add_apptype(**params)
+        err = res.get('error', None)
+        assert isinstance(err, Exception)
+        assert 'fake_apptype' in err.args[1:]

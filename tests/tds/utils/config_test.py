@@ -27,7 +27,7 @@ class TestDottedDict(unittest2.TestCase):
 class TestConfig(unittest2.TestCase):
     def test_load(self):
         c = config.Config()
-        self.assertRaises(NotImplementedError, c.load, logger=None)
+        self.assertRaises(NotImplementedError, c.load)
 
 
 class FileConfigLoader(object):
@@ -40,7 +40,7 @@ class FileConfigLoader(object):
 
         m = mock.mock_open(read_data=open(fname).read())
         with mock.patch('__builtin__.open', m, create=True):
-            c.load(logger=None)
+            c.load()
 
         m.assert_called_with(c.filename)
 
@@ -63,7 +63,7 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
         m = mock.mock_open()
         with mock.patch('__builtin__.open', m, create=True):
             m.return_value.read.side_effect = IOError
-            self.assertRaises(config.ConfigurationError, c.load, logger=None)
+            self.assertRaises(config.ConfigurationError, c.load)
 
     def test_load_open_failure(self):
         c = config.FileConfig('foo')
@@ -71,7 +71,7 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
         m = mock.mock_open()
         with mock.patch('__builtin__.open', m, create=True):
             m.side_effect = IOError
-            self.assertRaises(config.ConfigurationError, c.load, None)
+            self.assertRaises(config.ConfigurationError, c.load)
 
     def test_parse_notimplemented(self):
         c = config.FileConfig('foo')
@@ -109,7 +109,7 @@ class TestVerifyingConfig(unittest2.TestCase):
 
     def test_super_load(self):
         class LoadImplemented(config.Config):
-            def load(self, logger=None):
+            def load(self):
                 pass
 
         class VerifyingConfigSubclass(config.VerifyingConfig, LoadImplemented):
@@ -117,7 +117,7 @@ class TestVerifyingConfig(unittest2.TestCase):
 
         c = VerifyingConfigSubclass()
         with mock.patch.object(c, 'verify'):
-            c.load(logger=None)
+            c.load()
             c.verify.assert_called()
 
     def test_verify_empty(self):
@@ -125,12 +125,12 @@ class TestVerifyingConfig(unittest2.TestCase):
             c = config.VerifyingConfig()
             with mock.patch.object(c, 'load'):
                 c.load.return_value = None
-                c.verify(logger=None)
+                c.verify()
 
-                c.load.assert_called_with(None)
+                c.load.assert_called_with()
 
             config.VerifyingConfig._verify.assert_called_with(
-                c, c.schema, None
+                c, c.schema
             )
 
     def test_verify_non_empty(self):
@@ -139,22 +139,21 @@ class TestVerifyingConfig(unittest2.TestCase):
             with mock.patch.object(c, 'load'):
                 c['something'] = 'foo'
                 c.load.return_value = None
-                c.verify(logger=None)
+                c.verify()
 
                 assert not c.load.called
 
             config.VerifyingConfig._verify.assert_called_with(
-                c, c.schema, None
+                c, c.schema
             )
 
     def test__verify_success_empty_schema(self):
-        config.VerifyingConfig._verify(data={}, schema={}, logger=None)
+        config.VerifyingConfig._verify(data={}, schema={})
 
     def test__verify_success_contents(self):
         config.VerifyingConfig._verify(
             data=dict(a=dict(b=1, c=2)),
             schema=dict(a=['b', 'c']),
-            logger=None
         )
         assert True, "Everything's ok if we get here!"
 
@@ -164,7 +163,6 @@ class TestVerifyingConfig(unittest2.TestCase):
             config.VerifyingConfig._verify,
             data=dict(a=dict(b=1, c=2)),
             schema=dict(a=['b', 'c'], d=['e']),
-            logger=None
         )
 
     def test__verify_failure_missing_sub_key(self):
@@ -173,7 +171,6 @@ class TestVerifyingConfig(unittest2.TestCase):
             config.VerifyingConfig._verify,
             data=dict(a=dict(b=1, c=2), d=dict()),
             schema=dict(a=['b', 'c'], d=['e']),
-            logger=None
         )
 
     def test__verify_failure_weird_type(self):
@@ -182,7 +179,6 @@ class TestVerifyingConfig(unittest2.TestCase):
             config.VerifyingConfig._verify,
             data=dict(a=dict(b=1, c=2), d=1),
             schema=dict(a=['b', 'c'], d=['e']),
-            logger=None
         )
 
     def test__verify_failure_extra_sub_key(self):
@@ -191,7 +187,6 @@ class TestVerifyingConfig(unittest2.TestCase):
             config.VerifyingConfig._verify,
             data=dict(a=dict(b=1, c=2), d=dict(e=3, f=4)),
             schema=dict(a=['b', 'c'], d=['e']),
-            logger=None
         )
 
 
@@ -262,7 +257,7 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         c = config.TDSDatabaseConfig('foo', 'bar')
         self.load_fake_config(c, 'dbaccess.test')
         c['db'].pop('user')
-        self.assertRaises(config.ConfigurationError, c.verify, None)
+        self.assertRaises(config.ConfigurationError, c.verify)
 
 
 class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):

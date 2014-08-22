@@ -12,16 +12,16 @@ from tests.factories.model.deployment import (
     AllApptypesDeploymentFactory,
 )
 
-APP_CONFIG = DeployConfigFactory()
-
-
-class TestNotifications(unittest2.TestCase):
-
+class AppConfigProvider(unittest2.TestCase):
     def setUp(self):
-        self.config = APP_CONFIG['notifications']
+        self.app_config = DeployConfigFactory()
+        self.config = self.app_config['notifications']
+
+
+class TestNotifications(AppConfigProvider):
 
     def create_notification(self):
-        return base.Notifications(APP_CONFIG)
+        return base.Notifications(self.app_config)
 
     def test_constructor(self):
         n = self.create_notification()
@@ -33,6 +33,7 @@ class TestNotifications(unittest2.TestCase):
     @patch('tds.notifications.mail.EmailNotifier', autospec=True)
     @patch('tds.notifications.hipchat.HipchatNotifier', autospec=True)
     def test_send_notifications(self, hipchat, email):
+        self.config['enabled_methods'] = ['email', 'hipchat']
         n = self.create_notification()
 
         notifiers = {
@@ -48,7 +49,7 @@ class TestNotifications(unittest2.TestCase):
                 mock.return_value.notify.assert_called_with(deployment)
 
 
-class TestNotifierClass(unittest2.TestCase):
+class TestNotifierClass(AppConfigProvider):
     def test_send(self):
         n = base.Notifier({}, {})
         self.assertRaises(
@@ -92,8 +93,8 @@ class TestNotifierClass(unittest2.TestCase):
             ]
 
             n = base.Notifier(
-                APP_CONFIG,
-                APP_CONFIG['notifications']
+                self.app_config,
+                self.config
             )
             message = n.message_for_deployment(deployment_factory())
 
@@ -106,8 +107,8 @@ class TestNotifierClass(unittest2.TestCase):
 
     def test_message_for_unvalidated(self):
         n = base.Notifier(
-            APP_CONFIG,
-            APP_CONFIG['notifications'],
+            self.app_config,
+            self.config
         )
 
         message = n.message_for_deployment(
