@@ -29,10 +29,6 @@ class TDS(object):
     view = tds.views.CLI
 
     command_map = {
-        ('jenkinspackage', 'add'): 'exec_jenkinspackage_add',
-        ('package', 'add'): 'exec_package_add',
-        ('package', 'delete'): 'exec_package_delete',
-        ('package', 'list'): 'exec_package_list',
         ('project', 'create'): 'exec_project_create',
         ('project', 'delete'): 'exec_project_delete',
         ('project', 'list'): 'exec_project_list',
@@ -42,6 +38,7 @@ class TDS(object):
     }
 
     views = {
+        ('jenkinspackage', 'add'): 'package_add',
         ('deploy', 'redeploy'): 'deploy_promote',
         ('config', 'add_apptype'): 'deploy_add_apptype',
         ('config', 'create'): 'project_create',
@@ -248,38 +245,6 @@ class TDS(object):
             action='add',
             view='project_create',
             access_level='admin'
-        )
-
-    def exec_jenkinspackage_add(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.JenkinspackageController,
-            action='add',
-            view='package_add',
-            access_level='dev'
-        )
-
-    def exec_package_add(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.PackageController,
-            action='add',
-            view='package_add',
-            access_level='dev'
-        )
-
-    def exec_package_delete(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.PackageController,
-            action='delete',
-            view='package_delete',
-            access_level='dev'
-        )
-
-    def exec_package_list(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.PackageController,
-            action='list',
-            view='package_list',
-            access_level='dev'
         )
 
     def exec_controller_default(self, ControllerClass, action, view, access_level=None):
