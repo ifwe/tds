@@ -5,6 +5,7 @@ Feature: The repository list subcommand
 
     Background: User setup
         Given I have "dev" permissions
+        And I am in the "dev" environment
 
     Scenario: with no projects
         When I run "repository list"

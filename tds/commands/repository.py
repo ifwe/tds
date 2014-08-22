@@ -11,15 +11,27 @@ import tds.authorize
 import tds.model
 import tds.utils
 
+from .base import BaseController
+from .project import ProjectController
+
 log = logging.getLogger('tds')
 
 
-class RepositoryController(object):
-
+class RepositoryController(BaseController):
     """Commands to manage the deployment repository"""
-    def __init__(self, config):
-        super(RepositoryController, self).__init__()
-        self.app_config = config
+    access_levels = dict(
+        list='environment',
+        add='admin',
+        delete='admin',
+    )
+
+    def list(self, **params):
+        'repository list subcommand'
+        return ProjectController(self.app_config).list(**params)
+
+    def delete(self, **params):
+        'repository delete subcommand'
+        return ProjectController(self.app_config).delete(**params)
 
     @staticmethod
     def verify_package_arch(arch):
