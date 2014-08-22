@@ -1,3 +1,4 @@
+'Configuration types and helpers for TDS'
 import collections
 import os.path
 import logging
@@ -15,14 +16,17 @@ __all__ = [
 
 log = logging.getLogger('tds.util.config')
 
-#http://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
-def update_recurse(d, u):
-    for k, v in u.iteritems():
-        if isinstance(v, collections.Mapping):
-            d[k] = update_recurse(d.get(k, {}), v)
+def update_recurse(mapping, update):
+    '''
+    Descend through keypaths of 'update', updating the mapping when scalar
+    values are found
+    '''
+    for key, val in update.iteritems():
+        if isinstance(val, collections.Mapping):
+            mapping[key] = update_recurse(mapping.get(key, {}), val)
         else:
-            d[k] = v
-    return d
+            mapping[key] = val
+    return mapping
 
 class DottedDict(dict):
     """Allow dictionary keys to be accessed like attributes"""
@@ -33,26 +37,26 @@ class DottedDict(dict):
         """ """
 
         key_parts = key.split('.')
-        d = self
+        mapping = self
 
         while key_parts:
             part = key_parts.pop(0)
             try:
-                d = dict.__getitem__(d, part)
+                mapping = dict.__getitem__(mapping, part)
             except KeyError as e:
                 if default is type(self).sentinel:
                     raise e
                 else:
                     return default
 
-        return d
+        return mapping
 
 
 class Config(DottedDict):
     """Base configuration class"""
 
     @debug
-    def load(self, logger):
+    def load(self):
         """Abstract method, must be defined in subclasses"""
 
         raise NotImplementedError
@@ -68,14 +72,14 @@ class FileConfig(Config):
         self.filename = filename
 
     @debug
-    def load(self, logger=None):
+    def load(self):
         """Read information from configuration file and update"""
 
         log.debug('Loading configuration file %r', self.filename)
 
         try:
-            with open(self.filename) as f:
-                data = f.read()
+            with open(self.filename) as fobj:
+                data = fobj.read()
         except IOError as e:
             raise ConfigurationError('Unable to read configuration file '
                                      '%r: %s', self.filename, e)
@@ -116,22 +120,22 @@ class VerifyingConfig(Config):
     schema = {}
 
     @debug
-    def load(self, logger=None):
-        super(VerifyingConfig, self).load(logger)
+    def load(self):
+        super(VerifyingConfig, self).load()
         self.verify()
 
     @debug
-    def verify(self, logger=None):
+    def verify(self):
         """Verify data, loading it in first if necessary"""
 
         if not len(self):
-            self.load(logger)
+            self.load()
 
-        type(self)._verify(self, self.schema, logger)
+        self._verify(self, self.schema)
 
     @staticmethod
     @debug
-    def _verify(data, schema, logger=None):
+    def _verify(data, schema):
         """Data verification - ensure all entries are correct
         and complete
         """
@@ -139,7 +143,7 @@ class VerifyingConfig(Config):
         for key in schema:
             schema_keys = set(schema.get(key, []))
 
-            log.debug(
+            log.log(
                 5, 'Checking for config keys %r in section %r',
                 schema_keys, key
             )
@@ -170,8 +174,7 @@ class TDSConfig(YAMLConfig, VerifyingConfig):
 
     def __init__(self, filename, conf_dir=default_conf_dir):
         """ """
-
-        self.filename = os.path.join(conf_dir, filename)
+        super(TDSConfig, self).__init__(os.path.join(conf_dir, filename))
 
 
 class TDSDatabaseConfig(TDSConfig):
@@ -199,13 +202,17 @@ class TDSDatabaseConfig(TDSConfig):
             '%s.%s.yml' % (name_fragment, access_level),
             conf_dir=conf_dir
         )
-        self.filename = self.access.filename
+        super(TDSDatabaseConfig, self).__init__(self.access.filename)
 
-    def load(self, logger=None):
-        self.basic.load(logger)
-        self.access.load(logger)
+    def load(self):
+        self.basic.load()
         update_recurse(self, self.basic)
-        update_recurse(self, self.access)
+        try:
+            self.access.load()
+        except ConfigurationError:
+            pass
+        else:
+            update_recurse(self, self.access)
 
 
 class TDSDeployConfig(TDSConfig):

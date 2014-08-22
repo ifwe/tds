@@ -4,10 +4,12 @@ from .base import Base
 import tagopsdb
 
 
-class Application(Base, tagopsdb.PackageDefinition):
+class Application(Base):
     'Represents a single application'
     # name
     # path
     # build_host
     # environment
     # packages / versions
+
+    delegate = tagopsdb.PackageDefinition

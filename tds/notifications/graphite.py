@@ -1,3 +1,6 @@
+'''
+Notifier and helpers for sending notifications via graphite
+'''
 import graphiteudp
 
 from .base import Notifications, Notifier
@@ -5,6 +8,9 @@ from .base import Notifications, Notifier
 
 @Notifications.add('graphite')
 class GraphiteNotifier(Notifier):
+    '''
+    Send graphite notification
+    '''
     active_events = (
         ('config', 'push'),
         ('config', 'repush'),

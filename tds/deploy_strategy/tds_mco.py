@@ -3,6 +3,7 @@ import json
 import re
 
 import tds.utils
+import tds.utils.processes as processes
 
 from .base import DeployStrategy
 
@@ -11,6 +12,9 @@ log = logging.getLogger('tds')
 
 
 class TDSMCODeployStrategy(DeployStrategy):
+    def __init__(self, bin, **kwargs):
+        self.mco_bin = bin
+
     @tds.utils.debug
     def _process_mco_command(self, mco_cmd, retry):
         """Run a given MCollective 'mco' command"""
@@ -18,12 +22,8 @@ class TDSMCODeployStrategy(DeployStrategy):
         log.debug('Running MCollective command')
         log.debug(5, 'Command is: %s' % ' '.join(mco_cmd))
 
-        proc = subprocess.Popen(
-            mco_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        stdout, stderr = proc.communicate()
+        proc = processes.run(mco_cmd, expect_return_code=None)
+        stdout, stderr = proc.stdout, proc.stderr
 
         if proc.returncode:
             return (False, 'The mco process failed to run successfully.\n'
@@ -78,7 +78,7 @@ class TDSMCODeployStrategy(DeployStrategy):
 
         log.debug('Restarting application on host %r', dep_host)
 
-        mco_cmd = ['/usr/bin/mco', 'tds', '--discovery-timeout', '4',
+        mco_cmd = [self.mco_bin, 'tds', '--discovery-timeout', '4',
                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                    app, 'restart']
 
@@ -88,7 +88,7 @@ class TDSMCODeployStrategy(DeployStrategy):
     def deploy_to_host(self, dep_host, app, version, retry=4):
         log.debug('Deploying to host %r' % dep_host)
 
-        mco_cmd = ['/usr/bin/mco', 'tds', '--discovery-timeout', '4',
+        mco_cmd = [self.mco_bin, 'tds', '--discovery-timeout', '4',
                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,
                    app, version]
 

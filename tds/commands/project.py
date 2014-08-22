@@ -10,8 +10,9 @@ class ProjectController(object):
 
     """Commands to manage TDS projects"""
 
-    def __init__(self, logger=None):
-        log.warning('Extra argument "logger" ignored in commands.project')
+    def __init__(self, config):
+        super(ProjectController, self).__init__()
+        self.app_config = config
 
     @staticmethod
     def create(project, **_kwds):
@@ -19,7 +20,9 @@ class ProjectController(object):
         project_name = project
         project = Project.get(name=project_name)
         if project is not None:
-            return dict(error=Exception("Project already exists", project.name))
+            return dict(error=Exception(
+                "Project already exists: %s", project.name
+            ))
 
         log.debug('Creating project %r', project_name)
         return dict(result=Project.create(name=project_name))
@@ -31,7 +34,9 @@ class ProjectController(object):
         project_name = project
         project = Project.get(name=project_name)
         if project is None:
-            return dict(error=Exception("Project not found", project_name))
+            return dict(error=Exception(
+                'Project "%s" does not exist', project_name
+            ))
 
         log.debug('Removing project %r', project_name)
 
@@ -47,7 +52,9 @@ class ProjectController(object):
             return dict(
                 result=filter(
                     None,
-                    [Project.get(name=p) for p in project_names]
+                    [Project.get(name=p)
+                     or Exception('Project "%s" does not exist', p)
+                     for p in project_names]
                 )
             )
         else:
