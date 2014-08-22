@@ -38,15 +38,6 @@ class TDS(object):
         ('config', 'validate'): 'exec_config_validate',
         ('config', 'repush'): 'exec_deploy_redeploy',
         ('config', 'revert'): 'exec_deploy_rollback',
-        ('deploy', 'add-apptype'): 'exec_deploy_add_apptype',
-        ('deploy', 'delete-apptype'): 'exec_deploy_delete_apptype',
-        ('deploy', 'invalidate'): 'exec_deploy_invalidate',
-        ('deploy', 'promote'): 'exec_deploy_promote',
-        ('deploy', 'redeploy'): 'exec_deploy_redeploy',
-        ('deploy', 'restart'): 'exec_deploy_restart',
-        ('deploy', 'rollback'): 'exec_deploy_rollback',
-        ('deploy', 'show'): 'exec_deploy_show',
-        ('deploy', 'validate'): 'exec_deploy_validate',
         ('jenkinspackage', 'add'): 'exec_jenkinspackage_add',
         ('package', 'add'): 'exec_package_add',
         ('package', 'delete'): 'exec_package_delete',
@@ -57,6 +48,10 @@ class TDS(object):
         ('repository', 'add'): 'exec_repository_add',
         ('repository', 'delete'): 'exec_project_delete',
         ('repository', 'list'): 'exec_project_list',
+    }
+
+    views = {
+        ('deploy', 'redeploy'): 'deploy_promote',
     }
 
     def __init__(self, params):
@@ -222,23 +217,6 @@ class TDS(object):
         else:
             handler()
 
-    def exec_command_default(self):
-
-        log.log(5, 'Instantiating class %r',
-                self.params['command_name'].capitalize())
-
-        cmd = getattr(tds.commands,
-                      self.params['command_name'].capitalize())(log)
-
-        try:
-            log.log(5, 'Executing subcommand %r',
-                    self.params['subcommand_name'].replace('-', '_'))
-            getattr(
-                cmd,
-                self.params['subcommand_name'].replace('-', '_')
-            )(self.params)
-        except:
-            raise   # Just pass error up to top level
 
     def exec_project_list(self):
         return self.exec_controller_default(
@@ -280,27 +258,11 @@ class TDS(object):
             access_level='admin'
         )
 
-    def exec_deploy_add_apptype(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='add_apptype',
-            view='deploy_add_apptype',
-            access_level='admin'
-        )
-
     def exec_config_add_apptype(self):
         return self.exec_controller_default(
             ControllerClass=tds.commands.ConfigController,
             action='add_apptype',
             view='deploy_add_apptype',
-            access_level='admin'
-        )
-
-    def exec_deploy_delete_apptype(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='delete_apptype',
-            view='deploy_delete_apptype',
             access_level='admin'
         )
 
@@ -312,14 +274,6 @@ class TDS(object):
             access_level='admin'
         )
 
-    def exec_deploy_invalidate(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='invalidate',
-            view='deploy_invalidate',
-            access_level=self.params['environment']
-        )
-
     def exec_config_invalidate(self):
         return self.exec_controller_default(
             ControllerClass=tds.commands.ConfigController,
@@ -328,27 +282,11 @@ class TDS(object):
             access_level=self.params['environment']
         )
 
-    def exec_deploy_show(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='show',
-            view='deploy_show',
-            access_level=self.params['environment']
-        )
-
     def exec_config_show(self):
         return self.exec_controller_default(
             ControllerClass=tds.commands.ConfigController,
             action='show',
             view='deploy_show',
-            access_level=self.params['environment']
-        )
-
-    def exec_deploy_validate(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='validate',
-            view='deploy_validate',
             access_level=self.params['environment']
         )
 
@@ -372,14 +310,6 @@ class TDS(object):
         return self.exec_controller_default(
             ControllerClass=tds.commands.ConfigController,
             action='push',
-            view='deploy_promote',
-            access_level=self.params['environment']
-        )
-
-    def exec_deploy_promote(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='promote',
             view='deploy_promote',
             access_level=self.params['environment']
         )
@@ -408,41 +338,43 @@ class TDS(object):
             access_level='dev'
         )
 
-    def exec_deploy_redeploy(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='redeploy',
-            view='deploy_promote',
-            access_level=self.params['environment']
-        )
-
-    def exec_deploy_restart(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='restart',
-            view='deploy_restart',
-            access_level=self.params['environment']
-        )
-
-    def exec_deploy_rollback(self):
-        return self.exec_controller_default(
-            ControllerClass=tds.commands.DeployController,
-            action='rollback',
-            view='deploy_rollback',
-            access_level=self.params['environment']
-        )
 
     def exec_controller_default(self, ControllerClass, action, view, access_level=None):
+        '''
+        This is for new-style controllers that don't have BaseController
+        as a base class
+        '''
+        controller = ControllerClass(self.config)
+        # XXX: access levels need to be moved into controller classes
         if access_level is not None:
             tds.authorize.verify_access(
                 self.params.get('user_level', 'disabled'),
                 access_level
             )
 
-        controller = ControllerClass(self.config)
         result = getattr(controller, action)(**self.params)
-
         return self.render(view, result)
+
+    def exec_command_default(self):
+        '''This is for controllers with BaseController as a base class'''
+        command = self.params['command_name'].replace('-', '_')
+        subcommand = self.params['subcommand_name'].replace('-', '_')
+        full_command = (command, subcommand)
+        controller_name = command.capitalize() + "Controller"
+        log.log(5, 'Instantiating class %r', controller_name)
+
+        view_name = self.views.get(
+            full_command,
+            '%s_%s' % full_command
+        )
+
+        ControllerClass = getattr(tds.commands, controller_name)
+        controller = ControllerClass(self.config)
+
+        result = controller.action(subcommand, **self.params)
+
+        return self.render(view_name, result)
+
 
     def render(self, *args, **kwargs):
         return self.view().generate_result(*args, **kwargs)
