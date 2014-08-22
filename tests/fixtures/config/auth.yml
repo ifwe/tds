@@ -1,0 +1,7 @@
+---
+mapping:
+    disabled: root
+    admin: siteops
+    prod: prodsupportlite
+    stage: stagesupport
+    dev: engteam
