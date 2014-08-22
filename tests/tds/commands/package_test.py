@@ -1,12 +1,13 @@
 from mock import Mock, patch
 from unittest_data_provider import data_provider
 import unittest2
-import logging
 
 from tests.factories.utils.config import DeployConfigFactory
 
 import tds.commands
 import tds.model
+
+import tagopsdb
 
 
 class TestPackageAdd(unittest2.TestCase):
@@ -15,18 +16,35 @@ class TestPackageAdd(unittest2.TestCase):
             'tds.utils.config.TDSDeployConfig',
             return_value=DeployConfigFactory(),
         )
-        self.session = patch(
-            'tagopsdb.Session',
-            **{'commit.return_value': None}
-        ).start()
+        # self.session = patch(
+        #     'tagopsdb.Session',
+        #     **{'commit.return_value': None}
+        # ).start()
+
+        self.tds_project = patch(
+            'tds.model.Project',
+            **{'get.return_value': Mock(tds.model.Project)}
+        )
+        self.tds_project.start()
+
+        self.tds_pkg_loc = patch(
+            'tagopsdb.PackageLocation',
+            **{'get.return_value': Mock(tagopsdb.PackageLocation)}
+        )
+        self.tds_pkg_loc.start()
+
+        self.tds_pkg = patch(
+            'tagopsdb.Package',
+            **{'get.return_value': Mock(tagopsdb.Package)}
+        )
+        self.tds_pkg.start()
+
         self.tds_authorize = patch(
             'tds.authorize',
             **{'verify_access.return_value': True}
         ).start()
 
-        self.package = tds.commands.Package(
-            logging.getLogger(type(self).__name__ + ' Package')
-        )
+        self.package = tds.commands.Package()
 
         package_methods = [
             ('_queue_rpm', True),

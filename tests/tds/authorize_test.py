@@ -8,6 +8,7 @@ from unittest_data_provider import data_provider
 import tds.authorize
 
 from tests.factories.model.actor import ActorFactory
+from tests.factories.utils.config import AuthConfigFactory
 
 GROUPS = {
     500: 'invalid_group',
@@ -21,7 +22,7 @@ GROUPS = {
 
 def map_level(gr_name):
     'Find access level for a given group'
-    for auth_level, group in tds.authorize.access_mapping.iteritems():
+    for auth_level, group in tds.authorize.DEFAULT_ACCESS_MAPPING.iteritems():
         if gr_name == group:
             return auth_level
     else:
@@ -41,4 +42,4 @@ class TestAuthorization(unittest2.TestCase):
         actor = ActorFactory()
         actor.groups = [GROUPS[gid]]
 
-        assert tds.authorize.get_access_level(actor) == auth_level
+        assert AuthConfigFactory().get_access_level(actor) == auth_level
