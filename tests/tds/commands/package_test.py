@@ -12,15 +12,6 @@ import tagopsdb
 
 class TestPackageAdd(unittest2.TestCase):
     def setUp(self):
-        self.app_config = patch(
-            'tds.utils.config.TDSDeployConfig',
-            return_value=DeployConfigFactory(),
-        )
-        # self.session = patch(
-        #     'tagopsdb.Session',
-        #     **{'commit.return_value': None}
-        # ).start()
-
         self.tds_project = patch(
             'tds.model.Project',
             **{'get.return_value': Mock(tds.model.Project)}
@@ -44,7 +35,7 @@ class TestPackageAdd(unittest2.TestCase):
             **{'verify_access.return_value': True}
         ).start()
 
-        self.package = tds.commands.PackageController()
+        self.package = tds.commands.PackageController(DeployConfigFactory())
 
         package_methods = [
             ('_queue_rpm', True),
@@ -77,7 +68,7 @@ class TestPackageAdd(unittest2.TestCase):
             **{'find_app_location': Mock(pkg_name='fake_app', arch='noarch')}
         ).start()
 
-        self.package.add(dict(
+        self.package.add(**dict(
             project='fake_app',
             version='deadbeef',
             user='fake_user',
