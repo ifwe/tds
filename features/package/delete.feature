@@ -5,6 +5,7 @@ Feature: package delete subcommand
 
     Background:
         Given I have "dev" permissions
+        And I am in the "dev" environment
 
     @no_db
     Scenario: too few arguments
