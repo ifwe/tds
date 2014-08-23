@@ -63,10 +63,16 @@ HOST_DEPLOY_TEMPLATE = (
 )
 
 
+def format_access_error(exc):
+    return (
+        'You do not have the appropriate permissions to run this command. '
+        'Contact your manager.'
+    )
+
+
 EXCEPTION_FORMATTERS = dict(
     AccessError=format_access_error
 )
-
 
 
 def format_exception(exc):
@@ -84,12 +90,6 @@ def format_exception(exc):
             "Exception=repr(%r) str(%s) could not be formatted: %r" %
             (exc, exc, format_exc)
         )
-
-def format_access_error(exc):
-    return (
-        'Your account does not have the appropriate '
-        'permissions to run the requested command.'
-    )
 
 
 def format_exception_default(exc):
@@ -218,9 +218,7 @@ class CLI(Base):
                 % dict(name=result.name)
             )
         elif error is not None:
-            print 'Could not delete: %(message)s' % dict(
-                message=format_exception(error)
-            )
+            print format_exception(error)
 
     @staticmethod
     def generate_project_create_result(result=None, error=None, **_kwds):
