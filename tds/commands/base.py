@@ -1,5 +1,5 @@
 import tds.authorize
-
+import tds.exceptions
 
 class BaseController(object):
     access_levels = {}
@@ -14,11 +14,13 @@ class BaseController(object):
             if required_access_level == 'environment':
                 required_access_level = params.get('environment')
 
-            # TODO: make this return an auth exception
-            tds.authorize.verify_access(
-                params.get('user_level', 'disabled'),
-                required_access_level
-            )
+            try:
+                tds.authorize.verify_access(
+                    params.get('user_level', 'disabled'),
+                    required_access_level
+                )
+            except tds.exceptions.AccessError as exc:
+                return dict(error=exc)
 
         handler = getattr(self, action, None)
         if handler is None:
