@@ -63,15 +63,37 @@ HOST_DEPLOY_TEMPLATE = (
 )
 
 
+EXCEPTION_FORMATTERS = dict(
+    AccessError=format_access_error
+)
+
+
+
 def format_exception(exc):
     'Format an exception for user consumption'
+
+    exception_formatter = EXCEPTION_FORMATTERS.get(
+        type(exc).__name__,
+        format_exception_default
+    )
+
     try:
-        return exc.args[0] % exc.args[1:]
+        return exception_formatter(exc)
     except Exception as format_exc:
         return (
             "Exception=repr(%r) str(%s) could not be formatted: %r" %
             (exc, exc, format_exc)
         )
+
+def format_access_error(exc):
+    return (
+        'Your account does not have the appropriate '
+        'permissions to run the requested command.'
+    )
+
+
+def format_exception_default(exc):
+    return exc.args[0] % exc.args[1:]
 
 
 def format_project(project):
