@@ -19,27 +19,34 @@ import logging
 log = logging.getLogger('tds')
 
 
-class Config(DeployController):
+class ConfigController(DeployController):
     """Commands to manage deployments for supported config applications"""
+
+    access_levels = DeployController.access_levels.copy()
+    access_levels.update(
+        create='admin',
+        delete='admin',
+        repush='environment',
+        revert='environment',
+        push='environment',
+    )
 
     requires_tier_progression = False
 
-    @tds.utils.debug
-    def repush(self, params):
+    def repush(self, **params):
         'Repush a version of a config project. Same as `deploy redeploy`'
-        super(Config, self).redeploy(params)
+        return super(ConfigController, self).redeploy(**params)
 
-    @tds.utils.debug
-    def revert(self, params):
+    def revert(self, **params):
         '''
         Revert to the previous version of a config project.
         Same as `deploy rollback`
         '''
-        super(Config, self).rollback(params)
+        return super(ConfigController, self).rollback(**params)
 
-
-class ConfigController(Config):
-    """Controller for the config command"""
+    def push(self, **params):
+        'Push a new version of a config project. Same as `deploy promote`'
+        return super(ConfigController, self).promote(**params)
 
     @staticmethod
     def verify_package_arch(arch):
@@ -55,7 +62,6 @@ class ConfigController(Config):
                 u', '.join(sorted(arches))
             )
 
-    @tds.utils.debug
     def create(self, **params):
         # XXX: Replace this with a call
         # XXX: to ApplicationController(log).add(params)
@@ -98,13 +104,6 @@ class ConfigController(Config):
         log.debug('Committed database changes')
 
         return dict(result=tds.model.Project.get(name=params['project']))
-
-    def push(self, **params):
-        'Push a new version of a config project. Same as `deploy promote`'
-        try:
-            return super(ConfigController, self).promote(**params)
-        except Exception as exc:
-            return dict(error=exc)
 
     @staticmethod
     def delete(params):

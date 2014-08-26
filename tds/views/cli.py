@@ -196,9 +196,7 @@ class CLI(Base):
                 % dict(name=result.name)
             )
         elif error is not None:
-            name, = error.args[1:]
-            print 'Could not delete %(name)s: %(message)s' % dict(
-                name=name,
+            print 'Could not delete: %(message)s' % dict(
                 message=format_exception(error)
             )
 

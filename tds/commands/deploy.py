@@ -19,6 +19,8 @@ import tds.deploy_strategy
 
 import logging
 
+from .base import BaseController
+
 log = logging.getLogger('tds')
 
 
@@ -47,7 +49,7 @@ def create_deployment(params):
     )
 
 
-class Deploy(object):
+class DeployController(BaseController):
 
     """Commands to manage deployments for supported applications"""
 
@@ -64,12 +66,23 @@ class Deploy(object):
 
     requires_tier_progression = True
 
-    def __init__(self ):
-        """Basic initialization"""
+    access_levels = {
+        'add_apptype': 'admin',
+        'delete_apptype': 'admin',
+        'invalidate': 'environment',
+        'show': 'environment',
+        'validate': 'environment',
+        'promote': 'environment',
+        'redeploy': 'environment',
+        'rollback': 'environment',
+        'restart': 'environment',
+    }
 
-        self.app_config = tds.utils.config.TDSDeployConfig()
+    def __init__(self, config):
+        """Basic initialization"""
+        super(DeployController, self).__init__(config)
         self._deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy(
-            '/usr/bin/mco'
+            **self.app_config['mco']
         )
 
     @property
@@ -1613,8 +1626,7 @@ class Deploy(object):
 
             return (pkg.id, app_ids)
 
-    @staticmethod
-    def add_apptype(params):
+    def add_apptype(self, **params):
         """Add a specific application type to the given project"""
 
         log.debug('Adding application type for project')
@@ -1665,8 +1677,7 @@ class Deploy(object):
             )
         )
 
-    @staticmethod
-    def delete_apptype(params):
+    def delete_apptype(self, **params):
         """Delete a specific application type from the given project"""
 
         log.debug('Removing application type for project')
@@ -1700,8 +1711,7 @@ class Deploy(object):
             )
         )
 
-    @tds.utils.debug
-    def promote(self, params):
+    def promote(self, **params):
         """Deploy given version of given project to requested application
            tiers or hosts
         """
@@ -1739,8 +1749,7 @@ class Deploy(object):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-    @tds.utils.debug
-    def invalidate(self, params):
+    def invalidate(self, **params):
         """Invalidate a given version of a given project"""
 
         log.debug('Invalidating for given project')
@@ -1795,8 +1804,7 @@ class Deploy(object):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-    @tds.utils.debug
-    def show(self, params):
+    def show(self, **params):
         """Show deployment information for a given project"""
 
         log.debug('Showing deployment information for given project')
@@ -1906,7 +1914,7 @@ class Deploy(object):
         return dict(result=deploy_info)
 
 
-    def validate(self, params):
+    def validate(self, **params):
         """Validate a given version of a given project"""
 
         log.debug('Validating for given project')
@@ -1959,8 +1967,7 @@ class Deploy(object):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-    @tds.utils.debug
-    def rollback(self, params):
+    def rollback(self, **params):
         """Rollback to the previous validated deployed version of given
            project on requested application tiers or hosts
         """
@@ -2027,8 +2034,7 @@ class Deploy(object):
 
         return None
 
-    @tds.utils.debug
-    def restart(self, params):
+    def restart(self, **params):
         """Restart given project on requested application tiers or hosts"""
 
         log.debug('Restarting application for project')
@@ -2140,8 +2146,7 @@ class Deploy(object):
 
         return dict(result=restart_results)
 
-    @tds.utils.debug
-    def redeploy(self, params):
+    def redeploy(self, **params):
         """Redeploy given project to requested application tiers or hosts"""
 
         log.debug('Redeploying project')
@@ -2170,68 +2175,3 @@ class Deploy(object):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-
-class DeployController(Deploy):
-    '''
-    New-style controller for deploy commands
-    '''
-    def __init__(self, config):
-        super(DeployController, self).__init__()
-        self.app_config = config
-        self._deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy(
-            **self.app_config['mco']
-        )
-
-    def add_apptype(self, **params):
-        try:
-            return super(DeployController, self).add_apptype(params)
-        except tagopsdb.exceptions.RepoException as exc:
-            return dict(error=exc)
-
-    def delete_apptype(self, **params):
-        try:
-            return super(DeployController, self).delete_apptype(params)
-        except tagopsdb.exceptions.RepoException as exc:
-            return dict(error=exc)
-
-    def validate(self, **params):
-        try:
-            return super(DeployController, self).validate(params)
-        except Exception as exc:
-            return dict(error=exc)
-
-    def invalidate(self, **params):
-        try:
-            return super(DeployController, self).invalidate(params)
-        except Exception as exc:
-            return dict(error=exc)
-
-    def show(self, **params):
-        try:
-            return super(DeployController, self).show(params)
-        except Exception as exc:
-            return dict(error=exc)
-
-    def promote(self, **params):
-        try:
-            return super(DeployController, self).promote(params)
-        except Exception as exc:
-            return dict(error=exc)
-
-    def restart(self, **params):
-        try:
-            return super(DeployController, self).restart(params)
-        except Exception as exc:
-            return dict(error=exc)
-
-    def redeploy(self, **params):
-        try:
-            return super(DeployController, self).redeploy(params)
-        except Exception as exc:
-            return dict(error=exc)
-
-    def rollback(self, **params):
-        try:
-            return super(DeployController, self).rollback(params)
-        except Exception as exc:
-            return dict(error=exc)

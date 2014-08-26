@@ -17,6 +17,8 @@ import tds.utils
 
 import logging
 
+from .base import BaseController
+
 log = logging.getLogger('tds')
 
 
@@ -33,14 +35,14 @@ def processing_handler(*_args):
     )
 
 
-class Package(object):
-
+class PackageController(BaseController):
     """Commands to manage packages for supported applications"""
 
-    def __init__(self):
-        """Basic initialization"""
-
-        self.host = socket.gethostname()
+    access_levels = {
+        'list': 'environment',
+        'add': 'environment',
+        'delete': 'environment',
+    }
 
     @staticmethod
     def check_package_state(pkg_info):
@@ -112,8 +114,7 @@ class Package(object):
         log.info('RPM successfully linked')
         return True
 
-    @tds.utils.debug
-    def add(self, params):
+    def add(self, **params):
         """Add a given version of a package for a given project"""
 
         log.debug(
@@ -121,8 +122,6 @@ class Package(object):
             'to software repository', params['version'],
             params['project']
         )
-
-        tds.authorize.verify_access(params['user_level'], 'dev')
 
         # The real 'revision' is hardcoded to 1 for now
         # This needs to be changed at some point
@@ -195,8 +194,7 @@ class Package(object):
             project_name=params['project'], package=package
         ))
 
-    @tds.utils.debug
-    def delete(self, params):
+    def delete(self, **params):
         """Delete a given version of a package for a given project"""
 
         log.debug(
@@ -204,8 +202,6 @@ class Package(object):
             'from software repository', params['version'],
             params['project']
         )
-
-        tds.authorize.verify_access(params['user_level'], 'dev')
 
         project = tds.model.Project.get(name=params['project'])
         if project is None:
@@ -238,8 +234,7 @@ class Package(object):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-    @staticmethod
-    def list(params):
+    def list(self, **params):
         """Show information for all existing packages in the software
            repository for requested projects (or all projects)
         """
@@ -252,8 +247,6 @@ class Package(object):
         log.debug('Listing information for all existing packages '
                   'for projects: %s', apps)
 
-        tds.authorize.verify_access(params['user_level'], 'dev')
-
         packages_sorted = sorted(
             tagopsdb.deploy.package.list_packages(params['projects']),
             key=lambda package: int(package.version)
@@ -265,28 +258,3 @@ class Package(object):
             log.info('Revision: %s', pkg.revision)
             log.info('')
 
-
-class PackageController(Package):
-    """Controller for package command"""
-
-    def __init__(self, config):
-        super(PackageController, self).__init__()
-        self.app_config = config
-
-    def add(self, **params):
-        try:
-            return super(PackageController, self).add(params)
-        except Exception as exc:
-            return dict(error=exc)
-
-    def delete(self, **params):
-        try:
-            return super(PackageController, self).delete(params)
-        except Exception as exc:
-            return dict(error=exc)
-
-    def list(self, **params):
-        try:
-            return super(PackageController, self).list(params)
-        except Exception as exc:
-            return dict(error=exc)

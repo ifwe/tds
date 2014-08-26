@@ -14,7 +14,7 @@ import logging
 log = logging.getLogger('tds')
 
 
-class Jenkinspackage(PackageController):
+class JenkinspackageController(PackageController):
     """Temporary class to manage packages for supported applications
        via direct access to Jenkins build (artifactory)
     """
@@ -83,13 +83,3 @@ class Jenkinspackage(PackageController):
         os.unlink(tmpname)
 
         return True
-
-
-class JenkinspackageController(Jenkinspackage):
-    """Controller for jenkinspackage command"""
-
-    def add(self, **params):
-        try:
-            return super(JenkinspackageController, self).add(**params)
-        except Exception as exc:
-            return dict(error=exc)
