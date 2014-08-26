@@ -65,11 +65,11 @@ def parse_command_line(sysargs):
     return parser.parse_args(sysargs)
 
 
-def main():
+def _main(sysargs):
     """Parse command line, configure logging and initialize application,
        then run specified command
     """
-    args = parse_command_line(sys.argv[1:])
+    args = parse_command_line(sysargs)
     tds_params = vars(args)
     tds_params['log'] = conflog.configure_logging(
         tds_params['config_dir'],
@@ -93,6 +93,12 @@ def main():
             WrongEnvironmentError, WrongProjectTypeError) as exc:
         tds_params['log'].error(exc)
         sys.exit(1)
+
+
+def main():
+    'Wrapper around _main() that passes in sys.argv'
+    return _main(sys.argv[1:])
+
 
 if __name__ == '__main__':
     main()
