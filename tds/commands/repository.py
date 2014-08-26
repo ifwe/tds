@@ -53,8 +53,6 @@ class RepositoryController(BaseController):
         log.debug('Adding application %r to repository',
                   params['project'])
 
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
         try:
             self.verify_package_arch(params['arch'])
         except Exception as exc:

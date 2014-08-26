@@ -19,10 +19,6 @@ class DeploySetUp(unittest2.TestCase):
             'tagopsdb.Session',
             **{'commit.return_value': None}
         ).start()
-        self.tds_authorize = patch(
-            'tds.authorize',
-            **{'verify_access.return_value': True}
-        ).start()
 
         app_config = DeployConfigFactory()
         self.deploy = tds.commands.DeployController(app_config)
@@ -66,11 +62,6 @@ class TestPromoteAndPush(DeploySetUp):
         self.tds_authorize = patch(
             'tds.authorize',
             **{'verify_access.return_value': True}
-        ).start()
-
-        self.tds_dep_target = patch(
-            'tds.model.DeployTarget',
-            **{'get.return_value': Mock(name='fake_target')}
         ).start()
 
         return_val = self.deploy.check_previous_environment(
