@@ -1,6 +1,6 @@
 '''Data for command line arguments, subsarguments and options'''
 
-from ordereddict import OrderedDict as odict
+from collections import OrderedDict as odict
 
 REPOSITORY_DATA = odict([
     ('add', odict([
