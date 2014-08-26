@@ -16,14 +16,14 @@ def project = new PythonFPMMatrixProject(
         githubProject: 'deploy',
         hipchatRoom: 'Tagged Deployment System',
         email: 'devtools@tagged.com',
-        interpreters:['python26', 'python27'],
+        interpreters:['python27'],
     ]
 )
 
 // Report pylint warnings and go 'unstable' when over the threshold
 def pylint = project.downstreamJob {
     name 'pylint'
-    label 'python26 && centos6'
+    label 'python27 && centos6'
     steps { shell '.jenkins/scripts/pylint.sh' }
 
     publishers {
@@ -37,7 +37,7 @@ def pylint = project.downstreamJob {
 // Run python unit tests and record results
 def pyunit = project.downstreamJob {
     name 'pyunit'
-    label 'python26 && centos6'
+    label 'python27 && centos6'
     steps { shell '.jenkins/scripts/pyunit.sh' }
     publishers {
         archiveJunit "reports/pyunit.xml"
@@ -48,7 +48,7 @@ def pyunit = project.downstreamJob {
 // Run behave tests and record results
 def features = project.downstreamJob {
     name 'features'
-    label 'python26 && centos6'
+    label 'python27 && centos6'
     steps { shell '.jenkins/scripts/features.sh' }
     publishers {
         archiveJunit "reports/*.xml"
