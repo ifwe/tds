@@ -2,6 +2,8 @@ from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
 import sys
+import os, os.path
+import fnmatch
 
 # Let's add this later
 # long_description = open('README.txt').read()
@@ -21,6 +23,21 @@ class PyTest(TestCommand):
         errno = pytest.main(self.test_args)
         if errno != 0:
             raise SystemExit("Test failures (errno=%d)", errno)
+
+
+def discover_packages(base):
+    '''
+    Discovers all sub-packages for a base package
+    Note: does not work with namespaced packages (via pkg_resources or similar)
+    '''
+    import importlib
+    mod = importlib.import_module(base)
+    mod_fname = mod.__file__
+    mod_dirname = os.path.dirname(mod_fname)
+
+    for root, _dirnames, filenames in os.walk(mod_dirname):
+        for _fname in fnmatch.filter(filenames, '__init__.py'):
+            yield '.'.join(root.split(os.sep))
 
 
 REQ_BLACKLIST = ['tagopsdb']
@@ -72,15 +89,7 @@ setup_args = dict(
     author='Kenneth Lareau',
     author_email='klareau@tagged.com',
     license='MIT',
-    packages=[
-        'tds',
-        'tds.commands',
-        'tds.deploy_strategy',
-        'tds.model',
-        'tds.notifications',
-        'tds.scripts',
-        'tds.utils'
-    ],
+    packages=list(discover_packages('tds')),
     install_requires=REQUIREMENTS['install'],
     entry_points={
         'console_scripts': [
