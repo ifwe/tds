@@ -197,8 +197,7 @@ def before_scenario(context, scenario):
     if 'jenkins_server' in context.tags:
         setup_jenkins_server(context, scenario)
 
-    if 'no_db' not in context.tags:
-        setup_temp_db(context, scenario)
+    setup_temp_db(context, scenario)
 
 
 def after_scenario(context, scenario):
@@ -227,7 +226,7 @@ def after_scenario(context, scenario):
                     ))
                 print
 
-        teardown_temp_db(context)
+    teardown_temp_db(context, scenario)
 
     if 'jenkins_server' in context.tags:
         teardown_jenkins_server(context, scenario)
@@ -236,6 +235,7 @@ def after_scenario(context, scenario):
 
 
 def setup_temp_db(context, scenario):
+    dry_run = 'no_db' in context.tags
     db_info = {}
 
     with open(context.DB_CONFIG_FILE) as f_tmpl:
@@ -246,39 +246,40 @@ def setup_temp_db(context, scenario):
     db_hosts = list(DB_HOSTS)
     random.shuffle(db_hosts)
 
-    exc = None
-    while db_hosts:
-        db_info['db'].update(
-            hostname=db_hosts.pop(0),
-            db_name=db_name,
-            user='jenkins',
-            password='hawaiirobots'
-        )
-
-        base_mysql_args = [
-            'mysql',
-            '--host', db_info['db']['hostname'],
-            '--user', db_info['db']['user'],
-            '--password=' + db_info['db']['password'],
-        ]
-
-        try:
-            processes.run(
-                base_mysql_args +
-                ['--execute', 'CREATE DATABASE IF NOT EXISTS %s;' % db_name]
+    if not dry_run:
+        exc = None
+        while db_hosts:
+            db_info['db'].update(
+                hostname=db_hosts.pop(0),
+                db_name=db_name,
+                user='jenkins',
+                password='hawaiirobots'
             )
-        except Exception as exc:
-            # assume it's a host problem
-            if db_hosts:
-                exc = None
-                continue
+
+            base_mysql_args = [
+                'mysql',
+                '--host', db_info['db']['hostname'],
+                '--user', db_info['db']['user'],
+                '--password=' + db_info['db']['password'],
+            ]
+
+            try:
+                processes.run(
+                    base_mysql_args +
+                    ['--execute', 'CREATE DATABASE IF NOT EXISTS %s;' % db_name]
+                )
+            except Exception as exc:
+                # assume it's a host problem
+                if db_hosts:
+                    exc = None
+                    continue
+                else:
+                    break
             else:
                 break
-        else:
-            break
 
-    if exc:
-        raise
+        if exc:
+            raise
 
     auth_levels = tds.authorize.ACCESS_LEVELS
 
@@ -290,6 +291,9 @@ def setup_temp_db(context, scenario):
     for fname in [filename] + auth_fnames:
         with open(opj(conf_dir, fname), 'wb') as db_file:
             db_file.write(yaml.dump(db_info))
+
+    if dry_run:
+        return
 
     db_data_file = opj(
         context.PROJECT_ROOT,
@@ -335,7 +339,11 @@ def seed_db():
     tagopsdb.Session.commit()
 
 
-def teardown_temp_db(*_args):
+def teardown_temp_db(context, *_args):
+    dry_run = 'no_db' in context.tags
+    if dry_run:
+        return
+
     import tagopsdb
     tagopsdb.destroy()
     sys.modules.pop('tagopsdb', None)
