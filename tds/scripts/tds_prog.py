@@ -65,11 +65,11 @@ def parse_command_line(sysargs):
     return parser.parse_args(sysargs)
 
 
-def main(sysargs):
+def main():
     """Parse command line, configure logging and initialize application,
        then run specified command
     """
-    args = parse_command_line(sysargs)
+    args = parse_command_line(sys.argv[1:])
     tds_params = vars(args)
     tds_params['log'] = conflog.configure_logging(
         tds_params['config_dir'],
@@ -95,4 +95,4 @@ def main(sysargs):
         sys.exit(1)
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
