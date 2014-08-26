@@ -5,6 +5,7 @@ Feature: The package list subcommand
 
     Background: User setup
         Given I have "dev" permissions
+        And I am in the "dev" environment
         And there are projects:
             | name |
             | bar  |

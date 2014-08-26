@@ -2,17 +2,14 @@
 import logging
 
 from tds.model import Project
+from .base import BaseController
 
 log = logging.getLogger('tds')
 
 
-class ProjectController(object):
+class ProjectController(BaseController):
 
     """Commands to manage TDS projects"""
-
-    def __init__(self, config):
-        super(ProjectController, self).__init__()
-        self.app_config = config
 
     @staticmethod
     def create(project, **_kwds):

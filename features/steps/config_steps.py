@@ -19,7 +19,7 @@ def given_i_am_in_environment(context, env):
     if 'no_db' not in context.tags:
         tagopsdb.Session.add(tagopsdb.Environment(
             env=env,
-            environment=tds.commands.Deploy.envs.get(env, env),
+            environment=tds.commands.DeployController.envs.get(env, env),
             domain=env + 'example.com',
             prefix=env[0]
         ))
