@@ -1,2 +1,6 @@
 ---
-db: {hostname: all-the-data.example.org, db_name: aint-here}
+db:
+    hostname: all-the-data.example.org
+    db_name: aint-here
+    password: superpassword
+    user: fakityfake

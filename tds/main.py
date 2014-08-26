@@ -107,20 +107,6 @@ class TDS(object):
         return authconfig
 
     @tds.utils.debug
-    def check_user_auth(self):
-        """Verify the user is authorized to run the application"""
-
-        log.debug('Checking user authorization level')
-
-        self.params['user_level'] = self.authconfig.get_access_level(LocalActor())
-        log.log(5, 'User level is: %s', self.params['user_level'])
-
-        if self.params['user_level'] is None:
-            raise AccessError('Your account (%s) is not allowed to run this '
-                              'application.\nPlease refer to your manager '
-                              'for assistance.' % self.params['user'])
-
-    @tds.utils.debug
     def check_exclusive_options(self):
         """Ensure certain options are exclusive and set parameter
            to check for explicit hosts or application types
@@ -154,7 +140,9 @@ class TDS(object):
 
         self.params['user'] = pwd.getpwuid(os.getuid()).pw_name
         log.log(5, 'User is: %s', self.params['user'])
-        self.check_user_auth()
+
+        self.params['user_level'] = self.authconfig.get_access_level(LocalActor())
+        log.log(5, 'User level is: %s', self.params['user_level'])
 
         self.params['environment'] = self.config['env.environment']
         log.log(5, 'Environment is: %s', self.params['environment'])
