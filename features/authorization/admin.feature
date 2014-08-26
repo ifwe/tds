@@ -20,23 +20,3 @@ Feature: Authorization roles
             # | project create                                |
             | repository delete foo                         |
             | repository add foo bar baz noarch ci rpm what |
-
-
-
-#     Examples:
-#         | env   | permissions   |
-#         | admin | prod          |
-#         | prod  | stage         |
-#         | stage | dev           |
-#         | dev   | fake          |
-
-
-
-# deploy delete-apptype
-# deploy add-apptype
-# config create
-# config delete
-# project delete
-# project create
-# repository delete
-# repository add
