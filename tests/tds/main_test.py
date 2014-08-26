@@ -70,7 +70,6 @@ class TestTDS(unittest2.TestCase):
                 'pwd.getpwuid',
                 **{'return_value.pw_name': 'fake'}
             ),
-            mock.patch.object(t, 'check_user_auth'),
         ):
             t.update_program_parameters()
 
@@ -79,17 +78,6 @@ class TestTDS(unittest2.TestCase):
         assert t.params['user'] == 'fake'
         assert t.params['environment'] == 'fakedev'
         assert t.params['repo'] == config['repo']
-
-    def test_check_user_auth_failure(self):
-        t = tds.main.TDS(dict(user='someone'))
-        with mock.patch.object(t.authconfig, 'get_access_level', return_value=None):
-            self.assertRaises(tds.main.AccessError, t.check_user_auth)
-
-    def test_check_user_auth_succes(self):
-        t = tds.main.TDS(dict(user='someone'))
-        with mock.patch.object(t.authconfig, 'get_access_level', return_value='yay'):
-            t.check_user_auth()
-            assert t.params['user_level'] == 'yay'
 
     def test_initialize_db_from_opts(self):
 
