@@ -33,11 +33,11 @@ def discover_packages(base):
     import importlib
     mod = importlib.import_module(base)
     mod_fname = mod.__file__
-    mod_dirname = os.path.dirname(mod_fname)
+    mod_dirname = os.path.normpath(os.path.dirname(mod_fname))
 
     for root, _dirnames, filenames in os.walk(mod_dirname):
         for _fname in fnmatch.filter(filenames, '__init__.py'):
-            yield '.'.join(root.split(os.sep))
+            yield '.'.join(os.path.relpath(root).split(os.sep))
 
 
 REQ_BLACKLIST = ['tagopsdb']
