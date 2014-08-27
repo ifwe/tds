@@ -75,35 +75,28 @@ class ConfigController(DeployController):
 
         project_name = project
 
-        try:
-            self.verify_package_arch(params['arch'])
-        except Exception as exc:
-            return dict(error=exc)
+        self.verify_package_arch(params['arch'])
 
         existing_proj = tds.model.Project.get(name=project_name)
 
         if existing_proj is not None:
-            return dict(error=Exception(
+            raise Exception(
                 "Project already exists: %s", existing_proj.name
-            ))
-
-        try:
-            log.debug('Adding config project to repository')
-
-            # Project type matches project name
-            tagopsdb.deploy.repo.add_app_location(
-                project_name,
-                params['buildtype'],
-                params['pkgname'],
-                project_name,
-                params['pkgpath'],
-                params['arch'],
-                params['buildhost'],
-                params['env_specific']
             )
-        except tagopsdb.exceptions.RepoException as exc:
-            log.error(exc)
-            return dict(error=exc)
+
+        log.debug('Adding config project to repository')
+
+        # Project type matches project name
+        tagopsdb.deploy.repo.add_app_location(
+            project_name,
+            params['buildtype'],
+            params['pkgname'],
+            project_name,
+            params['pkgpath'],
+            params['arch'],
+            params['buildhost'],
+            params['env_specific']
+        )
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')

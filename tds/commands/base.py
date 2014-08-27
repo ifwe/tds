@@ -37,12 +37,13 @@ class BaseController(object):
 
 
         handler = getattr(self, action, None)
-        if handler is None:
-            return dict(error=Exception(
-                "Unknown action for %s: %s", type(self).__name__, action
-            ))
 
         try:
+            if handler is None:
+                raise Exception(
+                    "Unknown action for %s: %s", type(self).__name__, action
+                )
+
             # TODO: turn validation errors into a different kind of exception
             params = self.validate_params(
                 getattr(handler, '_needs_validation', None),
