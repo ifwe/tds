@@ -11,6 +11,7 @@ import tds.scripts.tds_prog as prog
 from behave import given, when, then
 
 TDS_SCRIPT = tds.scripts.tds_prog.__file__
+TRACEBACK_TEXT = 'Traceback (most recent call last)'
 
 @when(u'I run "{command}"')
 def when_i_run_command(context, command):
@@ -70,26 +71,37 @@ def when_the_command_finishes(context):
         expect_return_code=None
     )
 
+    context.execute_steps('Then the output has no errors')
+
+
+def output_checker(context, check):
+    stdout = context.process.stdout.strip()
+    stderr = context.process.stderr.strip()
+
+    assert check(stdout, stderr), (stdout, stderr)
 
 @then(u'the output has "{text}"')
 def then_the_output_has_text(context, text):
-    stdout = context.process.stdout
-    stderr = context.process.stderr
-    assert text in stdout or text in stderr, (stdout, stderr)
+    output_checker(context, lambda out, err: text in out or text in err)
+
+
+@then(u'the output has no errors')
+def then_the_output_has_no_errors(context):
+    output_checker(
+        context,
+        lambda out, err: TRACEBACK_TEXT not in err or TRACEBACK_TEXT not in out
+    )
 
 
 @then(u'the output is "{text}"')
 def then_the_output_is_text(context, text):
-    stdout = context.process.stdout
-    stderr = context.process.stderr
-    assert text == stdout.strip() or text == stderr.strip(), (stdout, stderr)
+    output_checker(context, lambda out, err: text == out or text == err)
 
 
 @then(u'the output is empty')
 def then_the_output_is_empty(context):
-    stdout = context.process.stdout
-    stderr = context.process.stderr
-    assert len(stdout.strip()) == 0, (stdout, stderr)
+    output_checker(context, lambda out, *_a: len(out) == 0)
+
 
 @then(u'it took at least {seconds} seconds')
 def then_it_took_at_least_seconds(context, seconds):
