@@ -1881,7 +1881,7 @@ class DeployController(BaseController):
 
         log.debug('Rolling back project')
 
-        self.ensure_explicit_destinations(params)
+        self.ensure_explicit_destinations(project, params)
 
         pkg_id, app_ids, app_host_map = self.get_app_info(project, params)
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
@@ -2045,7 +2045,7 @@ class DeployController(BaseController):
 
         log.debug('Redeploying project')
 
-        self.ensure_explicit_destinations(params)
+        self.ensure_explicit_destinations(project, params)
 
         pkg_id, app_ids, app_host_map = self.get_app_info(project, params,
                                                           hostonly=True)
