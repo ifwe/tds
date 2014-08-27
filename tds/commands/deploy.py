@@ -1780,7 +1780,7 @@ class DeployController(BaseController):
         targets = []
         app_ids = self.get_app_types(project, params)
 
-        if params['apptypes']:
+        if params.get('apptypes', None):
             for apptype in params['apptypes']:
                 target = tds.model.DeployTarget.get(name=apptype)
 
