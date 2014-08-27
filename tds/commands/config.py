@@ -11,6 +11,7 @@ import tds.exceptions
 import tds.model
 import tds.utils
 # TODO: this should be a subclass of ApplicationController (or removed)
+from .base import validate
 from .project import ProjectController
 from .deploy import DeployController
 
@@ -33,10 +34,12 @@ class ConfigController(DeployController):
 
     requires_tier_progression = False
 
+    @validate('project')
     def repush(self, **params):
         'Repush a version of a config project. Same as `deploy redeploy`'
         return super(ConfigController, self).redeploy(**params)
 
+    @validate('project')
     def revert(self, **params):
         '''
         Revert to the previous version of a config project.
@@ -44,6 +47,7 @@ class ConfigController(DeployController):
         '''
         return super(ConfigController, self).rollback(**params)
 
+    @validate('project')
     def push(self, **params):
         'Push a new version of a config project. Same as `deploy promote`'
         return super(ConfigController, self).promote(**params)
@@ -62,49 +66,45 @@ class ConfigController(DeployController):
                 u', '.join(sorted(arches))
             )
 
-    def create(self, **params):
+    def create(self, project, **params):
         # XXX: Replace this with a call
         # XXX: to ApplicationController(log).add(params)
         """Add a new config project to the system"""
 
         log.debug('Creating new config project')
 
-        try:
-            self.verify_package_arch(params['arch'])
-        except Exception as exc:
-            return dict(error=exc)
+        project_name = project
 
-        existing_proj = tds.model.Project.get(name=params['project'])
+        self.verify_package_arch(params['arch'])
+
+        existing_proj = tds.model.Project.get(name=project_name)
 
         if existing_proj is not None:
-            return dict(error=Exception(
+            raise Exception(
                 "Project already exists: %s", existing_proj.name
-            ))
-
-        try:
-            log.debug('Adding config project to repository')
-
-            # Project type matches project name
-            tagopsdb.deploy.repo.add_app_location(
-                params['project'],
-                params['buildtype'],
-                params['pkgname'],
-                params['project'],
-                params['pkgpath'],
-                params['arch'],
-                params['buildhost'],
-                params['env_specific']
             )
-        except tagopsdb.exceptions.RepoException as exc:
-            log.error(exc)
-            return dict(error=exc)
+
+        log.debug('Adding config project to repository')
+
+        # Project type matches project name
+        tagopsdb.deploy.repo.add_app_location(
+            project_name,
+            params['buildtype'],
+            params['pkgname'],
+            project_name,
+            params['pkgpath'],
+            params['arch'],
+            params['buildhost'],
+            params['env_specific']
+        )
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-        return dict(result=tds.model.Project.get(name=params['project']))
+        return dict(result=tds.model.Project.get(name=project_name))
 
     @staticmethod
+    @validate('project')
     def delete(params):
         """Remove a config project from the system"""
         return ProjectController().delete(**params)

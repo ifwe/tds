@@ -30,7 +30,7 @@ Feature: deploy/config add-apptype subcommand
 
     Scenario Outline: add a target that doesn't exist to a project that doesn't exist
         When I run "<command> add-apptype targ proj"
-        Then the output is "Project doesn't exist: proj"
+        Then the output is "Project "proj" does not exist"
 
         Examples:
             | command |
@@ -40,7 +40,7 @@ Feature: deploy/config add-apptype subcommand
     Scenario Outline: add a target to a project that doesn't exist
         Given there is a deploy target with name="targ"
         When I run "<command> add-apptype targ proj"
-        Then the output is "Project doesn't exist: proj"
+        Then the output is "Project "proj" does not exist"
 
         Examples:
             | command |

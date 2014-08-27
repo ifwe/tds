@@ -11,7 +11,7 @@ import tds.authorize
 import tds.model
 import tds.utils
 
-from .base import BaseController
+from .base import BaseController, validate
 from .project import ProjectController
 
 log = logging.getLogger('tds')
@@ -25,10 +25,12 @@ class RepositoryController(BaseController):
         delete='admin',
     )
 
+    @validate('project')
     def list(self, **params):
         'repository list subcommand'
         return ProjectController(self.app_config).list(**params)
 
+    @validate('project')
     def delete(self, **params):
         'repository delete subcommand'
         return ProjectController(self.app_config).delete(**params)
@@ -53,18 +55,15 @@ class RepositoryController(BaseController):
         log.debug('Adding application %r to repository',
                   params['project'])
 
-        try:
-            self.verify_package_arch(params['arch'])
-        except Exception as exc:
-            return dict(error=exc)
+        self.verify_package_arch(params['arch'])
 
         targets = []
         for apptype in params['apptypes']:
             target = tds.model.DeployTarget.get(name=apptype)
             if target is None:
-                return dict(error=Exception(
+                raise Exception(
                     "Apptype '%s' does not exist", apptype
-                ))
+                )
 
             targets.append(target)
 
@@ -96,7 +95,7 @@ class RepositoryController(BaseController):
             log.error(e)
             return
 
-        if params['config']:
+        if params.get('config', None):
             # XXX: this should go away as config is not special
             log.debug('Adding application %r to config project %r',
                       params['project'], params['config'])

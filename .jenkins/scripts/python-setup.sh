@@ -15,15 +15,15 @@ if [ ! -z "$VIRTUAL_ENV" ] ; then
 fi
 
 if ! [[ -d "$SITEOPS_VIRTUALENV" && -f "$SITEOPS_VIRTUALENV/bin/activate" ]] ; then
-    if ! which virtualenv ; then
+    if ! which virtualenv-2.7 ; then
         wget http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.1.tar.gz
         tar -xzf virtualenv-1.9.1.tar.gz
         rm virtualenv-1.9.1.tar.gz
         pushd virtualenv-1.9.1
-        python virtualenv.py "$SITEOPS_VIRTUALENV"
+        python2.7 virtualenv.py "$SITEOPS_VIRTUALENV"
         popd
     else
-        virtualenv "$SITEOPS_VIRTUALENV"
+        virtualenv-2.7 "$SITEOPS_VIRTUALENV"
     fi
 
     if [ -d virtualenv-1.9.1 ] ; then

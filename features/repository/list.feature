@@ -47,8 +47,7 @@ Feature: The repository list subcommand
     Scenario: with a missing project and an existing project specified
         Given there is a project with name="foo"
         When I run "repository list --projects foo bar"
-        Then the output describes a project with name="foo"
-        And the output describes a missing project with name="bar"
+        Then the output describes a missing project with name="bar"
 
     Scenario: with multiple missing projects specifed
         When I run "repository list --projects foo bar"

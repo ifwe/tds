@@ -63,7 +63,7 @@ class TestPackageAdd(unittest2.TestCase):
             **{'find_app_location': Mock(pkg_name='fake_app', arch='noarch')}
         ).start()
 
-        self.package.add(**dict(
+        self.package.action('add', **dict(
             project='fake_app',
             version='deadbeef',
             user='fake_user',

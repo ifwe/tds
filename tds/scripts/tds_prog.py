@@ -71,9 +71,13 @@ def _main(sysargs):
     """
     args = parse_command_line(sysargs)
     tds_params = vars(args)
+    for k in tds_params.keys():
+        if tds_params[k] is None:
+            tds_params.pop(k)
+
     tds_params['log'] = conflog.configure_logging(
         tds_params['config_dir'],
-        tds_params['verbose'],
+        tds_params.get('verbose', None),
         tds_params['use_color']
     )
     tds_params['log'].debug(5, 'Program parameters: %r',
