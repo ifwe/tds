@@ -1361,9 +1361,11 @@ class DeployController(BaseController):
                 )
                 failed_hosts.append((dep_host.hostname, info))
 
-            if params['delay']:
-                log.log(5, 'Sleeping for %d seconds...', params['delay'])
-                time.sleep(params['delay'])
+
+            delay = params.get('delay', None)
+            if delay is not None:
+                log.log(5, 'Sleeping for %d seconds...', delay)
+                time.sleep(delay)
 
         # If any hosts failed, show failure information for each
         if failed_hosts:
@@ -2028,14 +2030,15 @@ class DeployController(BaseController):
 
         restart_results = {}
 
+        delay = params.get('delay', None)
         for i, (host, pkg) in enumerate(restart_targets):
             # TODO: rework restart_hosts to take a list of hosts/pkgs
             restart_result = self.restart_host(host.name, pkg.name)
             restart_results[(host, pkg)] = restart_result[0]
 
-            if params['delay'] and (i+1) < len(restart_targets):
-                log.log(5, 'Sleeping for %d seconds...', params['delay'])
-                time.sleep(params['delay'])
+            if delay is not None and (i+1) < len(restart_targets):
+                log.log(5, 'Sleeping for %d seconds...', delay)
+                time.sleep(delay)
 
         return dict(result=restart_results)
 
