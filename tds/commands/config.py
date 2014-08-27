@@ -11,6 +11,7 @@ import tds.exceptions
 import tds.model
 import tds.utils
 # TODO: this should be a subclass of ApplicationController (or removed)
+from .base import validate
 from .project import ProjectController
 from .deploy import DeployController
 
@@ -62,19 +63,20 @@ class ConfigController(DeployController):
                 u', '.join(sorted(arches))
             )
 
-    def create(self, **params):
+    def create(self, project, **params):
         # XXX: Replace this with a call
         # XXX: to ApplicationController(log).add(params)
         """Add a new config project to the system"""
 
         log.debug('Creating new config project')
 
+        project_name = project
         try:
             self.verify_package_arch(params['arch'])
         except Exception as exc:
             return dict(error=exc)
 
-        existing_proj = tds.model.Project.get(name=params['project'])
+        existing_proj = tds.model.Project.get(name=project_name)
 
         if existing_proj is not None:
             return dict(error=Exception(
@@ -86,10 +88,10 @@ class ConfigController(DeployController):
 
             # Project type matches project name
             tagopsdb.deploy.repo.add_app_location(
-                params['project'],
+                project_name,
                 params['buildtype'],
                 params['pkgname'],
-                params['project'],
+                project_name,
                 params['pkgpath'],
                 params['arch'],
                 params['buildhost'],
@@ -102,7 +104,7 @@ class ConfigController(DeployController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-        return dict(result=tds.model.Project.get(name=params['project']))
+        return dict(result=tds.model.Project.get(name=project_name))
 
     @staticmethod
     def delete(params):

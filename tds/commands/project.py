@@ -2,7 +2,7 @@
 import logging
 
 from tds.model import Project
-from .base import BaseController
+from .base import BaseController, validate
 
 log = logging.getLogger('tds')
 
@@ -24,35 +24,17 @@ class ProjectController(BaseController):
         log.debug('Creating project %r', project_name)
         return dict(result=Project.create(name=project_name))
 
-    @staticmethod
-    def delete(project, **_kwds):
+    @validate('project')
+    def delete(self, project, **_kwds):
         """Remove a given project"""
-
-        project_name = project
-        project = Project.get(name=project_name)
-        if project is None:
-            return dict(error=Exception(
-                'Project "%s" does not exist', project_name
-            ))
-
-        log.debug('Removing project %r', project_name)
-
+        log.debug('Removing project %r', project.name)
         project.delete()
         return dict(result=project)
 
-    @staticmethod
-    def list(projects=(), **_kwds):
+    @validate('project')
+    def list(self, projects=(), **_kwds):
         """Show information for requested projects (or all projects)"""
-        project_names = projects
+        if len(projects) == 0:
+            projects = Project.all()
 
-        if project_names:
-            return dict(
-                result=filter(
-                    None,
-                    [Project.get(name=p)
-                     or Exception('Project "%s" does not exist', p)
-                     for p in project_names]
-                )
-            )
-        else:
-            return dict(result=Project.all())
+        return dict(result=projects)
