@@ -30,7 +30,7 @@ class DeploymentFactory(factory.Factory):
     project = factory.SubFactory(ProjectFactory)
 
     target = dict(
-        environment='test',
+        environment='dev',
         apptypes=['fake_apptype'],
     )
 
