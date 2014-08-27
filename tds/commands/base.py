@@ -58,10 +58,7 @@ class BaseController(object):
 
         result = params.copy()
 
-        for key in params.keys():
-            if key not in validate_attrs:
-                continue
-
+        for key in validate_attrs:
             validator = getattr(self, 'validate_' + key, None)
             if validator is None:
                 raise Exception(

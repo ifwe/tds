@@ -11,7 +11,7 @@ import tds.authorize
 import tds.model
 import tds.utils
 
-from .base import BaseController
+from .base import BaseController, validate
 from .project import ProjectController
 
 log = logging.getLogger('tds')
@@ -25,10 +25,12 @@ class RepositoryController(BaseController):
         delete='admin',
     )
 
+    @validate('project')
     def list(self, **params):
         'repository list subcommand'
         return ProjectController(self.app_config).list(**params)
 
+    @validate('project')
     def delete(self, **params):
         'repository delete subcommand'
         return ProjectController(self.app_config).delete(**params)
