@@ -89,7 +89,7 @@ def then_the_output_has_text(context, text):
 def then_the_output_has_no_errors(context):
     output_checker(
         context,
-        lambda out, err: TRACEBACK_TEXT not in err or TRACEBACK_TEXT not in out
+        lambda out, err: not (TRACEBACK_TEXT in err or TRACEBACK_TEXT in out)
     )
 
 
