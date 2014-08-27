@@ -134,10 +134,10 @@ class PackageController(BaseController):
         pkg = tagopsdb.Package.get(name=pkg_loc.name)
 
         if pkg is not None:
-            return dict(error=Exception(
+            raise Exception(
                 'Package version "%s@%s" already exists',
                 pkg.name, pkg.version
-            ))
+            )
 
         if self.check_package_state(pkg_info) is None:
             try:
@@ -167,10 +167,10 @@ class PackageController(BaseController):
 
             if not self._queue_rpm(params, pending_rpm, rpm_name, app):
                 log.info('Failed to copy RPM into incoming directory')
-                return dict(error=Exception(
+                raise Exception(
                     'Package "%s@%s" does not exist',
                     app.pkg_name, params['version']
-                ))
+                )
 
         # Wait until status has been updated to 'failed' or 'completed',
         # or timeout occurs (meaning repository side failed, check logs there)

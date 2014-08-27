@@ -17,9 +17,9 @@ class ProjectController(BaseController):
         project_name = project
         project = Project.get(name=project_name)
         if project is not None:
-            return dict(error=Exception(
+            raise Exception(
                 "Project already exists: %s", project.name
-            ))
+            )
 
         log.debug('Creating project %r', project_name)
         return dict(result=Project.create(name=project_name))

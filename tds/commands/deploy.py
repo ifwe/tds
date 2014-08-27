@@ -1741,18 +1741,18 @@ class DeployController(BaseController):
 
         if params.get('apptypes', None) is not None:
             if not all(x in target_names for x in params['apptypes']):
-                return dict(error=Exception(
+                raise Exception(
                     'Valid deploy targets for project "%s" are: %r',
                     project.name,
                     map(str, target_names)
-                ))
+                )
 
         pkg_id, app_ids, _app_host_map = self.get_app_info(project, params)
         if pkg_id is None:
-            return dict(error=Exception(
+            raise Exception(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
-            ))
+            )
 
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
 
@@ -1787,15 +1787,15 @@ class DeployController(BaseController):
                 target = tds.model.DeployTarget.get(name=apptype)
 
                 if target is None:
-                    return dict(error=Exception(
+                    raise Exception(
                         'Apptype "%s" does not exist', apptype
-                    ))
+                    )
 
                 if target.id not in app_ids:
-                    return dict(error=Exception(
+                    raise Exception(
                         'Apptype "%s" does not map to project "%s"',
                         apptype, project.name
-                    ))
+                    )
 
                 targets.append(target)
         else:
@@ -1924,10 +1924,10 @@ class DeployController(BaseController):
                 continue
 
             if dep.status in ('inprogress', 'incomplete'):
-                return dict(error=Exception(
+                raise Exception(
                     'Deploy target "%s" is being deployed to currently',
                     target.name
-                ))
+                )
 
             if dep.status in ('complete', 'validated'):
                 break
@@ -1969,10 +1969,10 @@ class DeployController(BaseController):
 
             for target in targets:
                 if target is None or target not in project.targets:
-                    return dict(error=Exception(
+                    raise Exception(
                         'Valid apptypes for project "%s" are: %s',
                         project.name, [str(x.name) for x in project.targets]
-                    ))
+                    )
 
                 pkg = self.get_package_for_target(target, environment)
                 if pkg is None:
@@ -2002,16 +2002,16 @@ class DeployController(BaseController):
                     bad_hosts.append(hostname)
 
             if no_exist_hosts:
-                return dict(error=Exception(
+                raise Exception(
                     "These hosts do not exist: %s", ', '.join(no_exist_hosts)
-                ))
+                )
 
             if bad_hosts:
-                return dict(error=Exception(
+                raise Exception(
                     'The following hosts are in the wrong environment or '
                     'do not belong to a matching app type: %s',
                     ', '.join(bad_hosts)
-                ))
+                )
 
             for host in hosts:
                 pkg = self.get_package_for_target(host.application, environment)
@@ -2021,10 +2021,10 @@ class DeployController(BaseController):
                 restart_targets.append((host, pkg))
 
         if not restart_targets:
-            return dict(error=Exception(
+            raise Exception(
                 'Nothing to restart for project "%s" in %s environment',
                 project.name, environment.environment
-            ))
+            )
 
         restart_targets.sort(key=lambda x: (x[0].name, x[1].name))
 
@@ -2084,28 +2084,28 @@ class DeployController(BaseController):
 
         if params.get('apptypes', None) is not None:
             if not all(x in target_names for x in params['apptypes']):
-                return dict(error=Exception(
+                raise Exception(
                     'Valid deploy targets for project "%s" are: %r',
                     project.name,
                     map(str, target_names)
-                ))
+                )
 
         pkg_id, app_ids, _app_host_map = self.get_app_info(project, params)
 
         if pkg_id is None:
-            return dict(error=Exception(
+            raise Exception(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
-            ))
+            )
 
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
-            return dict(error=Exception(
+            raise Exception(
                 'No deployments to validate for application "%s" '
                 'in %s environment', project.name,
                 self.envs[params['environment']]
-            ))
+            )
 
         app_dep_map = self.determine_validations(project, params, pkg_id, app_ids,
                                                  app_dep_map)
