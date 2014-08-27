@@ -1637,7 +1637,7 @@ class DeployController(BaseController):
         try:
             tagopsdb.deploy.repo.add_app_packages_mapping(
                 package_location,
-                project,
+                project.delegate,
                 pkg_def,
                 [params['apptype']]
             )
