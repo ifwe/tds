@@ -74,6 +74,7 @@ class ConfigController(DeployController):
         log.debug('Creating new config project')
 
         project_name = project
+
         try:
             self.verify_package_arch(params['arch'])
         except Exception as exc:
