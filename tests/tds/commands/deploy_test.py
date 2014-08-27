@@ -93,8 +93,8 @@ class TestPromoteAndPush(DeploySetUp):
         self.deploy.ensure_newer_versions.return_value = True
 
         self.deploy.action('promote',
-            user_level='fake_access',
-            environment='fake_env',
+            user_level='dev',
+            environment='dev',
             project='fake_app'
         )
 
@@ -106,8 +106,8 @@ class TestPromoteAndPush(DeploySetUp):
         self.deploy.ensure_newer_versions.return_value = version_is_new
 
         self.deploy.action('promote',
-            user_level='fake_access',
-            environment='fake_env',
+            user_level='dev',
+            environment='dev',
             project='fake_app'
         )
 
@@ -118,8 +118,8 @@ class TestPromoteAndPush(DeploySetUp):
         self.config.ensure_newer_versions.return_value = False
 
         self.config.action('push',
-            user_level='fake_access',
-            environment='fake_env',
+            user_level='dev',
+            environment='dev',
             project='fake_app'
         )
 
@@ -131,8 +131,8 @@ class TestPromoteAndPush(DeploySetUp):
         notify.return_value = None
 
         params = dict(
-            user_level='fake_access',
-            environment='test',  # TODO: mock BaseDeploy.envs
+            user_level='dev',
+            environment='dev',  # TODO: mock BaseDeploy.envs
             project='fake_project',
             user='fake_user',
             groups=['engteam'],
@@ -156,8 +156,8 @@ class TestAddApptype(DeploySetUp):
         side_effect=tagopsdb.exceptions.RepoException)
     def test_missing_project(self, mock_app_loc):
         params = dict(
-            user_level='fake_access',
-            environment='test',  # TODO: mock BaseDeploy.envs
+            user_level='admin',
+            environment='dev',  # TODO: mock BaseDeploy.envs
             project='fake_project',
             user='fake_user',
             groups=['engteam'],
@@ -186,8 +186,8 @@ class TestAddApptype(DeploySetUp):
         side_effect=tagopsdb.exceptions.RepoException)
     def test_missing_apptype(self, *args):
         params = dict(
-            user_level='fake_access',
-            environment='test',  # TODO: mock BaseDeploy.envs
+            user_level='admin',
+            environment='dev',  # TODO: mock BaseDeploy.envs
             project='fake_project',
             user='fake_user',
             groups=['engteam'],
@@ -200,4 +200,4 @@ class TestAddApptype(DeploySetUp):
         res = self.deploy.action('add_apptype', **params)
         err = res.get('error', None)
         assert isinstance(err, Exception)
-        assert 'fake_apptype' in err.args[1:]
+        assert 'fake_apptype' in err.args[1:], repr(err)
