@@ -312,7 +312,7 @@ class DeployController(BaseController):
                    ' out of %d hosts' % total_hosts,
                    ' (', progressbar.Timer(), ', ', progressbar.ETA(), ')']
 
-        if params['verbose'] is None:
+        if params.get('verbose', None) is None:
             pbar = progressbar.ProgressBar(widgets=widgets,
                                            maxval=total_hosts).start()
 
@@ -398,16 +398,17 @@ class DeployController(BaseController):
 
                 log.log(5, 'Committed database (nested) change')
 
-            if params['verbose'] is None:
+            if params.get('verbose', None) is None:
                 pbar.update(host_count)
 
             host_count += 1
 
-            if params['delay']:
-                log.log(5, 'Sleeping for %d seconds...', params['delay'])
-                time.sleep(params['delay'])
+            delay = params.get('delay', None)
+            if delay is not None:
+                log.log(5, 'Sleeping for %d seconds...', delay)
+                time.sleep(delay)
 
-        if params['verbose'] is None:
+        if params.get('verbose', None) is None:
             pbar.finish()
 
         # If any hosts failed, show failure information for each
