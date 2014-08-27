@@ -1660,6 +1660,7 @@ class DeployController(BaseController):
             )
         )
 
+    @validate('project')
     def delete_apptype(self, project, **params):
         """Delete a specific application type from the given project"""
 
@@ -1730,6 +1731,7 @@ class DeployController(BaseController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
+    @validate('project')
     def invalidate(self, project, **params):
         """Invalidate a given version of a given project"""
 
@@ -1775,6 +1777,7 @@ class DeployController(BaseController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
+    @validate('project')
     def show(self, project, **params):
         """Show deployment information for a given project"""
 
@@ -1922,6 +1925,7 @@ class DeployController(BaseController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
+    @validate('project')
     def rollback(self, project, **params):
         """Rollback to the previous validated deployed version of given
            project on requested application tiers or hosts
@@ -1986,6 +1990,7 @@ class DeployController(BaseController):
 
         return None
 
+    @validate('project')
     def restart(self, project, **params):
         """Restart given project on requested application tiers or hosts"""
 
@@ -2089,6 +2094,7 @@ class DeployController(BaseController):
 
         return dict(result=restart_results)
 
+    @validate('project')
     def redeploy(self, project, **params):
         """Redeploy given project to requested application tiers or hosts"""
 
