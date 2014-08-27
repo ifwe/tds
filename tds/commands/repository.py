@@ -95,7 +95,7 @@ class RepositoryController(BaseController):
             log.error(e)
             return
 
-        if params['config']:
+        if params.get('config', None):
             # XXX: this should go away as config is not special
             log.debug('Adding application %r to config project %r',
                       params['project'], params['config'])
