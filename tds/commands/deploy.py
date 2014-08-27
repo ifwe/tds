@@ -1881,51 +1881,6 @@ class DeployController(BaseController):
 
 
     @validate('project')
-    def validate(self, project, **params):
-        """Validate a given version of a given project"""
-
-        log.debug('Validating for given project')
-
-        # Not a deployment
-        params['deployment'] = False
-
-        self.ensure_explicit_destinations(project, params)
-
-        target_names = list(x.name for x in project.targets)
-
-        if params.get('apptypes', None) is not None:
-            if not all(x in target_names for x in params['apptypes']):
-                return dict(error=Exception(
-                    'Valid deploy targets for project "%s" are: %r',
-                    project.name,
-                    map(str, target_names)
-                ))
-
-        pkg_id, app_ids, _app_host_map = self.get_app_info(project, params)
-
-        if pkg_id is None:
-            return dict(error=Exception(
-                'Package "%s@%s" does not exist',
-                project.name, params['version']
-            ))
-
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
-
-        if not len(filter(None, app_dep_map.itervalues())):
-            return dict(error=Exception(
-                'No deployments to validate for application %r '
-                'in %s environment', project.name,
-                self.envs[params['environment']]
-            ))
-
-        app_dep_map = self.determine_validations(project, params, pkg_id, app_ids,
-                                                 app_dep_map)
-        self.perform_validations(project, params, app_dep_map)
-
-        tagopsdb.Session.commit()
-        log.debug('Committed database changes')
-
-    @validate('project')
     def rollback(self, project, **params):
         """Rollback to the previous validated deployed version of given
            project on requested application tiers or hosts
@@ -2121,3 +2076,47 @@ class DeployController(BaseController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
+    @validate('project')
+    def validate(self, project, **params):
+        """Validate a given version of a given project"""
+
+        log.debug('Validating for given project')
+
+        # Not a deployment
+        params['deployment'] = False
+
+        self.ensure_explicit_destinations(project, params)
+
+        target_names = list(x.name for x in project.targets)
+
+        if params.get('apptypes', None) is not None:
+            if not all(x in target_names for x in params['apptypes']):
+                return dict(error=Exception(
+                    'Valid deploy targets for project "%s" are: %r',
+                    project.name,
+                    map(str, target_names)
+                ))
+
+        pkg_id, app_ids, _app_host_map = self.get_app_info(project, params)
+
+        if pkg_id is None:
+            return dict(error=Exception(
+                'Package "%s@%s" does not exist',
+                project.name, params['version']
+            ))
+
+        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+
+        if not len(filter(None, app_dep_map.itervalues())):
+            return dict(error=Exception(
+                'No deployments to validate for application %r '
+                'in %s environment', project.name,
+                self.envs[params['environment']]
+            ))
+
+        app_dep_map = self.determine_validations(project, params, pkg_id, app_ids,
+                                                 app_dep_map)
+        self.perform_validations(project, params, app_dep_map)
+
+        tagopsdb.Session.commit()
+        log.debug('Committed database changes')
