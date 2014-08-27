@@ -455,7 +455,7 @@ class DeployController(BaseController):
 
                 # We want the tier status updated only if doing
                 # a rollback
-                if self.deploy_to_hosts(params, dep_hosts, dep_id,
+                if self.deploy_to_hosts(project, params, dep_hosts, dep_id,
                                         redeploy=redeploy) \
                         and params['subcommand_name'] == 'rollback':
                     app_dep = app_dep_map[app_id][0]
@@ -515,7 +515,7 @@ class DeployController(BaseController):
                     )
                     continue
 
-                if self.deploy_to_hosts(params, dep_hosts, dep_id,
+                if self.deploy_to_hosts(project, params, dep_hosts, dep_id,
                                         redeploy=redeploy):
                     app_dep.status = 'complete'
                 else:
@@ -975,7 +975,7 @@ class DeployController(BaseController):
                 )
 
             try:
-                pkg_id, app_host_map = self.verify_package(params,
+                pkg_id, app_host_map = self.verify_package(project, params,
                                                            hostonly=hostonly)
             except ValueError, e:
                 log.error('%s for given project and hosts', e)
@@ -1018,7 +1018,7 @@ class DeployController(BaseController):
             log.log(5, 'Verification is for application tiers...')
 
             try:
-                pkg_id, app_ids = self.verify_package(params)
+                pkg_id, app_ids = self.verify_package(project, params)
             except ValueError, e:
                 log.error('%s for given project and application tiers', e)
                 raise SystemExit(1)
@@ -1034,7 +1034,6 @@ class DeployController(BaseController):
 
         return (pkg_id, app_ids, app_host_map)
 
-    @staticmethod
     def get_app_types(self, project, params):
         """Determine application IDs for deployment"""
 
@@ -1046,7 +1045,7 @@ class DeployController(BaseController):
             log.error(e)
             raise SystemExit(1)
 
-        if params['apptypes']:
+        if params.get('apptypes', None):
             try:
                 app_defs = [
                     tagopsdb.deploy.deploy.find_app_by_apptype(x)
@@ -1422,7 +1421,6 @@ class DeployController(BaseController):
 
         deployment = create_deployment(project=project, **params)
         notification = tds.notifications.Notifications(self.app_config)
-        print deployment
         notification.notify(deployment)
 
     @staticmethod
@@ -1580,7 +1578,7 @@ class DeployController(BaseController):
         return app_id_hosts_mapping
 
     @tds.utils.debug
-    def verify_package(self, params, hostonly=False):
+    def verify_package(self, project, params, hostonly=False):
         """Ensure requested package is valid (exists in the software
            repository)
         """
@@ -1622,19 +1620,19 @@ class DeployController(BaseController):
                 project.name
             )
         except tagopsdb.exceptions.RepoException:
-            return dict(error=Exception(
+            raise Exception(
                 "RepoException when finding package location for project: %s", project.name
-            ))
+            )
 
         try:
             pkg_def = tagopsdb.deploy.package.find_package_definition(
                 project.id
             )
         except tagopsdb.exceptions.RepoException:
-            return dict(error=Exception(
+            raise Exception(
                 # XXX: who cares?
                 "No packages associated with project: %s", project.name
-            ))
+            )
 
         try:
             tagopsdb.deploy.repo.add_app_packages_mapping(
@@ -1644,11 +1642,9 @@ class DeployController(BaseController):
                 [params['apptype']]
             )
         except tagopsdb.exceptions.RepoException:
-            return dict(error=Exception(
+            raise Exception(
                 "Deploy target does not exist: %s", params['apptype']
-            ))
-        except Exception as exc:
-            return dict(error=exc)
+            )
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
@@ -1669,9 +1665,9 @@ class DeployController(BaseController):
         app = tagopsdb.deploy.repo.find_app_location(project.name)
 
         if app is None:
-            return dict(error=Exception(
+            raise Exception(
                 'No app found for project "%s"', project.name
-            ))
+            )
 
         try:
             tagopsdb.deploy.repo.delete_app_packages_mapping(
@@ -1679,9 +1675,9 @@ class DeployController(BaseController):
                 [params['apptype']]
             )
         except tagopsdb.exceptions.RepoException:
-            return dict(error=Exception(
+            raise Exception(
                 'Target "%s" does not exist', params['apptype']
-            ))
+            )
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
@@ -1701,18 +1697,15 @@ class DeployController(BaseController):
 
         log.debug('Deploying project')
 
-        try:
-            self.ensure_explicit_destinations(project, params)
-        except Exception as exc:
-            return dict(error=exc)
+        self.ensure_explicit_destinations(project, params)
 
         pkg_id, app_ids, app_host_map = self.get_app_info(project, params)
 
         if pkg_id is None:
-            return dict(error=Exception(
+            raise Exception(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
-            ))
+            )
 
         package = tds.model.Package.get(id=pkg_id)
         params['package_name'] = package.name
@@ -1954,10 +1947,7 @@ class DeployController(BaseController):
         # Not a deployment
         params['deployment'] = False
 
-        try:
-            self.ensure_explicit_destinations(project, params)
-        except Exception as exc:
-            return dict(error=exc)
+        self.ensure_explicit_destinations(project, params)
 
         environment = tagopsdb.Environment.get(env=params['environment'])
 

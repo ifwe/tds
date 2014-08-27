@@ -53,10 +53,7 @@ class RepositoryController(BaseController):
         log.debug('Adding application %r to repository',
                   params['project'])
 
-        try:
-            self.verify_package_arch(params['arch'])
-        except Exception as exc:
-            return dict(error=exc)
+        self.verify_package_arch(params['arch'])
 
         targets = []
         for apptype in params['apptypes']:

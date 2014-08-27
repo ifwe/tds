@@ -34,10 +34,12 @@ class ConfigController(DeployController):
 
     requires_tier_progression = False
 
+    @validate('project')
     def repush(self, **params):
         'Repush a version of a config project. Same as `deploy redeploy`'
         return super(ConfigController, self).redeploy(**params)
 
+    @validate('project')
     def revert(self, **params):
         '''
         Revert to the previous version of a config project.
@@ -45,6 +47,7 @@ class ConfigController(DeployController):
         '''
         return super(ConfigController, self).rollback(**params)
 
+    @validate('project')
     def push(self, **params):
         'Push a new version of a config project. Same as `deploy promote`'
         return super(ConfigController, self).promote(**params)
@@ -107,6 +110,7 @@ class ConfigController(DeployController):
         return dict(result=tds.model.Project.get(name=project_name))
 
     @staticmethod
+    @validate('project')
     def delete(params):
         """Remove a config project from the system"""
         return ProjectController().delete(**params)
