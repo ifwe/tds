@@ -191,6 +191,7 @@ class PackageController(BaseController):
             project_name=project.name, package=package
         ))
 
+    @validate('project')
     def delete(self, project, **params):
         """Delete a given version of a package for a given project"""
 
