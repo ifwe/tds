@@ -7,6 +7,7 @@ import tds.model.deployment as d
 
 from .actor import ActorFactory
 from .package import PackageFactory
+from .project import ProjectFactory
 
 
 class DeploymentFactory(factory.Factory):
@@ -26,7 +27,7 @@ class DeploymentFactory(factory.Factory):
         subcommand='promote',
     )
 
-    project = factory.LazyAttribute(lambda x: dict(name=x.package.name))
+    project = factory.SubFactory(ProjectFactory)
 
     target = dict(
         environment='test',

@@ -17,7 +17,7 @@ import tds.utils
 
 import logging
 
-from .base import BaseController
+from .base import BaseController, validate
 
 log = logging.getLogger('tds')
 
@@ -114,26 +114,23 @@ class PackageController(BaseController):
         log.info('RPM successfully linked')
         return True
 
-    def add(self, **params):
+    @validate('project')
+    def add(self, project, **params):
         """Add a given version of a package for a given project"""
 
         log.debug(
             'Adding version %s of the package for project "%s" '
             'to software repository', params['version'],
-            params['project']
+            project.name
         )
 
         # The real 'revision' is hardcoded to 1 for now
         # This needs to be changed at some point
-        pkg_info = {'project': params['project'],
+        pkg_info = {'project': project.name,
                     'version': params['version'],
                     'revision': '1', }
 
-        project = tds.model.Project.get(name=params['project'])
-        if project is None:
-            raise Exception('Project "%s" does not exist', params['project'])
-
-        pkg_loc = tagopsdb.PackageLocation.get(app_name=params['project'])
+        pkg_loc = tagopsdb.PackageLocation.get(app_name=project.name)
         pkg = tagopsdb.Package.get(name=pkg_loc.name)
 
         if pkg is not None:
@@ -145,7 +142,7 @@ class PackageController(BaseController):
         if self.check_package_state(pkg_info) is None:
             try:
                 tagopsdb.deploy.package.add_package(
-                    params['project'],
+                    project.name,
                     params['version'],
                     '1',
                     params['user']
@@ -158,7 +155,7 @@ class PackageController(BaseController):
             log.debug('Committed database changes')
 
             # Get repo information for package
-            app = tagopsdb.deploy.repo.find_app_location(params['project'])
+            app = tagopsdb.deploy.repo.find_app_location(project.name)
 
             # Revision hardcoded for now
             rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, params['version'],
@@ -191,24 +188,20 @@ class PackageController(BaseController):
         signal.alarm(0)
 
         return dict(result=dict(
-            project_name=params['project'], package=package
+            project_name=project.name, package=package
         ))
 
-    def delete(self, **params):
+    def delete(self, project, **params):
         """Delete a given version of a package for a given project"""
 
         log.debug(
             'Deleting version %s of the package for project "%s" '
             'from software repository', params['version'],
-            params['project']
+            project.name
         )
 
-        project = tds.model.Project.get(name=params['project'])
-        if project is None:
-            raise Exception('Project "%s" does not exist', params['project'])
-
         pkg_info = dict(
-            project=params['project'],
+            project=project.name,
             version=params['version'],
             revision='1'
         )
@@ -216,14 +209,14 @@ class PackageController(BaseController):
         if self.check_package_state(pkg_info) is None:
             raise Exception(
                 'Package "%s@%s" does not exist',
-                params['project'], params['version']
+                project.name, params['version']
             )
 
         try:
             # The real 'revision' is hardcoded to 1 for now
             # This needs to be changed at some point
             tagopsdb.deploy.package.delete_package(
-                params['project'],
+                project.name,
                 params['version'],
                 '1'
             )
