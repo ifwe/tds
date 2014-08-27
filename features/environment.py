@@ -295,16 +295,6 @@ def setup_temp_db(context, scenario):
     if dry_run:
         return
 
-    db_data_file = opj(
-        context.PROJECT_ROOT,
-        'tests',
-        'fixtures',
-        'tagopsdb-schema.sql'
-    )
-
-    with open(db_data_file, 'rb') as db_data:
-        processes.run(base_mysql_args + [db_name], stdin=db_data)
-
     import tagopsdb
     tagopsdb.init(
         url=dict(
@@ -314,6 +304,7 @@ def setup_temp_db(context, scenario):
             database=db_info['db']['db_name'],
         ),
         pool_recycle=3600,
+        create=True,
     )
 
     seed_db()
