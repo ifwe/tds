@@ -76,7 +76,7 @@ Feature: deploy/config validate subcommand
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         When I run "<command> validate proj 123 --apptype foo"
-        Then the output is "No deployments to validate for application 'proj' in development environment"
+        Then the output is "No deployments to validate for application "proj" in development environment"
 
         Examples:
             | command |

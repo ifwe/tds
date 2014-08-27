@@ -2102,7 +2102,7 @@ class DeployController(BaseController):
 
         if not len(filter(None, app_dep_map.itervalues())):
             return dict(error=Exception(
-                'No deployments to validate for application %r '
+                'No deployments to validate for application "%s" '
                 'in %s environment', project.name,
                 self.envs[params['environment']]
             ))
