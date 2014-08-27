@@ -1258,7 +1258,7 @@ class DeployController(BaseController):
         self.restart_hosts_or_tiers(params, dep_id, app_host_map, app_dep_map)
 
     @tds.utils.debug
-    def perform_rollbacks(self, params, app_pkg_map, app_host_map,
+    def perform_rollbacks(self, project, params, app_pkg_map, app_host_map,
                           app_dep_map):
         """Perform all rollbacks to the requested application tiers
            or hosts
@@ -1903,7 +1903,7 @@ class DeployController(BaseController):
             self.determine_rollbacks(params, app_ids, app_host_map,
                                      app_dep_map)
         self.send_notifications(project, params)
-        self.perform_rollbacks(params, app_pkg_map, app_host_map, app_dep_map)
+        self.perform_rollbacks(project, params, app_pkg_map, app_host_map, app_dep_map)
 
         if not params.get('hosts', None):
             # Now perform invalidations, commit immediately follows
