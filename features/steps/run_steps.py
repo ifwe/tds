@@ -94,3 +94,7 @@ def then_the_output_is_empty(context):
 @then(u'it took at least {seconds} seconds')
 def then_it_took_at_least_seconds(context, seconds):
     assert context.process.duration >= float(seconds)
+
+@then(u'the test fails')
+def then_the_test_fails(context):
+    assert False, 'step triggered failure'
