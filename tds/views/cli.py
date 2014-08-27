@@ -63,15 +63,37 @@ HOST_DEPLOY_TEMPLATE = (
 )
 
 
+def format_access_error(exc):
+    return (
+        'You do not have the appropriate permissions to run this command. '
+        'Contact your manager.'
+    )
+
+
+EXCEPTION_FORMATTERS = dict(
+    AccessError=format_access_error
+)
+
+
 def format_exception(exc):
     'Format an exception for user consumption'
+
+    exception_formatter = EXCEPTION_FORMATTERS.get(
+        type(exc).__name__,
+        format_exception_default
+    )
+
     try:
-        return exc.args[0] % exc.args[1:]
+        return exception_formatter(exc)
     except Exception as format_exc:
         return (
             "Exception=repr(%r) str(%s) could not be formatted: %r" %
             (exc, exc, format_exc)
         )
+
+
+def format_exception_default(exc):
+    return exc.args[0] % exc.args[1:]
 
 
 def format_project(project):
@@ -196,9 +218,7 @@ class CLI(Base):
                 % dict(name=result.name)
             )
         elif error is not None:
-            print 'Could not delete: %(message)s' % dict(
-                message=format_exception(error)
-            )
+            print format_exception(error)
 
     @staticmethod
     def generate_project_create_result(result=None, error=None, **_kwds):

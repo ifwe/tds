@@ -25,14 +25,3 @@ Feature: repository delete project
         When I run "repository delete proj"
         Then the output has "Project "proj" does not exist"
         And there is no project with name="proj"
-
-    Scenario: for non-admin with existing project
-        Given I have "dev" permissions
-        And there is a project with name="proj"
-        When I run "repository delete proj"
-        Then the output has "Your account does not have the appropriate permissions"
-
-    Scenario: for non-admin with non-existing project
-        Given I have "dev" permissions
-        When I run "repository delete proj"
-        Then the output has "Your account does not have the appropriate permissions"

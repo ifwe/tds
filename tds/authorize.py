@@ -56,6 +56,6 @@ def verify_access(user_level, access_level):
 
     log.debug('Ensuring user has necessary access')
 
-    if ACCESS_LEVELS.index(user_level) > ACCESS_LEVELS.index(access_level):
-        raise AccessError('Your account does not have the appropriate '
-                          'permissions\nto run the requested command.')
+    if user_level not in ACCESS_LEVELS or \
+        ACCESS_LEVELS.index(user_level) > ACCESS_LEVELS.index(access_level):
+        raise AccessError()

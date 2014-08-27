@@ -30,11 +30,6 @@ class TestPackageAdd(unittest2.TestCase):
         )
         self.tds_pkg.start()
 
-        self.tds_authorize = patch(
-            'tds.authorize',
-            **{'verify_access.return_value': True}
-        ).start()
-
         self.package = tds.commands.PackageController(DeployConfigFactory())
 
         package_methods = [
