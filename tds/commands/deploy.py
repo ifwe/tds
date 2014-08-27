@@ -1631,8 +1631,6 @@ class DeployController(BaseController):
 
         log.debug('Adding application type for project')
 
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
         try:
             package_location = tagopsdb.deploy.repo.find_app_location(
                 params['project']
@@ -1682,8 +1680,6 @@ class DeployController(BaseController):
 
         log.debug('Removing application type for project')
 
-        tds.authorize.verify_access(params['user_level'], 'admin')
-
         app = tagopsdb.deploy.repo.find_app_location(params['project'])
 
         if app is None:
@@ -1717,9 +1713,6 @@ class DeployController(BaseController):
         """
 
         log.debug('Deploying project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
 
         try:
             self.ensure_explicit_destinations(params)
@@ -1756,9 +1749,6 @@ class DeployController(BaseController):
 
         # Not a deployment
         params['deployment'] = False
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
 
         self.ensure_explicit_destinations(params)
 
@@ -1808,8 +1798,6 @@ class DeployController(BaseController):
         """Show deployment information for a given project"""
 
         log.debug('Showing deployment information for given project')
-
-        tds.authorize.verify_access(params['user_level'], 'dev')
 
         project = tds.model.Project.get(name=params['project'])
         if project is None:
@@ -1922,9 +1910,6 @@ class DeployController(BaseController):
         # Not a deployment
         params['deployment'] = False
 
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
-
         self.ensure_explicit_destinations(params)
 
         project = tds.model.Project.get(name=params['project'])
@@ -1973,9 +1958,6 @@ class DeployController(BaseController):
         """
 
         log.debug('Rolling back project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
 
         self.ensure_explicit_destinations(params)
 
@@ -2041,9 +2023,6 @@ class DeployController(BaseController):
 
         # Not a deployment
         params['deployment'] = False
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
 
         project = tds.model.Project.get(name=params['project'])
         if project is None:
@@ -2150,9 +2129,6 @@ class DeployController(BaseController):
         """Redeploy given project to requested application tiers or hosts"""
 
         log.debug('Redeploying project')
-
-        tds.authorize.verify_access(params['user_level'],
-                                    params['environment'])
 
         self.ensure_explicit_destinations(params)
 

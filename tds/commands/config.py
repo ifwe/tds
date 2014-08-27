@@ -69,7 +69,6 @@ class ConfigController(DeployController):
 
         log.debug('Creating new config project')
 
-        tds.authorize.verify_access(params['user_level'], 'admin')
         try:
             self.verify_package_arch(params['arch'])
         except Exception as exc:
