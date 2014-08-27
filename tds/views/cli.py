@@ -299,3 +299,7 @@ class CLI(Base):
                 host, pkg = key
                 print "%s (%s)" % host.name, pkg.name
 
+
+    @classmethod
+    def generate_deploy_invalidate_result(cls, **kwds):
+        pass
