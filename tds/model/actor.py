@@ -1,4 +1,4 @@
-'''Model module for actor object'''
+"""Model module for actor object."""
 
 import grp
 import os
@@ -8,7 +8,7 @@ from .base import Base
 
 
 class Actor(Base):
-    'Model base class for actor object'
+    """Model base class for actor object."""
 
     def __init__(self, name, groups):
         ''
@@ -18,7 +18,7 @@ class Actor(Base):
 
 
 class LocalActor(Actor):
-    'Model class for actor object populated with values from the local OS'
+    """Model class for actor object populated with values from the local OS."""
 
     def __init__(self):
         ''
