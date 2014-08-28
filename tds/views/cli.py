@@ -303,3 +303,7 @@ class CLI(Base):
     @classmethod
     def generate_deploy_invalidate_result(cls, **kwds):
         pass
+
+    @classmethod
+    def generate_deploy_promote_result(cls, **kwds):
+        pass
