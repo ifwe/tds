@@ -1724,6 +1724,7 @@ class DeployController(BaseController):
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
+        return dict()
 
     @validate('project')
     def invalidate(self, project, **params):
