@@ -1,6 +1,6 @@
-'''
+"""
 Controller for 'deploy' commands
-'''
+"""
 import collections
 import progressbar
 import time
@@ -25,7 +25,7 @@ log = logging.getLogger('tds')
 
 
 def create_deployment(project, **params):
-    'Translate the common "params" argument into a Deployment instance'
+    """Translate the common "params" argument into a Deployment instance."""
     return tds.model.Deployment(
         actor=tds.model.Actor(
             name=params.get('user'),
@@ -85,9 +85,9 @@ class DeployController(BaseController):
 
     @property
     def deploy_strategy(self):
-        '''
+        """
         Accessor for the DeployStrategy instance used by this object
-        '''
+        """
         return self._deploy_strategy
 
     @tds.utils.debug

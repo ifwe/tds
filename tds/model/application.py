@@ -1,11 +1,11 @@
-'''Model module for application object'''
+"""Model module for application object."""
 
 from .base import Base
 import tagopsdb
 
 
 class Application(Base):
-    'Represents a single application'
+    """Represents a single application."""
     # name
     # path
     # build_host

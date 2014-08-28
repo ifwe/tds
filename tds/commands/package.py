@@ -1,4 +1,4 @@
-'Commands to support managing packages in the TDS system'
+"""Commands to support managing packages in the TDS system."""
 
 import os.path
 import socket
@@ -244,4 +244,3 @@ class PackageController(BaseController):
             log.info('Version: %s', pkg.version)
             log.info('Revision: %s', pkg.revision)
             log.info('')
-

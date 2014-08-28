@@ -1,4 +1,4 @@
-'Commands to manage the deployment repository'
+"""Commands to manage the deployment repository."""
 
 import logging
 
@@ -18,7 +18,7 @@ log = logging.getLogger('tds')
 
 
 class RepositoryController(BaseController):
-    """Commands to manage the deployment repository"""
+    """Commands to manage the deployment repository."""
     access_levels = dict(
         list='environment',
         add='admin',
@@ -27,17 +27,17 @@ class RepositoryController(BaseController):
 
     @validate('project')
     def list(self, **params):
-        'repository list subcommand'
+        """Repository list subcommand."""
         return ProjectController(self.app_config).list(**params)
 
     @validate('project')
     def delete(self, **params):
-        'repository delete subcommand'
+        """Repository delete subcommand."""
         return ProjectController(self.app_config).delete(**params)
 
     @staticmethod
     def verify_package_arch(arch):
-        """Ensure architecture for package is supported"""
+        """Ensure architecture for package is supported."""
 
         table = tagopsdb.model.PackageLocation.__table__
         arches = table.columns['arch'].type.enums
@@ -50,7 +50,7 @@ class RepositoryController(BaseController):
             )
 
     def add(self, **params):
-        """Add a given project to the repository"""
+        """Add a given project to the repository."""
 
         log.debug('Adding application %r to repository',
                   params['project'])

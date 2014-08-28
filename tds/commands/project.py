@@ -1,4 +1,4 @@
-'Commands to manage the TDS projects'
+"""Commands to manage the TDS projects."""
 import logging
 
 from tds.model import Project
@@ -9,11 +9,11 @@ log = logging.getLogger('tds')
 
 class ProjectController(BaseController):
 
-    """Commands to manage TDS projects"""
+    """Commands to manage TDS projects."""
 
     @staticmethod
     def create(project, **_kwds):
-        """Add a project"""
+        """Add a project."""
         project_name = project
         project = Project.get(name=project_name)
         if project is not None:
@@ -26,14 +26,14 @@ class ProjectController(BaseController):
 
     @validate('project')
     def delete(self, project, **_kwds):
-        """Remove a given project"""
+        """Remove a given project."""
         log.debug('Removing project %r', project.name)
         project.delete()
         return dict(result=project)
 
     @validate('project')
     def list(self, projects=(), **_kwds):
-        """Show information for requested projects (or all projects)"""
+        """Show information for requested projects (or all projects)."""
         if len(projects) == 0:
             projects = Project.all()
 
