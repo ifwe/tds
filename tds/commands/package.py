@@ -239,8 +239,4 @@ class PackageController(BaseController):
             key=lambda package: (package.created, package.version, package.revision)
         )
 
-        for pkg in packages_sorted:
-            log.info('Project: %s', pkg.pkg_name)
-            log.info('Version: %s', pkg.version)
-            log.info('Revision: %s', pkg.revision)
-            log.info('')
+        return dict(result=packages_sorted)
