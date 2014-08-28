@@ -1,17 +1,17 @@
-'''Model module for deployment target object'''
+"""Model module for deployment target object."""
 
 from .base import Base
 import tagopsdb
 
 
 class DeployTarget(Base):
-    '''
+    """
     A deploy target is something that can be deployed to
     examples:
         host
         apptype
         a list of hosts or apptypes
-    '''
+    """
     # name / app_type
     # distribution
     # host_base

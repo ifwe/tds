@@ -3,6 +3,15 @@ A command line view for TDS
 '''
 from .base import Base
 
+def silence(*exc_classes):
+    def wrap_func(f):
+        def call_func(*a, **k):
+            try:
+                return f(*a, **k)
+            except exc_classes:
+                return None
+        return call_func
+    return wrap_func
 
 # TODO: this isn't planned out AT ALL
 PROJECT_TEMPLATE = (
@@ -62,6 +71,12 @@ HOST_DEPLOY_TEMPLATE = (
     'Install state: {self.status}\n'
 )
 
+PACKAGE_TEMPLATE = (
+    'Project: {self.name}\n'
+    'Version: {self.version}\n'
+    'Revision: {self.revision}\n'
+)
+
 
 def format_access_error(exc):
     return (
@@ -110,6 +125,10 @@ def format_project(project):
         output.append('\n\t'.join(app_result))
 
     return ''.join(output) + '\n'
+
+
+def format_package(package):
+    return PACKAGE_TEMPLATE.format(self=package)
 
 
 def format_deployments(deployments):
@@ -185,8 +204,7 @@ class CLI(Base):
                 (view_name, tds_result)
             )
 
-    @staticmethod
-    def generate_default_result(**kwds):
+    def generate_default_result(self, **kwds):
         'This is called if no matching handler is found'
         if kwds.get('error'):
             print format_exception(kwds['error'])
@@ -237,13 +255,12 @@ class CLI(Base):
         elif error:
             print format_exception(error)
 
-    @classmethod
-    def generate_deploy_add_apptype_result(cls,
+    def generate_deploy_add_apptype_result(self,
         result=None, error=None, **kwds
     ):
         'Format the result of a "deploy add-apptype" action'
         if error is not None:
-            return cls.generate_default_result(
+            return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
@@ -252,13 +269,12 @@ class CLI(Base):
             % result
         )
 
-    @classmethod
-    def generate_deploy_delete_apptype_result(cls,
+    def generate_deploy_delete_apptype_result(self,
         result=None, error=None, **kwds
     ):
         'Format the result of a "deploy delete-apptype" action'
         if error is not None:
-            return cls.generate_default_result(
+            return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
@@ -268,11 +284,10 @@ class CLI(Base):
             % result
         )
 
-    @classmethod
-    def generate_package_add_result(cls, result=None, error=None, **kwds):
+    def generate_package_add_result(self, result=None, error=None, **kwds):
         'Format the result of a "package add" action'
         if error is not None:
-            return cls.generate_default_result(
+            return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
@@ -281,11 +296,22 @@ class CLI(Base):
             'Added package version: "%s@%s"' % (package.name, package.version)
         )
 
-    @classmethod
-    def generate_deploy_restart_result(cls, result=None, error=None, **kwds):
+    def generate_package_list_result(self, result=None, error=None, **kwds):
+        if error is not None:
+            return self.generate_default_result(
+                result=result, error=error, **kwds
+            )
+
+        package_texts = []
+        for package in result:
+            package_texts.append(format_package(package))
+
+        print '\n\n'.join(package_texts)
+
+    def generate_deploy_restart_result(self, result=None, error=None, **kwds):
         'Format the result of a "deploy restart" action'
         if error is not None:
-            return cls.generate_default_result(
+            return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
@@ -297,5 +323,12 @@ class CLI(Base):
                     print "Some hosts had failures:\n"
                     printed_fail_message = True
                 host, pkg = key
-                print "%s (%s)" % host.name, pkg.name
+                print "%s (%s)" % (host.name, pkg.name)
 
+
+    generate_deploy_invalidate_result = \
+    generate_deploy_promote_result = \
+    generate_deploy_validate_result = \
+    generate_deploy_rollback_result = \
+    generate_deploy_redeploy_result = \
+    silence(NotImplementedError)(generate_default_result)

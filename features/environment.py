@@ -12,8 +12,6 @@ import os
 import os.path
 from os.path import dirname, join as opj
 
-import tagopsdb
-
 import tds.authorize
 import tds.utils.processes as processes
 import tds.utils.merge as merge
@@ -201,6 +199,7 @@ def before_scenario(context, scenario):
 
 
 def after_scenario(context, scenario):
+    import tagopsdb
     verbose = scenario.status != 'passed' and 'wip' in context.tags
 
     if verbose and getattr(context, 'process', None):
