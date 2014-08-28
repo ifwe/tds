@@ -536,7 +536,6 @@ class DeployController(BaseController):
                     'status.cgi?style=detail&hostgroup=app.%s', app_type
                 )
 
-    @tds.utils.debug
     def determine_invalidations(self, project, params, app_ids, app_dep_map):
         """Determine which application tiers need invalidations performed"""
 
@@ -1725,6 +1724,7 @@ class DeployController(BaseController):
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
+        return dict()
 
     @validate('project')
     def invalidate(self, project, **params):
@@ -1757,13 +1757,12 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
-            log.info(
+            raise Exception(
                 'No deployments to invalidate for application %r '
                 'with version %r in %s environment',
                 project.name, params['version'],
                 self.envs[params['environment']]
             )
-            return
 
         app_dep_map = self.determine_invalidations(project, params, app_ids,
                                                    app_dep_map)
@@ -1771,6 +1770,7 @@ class DeployController(BaseController):
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
+        return dict()
 
     @validate('project')
     def show(self, project, **params):
@@ -1889,12 +1889,11 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
-            log.info(
+            raise Exception(
                 'Nothing to roll back for application %r in %s '
                 'environment', project.name,
                 self.envs[params['environment']]
             )
-            return
 
         # Save verison of application/deployment map for invalidation
         # at the end of the run
@@ -1914,6 +1913,8 @@ class DeployController(BaseController):
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
+
+        return dict()
 
     @staticmethod
     def get_package_for_target(target, environment):
@@ -2055,12 +2056,11 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
-            log.info(
+            raise Exception(
                 'Nothing to redeploy for application %r in %s '
                 'environment', project.name,
                 self.envs[params['environment']]
             )
-            return
 
         dep_id = self.determine_redeployments(pkg_id)
         self.send_notifications(project, params)
@@ -2068,6 +2068,8 @@ class DeployController(BaseController):
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
+
+        return dict()
 
     @validate('project')
     def validate(self, project, **params):
@@ -2113,3 +2115,5 @@ class DeployController(BaseController):
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
+
+        return dict()
