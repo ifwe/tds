@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import platform
 import logging
 import logging.handlers
 import os
@@ -265,8 +266,11 @@ def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
 
     dev_log = '/dev/log'
 
+    if sys.platform.startswith('darwin'):
+        dev_log = '/var/run/syslog'
+
     try:
-        mode = os.stat(dev_log)[stat.ST_MODE]
+        mode = os.stat(dev_log).st_mode
     except OSError:
         mode = 0
 
