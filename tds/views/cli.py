@@ -3,6 +3,15 @@ A command line view for TDS
 '''
 from .base import Base
 
+def silence(*exc_classes):
+    def wrap_func(f):
+        def call_func(*a, **k):
+            try:
+                return f(*a, **k)
+            except exc_classes:
+                return None
+        return call_func
+    return wrap_func
 
 # TODO: this isn't planned out AT ALL
 PROJECT_TEMPLATE = (
@@ -185,8 +194,7 @@ class CLI(Base):
                 (view_name, tds_result)
             )
 
-    @staticmethod
-    def generate_default_result(**kwds):
+    def generate_default_result(self, **kwds):
         'This is called if no matching handler is found'
         if kwds.get('error'):
             print format_exception(kwds['error'])
@@ -300,10 +308,6 @@ class CLI(Base):
                 print "%s (%s)" % host.name, pkg.name
 
 
-    @classmethod
-    def generate_deploy_invalidate_result(cls, **kwds):
-        pass
-
-    @classmethod
-    def generate_deploy_promote_result(cls, **kwds):
-        pass
+    generate_deploy_invalidate_result = \
+    generate_deploy_promote_result = \
+    silence(NotImplementedError)(generate_default_result)
