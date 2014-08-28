@@ -1,9 +1,9 @@
-'''Base module for TDS objects'''
+"""Base module for TDS objects."""
 import tagopsdb
 
 
 class BaseMeta(type):
-    'metaclass for Base to enable delegation of class attributes'
+    """Metaclass for Base to enable delegation of class attributes."""
     def __getattr__(cls, key):
         try:
             return type.__getattribute__(cls, key)
@@ -14,7 +14,7 @@ class BaseMeta(type):
                 raise e
 
 class _Base(object):
-    'base class for Base to absorb all kwds'
+    """Base class for Base to absorb all kwds."""
 
     __metaclass__ = BaseMeta
     delegate = None
@@ -23,7 +23,7 @@ class _Base(object):
         super(_Base, self).__init__()
 
 class Base(_Base):
-    'Base class for TDS objects'
+    """Base class for TDS objects."""
 
     def __init__(self, **kwds):
         for key, val in kwds.iteritems():
@@ -50,14 +50,14 @@ class Base(_Base):
                 raise e
 
     def delete(self, commit=True, *args, **kwargs):
-        'Delete action with default auto-commit'
+        """Delete action with default auto-commit."""
         self.delegate.delete(*args, **kwargs)
         if commit:
             tagopsdb.Session.commit()
 
     @classmethod
     def create(cls, commit=True, **kwargs):
-        'Create action with default auto-commit'
+        """Create action with default auto-commit."""
         delegate = cls.delegate(**kwargs)
         tagopsdb.Session.add(delegate)
         self = cls(delegate=delegate)
@@ -67,12 +67,12 @@ class Base(_Base):
 
     @classmethod
     def get(cls, **kwargs):
-        '''
+        """
         Return one instance of cls with its delegate populated by the same
         get call made to cls's delegate type.
 
         Returns None if no matching instance is found.
-        '''
+        """
         delegate = cls.delegate.get(**kwargs)
         if delegate is None:
             return None
@@ -81,20 +81,20 @@ class Base(_Base):
 
     @classmethod
     def all(cls, **kwargs):
-        '''
+        """
         Return a list of cls instances with each instance's delegate populated
         by an instance of cls's delegate type
-        '''
+        """
 
         delegates = cls.delegate.all(**kwargs)
         return [cls(delegate=d) for d in delegates]
 
     @classmethod
     def find(cls, **kwargs):
-        '''
+        """
         Return a list of cls instances with each instance's delegate populated
         by an instance of cls's delegate type matching the provided kwargs
-        '''
+        """
 
         delegates = cls.delegate.find(**kwargs)
         return [cls(delegate=d) for d in delegates]
