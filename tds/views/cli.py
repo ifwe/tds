@@ -245,13 +245,12 @@ class CLI(Base):
         elif error:
             print format_exception(error)
 
-    @classmethod
-    def generate_deploy_add_apptype_result(cls,
+    def generate_deploy_add_apptype_result(self,
         result=None, error=None, **kwds
     ):
         'Format the result of a "deploy add-apptype" action'
         if error is not None:
-            return cls.generate_default_result(
+            return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
@@ -260,13 +259,12 @@ class CLI(Base):
             % result
         )
 
-    @classmethod
-    def generate_deploy_delete_apptype_result(cls,
+    def generate_deploy_delete_apptype_result(self,
         result=None, error=None, **kwds
     ):
         'Format the result of a "deploy delete-apptype" action'
         if error is not None:
-            return cls.generate_default_result(
+            return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
@@ -276,11 +274,10 @@ class CLI(Base):
             % result
         )
 
-    @classmethod
-    def generate_package_add_result(cls, result=None, error=None, **kwds):
+    def generate_package_add_result(self, result=None, error=None, **kwds):
         'Format the result of a "package add" action'
         if error is not None:
-            return cls.generate_default_result(
+            return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
@@ -289,11 +286,10 @@ class CLI(Base):
             'Added package version: "%s@%s"' % (package.name, package.version)
         )
 
-    @classmethod
-    def generate_deploy_restart_result(cls, result=None, error=None, **kwds):
+    def generate_deploy_restart_result(self, result=None, error=None, **kwds):
         'Format the result of a "deploy restart" action'
         if error is not None:
-            return cls.generate_default_result(
+            return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
