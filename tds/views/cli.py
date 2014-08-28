@@ -323,7 +323,7 @@ class CLI(Base):
                     print "Some hosts had failures:\n"
                     printed_fail_message = True
                 host, pkg = key
-                print "%s (%s)" % host.name, pkg.name
+                print "%s (%s)" % (host.name, pkg.name)
 
 
     generate_deploy_invalidate_result = \
