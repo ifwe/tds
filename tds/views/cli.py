@@ -71,6 +71,12 @@ HOST_DEPLOY_TEMPLATE = (
     'Install state: {self.status}\n'
 )
 
+PACKAGE_TEMPLATE = (
+    'Project: {self.name}\n'
+    'Version: {self.version}\n'
+    'Revision: {self.revision}\n'
+)
+
 
 def format_access_error(exc):
     return (
@@ -119,6 +125,10 @@ def format_project(project):
         output.append('\n\t'.join(app_result))
 
     return ''.join(output) + '\n'
+
+
+def format_package(package):
+    return PACKAGE_TEMPLATE.format(self=package)
 
 
 def format_deployments(deployments):
@@ -285,6 +295,18 @@ class CLI(Base):
         print (
             'Added package version: "%s@%s"' % (package.name, package.version)
         )
+
+    def generate_package_list_result(self, result=None, error=None, **kwds):
+        if error is not None:
+            return self.generate_default_result(
+                result=result, error=error, **kwds
+            )
+
+        package_texts = []
+        for package in result:
+            package_texts.append(format_package(package))
+
+        print '\n\n'.join(package_texts)
 
     def generate_deploy_restart_result(self, result=None, error=None, **kwds):
         'Format the result of a "deploy restart" action'
