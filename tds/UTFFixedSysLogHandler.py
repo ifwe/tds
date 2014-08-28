@@ -1,3 +1,4 @@
+import sys
 import socket
 from logging.handlers import SysLogHandler
 try:
@@ -18,6 +19,17 @@ class UTFFixedSysLogHandler(SysLogHandler):
 
     Bug Reference: http://bugs.python.org/issue7077
     """
+
+    def _connect_unixsocket(self, address):
+        result = super(UTFFixedSysLogHandler, self)._connect_unixsocket(address)
+
+        if not self.socket or not sys.platform.startswith('darwin'):
+            return result
+
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2**16-1)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2**16-1)
+
+        return result
 
     def emit(self, record):
         """
