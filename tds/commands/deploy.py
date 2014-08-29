@@ -1,5 +1,5 @@
 """
-Controller for 'deploy' commands
+Controller for 'deploy' commands.
 """
 import collections
 import progressbar
@@ -49,7 +49,7 @@ def create_deployment(project, **params):
 
 class DeployController(BaseController):
 
-    """Commands to manage deployments for supported applications"""
+    """Commands to manage deployments for supported applications."""
 
     dep_types = {'promote': 'Deployment',
                  'redeploy': 'Redeployment',
@@ -86,7 +86,7 @@ class DeployController(BaseController):
     @property
     def deploy_strategy(self):
         """
-        Accessor for the DeployStrategy instance used by this object
+        Accessor for the DeployStrategy instance used by this object.
         """
         return self._deploy_strategy
 
@@ -94,7 +94,7 @@ class DeployController(BaseController):
     def check_previous_environment(self, project, params, pkg_id, app_id):
         """Ensure deployment for previous environment for given package
            and apptier was validated; this is only relevant for staging
-           and production environments
+           and production environments.
         """
         # Note: this will currently allow any user to force
         # a deployment without previous tier requirement;
@@ -156,7 +156,7 @@ class DeployController(BaseController):
     @tds.utils.debug
     def check_for_current_deployment(self, params, app_id, hosts=None):
         """For the current app type, see if there are any current deployments
-           running and notify if there is
+           running and notify if there is.
         """
 
         log.debug(
@@ -230,7 +230,7 @@ class DeployController(BaseController):
     @tds.utils.debug
     def check_tier_state(self, project, params, pkg_id, app_dep):
         """Ensure state of tier (from given app deployment) is consistent
-           with state and deployment package versions
+           with state and deployment package versions.
         """
 
         log.debug('Checking state of tier')
@@ -279,7 +279,7 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
-        """Deploy specified package to a given host"""
+        """Deploy specified package to a given host."""
 
         return self.deploy_strategy.deploy_to_host(
             dep_host,
@@ -290,13 +290,13 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def restart_host(self, dep_host, app, retry=4):
-        'Restart a host'
+        """Restart a host."""
         return self.deploy_strategy.restart_host(dep_host, app, retry)
 
     @tds.utils.debug
     def deploy_to_hosts(self, project, params, dep_hosts, dep_id, redeploy=False):
         """Perform deployment on given set of hosts (only doing those
-           that previously failed with a redeploy)
+           that previously failed with a redeploy).
         """
 
         log.debug('Performing host deployments')

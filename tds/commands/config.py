@@ -1,6 +1,6 @@
-'''
+"""
 Commands to manage config-type projects.
-'''
+"""
 
 import tagopsdb
 import tagopsdb.deploy.repo
@@ -21,7 +21,7 @@ log = logging.getLogger('tds')
 
 
 class ConfigController(DeployController):
-    """Commands to manage deployments for supported config applications"""
+    """Commands to manage deployments for supported config applications."""
 
     access_levels = DeployController.access_levels.copy()
     access_levels.update(
@@ -36,20 +36,20 @@ class ConfigController(DeployController):
 
     @validate('project')
     def repush(self, **params):
-        'Repush a version of a config project. Same as `deploy redeploy`'
+        """Repush a version of a config project. Same as `deploy redeploy`."""
         return super(ConfigController, self).redeploy(**params)
 
     @validate('project')
     def revert(self, **params):
-        '''
+        """
         Revert to the previous version of a config project.
         Same as `deploy rollback`
-        '''
+        """
         return super(ConfigController, self).rollback(**params)
 
     @validate('project')
     def push(self, **params):
-        'Push a new version of a config project. Same as `deploy promote`'
+        """Push a new version of a config project. Same as `deploy promote`."""
         return super(ConfigController, self).promote(**params)
 
     @staticmethod
@@ -69,7 +69,7 @@ class ConfigController(DeployController):
     def create(self, project, **params):
         # XXX: Replace this with a call
         # XXX: to ApplicationController(log).add(params)
-        """Add a new config project to the system"""
+        """Add a new config project to the system."""
 
         log.debug('Creating new config project')
 
@@ -106,5 +106,5 @@ class ConfigController(DeployController):
     @staticmethod
     @validate('project')
     def delete(params):
-        """Remove a config project from the system"""
+        """Remove a config project from the system."""
         return ProjectController().delete(**params)

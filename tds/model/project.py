@@ -6,7 +6,6 @@ import tagopsdb
 
 
 class Project(Base):
-
     """A project links applications together in a deployable group."""
     # name
     # applications (aka package_definitions)

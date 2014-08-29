@@ -4,7 +4,7 @@
 #
 # All rights reserved.
 
-"""Python application to install a given Tagged application"""
+"""Python application to install a given Tagged application."""
 
 import ConfigParser
 import os
@@ -17,11 +17,11 @@ import psutil
 
 
 class ExtCommandError(Exception):
-    'Error running external command'
+    """Error running external command."""
 
 
 def run_command(cmd):
-    """Wrapper to run external command"""
+    """Wrapper to run external command."""
 
     print "running: ", " ".join(cmd)
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -37,7 +37,7 @@ def run_command(cmd):
 
 
 def puppet_check():
-    """Check for a running Puppet client process"""
+    """Check for a running Puppet client process."""
 
     pids = []
 
@@ -52,7 +52,7 @@ def puppet_check():
 
 
 def app_check(app):
-    """Ensure requested application is allowed on the system"""
+    """Ensure requested application is allowed on the system."""
 
     tds_conf = '/etc/tagops/tds.conf'
 
@@ -76,7 +76,7 @@ def app_check(app):
 
 
 def stop_puppet():
-    """Stop the Puppet client process if it's running"""
+    """Stop the Puppet client process if it's running."""
 
     running = puppet_check()
 
@@ -104,7 +104,7 @@ def stop_puppet():
 
 
 def manage_services(action):
-    """Manage a defined application services with a given action"""
+    """Manage a defined application services with a given action."""
 
     svc_cmd = ['/usr/local/tagops/sbin/services', action]
 
@@ -116,7 +116,7 @@ def manage_services(action):
 
 
 def app_install(app, version, inst_version):
-    """Install the given version of the application"""
+    """Install the given version of the application."""
 
     # Compare versions as integers for now; this will need to change
     # if we move to non-integer versions
@@ -145,7 +145,7 @@ def app_install(app, version, inst_version):
 
 
 def app_uninstall(app):
-    """Uninstall the application"""
+    """Uninstall the application."""
 
     # Stop service before uninstall, no need to restart
     manage_services('stop')
@@ -159,7 +159,7 @@ def app_uninstall(app):
 
 
 def get_version(app):
-    """Return current version of application"""
+    """Return current version of application."""
 
     vers_cmd = ['/bin/rpm', '-q', '--queryformat', '%{VERSION}', app]
 
@@ -167,7 +167,7 @@ def get_version(app):
 
 
 def verify_install(app, version):
-    """Verify the installed application is the correct version"""
+    """Verify the installed application is the correct version."""
 
     try:
         inst_version = get_version(app)
@@ -181,7 +181,7 @@ def verify_install(app, version):
 
 
 def do_install(app, version):
-    'TDS install install'
+    """TDS install install."""
     app_check(app)
     try:
         inst_version = get_version(app)
