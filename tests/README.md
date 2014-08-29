@@ -10,5 +10,7 @@ from this directory.
 * [./factories/](./factories/README.md) -
 <a href="https://github.com/rbarrois/factory_boy"
 target="_blank">factory_boy</a> factory files.
-* [./fixtures/](./fixtures/README.md)
-* [./tds/](./tds/README.md)
+* [./fixtures/](./fixtures/) -
+SQL and YAML fixtures
+* [./tds/](./tds/) -
+Main repository of unit tests

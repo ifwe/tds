@@ -13,6 +13,7 @@ Feature: repository delete project
         When I run "repository delete --foo"
         Then the output has "usage:"
 
+    @wip
     Scenario: for admin with existing project
         Given I have "admin" permissions
         And there is a project with name="proj"
