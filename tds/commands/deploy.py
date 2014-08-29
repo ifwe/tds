@@ -968,13 +968,9 @@ class DeployController(BaseController):
         if hosts:
             log.log(5, 'Verification is for hosts...')
 
-            try:
-                pkg, app_host_map = self.verify_package(
-                    project, hosts, apptypes, params, hostonly=hostonly
-                )
-            except ValueError, e:
-                log.error('%s for given project and hosts', e)
-                raise SystemExit(1)
+            pkg, app_host_map = self.verify_package(
+                project, hosts, apptypes, params, hostonly=hostonly
+            )
 
             host_deps = \
                 tagopsdb.deploy.deploy.find_host_deployments_by_package_name(
@@ -1013,11 +1009,7 @@ class DeployController(BaseController):
             log.log(5, 'Verification is for application tiers...')
 
 
-            try:
-                pkg, apptypes = self.verify_package(project, hosts, apptypes, params)
-            except ValueError, e:
-                log.error('%s for given project and application tiers', e)
-                raise SystemExit(1)
+            pkg, apptypes = self.verify_package(project, hosts, apptypes, params)
 
             app_host_map = None   # No need for this for tiers
 
@@ -1512,9 +1504,6 @@ class DeployController(BaseController):
         log.debug('Verifying requested package')
 
         pkg = self.get_package(project, params, hostonly)
-
-        if pkg is None:
-            return (pkg, apptypes)
 
         app_id_key = lambda x: x.application.id
         if hosts:
