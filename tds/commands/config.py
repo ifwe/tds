@@ -47,6 +47,7 @@ class ConfigController(DeployController):
         '''
         return super(ConfigController, self).rollback(**params)
 
+    @validate('targets')
     @validate('project')
     def push(self, **params):
         'Push a new version of a config project. Same as `deploy promote`'
