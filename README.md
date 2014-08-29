@@ -5,8 +5,9 @@ Kenneth Lareau
 ## Description
 TDS is a deployment system developed at Tagged with a database backend
 and a command line frontend.
-TDS is written primarily in Python.
-MySQL 5.1 was used as the database engine,
+The primary application is written in Python and integrates with several
+other applications.
+MySQL was used as the database engine,
 and SQLAlchemy as the object-relational mapper,
 with Alembic used for SQLAlchemy schema migrations.
 
@@ -46,7 +47,7 @@ The following command will run all unit tests:
 $ ./run_tests.py
 ```
 
-### Behavior tests
+### Feature tests
 The following command will run all
 <a href="//pythonhosted.org/behave/">Behave</a> tests:
 ```
@@ -77,16 +78,16 @@ You may specify a set of tags to restrict which behavior tests to run:
 </table>
 
 ## Navigation
-* [./.jenkins/](./.jenkins/README.md)
-* [./doc/](./doc/README.md) -
+* [./.jenkins/](./.jenkins/)
+* [./doc/](./doc/) -
 Documentation
-* [./etc/](./etc/README.md)
-* [./features/](./features/README.md) -
-Behavior tests
-* [./pkg/](./pkg/README.md)
-* [./share/](./share/README.md)
-* [./tds/](./tds/README.md)
-* [./tests/](./tests/README.md) -
+* [./etc/](./etc/)
+* [./features/](./features/) -
+Feature tests
+* [./pkg/](./pkg/)
+* [./share/](./share/)
+* [./tds/](./tds/)
+* [./tests/](./tests/) -
 Unit tests
 * [./requirements-dev.txt](./requirements-dev.txt) -
 Development and testing PyPI dependencies
