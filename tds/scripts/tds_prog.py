@@ -1,4 +1,4 @@
-'''Main file for TDS application'''
+"""Main file for TDS application."""
 
 import argparse
 import sys
@@ -15,7 +15,7 @@ from tds.exceptions import AccessError, ConfigurationError, \
 
 
 def create_subparsers(parser):
-    """Generate the subparsers to use for the command line"""
+    """Generate the subparsers to use for the command line."""
 
     data = tds.cmdline.parser_info()
 
@@ -37,7 +37,7 @@ def create_subparsers(parser):
 
 
 def parse_command_line(sysargs):
-    """Parse the command line and return the parser to the main program"""
+    """Parse the command line and return the parser to the main program."""
 
     parser = argparse.ArgumentParser(description='TagOps Deployment System')
 
@@ -67,7 +67,7 @@ def parse_command_line(sysargs):
 
 def _main(sysargs):
     """Parse command line, configure logging and initialize application,
-       then run specified command
+       then run specified command.
     """
     args = parse_command_line(sysargs)
     tds_params = vars(args)
@@ -100,7 +100,7 @@ def _main(sysargs):
 
 
 def main():
-    'Wrapper around _main() that passes in sys.argv'
+    """Wrapper around _main() that passes in sys.argv."""
     return _main(sys.argv[1:])
 
 

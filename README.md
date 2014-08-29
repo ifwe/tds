@@ -86,7 +86,8 @@ Documentation
 Feature tests
 * [./pkg/](./pkg/)
 * [./share/](./share/)
-* [./tds/](./tds/)
+* [./tds/](./tds/) -
+Models, views, and controllers for TDS application.
 * [./tests/](./tests/) -
 Unit tests
 * [./requirements-dev.txt](./requirements-dev.txt) -
@@ -123,6 +124,14 @@ functions related to object types are spread across the application.
         <td></td>
         <td></td>
         <td>`application.Application`</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>app type</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
         <td></td>
     </tr>
     <tr>

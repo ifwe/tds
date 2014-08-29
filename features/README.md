@@ -14,13 +14,19 @@ tests, please see the
 documentation</a> for Behave.
 
 ## Navigation
-* [./authorizations/](./authorizations/)
-* [./config/](./config/)
-* [./deploy/](./deploy/)
+* [./authorizations/](./authorizations/) -
+Authorization and permissions tests.
+* [./config/](./config/) -
+Tests for the `config` command.
+* [./deploy/](./deploy/) -
+Tests for the `deploy` command.
 * [./helpers/](./helpers/)
-* [./jenkinspackage/](./jenkinspackage/)
-* [./package/](./package/)
-* [./repository/](./repository/)
+* [./jenkinspackage/](./jenkinspackage/) -
+Tests for the `jenkins_package` command.
+* [./package/](./package/) -
+Tests for the `package` command.
+* [./repository/](./repository/) -
+Tests for the `repository` command.
 * [./steps/](./steps/) -
 Behave <a href="http://pythonhosted.org/behave/api.html#step-functions"
 target="_blank">steps</a>.
