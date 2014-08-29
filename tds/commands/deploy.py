@@ -1129,17 +1129,19 @@ class DeployController(BaseController):
             log.log(5, 'Determined version is: %s', version)
             params['current_version'] = version   # Used for notifications
 
-        pkg = None
-        try:
-            # Revision hardcoded to '1' for now
-            pkg = tagopsdb.deploy.package.find_package(
+        # Revision hardcoded to '1' for now
+        pkg = tagopsdb.deploy.package.find_package(
+            project.name,
+            version,
+            '1'
+        )
+
+        if pkg is None:
+            raise Exception(
+                'Package "%s@%s" does not exist',
                 project.name,
-                version,
-                '1'
+                version
             )
-        except tagopsdb.exceptions.PackageException as e:
-            log.error(e)
-            raise SystemExit(1)
 
         return pkg
 
