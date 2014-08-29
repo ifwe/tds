@@ -1,4 +1,4 @@
-"""Model module for package object"""
+"""Model module for package object."""
 
 from .base import Base
 import tagopsdb
