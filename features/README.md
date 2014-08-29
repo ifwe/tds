@@ -1,4 +1,4 @@
-# Behavior Tests
+# Feature Tests
 
 ## Description
 Behavior tests for TDS.  To run all tests, execute
@@ -14,14 +14,14 @@ tests, please see the
 documentation</a> for Behave.
 
 ## Navigation
-* ./authorizations/
-* ./config/
-* ./deploy/
-* ./helpers/
-* ./jenkinspackage/
-* ./package/
-* ./repository/
-* ./steps/ -
+* [./authorizations/](./authorizations/)
+* [./config/](./config/)
+* [./deploy/](./deploy/)
+* [./helpers/](./helpers/)
+* [./jenkinspackage/](./jenkinspackage/)
+* [./package/](./package/)
+* [./repository/](./repository/)
+* [./steps/](./steps/) -
 Behave <a href="http://pythonhosted.org/behave/api.html#step-functions"
 target="_blank">steps</a>.
 * [./environment.py](./environment.py) -

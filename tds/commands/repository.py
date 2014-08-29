@@ -18,7 +18,6 @@ log = logging.getLogger('tds')
 
 
 class RepositoryController(BaseController):
-
     """Commands to manage the deployment repository."""
     access_levels = dict(
         list='environment',
@@ -37,12 +36,12 @@ class RepositoryController(BaseController):
         proj_dict = ProjectController(self.app_config).delete(**params)
         pkg_loc = tagopsdb.PackageLocation.get(
             app_name=proj_dict['result'].name
-            )
+        )
         if pkg_loc is not None:
             pkg_loc.delete()
         pkg_def = tagopsdb.PackageDefinition.get(
             name=proj_dict['result'].name
-            )
+        )
         if pkg_def is not None:
             pkg_def.delete()
         tagopsdb.Session.commit()
