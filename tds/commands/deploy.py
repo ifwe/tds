@@ -1338,7 +1338,7 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def restart_hosts(self, params, dep_hosts, dep_id):
-        """Restart application on a given set of hosts"""
+        """Restart application on a given set of hosts."""
 
         log.debug('Restarting application on given hosts')
 
