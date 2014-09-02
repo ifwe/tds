@@ -1676,8 +1676,9 @@ class DeployController(BaseController):
         log.debug('Committed database changes')
         return dict()
 
+    @validate('targets')
     @validate('project')
-    def show(self, project, **params):
+    def show(self, project, hosts=None, apptypes=None, **params):
         """Show deployment information for a given project"""
 
         log.debug('Showing deployment information for given project')
@@ -1686,19 +1687,19 @@ class DeployController(BaseController):
         targets = []
         app_ids = self.get_app_types(project, params)
 
-        if params['apptypes']:
-            for apptype in params['apptypes']:
-                target = tds.model.AppTarget.get(name=apptype)
+        if apptypes:
+            for apptype in apptypes:
+                target = tds.model.AppTarget.get(name=apptype.name)
 
                 if target is None:
                     raise Exception(
-                        'Apptype "%s" does not exist', apptype
+                        'Apptype "%s" does not exist', apptype.name
                     )
 
                 if target.id not in app_ids:
                     raise Exception(
                         'Apptype "%s" does not map to project "%s"',
-                        apptype, project.name
+                        apptype.name, project.name
                     )
 
                 targets.append(target)
