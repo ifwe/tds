@@ -835,22 +835,6 @@ class DeployController(BaseController):
         return app_dep_map
 
     @tds.utils.debug
-    def ensure_explicit_destinations(self, project, params):
-        """Make sure multiple application types are explicit"""
-
-        log.debug(
-            'Ensuring multiple application types are explicitly mentioned'
-        )
-
-        if not params['explicit'] and len(self.get_app_types(project, params)) > 1:
-            log.info(
-                'Application "%s" has multiple corresponding '
-                'app types, please use "--apptypes" or '
-                '"--all-apptypes"', project.name
-            )
-            raise SystemExit(1)
-
-    @tds.utils.debug
     def ensure_newer_versions(self, project, params):
         """Ensure version being deployed is more recent than
            the currently deployed versions on requested app types
@@ -1828,8 +1812,6 @@ class DeployController(BaseController):
         # Not a deployment
         params['deployment'] = False
 
-        self.ensure_explicit_destinations(project, params)
-
         environment = tagopsdb.Environment.get(env=params['env'])
 
         restart_targets = []
@@ -1881,8 +1863,6 @@ class DeployController(BaseController):
 
         log.debug('Redeploying project')
 
-        self.ensure_explicit_destinations(project, params)
-
         pkg, apptypes, app_host_map = self.get_app_info(
             project, hosts, apptypes, params, hostonly=True
         )
@@ -1913,8 +1893,6 @@ class DeployController(BaseController):
 
         # Not a deployment
         params['deployment'] = False
-
-        self.ensure_explicit_destinations(project, params)
 
         pkg, apptypes, app_host_map = self.get_app_info(
             project, hosts, apptypes, params
