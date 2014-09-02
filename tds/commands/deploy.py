@@ -754,20 +754,21 @@ class DeployController(BaseController):
         return (app_pkg_map, app_host_map, app_dep_map)
 
     @tds.utils.debug
-    def determine_validations(self, project, params, pkg_id, app_ids, app_dep_map):
+    def determine_validations(self, project, params, pkg_id, apptypes,
+                              app_dep_map):
         """Determine which application tiers need validation performed"""
 
-        for app_id in app_ids:
-            if not app_dep_map[app_id]:
+        for apptype in apptypes:
+            if not app_dep_map[apptype.id]:
                 log.log(
                     5, 'Application ID %r is not in '
-                    'deployment/application map', app_id
+                    'deployment/application map', apptype.id
                 )
                 continue
 
             valid = True
 
-            app_dep, app_type, dep_type, pkg = app_dep_map[app_id]
+            app_dep, app_type, dep_type, pkg = app_dep_map[apptype.id]
             log.log(5, 'Application deployment is: %r', app_dep)
             log.log(5, 'Application type is: %s', app_type)
             log.log(5, 'Deployment type is: %s', dep_type)
@@ -785,7 +786,7 @@ class DeployController(BaseController):
             if valid:
                 # Ensure tier state is consistent
                 result, missing, diffs, not_ok_hostnames = \
-                    self.check_tier_state(project, params, pkg_id, app_dep)
+                    self.check_tier_state(project, params, pkg.id, app_dep)
 
                 if result != 'ok':
                     log.info(
@@ -827,9 +828,9 @@ class DeployController(BaseController):
             if not valid:
                 log.log(
                     5, 'Deleting application ID %r from '
-                    'deployment/application map', app_id
+                    'deployment/application map', apptype.id
                 )
-                del app_dep_map[app_id]
+                del app_dep_map[apptype.id]
 
         log.log(5, 'Deployment/application map is: %r', app_dep_map)
 
@@ -1891,7 +1892,7 @@ class DeployController(BaseController):
         )
         app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
-        if not len(filter(None, app_dep_map.itervalues())):
+        if not len(list(filter(None, app_dep_map.itervalues()))):
             raise Exception(
                 'Nothing to redeploy for application %r in %s '
                 'environment', project.name,
@@ -1909,7 +1910,7 @@ class DeployController(BaseController):
 
     @validate('targets')
     @validate('project')
-    def validate(self, project, targets, **params):
+    def validate(self, project, hosts=None, apptypes=None, **params):
         """Validate a given version of a given project"""
 
         log.debug('Validating for given project')
@@ -1919,17 +1920,9 @@ class DeployController(BaseController):
 
         self.ensure_explicit_destinations(project, params)
 
-        target_names = list(x.name for x in project.targets)
-
-        if params['apptypes']:
-            if not all(x in target_names for x in params['apptypes']):
-                raise Exception(
-                    'Valid deploy targets for project "%s" are: %r',
-                    project.name,
-                    map(str, target_names)
-                )
-
-        pkg, app_ids, _app_host_map = self.get_app_info(project, targets, params)
+        pkg, apptypes, app_host_map = self.get_app_info(
+            project, hosts, apptypes, params
+        )
 
         if pkg is None:
             raise Exception(
@@ -1937,17 +1930,18 @@ class DeployController(BaseController):
                 project.name, params['version']
             )
 
-        app_dep_map = self.find_app_deployments(pkg, app_ids, params)
+        app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
-        if not len(filter(None, app_dep_map.itervalues())):
+        if not len(list(filter(None, app_dep_map.itervalues()))):
             raise Exception(
                 'No deployments to validate for application "%s" '
                 'in %s environment', project.name,
                 self.envs[params['env']]
             )
 
-        app_dep_map = self.determine_validations(project, params, pkg, app_ids,
-                                                 app_dep_map)
+        app_dep_map = self.determine_validations(
+            project, params, pkg, apptypes, app_dep_map
+        )
         self.perform_validations(project, params, app_dep_map)
 
         tagopsdb.Session.commit()

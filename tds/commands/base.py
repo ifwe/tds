@@ -119,8 +119,8 @@ class BaseController(object):
             targets.extend(sum((p.targets for p in projects), []))
             if not all_apptypes and len(targets) > 1:
                 raise Exception(
-                    "Specify a target constraint (too many targets found: %r)",
-                    targets
+                    "Specify a target constraint (too many targets found: %s)",
+                    ', '.join(sorted([x.name for x in targets]))
                 )
             return dict(apptypes=targets, hosts=None)
         elif apptypes:
