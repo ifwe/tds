@@ -675,15 +675,14 @@ class DeployController(BaseController):
         return (app_host_map, app_dep_map)
 
     @staticmethod
-    def determine_redeployments(pkg_id):
+    def determine_redeployments(pkg):
         """Determine which application tiers or hosts need redeployments"""
 
         log.debug(
             'Determining redeployments for requested application '
             'types or hosts'
         )
-
-        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(pkg_id)
+        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(pkg.id)
         last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
 
         return last_pkg_dep.id
@@ -917,7 +916,7 @@ class DeployController(BaseController):
         return True
 
     @tds.utils.debug
-    def find_app_deployments(self, pkg_id, apptypes, params):
+    def find_app_deployments(self, package, apptypes, params):
         """Find all relevant application deployments for the requested
         app types and create an application/deployment mapping,
         keeping track of which app types have a current deployment
@@ -926,7 +925,6 @@ class DeployController(BaseController):
 
         log.debug('Finding all relevant application deployments')
 
-        package = tagopsdb.Package.get(id=pkg_id)
         environment = tagopsdb.Environment.get(
             environment=self.envs[params['env']]
         )
@@ -1214,7 +1212,7 @@ class DeployController(BaseController):
             app_dep.status = 'invalidated'
 
     @tds.utils.debug
-    def perform_redeployments(self, project, params, dep_id, app_host_map,
+    def perform_redeployments(self, project, hosts, apptypes, params, deployment, app_host_map,
                               app_dep_map):
         """Perform all redeployments to the requested application tiers or
            hosts
@@ -1222,8 +1220,8 @@ class DeployController(BaseController):
 
         log.debug('Performing redeployments to application tiers or hosts')
 
-        self.deploy_to_hosts_or_tiers(project, params, dep_id, app_host_map,
-                                      app_dep_map, redeploy=True)
+        self.deploy_to_hosts_or_tiers(project, hosts, apptypes, params, deployment.id,
+                                      app_dep_map, app_host_map, redeploy=True)
 
     @tds.utils.debug
     def perform_restarts(self, params, dep_id, app_host_map, app_dep_map):
@@ -1285,8 +1283,8 @@ class DeployController(BaseController):
 
             single_app_dep_map = {app_id: app_dep_map[app_id]}
 
-            self.deploy_to_hosts_or_tiers(project, params, dep_id, single_app_host_map,
-                                          single_app_dep_map)
+            self.deploy_to_hosts_or_tiers(project, hosts, apptypes, params, dep_id,
+                                          single_app_dep_map, single_app_host_map)
 
     @tds.utils.debug
     def perform_validations(self, project, params, app_dep_map):
@@ -1617,7 +1615,7 @@ class DeployController(BaseController):
 
         params['package_name'] = package.name
 
-        app_dep_map = self.find_app_deployments(package.id, apptypes, params)
+        app_dep_map = self.find_app_deployments(package, apptypes, params)
         app_host_map, app_dep_map = \
             self.determine_new_deployments(project, params, package, apptypes,
                                            app_host_map, app_dep_map)
@@ -1653,14 +1651,14 @@ class DeployController(BaseController):
                     map(str, target_names)
                 )
 
-        pkg_id, app_ids, _app_host_map = self.get_app_info(project, targets, params)
-        if pkg_id is None:
+        pkg, app_ids, _app_host_map = self.get_app_info(project, targets, params)
+        if pkg is None:
             raise Exception(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
             )
 
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+        app_dep_map = self.find_app_deployments(pkg, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
             raise Exception(
@@ -1791,8 +1789,8 @@ class DeployController(BaseController):
 
         self.ensure_explicit_destinations(project, params)
 
-        pkg_id, app_ids, app_host_map = self.get_app_info(project, targets, params)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+        pkg, app_ids, app_host_map = self.get_app_info(project, targets, params)
+        app_dep_map = self.find_app_deployments(pkg, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
             raise Exception(
@@ -1809,7 +1807,8 @@ class DeployController(BaseController):
         app_pkg_map, app_host_map, app_dep_map = \
             self.determine_rollbacks(params, app_ids, app_host_map,
                                      app_dep_map)
-        self.send_notifications(project, params)
+
+        self.send_notifications(project, hosts, apptypes, params)
         self.perform_rollbacks(project, params, app_pkg_map, app_host_map, app_dep_map)
 
         if not hosts:
@@ -1951,16 +1950,17 @@ class DeployController(BaseController):
 
     @validate('targets')
     @validate('project')
-    def redeploy(self, project, targets, **params):
+    def redeploy(self, project, hosts=None, apptypes=None, **params):
         """Redeploy given project to requested application tiers or hosts"""
 
         log.debug('Redeploying project')
 
         self.ensure_explicit_destinations(project, params)
 
-        pkg_id, app_ids, app_host_map = self.get_app_info(project, targets, params,
-                                                          hostonly=True)
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+        pkg, apptypes, app_host_map = self.get_app_info(
+            project, hosts, apptypes, params, hostonly=True
+        )
+        app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
             raise Exception(
@@ -1969,9 +1969,9 @@ class DeployController(BaseController):
                 self.envs[params['env']]
             )
 
-        dep_id = self.determine_redeployments(pkg_id)
-        self.send_notifications(project, params)
-        self.perform_redeployments(project, params, dep_id, app_host_map, app_dep_map)
+        deployment = pkg.deployments[-1]
+        self.send_notifications(project, hosts, apptypes, params)
+        self.perform_redeployments(project, hosts, apptypes, params, deployment, app_host_map, app_dep_map)
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
@@ -2000,15 +2000,15 @@ class DeployController(BaseController):
                     map(str, target_names)
                 )
 
-        pkg_id, app_ids, _app_host_map = self.get_app_info(project, targets, params)
+        pkg, app_ids, _app_host_map = self.get_app_info(project, targets, params)
 
-        if pkg_id is None:
+        if pkg is None:
             raise Exception(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
             )
 
-        app_dep_map = self.find_app_deployments(pkg_id, app_ids, params)
+        app_dep_map = self.find_app_deployments(pkg, app_ids, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
             raise Exception(
@@ -2017,7 +2017,7 @@ class DeployController(BaseController):
                 self.envs[params['env']]
             )
 
-        app_dep_map = self.determine_validations(project, params, pkg_id, app_ids,
+        app_dep_map = self.determine_validations(project, params, pkg, app_ids,
                                                  app_dep_map)
         self.perform_validations(project, params, app_dep_map)
 

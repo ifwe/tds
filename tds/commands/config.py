@@ -34,11 +34,13 @@ class ConfigController(DeployController):
 
     requires_tier_progression = False
 
+    @validate('targets')
     @validate('project')
     def repush(self, **params):
         'Repush a version of a config project. Same as `deploy redeploy`'
         return super(ConfigController, self).redeploy(**params)
 
+    @validate('targets')
     @validate('project')
     def revert(self, **params):
         '''
@@ -104,7 +106,6 @@ class ConfigController(DeployController):
 
         return dict(result=tds.model.Project.get(name=project_name))
 
-    @staticmethod
     @validate('project')
     def delete(params):
         """Remove a config project from the system"""
