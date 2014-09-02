@@ -675,19 +675,6 @@ class DeployController(BaseController):
         return (app_host_map, app_dep_map)
 
     @staticmethod
-    def determine_redeployments(pkg):
-        """Determine which application tiers or hosts need redeployments"""
-
-        log.debug(
-            'Determining redeployments for requested application '
-            'types or hosts'
-        )
-        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(pkg.id)
-        last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
-
-        return last_pkg_dep.id
-
-    @staticmethod
     def determine_restarts(pkg_id):
         """Determine which application tiers or hosts need restarts"""
 
@@ -702,36 +689,37 @@ class DeployController(BaseController):
         return last_pkg_dep.id
 
     @tds.utils.debug
-    def determine_rollbacks(self, params, app_ids, app_host_map, app_dep_map):
+    def determine_rollbacks(self, hosts, apptypes, params, app_host_map, app_dep_map):
         """Determine which application tiers or hosts need rollbacks"""
 
         log.debug('Determining rollbacks for requested application types')
 
         app_pkg_map = {}
 
-        for app_id in app_ids:
-            if app_dep_map.get(app_id, None) is None:
+        for apptype in apptypes:
+            if app_dep_map.get(apptype.id, None) is None:
                 log.log(
-                    5, 'Application ID %r is not in '
-                    'deployment/application map', app_id
+                    5, 'Application %r is not in '
+                    'deployment/application map', apptype
                 )
                 continue
 
             valid = True
 
-            _app_dep, app_name, _dep_type, package = app_dep_map[app_id]
+            _app_dep, app_name, _dep_type, package = app_dep_map[apptype.id]
+            print _app_dep, app_name, _dep_type, package, apptype
 
             pkg_def = package.package_definition
 
-            if params['hosts']:
+            if hosts:
                 prev_dep_info = \
                     tagopsdb.deploy.deploy.find_latest_validated_deployment(
-                        pkg_def.name, app_id,
+                        pkg_def.name, apptype.id,
                         self.envs[params['env']])
             else:
                 prev_dep_info = \
                     tagopsdb.deploy.deploy.find_previous_validated_deployment(
-                        pkg_def.name, app_id,
+                        pkg_def.name, apptype.id,
                         self.envs[params['env']])
 
             if prev_dep_info is None:
@@ -750,14 +738,14 @@ class DeployController(BaseController):
                 )
                 log.log(5, 'Previous package ID is: %s', prev_pkg_id)
 
-                app_pkg_map[app_id] = prev_pkg_id
+                app_pkg_map[apptype.id] = prev_pkg_id
 
             if not valid:
                 log.log(
-                    5, 'Deleting application ID %r from '
-                    'deployment/application map', app_id
+                    5, 'Deleting application %r from '
+                    'deployment/application map', apptype
                 )
-                del app_dep_map[app_id]
+                del app_dep_map[apptype.id]
 
         log.log(5, 'Package/application map is: %r', app_pkg_map)
         log.log(5, 'Host/application map is: %r', app_host_map)
@@ -1232,7 +1220,7 @@ class DeployController(BaseController):
         self.restart_hosts_or_tiers(params, dep_id, app_host_map, app_dep_map)
 
     @tds.utils.debug
-    def perform_rollbacks(self, project, params, app_pkg_map, app_host_map,
+    def perform_rollbacks(self, project, hosts, apptypes, params, app_pkg_map, app_host_map,
                           app_dep_map):
         """Perform all rollbacks to the requested application tiers
            or hosts
@@ -1267,7 +1255,7 @@ class DeployController(BaseController):
                 # Reset app deployment to 'inprogress' (if tier rollback)
                 # or 'incomplete' (if host rollback), will require
                 # revalidation
-                if params['hosts']:
+                if hosts:
                     app_dep.status = 'incomplete'
                 else:
                     app_dep.status = 'inprogress'
@@ -1631,7 +1619,7 @@ class DeployController(BaseController):
 
     @validate('targets')
     @validate('project')
-    def invalidate(self, project, targets, **params):
+    def invalidate(self, project, hosts=None, apptypes=None, **params):
         """Invalidate a given version of a given project"""
 
         log.debug('Invalidating for given project')
@@ -1639,26 +1627,14 @@ class DeployController(BaseController):
         # Not a deployment
         params['deployment'] = False
 
-        self.ensure_explicit_destinations(project, params)
-
-        target_names = list(x.name for x in project.targets)
-
-        if not params['apptypes']:
-            if not all(x in target_names for x in params['apptypes']):
-                raise Exception(
-                    'Valid deploy targets for project "%s" are: %r',
-                    project.name,
-                    map(str, target_names)
-                )
-
-        pkg, app_ids, _app_host_map = self.get_app_info(project, targets, params)
+        pkg, apptypes, _app_host_map = self.get_app_info(project, hosts, apptypes, params)
         if pkg is None:
             raise Exception(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
             )
 
-        app_dep_map = self.find_app_deployments(pkg, app_ids, params)
+        app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
             raise Exception(
@@ -1668,7 +1644,7 @@ class DeployController(BaseController):
                 self.envs[params['env']]
             )
 
-        app_dep_map = self.determine_invalidations(project, params, app_ids,
+        app_dep_map = self.determine_invalidations(project, params, apptypes,
                                                    app_dep_map)
         self.perform_invalidations(app_dep_map)
 
@@ -1781,17 +1757,15 @@ class DeployController(BaseController):
 
     @validate('targets')
     @validate('project')
-    def rollback(self, project, hosts, apptypes, **params):
+    def rollback(self, project, hosts=None, apptypes=None, **params):
         """Rollback to the previous validated deployed version of given
            project on requested application tiers or hosts
         """
 
         log.debug('Rolling back project')
 
-        self.ensure_explicit_destinations(project, params)
-
-        pkg, app_ids, app_host_map = self.get_app_info(project, targets, params)
-        app_dep_map = self.find_app_deployments(pkg, app_ids, params)
+        pkg, apptypes, app_host_map = self.get_app_info(project, hosts, apptypes, params)
+        app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
             raise Exception(
@@ -1806,11 +1780,11 @@ class DeployController(BaseController):
         orig_app_dep_map = app_dep_map
 
         app_pkg_map, app_host_map, app_dep_map = \
-            self.determine_rollbacks(params, app_ids, app_host_map,
+            self.determine_rollbacks(hosts, apptypes, params, app_host_map,
                                      app_dep_map)
 
         self.send_notifications(project, hosts, apptypes, params)
-        self.perform_rollbacks(project, params, app_pkg_map, app_host_map, app_dep_map)
+        self.perform_rollbacks(project, hosts, apptypes, params, app_pkg_map, app_host_map, app_dep_map)
 
         if not hosts:
             # Now perform invalidations, commit immediately follows
@@ -1847,8 +1821,9 @@ class DeployController(BaseController):
 
         return None
 
+    @validate('targets')
     @validate('project')
-    def restart(self, project, **params):
+    def restart(self, project, hosts=None, apptypes=None, **params):
         """Restart given project on requested application tiers or hosts"""
 
         log.debug('Restarting application for project')
@@ -1860,66 +1835,19 @@ class DeployController(BaseController):
 
         environment = tagopsdb.Environment.get(env=params['env'])
 
-        apptypes = params['apptypes']
-        hostnames = params['hosts']
-
         restart_targets = []
 
-        if apptypes is not None or hostnames is None:
-            if apptypes:
-                targets = [
-                    tds.model.AppTarget.get(name=apptype)
-                    for apptype in apptypes
-                ]
-            else:
-                targets = project.targets
-
-            for target in targets:
-                if target is None or target not in project.targets:
-                    raise Exception(
-                        'Valid apptypes for project "%s" are: %s',
-                        project.name, [str(x.name) for x in project.targets]
-                    )
-
-                pkg = self.get_package_for_target(target, environment)
+        if apptypes:
+            for apptype in apptypes:
+                pkg = self.get_package_for_target(apptype, environment)
                 if pkg is None:
                     continue
 
-                for host in target.hosts:
+                for host in apptype.hosts:
                     if host.environment == environment.environment:
                         restart_targets.append((host, pkg))
 
-        elif hostnames:
-            app_ids = [x.id for x in project.targets]
-            bad_hosts = []
-            no_exist_hosts = []
-            hosts = [
-                tagopsdb.Host.get(name=hostname)
-                for hostname in hostnames
-            ]
-            for host, hostname in zip(hosts, hostnames):
-                if host is None:
-                    no_exist_hosts.append(hostname)
-                    continue
-
-                if (
-                    host.app_id not in app_ids or
-                    host.environment != environment.environment
-                ):
-                    bad_hosts.append(hostname)
-
-            if no_exist_hosts:
-                raise Exception(
-                    "These hosts do not exist: %s", ', '.join(no_exist_hosts)
-                )
-
-            if bad_hosts:
-                raise Exception(
-                    'The following hosts are in the wrong environment or '
-                    'do not belong to a matching app type: %s',
-                    ', '.join(bad_hosts)
-                )
-
+        elif hosts:
             for host in hosts:
                 pkg = self.get_package_for_target(host.application, environment)
                 if pkg is None:
