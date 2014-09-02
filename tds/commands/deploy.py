@@ -539,7 +539,7 @@ class DeployController(BaseController):
                     'status.cgi?style=detail&hostgroup=app.%s', apptype.name
                 )
 
-    def determine_invalidations(self, project, params, app_ids, app_dep_map):
+    def determine_invalidations(self, project, params, apptypes, app_dep_map):
         """Determine which application tiers need invalidations performed"""
 
         log.debug(
@@ -560,17 +560,17 @@ class DeployController(BaseController):
             )
             curr_dep_versions[app_type] = int(version)
 
-        for app_id in app_ids:
-            if not app_dep_map[app_id]:
+        for apptype in apptypes:
+            if not app_dep_map[apptype.id]:
                 log.log(
                     5, 'Application ID %r is not in deployment/'
-                    'application map', app_id
+                    'application map', apptype.id
                 )
                 continue
 
             valid = True
 
-            app_dep, app_type, dep_type, pkg = app_dep_map[app_id]
+            app_dep, app_type, dep_type, pkg = app_dep_map[apptype.id]
             log.log(5, 'Application deployment is: %r', app_dep)
             log.log(5, 'Application type is: %s', app_type)
             log.log(5, 'Deployment type is: %s', dep_type)
@@ -597,9 +597,9 @@ class DeployController(BaseController):
             if not valid:
                 log.log(
                     5, 'Deleting application ID %r from '
-                    'deployment/application map', app_id
+                    'deployment/application map', apptype.id
                 )
-                del app_dep_map[app_id]
+                del app_dep_map[apptype.id]
 
         log.log(5, 'Deployment/application map is: %r', app_dep_map)
 
@@ -1628,7 +1628,10 @@ class DeployController(BaseController):
         # Not a deployment
         params['deployment'] = False
 
-        pkg, apptypes, _app_host_map = self.get_app_info(project, hosts, apptypes, params)
+        pkg, apptypes, _app_host_map = self.get_app_info(
+            project, hosts, apptypes, params
+        )
+
         if pkg is None:
             raise Exception(
                 'Package "%s@%s" does not exist',
@@ -1637,7 +1640,7 @@ class DeployController(BaseController):
 
         app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
-        if not len(filter(None, app_dep_map.itervalues())):
+        if not len(list(filter(None, app_dep_map.itervalues()))):
             raise Exception(
                 'No deployments to invalidate for application %r '
                 'with version %r in %s environment',
