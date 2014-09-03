@@ -86,7 +86,7 @@ def then_package_version_was_deployed_to_hosts(context, pkg, version):
         version
     )
 
-@then(u'package "{pkg} version "{version}" was deployed to these hosts')
+@then(u'package "{pkg}" version "{version}" was deployed to these hosts')
 def then_the_package_version_was_deployed_to_these_hosts(context, pkg, version):
     attr_sets = [
         dict(zip(context.table.headings, row))
@@ -116,7 +116,7 @@ def then_the_package_version_was_deployed_to_deploy_target(context, pkg, version
 @then(u'package "{pkg}" version "{version}" was deployed to the deploy target with {properties}')
 def then_package_was_restarted_on_a_specific_deploy_target(context, pkg, version, properties):
     attrs = parse_properties(properties)
-    targets = tds.model.DeployTarget.find(**attrs)
+    targets = tds.model.AppTarget.find(**attrs)
 
     assert check_deployment_on_hosts(
         context,
@@ -177,7 +177,7 @@ def check_restart_on_targets(context, targets, pkg):
 @then(u'package "{pkg}" was restarted on the deploy target with {properties}')
 def then_package_was_restarted_on_a_specific_deploy_target(context, pkg, properties):
     attrs = parse_properties(properties)
-    targets = tds.model.DeployTarget.find(**attrs)
+    targets = tds.model.AppTarget.find(**attrs)
     assert check_restart_on_targets(context, targets, pkg)
 
 @then(u'package "{pkg}" was restarted on the deploy target')
