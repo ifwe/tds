@@ -59,7 +59,7 @@ Feature: deploy restart subcommand
         Given there is a deploy target with name="appbar"
         And the deploy target is a part of the project
         When I run "deploy restart proj"
-        Then the output has "Application "proj" has multiple corresponding app types, please use "--apptypes" or "--all-apptypes""
+        Then the output has "Specify a target constraint (too many targets found: appbar, appfoo)"
 
     Scenario: restart a project with a multiple apptypes with apptypes option
         Given there is a deploy target with name="appbar"

@@ -31,8 +31,11 @@ class Base(_Base):
 
         super(Base, self).__init__(**kwds)
 
-    def __eq__(self, other):
-        return self.__dict__.__eq__(other.__dict__)
+    def __cmp__(self, other):
+        if getattr(other, '__dict__', None) is None:
+            return 1
+
+        return self.__dict__.__cmp__(other.__dict__)
 
     def __repr__(self):
         return '<%(class_name)s %(fields_str)s>' % dict(
