@@ -43,7 +43,7 @@ def create_deployment(project, hosts, apptypes, **params):
             version=params.get('version'),
         ),
         target=dict(
-            environment=params.get('environment'),
+            env=params.get('env'),
             apptypes=apptypes,
             hosts=hosts,
         ),
