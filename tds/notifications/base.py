@@ -99,8 +99,8 @@ class Notifier(object):
         subject = (
             'ATTENTION: %s in %s for %s app tier needs validation!' % (
                 deployment.project.name,
-                deployment.target['environment'],
-                ','.join(deployment.target['apptypes'])
+                deployment.target['env'],
+                ','.join(x.name for x in deployment.target['apptypes'])
             )
         )
         body = (
@@ -109,7 +109,7 @@ class Notifier(object):
             'Without this, Puppet cannot manage the tier correctly.' % (
                 deployment.package.version,
                 deployment.package.name,
-                ', '.join(deployment.target['apptypes']),
+                ', '.join(x.name for x in deployment.target['apptypes']),
             )
         )
 
@@ -131,7 +131,7 @@ class Notifier(object):
             destinations = ', '.join(deployment.target['hosts'])
         elif deployment.target.get('apptypes', None):
             dest_type = 'app tier(s)'
-            destinations = ', '.join(deployment.target['apptypes'])
+            destinations = ', '.join(x.name for x in deployment.target['apptypes'])
         else:
             dest_type = 'app tier(s)'
 

@@ -1,7 +1,6 @@
 """Model module for project object."""
 
 from .base import Base
-from .deploy_target import DeployTarget
 import tagopsdb
 
 
@@ -28,8 +27,9 @@ class Project(Base):
     @property
     def targets(self):
         """Return deploy targets, but ignore the "dummy" target."""
+        from .deploy_target import AppTarget
         return [
-            DeployTarget(delegate=x)
+            AppTarget(delegate=x)
             for x in self.delegate.targets
             if x.name != x.dummy
         ]

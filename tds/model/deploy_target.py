@@ -1,6 +1,7 @@
 """Model module for deployment target object."""
 
 from .base import Base
+from .project import Project
 import tagopsdb
 
 
@@ -30,4 +31,23 @@ class DeployTarget(Base):
     #
 
     # TODO: make subclasses where only one is an AppDefinition
+
+
+class AppTarget(DeployTarget):
     delegate = tagopsdb.AppDefinition
+
+    @property
+    def projects(self):
+        return [Project(delegate=p) for p in self.delegate.projects]
+
+
+class HostTarget(DeployTarget):
+    delegate = tagopsdb.Host
+
+    @property
+    def hosts(self):
+        return [self]
+
+    @property
+    def application(self):
+        return AppTarget(delegate=self.delegate.application)
