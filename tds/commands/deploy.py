@@ -1625,40 +1625,14 @@ class DeployController(BaseController):
 
     @validate('targets')
     @validate('project')
-    def show(self, project, hosts=None, apptypes=None, **params):
+    def show(self, project, apptypes=None, **params):
         """Show deployment information for a given project"""
 
         log.debug('Showing deployment information for given project')
 
-        # Check apptypes, then filter if needed
-        targets = []
-        app_ids = [x.id for x in project.targets]
-
-        if apptypes:
-            for apptype in apptypes:
-                target = tds.model.AppTarget.get(name=apptype.name)
-
-                if target is None:
-                    raise Exception(
-                        'Apptype "%s" does not exist', apptype.name
-                    )
-
-                if target.id not in app_ids:
-                    raise Exception(
-                        'Apptype "%s" does not map to project "%s"',
-                        apptype.name, project.name
-                    )
-
-                targets.append(target)
-        else:
-            targets = [
-                x for x in tds.model.AppTarget.all()
-                if x.id in app_ids
-            ]
-
         pkg_def_app_map = collections.defaultdict(list)
 
-        for target in targets:
+        for target in apptypes:
             for proj_pkg in tagopsdb.ProjectPackage.find(
                 project_id=project.id, app_id=target.id
             ):
