@@ -67,7 +67,7 @@ PACKAGE_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
             ])),
             (('--force', '-f'), odict([
                 ('help', 'Allow an existing package to be re-added'),
@@ -83,7 +83,7 @@ PACKAGE_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
             ])),
         ])),
     ])),
@@ -111,7 +111,7 @@ JENKINSPACKAGE_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
             ])),
         ])),
     ])),
@@ -183,7 +183,7 @@ CONFIG_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
             ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for invalidation'),
@@ -204,6 +204,7 @@ CONFIG_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for config project'),
+                ('type', str),
             ])),
             (('--delay',), odict([
                 ('help', 'Time delay (in seconds) between each push'),
@@ -285,7 +286,7 @@ CONFIG_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
                 ('nargs', '?'),
             ])),
             (('--apptypes',), odict([
@@ -307,7 +308,7 @@ CONFIG_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
             ])),
             (('--force', '-f'), odict([
                 ('help', 'Do validation even when there are bad hosts'),
@@ -357,7 +358,7 @@ DEPLOY_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
             ])),
             (('--apptypes',), odict([
                 ('help', 'Specific app type(s) for invalidation'),
@@ -378,7 +379,7 @@ DEPLOY_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
             ])),
             (('--force', '-f'), odict([
                 ('help',
@@ -492,7 +493,7 @@ DEPLOY_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
                 ('nargs', '?'),
             ])),
             (('--apptypes',), odict([
@@ -514,7 +515,7 @@ DEPLOY_DATA = odict([
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
-                ('type', int),
+                ('type', str),
             ])),
             (('--force', '-f'), odict([
                 ('help', 'Do validation even when there are bad hosts'),

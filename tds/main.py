@@ -144,8 +144,8 @@ class TDS(object):
         self.params['user_level'] = self.authconfig.get_access_level(LocalActor())
         log.log(5, 'User level is: %s', self.params['user_level'])
 
-        self.params['environment'] = self.config['env.environment']
-        log.log(5, 'Environment is: %s', self.params['environment'])
+        self.params['env'] = self.config['env.environment']
+        log.log(5, 'Environment is: %s', self.params['env'])
 
         self.params['repo'] = self.config['repo']
         self.params['jenkins_url'] = self.config['jenkins.url']
