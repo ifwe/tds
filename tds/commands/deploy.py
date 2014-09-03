@@ -5,6 +5,7 @@ import collections
 import progressbar
 import itertools
 import time
+import warnings
 from datetime import datetime, timedelta
 
 import tagopsdb
@@ -256,7 +257,7 @@ class DeployController(BaseController):
 
         missing_deps = list(set(apptype_hostnames) - set(dep_hostnames))
         version_diffs = [x.hostname for x in dep_hosts
-                         if int(x.version) != params['version']]
+                         if x.version != params['version']]
 
         if version_diffs:
             log.log(5, 'Version differences on: %s', ', '.join(version_diffs))
@@ -867,7 +868,8 @@ class DeployController(BaseController):
             # 'dep_version' must be typecast to an integer as well,
             # since the DB stores it as a string - may move away from
             # integers for versions in the future, so take note here
-            if params['version'] < int(dep_version):
+            warnings.warn('Package versions are being compared with string semantics')
+            if params['version'] < dep_version:
                 log.log(
                     5, 'Deployment version %r is newer than '
                     'requested version %r', dep_version,
