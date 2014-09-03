@@ -1,27 +1,40 @@
 import argparse
-import collections
 
 import tds.model
 import tds.authorize
 import tds.exceptions
 
 def validate(attr):
-    def function(f):
-        needs_val = getattr(f, '_needs_validation', None)
+    """
+    Decorator for an action method, which
+    """
+    def function(func):
+        """
+        Adds an attr to the func's _needs_validation list
+        """
+        needs_val = getattr(func, '_needs_validation', None)
         if needs_val is None:
-            needs_val = f._needs_validation = []
+            needs_val = func._needs_validation = []
         needs_val.append(attr)
 
-        return f
+        return func
     return function
 
+
 class BaseController(object):
+    """
+    Base class for controllers
+    """
     access_levels = {}
 
     def __init__(self, config):
         self.app_config = config
 
     def action(self, action, **params):
+        """
+        Perform an action for the controller with authorization, input
+        validation, and exception handling.
+        """
         required_access_level = self.access_levels.get(action, 'disabled')
 
         if required_access_level is not None:
@@ -57,9 +70,14 @@ class BaseController(object):
 
             return handler(**params)
         except Exception as exc:
+
             return dict(error=exc)
 
     def validate_params(self, validate_attrs, params):
+        """
+        Validates various parameters. See `validate_*` functions for different
+        parameters that can be validated and how.
+        """
         if not validate_attrs:
             return params
 
@@ -79,6 +97,12 @@ class BaseController(object):
 
 
     def validate_project(self, project=None, projects=None, **params):
+        """
+        Converts 'project' and 'projects' parameters from string names that
+        identify the projects into Project instances.
+
+        Can raise an Exception if a Project cannot be found for a name.
+        """
         if projects is None:
             projects = []
 
@@ -105,6 +129,16 @@ class BaseController(object):
     def validate_targets(
         self, env, hosts=None, apptypes=None, all_apptypes=None, **params
     ):
+        """
+        Converts 'env', 'hosts', 'apptypes', and 'all_apptypes' parameters
+        into just 'hosts' and 'apptypes' parameters.
+
+        Verifies that all specified hosts/apptypes are in the right
+        environments and associated with the project/projects.
+
+        Can raise an Exception from various different failure modes.
+        """
+
         if len(filter(None, [hosts, apptypes, all_apptypes])) > 1:
             raise argparse.ArgumentError('These options are exclusive: %s'
                 ['hosts', 'apptypes', 'all_apptyes']
@@ -166,8 +200,6 @@ class BaseController(object):
                     'These hosts are not in the "%s" environment: %s',
                     environment.environment, ', '.join(sorted(bad_hosts))
                 )
-
-            # TODO: check environment
 
             for project in projects:
                 for target in targets:
