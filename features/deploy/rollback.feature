@@ -157,6 +157,7 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
             | config revert     |
             | deploy rollback   |
 
+    @delay
     Scenario Outline: rollback version with delay option
         When I run "<command> proj --delay 10"
         Then the output has "Completed: 2 out of 2 hosts"

@@ -87,6 +87,7 @@ Feature: deploy restart subcommand
     #       this should probably be fixed (or the behavior changed based on
     #       given situation
 
+    @delay
     Scenario: restart a project with a valid delay option involving a single target
         When I run "deploy restart proj --delay 10 --hosts appfoo01"
         Then package "proj-name" was restarted on the host with name="appfoo01"
@@ -99,6 +100,7 @@ Feature: deploy restart subcommand
         When I run "deploy restart proj --delay notnum --apptypes appfoo"
         Then the output has "error: argument --delay: invalid int value:"
 
+    @delay
     Scenario: restart a project with a valid delay option involving multiple targets
         When I run "deploy restart proj --delay 10 --apptypes appfoo"
         Then package "proj-name" was restarted on the deploy target

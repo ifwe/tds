@@ -74,6 +74,10 @@ You may specify a set of tags to restrict which behavior tests to run:
         <td>wip</td>
         <td>Works in progress</td>
     </tr>
+    <tr>
+        <td>delay</td>
+        <td>Commands with timed delays</td>
+    </tr>
 </tbody>
 </table>
 
@@ -176,3 +180,7 @@ functions related to object types are spread across the application.
     </tr>
 </tbody>
 </table>
+
+## Roadmap
+See [roadmap.md](./doc/roadmap.md) for details on the release history and
+planned development of TDS.

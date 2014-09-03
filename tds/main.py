@@ -99,7 +99,7 @@ class TDS(object):
 
     @staticmethod
     def _load_authconfig(params):
-        'Load auth config'
+        """Load auth config."""
         authconfig = tds.authorize.TDSAuthConfig(
             params.get('auth_config', '/etc/tagops/tds_auth.yml')
         )
@@ -204,4 +204,5 @@ class TDS(object):
         return self.render(view_name, result)
 
     def render(self, *args, **kwargs):
-        return self.view().generate_result(*args, **kwargs)
+        return self.view(output_format=self.params['output_format']) \
+            .generate_result(*args, **kwargs)

@@ -125,6 +125,7 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
             | config repush     |
             | deploy redeploy   |
 
+    @delay
     Scenario Outline: redeploy with delay option
         When I run "<command> proj --delay 10"
         Then the output has "Completed: 2 out of 2 hosts"

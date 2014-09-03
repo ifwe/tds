@@ -58,6 +58,10 @@ def parse_command_line(sysargs):
     parser.add_argument('--config-dir',
                         help='Specify directory containing app config',
                         default='/etc/tagops/')
+    parser.add_argument('--output-format', #dest='output_format',
+                        help='Display output in specified format'
+                             ' [blocks|table|json]. Default: blocks.',
+                        default='blocks')
 
     create_subparsers(parser)
     argcomplete.autocomplete(parser)
