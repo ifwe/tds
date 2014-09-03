@@ -1005,10 +1005,8 @@ class DeployController(BaseController):
 
         log.debug('Determining package ID for given project')
 
-        app_types = map(
-            tagopsdb.deploy.deploy.find_apptype_by_appid,
-            [x.id for x in project.targets]
-        )
+        app_types = [x.name for x in project.targets]
+
         log.log(5, 'Application types are: %s', ', '.join(app_types))
 
         if 'version' in params:
@@ -1074,13 +1072,6 @@ class DeployController(BaseController):
             version,
             '1'
         )
-
-        if pkg is None:
-            raise Exception(
-                'Package "%s@%s" does not exist',
-                project.name,
-                version
-            )
 
         return pkg
 
@@ -1550,6 +1541,7 @@ class DeployController(BaseController):
             )
         )
 
+    @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
     def promote(self, project, hosts=None, apptypes=None, **params):
@@ -1561,12 +1553,6 @@ class DeployController(BaseController):
         package, apptypes, app_host_map = self.get_app_info(
             project, hosts, apptypes, params
         )
-
-        if package is None:
-            raise Exception(
-                'Package "%s@%s" does not exist',
-                project.name, params['version']
-            )
 
         params['package_name'] = package.name
 
@@ -1586,6 +1572,7 @@ class DeployController(BaseController):
         log.debug('Committed database changes')
         return dict()
 
+    @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
     def invalidate(self, project, hosts=None, apptypes=None, **params):
@@ -1599,12 +1586,6 @@ class DeployController(BaseController):
         pkg, apptypes, _app_host_map = self.get_app_info(
             project, hosts, apptypes, params
         )
-
-        if pkg is None:
-            raise Exception(
-                'Package "%s@%s" does not exist',
-                project.name, params['version']
-            )
 
         app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
@@ -1847,6 +1828,7 @@ class DeployController(BaseController):
 
         return dict()
 
+    @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
     def validate(self, project, hosts=None, apptypes=None, **params):
@@ -1860,12 +1842,6 @@ class DeployController(BaseController):
         pkg, apptypes, app_host_map = self.get_app_info(
             project, hosts, apptypes, params
         )
-
-        if pkg is None:
-            raise Exception(
-                'Package "%s@%s" does not exist',
-                project.name, params['version']
-            )
 
         app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
