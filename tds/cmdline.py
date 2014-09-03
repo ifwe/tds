@@ -9,10 +9,6 @@ REPOSITORY_DATA = odict([
             (('-c', '--config'), odict([
                 ('help', 'Config project associated with project'),
             ])),
-            (('-e', '--env-specific'), odict([
-                ('help', 'Project\'s packages are environment-specific'),
-                ('action', 'store_true'),
-            ])),
             (('project',), odict([
                 ('help', 'Name of project in system'),
             ])),
@@ -132,10 +128,6 @@ CONFIG_DATA = odict([
     ('create', odict([
         ('help', 'Create a new config project'),
         ('subargs', odict([
-            (('-e', '--env-specific'), odict([
-                ('help', 'Project\'s packages are environment-specific'),
-                ('action', 'store_true'),
-            ])),
             (('project',), odict([
                 ('help', 'Name of config project in system'),
             ])),

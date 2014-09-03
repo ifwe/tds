@@ -17,14 +17,6 @@ class Project(Base):
         return self.package_definitions
 
     @property
-    def environment_specific(self):
-        """
-        Returns False iff there are applications and at least
-        one is env specific
-        """
-        return all((not x.environment_specific) for x in self.applications)
-
-    @property
     def targets(self):
         """Return deploy targets, but ignore the "dummy" target."""
         from .deploy_target import AppTarget
