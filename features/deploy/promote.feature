@@ -31,7 +31,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
 
     Scenario Outline: promote version that doesn't exist
         When I run "<command> proj 456"
-        Then the output is "Package "proj@456" does not exist"
+        Then the output is "Package "proj-name@456" does not exist"
 
         Examples:
             | command           |

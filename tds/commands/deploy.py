@@ -926,7 +926,7 @@ class DeployController(BaseController):
         return app_deployments
 
     @tds.utils.debug
-    def get_app_info(self, project, hosts, apptypes, params, hostonly=False):
+    def get_app_info(self, project, package, hosts, apptypes, params, hostonly=False):
         """Verify requested package and which hosts or app tiers
         to install the package; for hosts a mapping is kept between
         them and their related app types
@@ -1544,14 +1544,14 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def promote(self, project, hosts=None, apptypes=None, **params):
+    def promote(self, project, package, hosts=None, apptypes=None, **params):
         """Deploy given version of given project to requested application
            tiers or hosts
         """
         log.debug('Deploying project')
 
-        package, apptypes, app_host_map = self.get_app_info(
-            project, hosts, apptypes, params
+        _package, apptypes, app_host_map = self.get_app_info(
+            project, package, hosts, apptypes, params
         )
 
         params['package_name'] = package.name
@@ -1575,7 +1575,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def invalidate(self, project, hosts=None, apptypes=None, **params):
+    def invalidate(self, project, package, hosts=None, apptypes=None, **params):
         """Invalidate a given version of a given project"""
 
         log.debug('Invalidating for given project')
@@ -1583,11 +1583,11 @@ class DeployController(BaseController):
         # Not a deployment
         params['deployment'] = False
 
-        pkg, apptypes, _app_host_map = self.get_app_info(
-            project, hosts, apptypes, params
+        _pkg, apptypes, _app_host_map = self.get_app_info(
+            project, package, hosts, apptypes, params
         )
 
-        app_dep_map = self.find_app_deployments(pkg, apptypes, params)
+        app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
             raise Exception(
@@ -1679,10 +1679,10 @@ class DeployController(BaseController):
 
         log.debug('Rolling back project')
 
-        pkg, apptypes, app_host_map = self.get_app_info(
-            project, hosts, apptypes, params
+        package, apptypes, app_host_map = self.get_app_info(
+            project, None, hosts, apptypes, params
         )
-        app_dep_map = self.find_app_deployments(pkg, apptypes, params)
+        app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
             raise Exception(
@@ -1803,10 +1803,10 @@ class DeployController(BaseController):
 
         log.debug('Redeploying project')
 
-        pkg, apptypes, app_host_map = self.get_app_info(
-            project, hosts, apptypes, params, hostonly=True
+        package, apptypes, app_host_map = self.get_app_info(
+            project, None, hosts, apptypes, params, hostonly=True
         )
-        app_dep_map = self.find_app_deployments(pkg, apptypes, params)
+        app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
             raise Exception(
@@ -1831,7 +1831,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def validate(self, project, hosts=None, apptypes=None, **params):
+    def validate(self, project, package, hosts=None, apptypes=None, **params):
         """Validate a given version of a given project"""
 
         log.debug('Validating for given project')
@@ -1839,11 +1839,11 @@ class DeployController(BaseController):
         # Not a deployment
         params['deployment'] = False
 
-        pkg, apptypes, app_host_map = self.get_app_info(
-            project, hosts, apptypes, params
+        _pkg, apptypes, app_host_map = self.get_app_info(
+            project, package, hosts, apptypes, params
         )
 
-        app_dep_map = self.find_app_deployments(pkg, apptypes, params)
+        app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
             raise Exception(

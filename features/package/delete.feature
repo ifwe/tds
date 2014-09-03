@@ -24,7 +24,7 @@ Feature: package delete subcommand
     Scenario: delete a package from a project with a version that doesn't exist
         Given there is a project with name="proj"
         When I run "package delete proj 123"
-        Then the output is "Package "proj@123" does not exist"
+        Then the output is "Package "proj-name@123" does not exist"
 
     Scenario: delete a package from a project
         Given there is a project with name="proj"
