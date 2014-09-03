@@ -15,6 +15,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | name          |
             | projhost01    |
             | projhost02    |
+            | projhost03    |
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
 
@@ -53,6 +54,16 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | config push       |
             | deploy promote    |
 
+    Scenario Outline: promote version to apptype that's not a part of the project
+        Given there is a deploy target with name="other-apptype"
+        When I run "<command> proj 123 --apptype other-apptype"
+        Then the output has "Valid apptypes for project "proj" are: ['the-apptype']"
+
+        Examples:
+            | command           |
+            | config push       |
+            | deploy promote    |
+
     Scenario: promote version that isn't validated in previous env (only for deploy)
         Given there is a package version with version="124"
         When I run "deploy promote proj 124"
@@ -61,7 +72,10 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
     Scenario Outline: promote version to hosts
         When I run "<command> proj 123 --hosts projhost01 projhost02"
         Then the output has "Completed: 2 out of 2 hosts"
-        And package "proj-name" version "123" was deployed to the hosts
+        And package "proj-name" version "123" was deployed to these hosts:
+            | name          |
+            | projhost01    |
+            | projhost02    |
 
         Examples:
             | command           |
@@ -70,7 +84,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
 
     Scenario Outline: promote version to apptype
         When I run "<command> proj 123 --apptype the-apptype"
-        Then the output has "Completed: 2 out of 2 hosts"
+        Then the output has "Completed: 3 out of 3 hosts"
         And package "proj-name" version "123" was deployed to the deploy target
 
         Examples:
@@ -86,7 +100,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         When I run "<command> proj 123 --all-apptypes"
-        Then the output has "Completed: 2 out of 2 hosts"
+        Then the output has "Completed: 3 out of 3 hosts"
         And the output has "Completed: 1 out of 1 hosts"
         And package "proj-name" version "123" was deployed to the deploy targets
 
@@ -100,7 +114,6 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         When I run "<command> proj 123 --hosts projhost01 projhost02"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: projhost01"
-
 
         Examples:
             | command           |
@@ -131,7 +144,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
 
     Scenario Outline: promote version to with delay option
         When I run "<command> proj 123 --delay 10"
-        Then the output has "Completed: 2 out of 2 hosts"
+        Then the output has "Completed: 3 out of 3 hosts"
         And package "proj-name" version "123" was deployed to the deploy target
         And it took at least 10 seconds
 
@@ -143,10 +156,55 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
     Scenario Outline: promote version that isn't validated in previous env with force option
         Given there is a package version with version="124"
         When I run "deploy promote <switch> proj 124"
-        Then the output has "Completed: 2 out of 2 hosts"
+        Then the output has "Completed: 3 out of 3 hosts"
         And package "proj-name" version "124" was deployed to the deploy target
 
         Examples:
             | switch    |
             | -f        |
             | --force   |
+
+    Scenario Outline: promote a version that that has already been deployed
+        Given the package version is deployed on the deploy targets in the "stage" env
+        When I run "<command> proj 123"
+        Then the output has "Application "proj" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
+
+        Examples:
+            | command           |
+            | config push       |
+            | deploy promote    |
+
+    Scenario Outline: promote a version that that has already been validated
+        Given the package version is deployed on the deploy targets in the "stage" env
+        And the package version has been validated in the "staging" environment
+        When I run "<command> proj 123"
+        Then the output has "Application "proj" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
+
+        Examples:
+            | command           |
+            | config push       |
+            | deploy promote    |
+
+    Scenario Outline: deploying to multiple hosts of different apptypes
+        Given there is a deploy target with name="other-apptype"
+        And there are hosts:
+            | name       |
+            | other01    |
+            | other02    |
+        And the hosts are associated with the deploy target
+        And the deploy target is a part of the project
+        And there is a package version with version="124"
+        And the package version is deployed on the deploy targets in the "dev" env
+        And the package version has been validated in the "development" environment
+        When I run "<command> proj 124 --hosts projhost01 projhost02 other01"
+        Then the output has "Completed: 3 out of 3 hosts"
+        And package "proj-name" version "124" was deployed to these hosts:
+            | name          |
+            | projhost01    |
+            | projhost02    |
+            | other01       |
+
+        Examples:
+            | command           |
+            | config push       |
+            | deploy promote    |

@@ -11,7 +11,7 @@ def get_model_factory(name):
     if name == 'project':
         return project_factory
     if name == 'deploy target':
-        return lambda ctxt, **kwargs: tds.model.DeployTarget.create(**kwargs)
+        return lambda ctxt, **kwargs: tds.model.AppTarget.create(**kwargs)
     if name == 'package version':
         return package_version_factory
     if name == 'host':
@@ -573,7 +573,7 @@ def then_the_package_is_invalidated(context):
 @then(u'the package version is validated for deploy target with {properties}')
 def then_the_package_is_validated_for_deploy_target(context, properties):
     attrs = parse_properties(properties)
-    target = tds.model.DeployTarget.get(**attrs)
+    target = tds.model.AppTarget.get(**attrs)
 
     # TODO: get only target.app_deployments where package matches.
     assert check_package_validation(
@@ -601,7 +601,7 @@ def check_package_validation(context, package, app_deployments, expected_state):
 @then(u'the package version is invalidated for deploy target with {properties}')
 def then_the_package_is_invalidated_for_deploy_target(context, properties):
     attrs = parse_properties(properties)
-    target = tds.model.DeployTarget.get(**attrs)
+    target = tds.model.AppTarget.get(**attrs)
 
     # TODO: get only target.app_deployments where package matches.
     assert check_package_validation(

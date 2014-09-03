@@ -19,7 +19,7 @@ Feature: deploy/config invalidate subcommand
 
     @no_db
     Scenario Outline: too many arguments
-        When I run "<command> invalidate proj foo"
+        When I run "<command> invalidate proj vers foo"
         Then the output has "usage:"
 
         Examples:
@@ -50,7 +50,7 @@ Feature: deploy/config invalidate subcommand
         Given there is a project with name="proj"
         And there is a package version with version="123"
         When I run "<command> invalidate proj 123 --apptype foo"
-        Then the output is "Valid deploy targets for project "proj" are: []"
+        Then the output is "Valid apptypes for project "proj" are: []"
 
         Examples:
             | command |
@@ -63,7 +63,7 @@ Feature: deploy/config invalidate subcommand
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         When I run "<command> invalidate proj 123 --apptype foo bar"
-        Then the output is "Valid deploy targets for project "proj" are: ['foo']"
+        Then the output is "Valid apptypes for project "proj" are: ['foo']"
 
         Examples:
             | command |
@@ -140,7 +140,7 @@ Feature: deploy/config invalidate subcommand
         And the package version is deployed on the deploy targets
         And the package version is validated
         When I run "<command> invalidate proj 123"
-        Then the output is "Application "proj" has multiple corresponding app types, please use "--apptypes" or "--all-apptypes""
+        Then the output is "Specify a target constraint (too many targets found: bar, foo)"
 
         Examples:
             | command |
