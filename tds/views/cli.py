@@ -1,7 +1,11 @@
-'''
+"""
 A command line view for TDS
-'''
+"""
+
+from tabulate import tabulate
+
 from .base import Base
+
 
 def silence(*exc_classes):
     def wrap_func(f):
@@ -91,7 +95,7 @@ EXCEPTION_FORMATTERS = dict(
 
 
 def format_exception(exc):
-    'Format an exception for user consumption'
+    """Format an exception for user consumption."""
 
     exception_formatter = EXCEPTION_FORMATTERS.get(
         type(exc).__name__,
@@ -112,7 +116,7 @@ def format_exception_default(exc):
 
 
 def format_project(project):
-    'Format a project object'
+    """Format a project object."""
     output = []
     output.append(PROJECT_TEMPLATE.format(self=project))
     output.append(TARGET_TEMPLATE.format(
@@ -132,7 +136,7 @@ def format_package(package):
 
 
 def format_deployments(deployments):
-    'Format a list of deployments'
+    """Format a list of deployments."""
     output = []
     for pkg_dep_info in deployments:
         no_dep = {
@@ -183,14 +187,14 @@ def format_deployments(deployments):
 
 
 class CLI(Base):
-    '''
+    """
     View implementation to print to sys.stdout
-    '''
+    """
     def generate_result(self, view_name, tds_result):
-        '''
+        """
         Dispatches on the various keys in 'tds_result' to provide
         user feedback.
-        '''
+        """
         handler = getattr(
             self,
             'generate_%s_result' % view_name,
@@ -205,31 +209,38 @@ class CLI(Base):
             )
 
     def generate_default_result(self, **kwds):
-        'This is called if no matching handler is found'
+        """This is called if no matching handler is found."""
         if kwds.get('error'):
             print format_exception(kwds['error'])
         else:
             raise NotImplementedError
 
-    @staticmethod
-    def generate_project_list_result(result=None, error=None, **_kwds):
-        '''
-        Show the view for a list of project objects
-        '''
+    def generate_project_list_result(self, result=None, error=None, **_kwds):
+        """
+        Show the view for a list of project objects.
+        """
         if result is None and error is not None:
             result = [error]
 
-        output = []
-        for project in result:
-            if isinstance(project, Exception):
-                output.append(format_exception(project) + '\n')
-            else:
-                output.append(format_project(project))
-        print ''.join(output)
+        if self.output_format=="table":
+            print tabulate(tuple((project.name, project.environment_specific)
+                                 for project in result
+                                 if not isinstance(project, Exception)),
+                           headers=("Project", "Environment Specific"),
+                           tablefmt="orgtbl")
+            print '\n\n'
+            print ''.join(tuple(format_exception(project) + '\n' for
+                                project in result if
+                                isinstance(project, Exception)))
+        elif self.output_format=="blocks":
+            print ''.join(tuple(format_exception(project) + '\n' if
+                                isinstance(project, Exception) else
+                                format_project(project) for project in
+                                result))
 
     @staticmethod
     def generate_project_delete_result(result=None, error=None, **_kwds):
-        'Render view for a deleted project'
+        """Render view for a deleted project."""
         if result:
             print (
                 'Project "%(name)s" was successfully deleted.'
@@ -240,7 +251,7 @@ class CLI(Base):
 
     @staticmethod
     def generate_project_create_result(result=None, error=None, **_kwds):
-        'Render view for a created project'
+        """Render view for a created project."""
         if result:
             print 'Created %(name)s:' % dict(name=result.name)
             print format_project(result)
@@ -249,7 +260,7 @@ class CLI(Base):
 
     @staticmethod
     def generate_deploy_show_result(result=None, error=None, **_kwds):
-        'Render view for a list of deployments'
+        """Render view for a list of deployments."""
         if result is not None:
             print format_deployments(result)
         elif error:
@@ -258,7 +269,7 @@ class CLI(Base):
     def generate_deploy_add_apptype_result(self,
         result=None, error=None, **kwds
     ):
-        'Format the result of a "deploy add-apptype" action'
+        """Format the result of a "deploy add-apptype" action."""
         if error is not None:
             return self.generate_default_result(
                 result=result, error=error, **kwds
@@ -272,7 +283,7 @@ class CLI(Base):
     def generate_deploy_delete_apptype_result(self,
         result=None, error=None, **kwds
     ):
-        'Format the result of a "deploy delete-apptype" action'
+        """Format the result of a "deploy delete-apptype" action."""
         if error is not None:
             return self.generate_default_result(
                 result=result, error=error, **kwds
@@ -285,7 +296,7 @@ class CLI(Base):
         )
 
     def generate_package_add_result(self, result=None, error=None, **kwds):
-        'Format the result of a "package add" action'
+        """Format the result of a "package add" action."""
         if error is not None:
             return self.generate_default_result(
                 result=result, error=error, **kwds
@@ -297,19 +308,27 @@ class CLI(Base):
         )
 
     def generate_package_list_result(self, result=None, error=None, **kwds):
+        """
+        Generate the package list display for the given results, which
+        should be an iterable with items that satisfy the
+        PACKAGE_TEMPLATE above.
+        """
         if error is not None:
             return self.generate_default_result(
                 result=result, error=error, **kwds
             )
 
-        package_texts = []
-        for package in result:
-            package_texts.append(format_package(package))
-
-        print '\n\n'.join(package_texts)
+        if self.output_format=="table":
+            print tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
+                                 pkg in result),
+                           headers=('Project', 'Version', 'Revision'),
+                           tablefmt="orgtbl")
+        elif self.output_format=="blocks":
+            print '\n\n'.join(tuple(format_package(package) for package
+                                    in result))
 
     def generate_deploy_restart_result(self, result=None, error=None, **kwds):
-        'Format the result of a "deploy restart" action'
+        """Format the result of a "deploy restart" action."""
         if error is not None:
             return self.generate_default_result(
                 result=result, error=error, **kwds

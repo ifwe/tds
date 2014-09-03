@@ -414,6 +414,17 @@ def then_the_output_describes_the_projects(context):
             Then the output describes a project with name="%s"
         ''' % project.name)
 
+@then(u'the output describes a project with name="{name}" in a table')
+def then_the_output_describes_a_project_with_name_in_a_table(context, name):
+    assert ('|-' in context.process.stdout
+            or
+            '-|' in context.process.stdout)
+    pipe_prepended = "| {name}".format(name=name)
+    pipe_appended = "{name} |".format(name=name)
+    assert (pipe_prepended in context.process.stdout
+            or
+            pipe_appended in context.process.stdout)
+
 @then(u'the output describes the packages')
 def then_the_output_describes_the_packages(context):
     for package in context.tds_package_versions:
@@ -445,6 +456,28 @@ def then_the_output_describes_a_project_with_properties(context, properties):
     except AssertionError as e:
         e.args += (stdout, stderr),
         raise e
+
+@then(u'the output describes the packages in a table')
+def then_the_output_describes_the_packages_in_a_table(context):
+    assert ("|-" in context.process.stdout
+            and
+            "-|" in context.process.stdout)
+    context.execute_steps(u'''
+        Then the output is a table with a column containing "{header}"
+    '''.format(header="Version"))
+    for package in context.tds_package_versions:
+        for pkg_attr in (package.version, package.name, package.revision):
+            context.execute_steps(u'''
+                Then the output is a table with a column containing "{attr}"
+            '''.format(attr=pkg_attr))
+
+@then(u'the output is a table with a column containing "{text}"')
+def then_the_output_is_a_table_with_a_column_containing(context, text):
+    pipe_prepended = '| {text} '.format(text=text)
+    pipe_appended = ' {text} |'.format(text=text)
+    assert (pipe_prepended in context.process.stdout
+            or
+            pipe_appended in context.process.stdout)
 
 @then(u'the output describes a project with {properties}')
 def then_the_output_describes_a_project_with_properties(context, properties):

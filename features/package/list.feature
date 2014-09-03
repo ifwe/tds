@@ -47,3 +47,13 @@ Feature: The package list subcommand
         Given there is a package version with project="foo",version="5"
         When I run "package list --projects foo bar"
         Then the output describes a package version with name="foo-name",version="5"
+
+    Scenario: with table output format
+        Given there is a package version with version="1"
+        When I run "--output-format table package list --projects bar"
+        Then the output describes the packages in a table
+
+    Scenario: explicit blocks output format
+        Given there is a package version with version="1"
+        When I run "--output-format blocks package list --projects bar"
+        Then the output describes the packages

@@ -53,3 +53,23 @@ Feature: The repository list subcommand
         When I run "repository list --projects foo bar"
         Then the output describes a missing project with name="foo"
         And the output describes a missing project with name="foo"
+
+    Scenario Outline: with explicit blocks output format
+        Given there is a project with name="<name>"
+        When I run "--output-format blocks repository list --projects <name>"
+        Then the output describes a project with name="<name>"
+
+        Examples:
+            | name    |
+            | foo     |
+            | spammon |
+
+    Scenario Outline: with table output format
+        Given there is a project with name="<name>"
+        When I run "--output-format table repository list --projects <name>"
+        Then the output describes a project with name="<name>" in a table
+
+        Examples:
+            | name    |
+            | foo     |
+            | spammon |
