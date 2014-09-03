@@ -79,7 +79,6 @@ class RepositoryController(BaseController):
                     params['pkgpath'],
                     params['arch'],
                     params['buildhost'],
-                    params['env_specific']
                 )
             log.log(5, 'Application\'s Location ID is: %d',
                     project.id)
