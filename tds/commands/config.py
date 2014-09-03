@@ -98,7 +98,6 @@ class ConfigController(DeployController):
             params['pkgpath'],
             params['arch'],
             params['buildhost'],
-            params['env_specific']
         )
 
         tagopsdb.Session.commit()
