@@ -1,15 +1,7 @@
 '''tds.model init'''
 
-from .actor import Actor, LocalActor
-from .deployment import Deployment, AppDeployment
-from .application import Application
-from .project import Project
-from .package import Package
-from .deploy_target import DeployTarget
-
-from tagopsdb import Environment
-
 __all__ = [
+    'Base',
     'Actor',
     'Deployment',
     'AppDeployment',
@@ -18,5 +10,17 @@ __all__ = [
     'Project',
     'Application',
     'Environment',
+    'AppTarget',
+    'HostTarget',
     'DeployTarget',
 ]
+
+from .base import Base
+from .actor import Actor, LocalActor
+from .deployment import Deployment, AppDeployment
+from .application import Application
+from .project import Project
+from .package import Package
+from .deploy_target import DeployTarget, HostTarget, AppTarget
+
+from tagopsdb import Environment
