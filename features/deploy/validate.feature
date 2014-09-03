@@ -45,8 +45,9 @@ Feature: deploy/config validate subcommand
             | config  |
 
     Scenario Outline: validate a package from a project with a version that doesn't exist
-        When I run "<command> validate proj 124"
-        Then the output is "Package "proj@124" does not exist"
+        Given there is a project with name="proj"
+        When I run "<command> validate proj 123"
+        Then the output is "Package "proj-name@123" does not exist"
 
         Examples:
             | command |

@@ -49,6 +49,7 @@ class ConfigController(DeployController):
         """
         return super(ConfigController, self).rollback(**params)
 
+    @validate('package')
     @validate('targets')
     @validate('project')
     def push(self, **params):

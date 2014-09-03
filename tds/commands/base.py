@@ -218,4 +218,24 @@ class BaseController(object):
         raise NotImplementedError
 
     def validate_package(self, version, **params):
-        raise NotImplementedError
+        params = self.validate_project(**params)
+        project = params['project']
+
+        all_apps = project.applications
+
+        if len(all_apps) > 1:
+            raise Exception(
+                'Project "%s" has too many applications associated with it: %s',
+                project.name, sorted(x.name for x in all_apps)
+            )
+
+        app = all_apps[0]
+
+        for package in app.packages:
+            if version == package.version:
+                return dict(package=package)
+
+        raise Exception(
+            'Package "%s@%s" does not exist',
+            app.name, version
+        )
