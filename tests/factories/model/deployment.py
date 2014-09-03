@@ -8,6 +8,7 @@ import tds.model.deployment as d
 from .actor import ActorFactory
 from .package import PackageFactory
 from .project import ProjectFactory
+from .deploy_target import AppTargetFactory
 
 
 class DeploymentFactory(factory.Factory):
@@ -30,8 +31,9 @@ class DeploymentFactory(factory.Factory):
     project = factory.SubFactory(ProjectFactory)
 
     target = dict(
-        environment='dev',
-        apptypes=['fake_apptype'],
+        env='dev',
+        apptypes=[AppTargetFactory(name='fake_apptype')],
+        hosts=None,
     )
 
 
@@ -44,7 +46,7 @@ class HostDeploymentFactory(DeploymentFactory):
     '''
 
     target = dict(
-        environment='test',
+        env='test',
         hosts=['whatever.example.com'],
     )
 
@@ -58,7 +60,7 @@ class AllApptypesDeploymentFactory(DeploymentFactory):
     '''
 
     target = dict(
-        environment='test',
+        env='test',
     )
 
 
