@@ -191,6 +191,7 @@ class PackageController(BaseController):
             project_name=project.name, package=package
         ))
 
+    @validate('package')
     @validate('project')
     def delete(self, project, **params):
         """Delete a given version of a package for a given project."""
@@ -200,18 +201,6 @@ class PackageController(BaseController):
             'from software repository', params['version'],
             project.name
         )
-
-        pkg_info = dict(
-            project=project.name,
-            version=params['version'],
-            revision='1'
-        )
-
-        if self.check_package_state(pkg_info) is None:
-            raise Exception(
-                'Package "%s@%s" does not exist',
-                project.name, params['version']
-            )
 
         try:
             # The real 'revision' is hardcoded to 1 for now

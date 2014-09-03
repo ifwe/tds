@@ -216,3 +216,6 @@ class BaseController(object):
             return dict(hosts=targets, apptypes=None)
 
         raise NotImplementedError
+
+    def validate_package(self, version, **params):
+        raise NotImplementedError
