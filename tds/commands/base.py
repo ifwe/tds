@@ -90,6 +90,7 @@ class BaseController(object):
 
         for project_name in projects:
             project = tds.model.Project.get(name=project_name)
+
             if project is None:
                 raise Exception('Project "%s" does not exist', project_name)
 
