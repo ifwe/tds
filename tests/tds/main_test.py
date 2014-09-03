@@ -76,7 +76,7 @@ class TestTDS(unittest2.TestCase):
         config = DeployConfigFactory()
 
         assert t.params['user'] == 'fake'
-        assert t.params['environment'] == 'fakedev'
+        assert t.params['env'] == 'fakedev'
         assert t.params['repo'] == config['repo']
 
     def test_initialize_db_from_opts(self):

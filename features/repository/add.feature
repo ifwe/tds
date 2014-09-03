@@ -1,4 +1,4 @@
-Feature: repository add project pkgname pkgpath arch buildhost buildtype apptypes [-e|--env-specific] [-c|--config]
+Feature: repository add project pkgname pkgpath arch buildhost buildtype apptypes [-c|--config]
     As an administrator
     I want to add projects to the repository
     So that developers can deploy the projects with TDS
@@ -40,16 +40,6 @@ Feature: repository add project pkgname pkgpath arch buildhost buildtype apptype
         Given there is a deploy target with name="apptype1"
         When I run "repository add proj pkgname /job/pkgname noarch ci.tagged.com jenkins apptype1 apptype2"
         Then the output has "Apptype 'apptype2' does not exist"
-
-    Scenario Outline: With '--env-specific' flag variants
-        Given there is a deploy target with name="apptype"
-        When I run "repository add <flag> proj pkgname /job/pkgname noarch ci.tagged.com jenkins apptype"
-        Then the output describes a project with name="proj",env_specific=True
-
-        Examples:
-            | flag              |
-            | --env-specific    |
-            | -e                |
 
     Scenario Outline: With '--config' flag variants
         Given there is a deploy target with name="apptype"

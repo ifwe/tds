@@ -20,14 +20,12 @@ def silence(*exc_classes):
 # TODO: this isn't planned out AT ALL
 PROJECT_TEMPLATE = (
     'Project: {self.name}\n'
-    'Environment Specific: {self.environment_specific}\n'
     # 'Project type: {self.type}\n'
 )
 APP_TEMPLATE = (
     'Application name: {self.pkg_name}\n'
     'Path: {self.path}\n'
     'Build host: {self.build_host}\n'
-    'Environment Specific: {self.environment_specific}\n'
 )
 TARGET_TEMPLATE = ('App types: {s}\n')
 APP_DEPLOY_HEADER_TEMPLATE = (

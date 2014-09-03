@@ -34,11 +34,13 @@ class ConfigController(DeployController):
 
     requires_tier_progression = False
 
+    @validate('targets')
     @validate('project')
     def repush(self, **params):
         """Repush a version of a config project. Same as `deploy redeploy`."""
         return super(ConfigController, self).redeploy(**params)
 
+    @validate('targets')
     @validate('project')
     def revert(self, **params):
         """
@@ -47,6 +49,7 @@ class ConfigController(DeployController):
         """
         return super(ConfigController, self).rollback(**params)
 
+    @validate('targets')
     @validate('project')
     def push(self, **params):
         """Push a new version of a config project. Same as `deploy promote`."""
@@ -95,7 +98,6 @@ class ConfigController(DeployController):
             params['pkgpath'],
             params['arch'],
             params['buildhost'],
-            params['env_specific']
         )
 
         tagopsdb.Session.commit()
@@ -103,7 +105,6 @@ class ConfigController(DeployController):
 
         return dict(result=tds.model.Project.get(name=project_name))
 
-    @staticmethod
     @validate('project')
     def delete(params):
         """Remove a config project from the system."""

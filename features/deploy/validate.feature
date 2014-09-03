@@ -50,7 +50,7 @@ Feature: deploy/config validate subcommand
         Given there is a project with name="proj"
         And there is a package version with version="123"
         When I run "<command> validate proj 123 --apptype foo"
-        Then the output is "Valid deploy targets for project "proj" are: []"
+        Then the output is "Valid apptypes for project "proj" are: []"
 
         Examples:
             | command |
@@ -63,7 +63,7 @@ Feature: deploy/config validate subcommand
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         When I run "<command> validate proj 123 --apptype foo bar"
-        Then the output is "Valid deploy targets for project "proj" are: ['foo']"
+        Then the output is "Valid apptypes for project "proj" are: ['foo']"
 
         Examples:
             | command |
@@ -121,7 +121,7 @@ Feature: deploy/config validate subcommand
         And the deploy target is a part of the project
         And the package version is deployed on the deploy target
         When I run "<command> validate proj 123"
-        Then the output is "Application "proj" has multiple corresponding app types, please use "--apptypes" or "--all-apptypes""
+        Then the output is "Specify a target constraint (too many targets found: bar, foo)"
 
         Examples:
             | command |

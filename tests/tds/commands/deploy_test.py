@@ -7,6 +7,7 @@ from tests.factories.model.deployment import DeploymentFactory
 from tests.factories.utils.config import DeployConfigFactory
 from tests.factories.model.project import ProjectFactory
 from tests.factories.model.package import PackageFactory
+from tests.factories.model.deploy_target import AppTargetFactory
 
 import tagopsdb
 import tagopsdb.deploy.deploy
@@ -27,19 +28,30 @@ class DeploySetUp(unittest2.TestCase):
             **{'return_value': PackageFactory()}
         ).start()
 
+        self.tds_env = patch(
+            'tds.model.Environment.get',
+            **{'side_effect': Mock}
+        ).start()
+
         app_config = DeployConfigFactory()
         self.deploy = tds.commands.DeployController(app_config)
         self.config = tds.commands.ConfigController(app_config)
 
         deploy_methods = [
-            ('get_app_info', (1, [1], {})),
+            ('get_app_info', (
+                PackageFactory(name='fake_package', version='123', id='1'),
+                [AppTargetFactory(name='fake_apptype')],
+                {}
+            )),
             ('perform_deployments', None),
             ('find_app_deployments', {}),
             ('ensure_newer_versions', False),
             ('determine_new_deployments', ({}, {})),
-            ('ensure_explicit_destinations', None),
             ('validate_project', lambda **kw:
-                dict(project=ProjectFactory(name=kw['project']))
+                dict(
+                    project=ProjectFactory(name=kw['project']),
+                    projects=[ProjectFactory(name=kw['project'])]
+                )
             )
         ]
 
@@ -77,13 +89,14 @@ class TestPromoteAndPush(DeploySetUp):
             **{'verify_access.return_value': True}
         ).start()
 
+        target = AppTargetFactory(id=1)
         return_val = self.deploy.check_previous_environment(
             ProjectFactory(),
             params={'force': force_option_used,
-                    'environment': 'prod',
+                    'env': 'prod',
                     'version': 'deadbeef'},
-            pkg_id='123',
-            app_id='123',
+            package=PackageFactory(version='123'),
+            apptype=target,
         )
 
         assert return_val == force_option_used
@@ -92,10 +105,10 @@ class TestPromoteAndPush(DeploySetUp):
         self.patch_method(self.deploy, 'send_notifications', None)
         self.deploy.ensure_newer_versions.return_value = True
 
-        self.deploy.action('promote',
+        self.deploy.promote(
             user_level='dev',
-            environment='dev',
-            project='fake_app'
+            env='dev',
+            project=ProjectFactory(name='fake_app')
         )
 
         assert self.deploy.perform_deployments.called
@@ -105,10 +118,10 @@ class TestPromoteAndPush(DeploySetUp):
         self.patch_method(self.deploy, 'send_notifications', None)
         self.deploy.ensure_newer_versions.return_value = version_is_new
 
-        self.deploy.action('promote',
+        self.deploy.promote(
             user_level='dev',
-            environment='dev',
-            project='fake_app'
+            env='dev',
+            project=ProjectFactory(name='fake_app')
         )
 
         assert self.deploy.perform_deployments.called
@@ -117,11 +130,7 @@ class TestPromoteAndPush(DeploySetUp):
         self.patch_method(self.config, 'send_notifications', None)
         self.config.ensure_newer_versions.return_value = False
 
-        self.config.action('push',
-            user_level='dev',
-            environment='dev',
-            project='fake_app'
-        )
+        self.config.push(project=ProjectFactory(name='fake_app'))
 
         assert self.config.perform_deployments.called
 
@@ -132,8 +141,8 @@ class TestPromoteAndPush(DeploySetUp):
 
         params = dict(
             user_level='dev',
-            environment='dev',  # TODO: mock BaseDeploy.envs
-            project='fake_project',
+            env='dev',  # TODO: mock BaseDeploy.envs
+            project=ProjectFactory(name='fake_project'),
             user='fake_user',
             groups=['engteam'],
             apptypes=['fake_apptype'],
@@ -142,7 +151,7 @@ class TestPromoteAndPush(DeploySetUp):
             version='badf00d',
         )
 
-        returned = self.deploy.action(params.get('subcommand_name'), **params)
+        returned = getattr(self.deploy, params.get('subcommand_name'))(**params)
 
         deployment = DeploymentFactory()
         Notifications.assert_called_with(DeployConfigFactory())
@@ -157,20 +166,21 @@ class TestAddApptype(DeploySetUp):
     def test_missing_project(self, mock_app_loc):
         params = dict(
             user_level='admin',
-            environment='dev',  # TODO: mock BaseDeploy.envs
-            project='fake_project',
+            env='dev',  # TODO: mock BaseDeploy.envs
+            project=ProjectFactory(name='fake_project'),
             user='fake_user',
             groups=['engteam'],
-            apptypes=['fake_apptype'],
+            apptypes=AppTargetFactory(name='fake_apptype'),
             subcommand_name='add-apptype',  # TODO: mock BaseDeploy.dep_types
             command_name='deploy',
             version='badf00d',
         )
 
-        res = self.deploy.action('add_apptype', **params)
-        err = res.get('error', None)
-        assert isinstance(err, Exception)
-        assert params['project'] in err.args[1:], repr(err)
+        with self.assertRaises(Exception) as raised:
+            self.deploy.add_apptype(**params)
+
+        err = raised.exception
+        assert params['project'].name in err.args[1:], repr(err)
 
     @patch(
         'tagopsdb.deploy.repo.find_app_location',
@@ -187,8 +197,8 @@ class TestAddApptype(DeploySetUp):
     def test_missing_apptype(self, *args):
         params = dict(
             user_level='admin',
-            environment='dev',  # TODO: mock BaseDeploy.envs
-            project='fake_project',
+            env='dev',  # TODO: mock BaseDeploy.envs
+            project=ProjectFactory(name='fake_project'),
             user='fake_user',
             groups=['engteam'],
             apptype='fake_apptype',
@@ -197,7 +207,8 @@ class TestAddApptype(DeploySetUp):
             version='badf00d',
         )
 
-        res = self.deploy.action('add_apptype', **params)
-        err = res.get('error', None)
-        assert isinstance(err, Exception)
-        assert 'fake_apptype' in err.args[1:], repr(err)
+        with self.assertRaises(Exception) as raised:
+            self.deploy.add_apptype(**params)
+
+        err = raised.exception
+        assert params['apptype'] in err.args[1:], repr(err)

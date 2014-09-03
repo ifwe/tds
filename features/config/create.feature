@@ -1,4 +1,4 @@
-Feature: config create project pkgname pkgpath arch buildhost buildtype [-e|--env-specific]
+Feature: config create project pkgname pkgpath arch buildhost buildtype
     As an administrator
     I want to add config projects to the repository
     So that developers can deploy configurations with TDS
@@ -29,14 +29,3 @@ Feature: config create project pkgname pkgpath arch buildhost buildtype [-e|--en
         Given there is a project with name="tagconfig"
         When I run "config create tagconfig pkgname /job/pkgname noarch ci.tagged.com jenkins"
         Then the output has "Project already exists: tagconfig"
-
-    Scenario Outline: With '--env-specific' flag variants
-        Given there is a deploy target with name="apptype"
-        When I run "config create <flag> tagconfig pkgname /job/pkgname noarch ci.tagged.com jenkins"
-        Then the output describes a project with name="tagconfig",env_specific=True
-
-        Examples:
-            | flag              |
-            | --env-specific    |
-            | -e                |
-

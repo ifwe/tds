@@ -1,7 +1,6 @@
 """Model module for project object."""
 
 from .base import Base
-from .deploy_target import DeployTarget
 import tagopsdb
 
 
@@ -18,18 +17,11 @@ class Project(Base):
         return self.package_definitions
 
     @property
-    def environment_specific(self):
-        """
-        Return False iff there are applications and at least
-        one is env specific.
-        """
-        return all((not x.environment_specific) for x in self.applications)
-
-    @property
     def targets(self):
         """Return deploy targets, but ignore the "dummy" target."""
+        from .deploy_target import AppTarget
         return [
-            DeployTarget(delegate=x)
+            AppTarget(delegate=x)
             for x in self.delegate.targets
             if x.name != x.dummy
         ]
