@@ -459,10 +459,6 @@ def then_the_output_describes_a_project_with_properties(context, properties):
             assert ('Project: %(name)s' % attrs) in lines
             processed_attrs.add('name')
 
-        if 'env_specific' in attrs:
-            assert find_substring_or_regex_in_lines('Environment Specific: %(env_specific)s' % attrs, lines)
-            processed_attrs.add('env_specific')
-
         if 'apptype' in attrs:
             apptypes = attrs['apptype']
             if not isinstance(apptypes, list):
