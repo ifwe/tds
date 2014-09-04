@@ -18,8 +18,8 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         And the hosts are associated with the deploy target
 
         And there is a package version with version="122"
-        And the package version is deployed on the deploy targets in the "stage" env
-        And the package version has been validated in the "staging" environment
+        And the package is deployed on the deploy targets in the "stage" env
+        And the package has been validated in the "staging" environment
 
         And there is a package version with version="123"
         And the package version is deployed on the deploy targets in the "dev" env
@@ -80,8 +80,8 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
         And the deploy target is a part of the project
-        And the package version is deployed on the deploy target
-        And the package version failed to deploy on the host with name="anotherhost01"
+        And the package is deployed on the deploy target
+        And the package failed to deploy on the host with name="anotherhost01"
         When I run "<command> proj --all-apptypes"
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Completed: 1 out of 1 hosts"

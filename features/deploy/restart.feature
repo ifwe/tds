@@ -15,8 +15,8 @@ Feature: deploy restart subcommand
             | appfoo02      | dev   |
         And the hosts are associated with the deploy target
         And there is a package version with version="123"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
 
     Scenario: too few arguments
         When I run "deploy restart"

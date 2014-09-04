@@ -34,12 +34,14 @@ class ConfigController(DeployController):
 
     requires_tier_progression = False
 
+    @validate('package')
     @validate('targets')
     @validate('project')
     def repush(self, **params):
         """Repush a version of a config project. Same as `deploy redeploy`."""
         return super(ConfigController, self).redeploy(**params)
 
+    @validate('package')
     @validate('targets')
     @validate('project')
     def revert(self, **params):
