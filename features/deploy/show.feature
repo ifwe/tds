@@ -63,7 +63,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: with a project and an apptype and a version that doesn't exist
         When I run "<command> show proj 124 --apptypes foo"
-        Then the output describes no deployments
+        Then the output is "Package "proj-name@124" does not exist"
 
         Examples:
             | command |
