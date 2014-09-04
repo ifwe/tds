@@ -106,7 +106,7 @@ class ConfigController(DeployController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-        return dict(result=tds.model.Application.get(name=project_name))
+        return dict(result=tds.model.Project.get(name=project_name))
 
     @validate('project')
     def delete(**params):
