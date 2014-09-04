@@ -54,6 +54,7 @@ class Base(_Base):
 
     def delete(self, commit=True, *args, **kwargs):
         """Delete action with default auto-commit."""
+        self.delegate.refresh()
         self.delegate.delete(*args, **kwargs)
         if commit:
             tagopsdb.Session.commit()
