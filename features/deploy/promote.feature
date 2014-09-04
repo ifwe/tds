@@ -8,7 +8,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         And I am in the "stage" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         And there are hosts:
@@ -66,7 +66,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | deploy promote    |
 
     Scenario: promote version that isn't validated in previous env (only for deploy)
-        Given there is a package version with version="124"
+        Given there is a package with version="124"
         When I run "deploy promote proj 124"
         Then the output has "Package "proj@124" never validated in "dev" environment for target "the-apptype""
 
@@ -156,7 +156,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | deploy promote    |
 
     Scenario Outline: promote version that isn't validated in previous env with force option
-        Given there is a package version with version="124"
+        Given there is a package with version="124"
         When I run "deploy promote <switch> proj 124"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "proj-name" version "124" was deployed to the deploy target

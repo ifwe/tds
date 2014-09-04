@@ -48,7 +48,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project for an apptype that does not exist
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         When I run "<command> invalidate proj 123 --apptype foo"
         Then the output is "Valid apptypes for project "proj" are: []"
 
@@ -59,7 +59,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project with one of several apptypes that does not exist
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         When I run "<command> invalidate proj 123 --apptype foo bar"
@@ -72,7 +72,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project for an apptype with it currently deployed
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         And the package is deployed on the deploy targets
@@ -86,7 +86,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project for an apptype
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         And the package is deployed on the deploy target
@@ -100,7 +100,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project with single apptype
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         And the package version is deployed on the deploy targets
@@ -116,7 +116,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project with single apptype with apptype option
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         And the package version is deployed on the deploy targets
@@ -131,7 +131,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project with multiple apptypes with no options
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are deploy targets:
             | name  |
             | foo   |
@@ -149,7 +149,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project with multiple apptypes with apptype option
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are deploy targets:
             | name  |
             | foo   |
@@ -167,7 +167,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project with multiple apptypes with all-apptypes option
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are deploy targets:
             | name  |
             | foo   |

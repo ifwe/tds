@@ -22,7 +22,7 @@ Feature: The package list subcommand
             | --projects foo bar    |
 
     Scenario: with multiple packages
-        Given there are package versions:
+        Given there are packages:
             | version   |
             | 1         |
             | 2         |
@@ -31,12 +31,12 @@ Feature: The package list subcommand
         Then the output describes the packages
 
     Scenario: with existing project specified
-        Given there is a package version with version="1"
+        Given there is a package with version="1"
         When I run "package list --projects bar"
         Then the output describes the packages
 
     Scenario: with multiple existing projects specified
-        Given there are package versions:
+        Given there are packages:
             | project   | version |
             | foo       | 1       |
             | foo       | 2       |
@@ -44,7 +44,7 @@ Feature: The package list subcommand
         Then the output describes the packages
 
     Scenario: with a missing project and an existing project specified
-        Given there is a package version with project="foo",version="5"
+        Given there is a package with project="foo",version="5"
         When I run "package list --projects foo bar"
         Then the output describes a package version with name="foo-name",version="5"
 

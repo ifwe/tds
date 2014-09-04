@@ -41,14 +41,14 @@ Feature: jenkinspackage add subcommand
         And the job has a build with number="123"
         When I start to run "jenkinspackage add proj job 123"
         And I wait 10 seconds
-        And the status is changed to "completed" for package version with name="proj-name",version=123
+        And the status is changed to "completed" for package with name="proj-name",version=123
         And the command finishes
         Then the output has "Added package version: "proj-name@123""
 
     @jenkins_server
     Scenario: add a package to a project again
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there is a jenkins job with name="job"
         And the job has a build with number="123"
         When I run "jenkinspackage add proj job 123"

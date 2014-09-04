@@ -531,7 +531,7 @@ def then_the_output_describes_a_project_with_name_in_rst(context, name):
 def then_the_output_describes_the_packages(context):
     for package in context.tds_package_versions:
         context.execute_steps('''
-            Then the output describes a package version with version="%s"
+            Then the output describes a package with version="%s"
         ''' % package.version)
 
 @then(u'the output describes a package version with {properties}')
@@ -965,7 +965,7 @@ def then_the_output_describes_no_deployments(context):
     ), ("tiers didn't match", stdout, stderr)
 
 
-@when('the status is changed to "{status}" for package version with {properties}')
+@when('the status is changed to "{status}" for package with {properties}')
 def when_package_version_state_is_changed(context, status, properties):
     attrs = parse_properties(properties)
     pkg = tagopsdb.Package.get(**attrs)

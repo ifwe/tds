@@ -17,7 +17,7 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
             | sprojhost02   | stage   |
         And the hosts are associated with the deploy target
 
-        And there is a package version with version="122"
+        And there is a package with version="122"
         And the package is deployed on the deploy targets in the "stage" env
         And the package has been validated in the "staging" environment
 

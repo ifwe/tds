@@ -31,12 +31,12 @@ Feature: package add subcommand
         And there is an RPM package with name="proj-name",version="123",path="proj-path"
         When I start to run "package add proj 123"
         And I wait 10 seconds
-        And the status is changed to "completed" for package version with name="proj-name",version=123
+        And the status is changed to "completed" for package with name="proj-name",version=123
         And the command finishes
         Then the output has "Added package version: "proj-name@123""
 
     Scenario: add a package to a project again
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         When I run "package add proj 123"
         Then the output has "Package version "proj-name@123" already exists"
