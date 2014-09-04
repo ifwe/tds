@@ -73,3 +73,17 @@ Feature: The repository list subcommand
             | name    |
             | foo     |
             | spammon |
+
+    Scenario: invalid output format
+        When I run "--output-format foo repository list"
+        Then the output has "output-format must be one of"
+
+    Scenario Outline: with json output format
+        Given there is a project with name="<name>"
+        When I run "--output-format json repository list --projects <name>"
+        Then the output describes a project with name="<name>" in json
+
+        Examples:
+            | name    |
+            | foo     |
+            | spammon |

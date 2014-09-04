@@ -2,9 +2,12 @@
 A command line view for TDS
 """
 
+import json
+
 from tabulate import tabulate
 
 from .base import Base
+from .json_encoder import TDSEncoder
 
 
 def silence(*exc_classes):
@@ -221,10 +224,10 @@ class CLI(Base):
             result = [error]
 
         if self.output_format=="table":
-            print tabulate(tuple((project.name, project.environment_specific)
+            print tabulate(tuple((project.name)
                                  for project in result
                                  if not isinstance(project, Exception)),
-                           headers=("Project", "Environment Specific"),
+                           headers=("Project"),
                            tablefmt="orgtbl")
             print '\n\n'
             print ''.join(tuple(format_exception(project) + '\n' for
@@ -235,6 +238,12 @@ class CLI(Base):
                                 isinstance(project, Exception) else
                                 format_project(project) for project in
                                 result))
+        elif self.output_format=="json":
+            #TODO Figure out how to convert exceptions as well
+            print '\n'.join(tuple(json.dumps(project.to_dict(),
+                                             cls=TDSEncoder)
+                                  for project in result
+                                  if not isinstance(project, Exception)))
 
     @staticmethod
     def generate_project_delete_result(result=None, error=None, **_kwds):
@@ -324,6 +333,10 @@ class CLI(Base):
         elif self.output_format=="blocks":
             print '\n\n'.join(tuple(format_package(package) for package
                                     in result))
+        elif self.output_format=="json":
+            print '\n'.join(tuple(json.dumps(package.to_dict(),
+                                             cls=TDSEncoder)
+                                  for package in result))
 
     def generate_deploy_restart_result(self, result=None, error=None, **kwds):
         """Format the result of a "deploy restart" action."""
