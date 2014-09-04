@@ -92,6 +92,9 @@ class PackageAddFactory(DeploymentFactory):
 
 
 class AppDeploymentFactory(factory.Factory):
+    """
+    Factory for creating app deployments.
+    """
     FACTORY_FOR = d.AppDeployment
     FACTORY_STRATEGY = factory.STUB_STRATEGY
 
