@@ -28,12 +28,12 @@ Feature: package delete subcommand
 
     Scenario: delete a package from a project
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         When I run "package delete proj 123"
         Then the output is "This command is not implemented yet"
 
     Scenario: Delete a target from a project again
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         When I run "package delete proj 123"
         Then the output is "This command is not implemented yet"

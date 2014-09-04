@@ -64,7 +64,7 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
             | deploy rollback   |
 
     Scenario Outline: rollback version to hosts
-        Given there is a package version with version="124"
+        Given there is a package with version="124"
         And the package is deployed on the hosts
         When I run "<command> proj --hosts projhost01 projhost02"
         Then the output has "Completed: 2 out of 2 hosts"
