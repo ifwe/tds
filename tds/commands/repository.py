@@ -121,9 +121,6 @@ class RepositoryController(BaseController):
                       params['project'], params['config'])
 
             try:
-                config = tagopsdb.deploy.repo.find_app_location(
-                    params['config']
-                )
                 # Transitional code for refactoring
                 config_new = tagopsdb.deploy.repo.find_project(
                     params['config']
@@ -133,8 +130,8 @@ class RepositoryController(BaseController):
                 )
 
                 log.log(
-                    5, 'Config project %r\'s Location ID is: %s',
-                    params['config'], config.id
+                    5, 'Config project %r\'s project: %r',
+                    params['config'], config_new
                 )
                 tagopsdb.deploy.repo.add_app_packages_mapping(
                     config_new,
