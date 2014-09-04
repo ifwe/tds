@@ -148,7 +148,7 @@ class BaseController(object):
                 ['hosts', 'apptypes', 'all_apptyes']
             )
 
-        params = self.validate_project(**params)
+        params.update(self.validate_project(**params))
         projects = params['projects']
 
         environment = tds.model.Environment.get(env=env)
@@ -217,7 +217,7 @@ class BaseController(object):
 
         raise NotImplementedError
 
-    def validate_package(self, version, **params):
+    def validate_package(self, version=None, **params):
         params = self.validate_project(**params)
         project = params['project']
 
@@ -231,11 +231,28 @@ class BaseController(object):
 
         app = all_apps[0]
 
-        for package in app.packages:
-            if version == package.version:
-                return dict(package=package)
+        if version is None:
+            package = self.get_latest_app_version(project, app, **params)
+            if package is None:
+                raise Exception("couldnt determine latest version")
+        else:
+            for package in app.packages:
+                if version == package.version:
+                    break
+            else:
+                package = None
 
-        raise Exception(
-            'Package "%s@%s" does not exist',
-            app.name, version
-        )
+        if package is None:
+            raise Exception(
+                'Package "%s@%s" does not exist',
+                app.name, version
+            )
+
+        return dict(package=package)
+
+    def get_latest_app_version(self, project, app, **params):
+        targets = self.validate_targets(project=project.name, **params)
+
+        hosts = targets.get('hosts', None)
+        apptypes = targets.get('apptypes', None)
+

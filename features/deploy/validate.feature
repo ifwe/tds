@@ -91,7 +91,7 @@ Feature: deploy/config validate subcommand
     Scenario Outline: validate a package from a project with single apptype
         When I run "<command> validate proj 123"
         Then the output is empty
-        And the package version is validated
+        And the package is validated
 
         Examples:
             | command |
@@ -100,7 +100,7 @@ Feature: deploy/config validate subcommand
 
     Scenario Outline: validate a package from a project with single apptype with apptype option
         When I run "<command> validate proj 123 --apptype foo"
-        Then the package version is validated
+        Then the package is validated
 
         Examples:
             | command |
@@ -134,7 +134,7 @@ Feature: deploy/config validate subcommand
         And the hosts are associated with the deploy target
         And the package version is deployed on the deploy target
         When I run "<command> validate proj 123 --apptype foo"
-        Then the package version is validated for deploy target with name="foo"
+        Then the package is validated for deploy target with name="foo"
 
         Examples:
             | command |
@@ -151,7 +151,7 @@ Feature: deploy/config validate subcommand
         And the hosts are associated with the deploy target
         And the package version is deployed on the deploy target
         When I run "<command> validate proj 123 --all-apptypes"
-        Then the package version is validated for the deploy targets
+        Then the package is validated for the deploy targets
 
         Examples:
             | command |

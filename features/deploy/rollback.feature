@@ -65,7 +65,7 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
 
     Scenario Outline: rollback version to hosts
         Given there is a package version with version="124"
-        And the package version is deployed on the hosts
+        And the package is deployed on the hosts
         When I run "<command> proj --hosts projhost01 projhost02"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "proj-name" version "123" was deployed to the hosts
@@ -91,14 +91,14 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
 
-        And the package version "121" is deployed on the deploy target
-        And the package version "121" is validated
+        And the package "121" is deployed on the deploy target
+        And the package "121" is validated
 
-        And the package version "122" is deployed on the deploy target
-        And the package version "122" is invalidated
+        And the package "122" is deployed on the deploy target
+        And the package "122" is invalidated
 
-        And the package version "123" is deployed on the deploy target
-        And the package version "123" is validated
+        And the package "123" is deployed on the deploy target
+        And the package "123" is validated
 
         When I run "<command> proj --all-apptypes"
         Then the output has "Completed: 2 out of 2 hosts"

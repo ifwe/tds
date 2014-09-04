@@ -1605,9 +1605,10 @@ class DeployController(BaseController):
         log.debug('Committed database changes')
         return dict()
 
+    @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def show(self, project, apptypes=None, **params):
+    def show(self, project, package, version, apptypes=None, **params):
         """Show deployment information for a given project"""
 
         log.debug('Showing deployment information for given project')
@@ -1670,9 +1671,10 @@ class DeployController(BaseController):
 
         return dict(result=deploy_info)
 
+    @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def rollback(self, project, hosts=None, apptypes=None, **params):
+    def rollback(self, project, package, hosts=None, apptypes=None, **params):
         """Rollback to the previous validated deployed version of given
            project on requested application tiers or hosts
         """
@@ -1742,9 +1744,10 @@ class DeployController(BaseController):
 
         return None
 
+    @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def restart(self, project, hosts=None, apptypes=None, **params):
+    def restart(self, project, package, hosts=None, apptypes=None, **params):
         """Restart given project on requested application tiers or hosts"""
 
         log.debug('Restarting application for project')
@@ -1796,9 +1799,10 @@ class DeployController(BaseController):
 
         return dict(result=restart_results)
 
+    @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def redeploy(self, project, hosts=None, apptypes=None, **params):
+    def redeploy(self, project, package, hosts=None, apptypes=None, **params):
         """Redeploy given project to requested application tiers or hosts"""
 
         log.debug('Redeploying project')

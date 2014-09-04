@@ -9,8 +9,8 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
         And there is a package version with version="123"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         And there are hosts:
             | name          | env   |
             | dprojhost01   | dev   |
@@ -98,8 +98,8 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
         And the deploy target is a part of the project
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         When I run "<command> proj 123 --all-apptypes"
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Completed: 1 out of 1 hosts"
