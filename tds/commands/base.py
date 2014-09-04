@@ -115,6 +115,8 @@ class BaseController(object):
 
         project = None
         project_objects = []
+        application = None
+        application_objects = []
 
         for project_name in projects:
             project = tds.model.Project.get(name=project_name)
@@ -122,12 +124,30 @@ class BaseController(object):
             if project is None:
                 raise Exception('Project "%s" does not exist', project_name)
 
+            if len(project.applications) == 0:
+                raise Exception(
+                    'Project "%s" has no applications', project_name,
+                )
+
+            if len(project.applications) > 1:
+                raise Exception(
+                    'Project "%s" has too many applications: %s',
+                    project_name,
+                    sorted(', '.join(x.name for x in project.applications))
+                )
+
+            application = project.applications[0]
+            application_objects.append(application)
             project_objects.append(project)
 
         return dict(
             projects=project_objects,
             project=project,
+            application=application,
+            applications=application_objects
         )
+
+    validate_application = validate_project
 
 
     def validate_targets(
@@ -218,8 +238,9 @@ class BaseController(object):
         raise NotImplementedError
 
     def validate_package(self, version=None, **params):
-        params = self.validate_project(**params)
-        project = params['project']
+        params.update(self.validate_project(**params))
+        project = params.pop('project')
+        params.pop('projects', None)
 
         all_apps = project.applications
 
