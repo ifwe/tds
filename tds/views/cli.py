@@ -224,7 +224,7 @@ class CLI(Base):
             result = [error]
 
         if self.output_format=="table":
-            print tabulate(tuple((project.name)
+            print tabulate(tuple((project.name,)
                                  for project in result
                                  if not isinstance(project, Exception)),
                            headers=("Project"),
