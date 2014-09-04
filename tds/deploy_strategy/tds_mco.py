@@ -1,3 +1,7 @@
+"""
+MCO deploy strategy class.
+"""
+
 import subprocess
 import json
 import re
@@ -12,7 +16,10 @@ log = logging.getLogger('tds')
 
 
 class TDSMCODeployStrategy(DeployStrategy):
+    """MCO deploy strategy class."""
+
     def __init__(self, bin, **kwargs):
+        """Initialize object."""
         self.mco_bin = bin
 
     @tds.utils.debug

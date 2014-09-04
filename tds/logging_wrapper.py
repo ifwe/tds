@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+Wrapper around different logging facilities.
+"""
+
 import platform
 import logging
 import logging.handlers
@@ -40,14 +44,14 @@ LOG_INFO = priorities['info']
 LOG_ERR = priorities['err']
 
 
-def _extract_from_dict(dict, key, default=None):
+def _extract_from_dict(dictionary, key, default=None):
     """Extract a given key from a dictionary.  If the key doesn't exist
        and a default parameter has been set, return that.
     """
 
     try:
-        value = dict[key]
-        del dict[key]
+        value = dictionary[key]
+        del dictionary[key]
     except KeyError:
         value = default
 
@@ -220,7 +224,7 @@ class Logger(logging.Logger, object):
 
         self._update_formatters()
 
-    def pop(self, user=None, code=None):
+    def pop(self, *args, **kwargs):
         """Retrieve the previous values for user and code and set them"""
 
         self.user, self.code = self.saved_state.pop()
@@ -280,12 +284,11 @@ def add_syslog(logger, fh_name, facility=LOG_DAEMON, priority=LOG_INFO):
     else:
         handle = UTFFixedSysLogHandler(facility=facility)
 
-    format = Formatter('%(name)s[%(process)d]%(user)s%(code)s: '
-                       '%(levelname)s: %(message)s', use_color=False,
-                       user=getattr(logger, 'user', None),
-                       code=getattr(logger, 'code', None))
-
-    handle.setFormatter(format)
+    handle.setFormatter(Formatter('%(name)s[%(process)d]%(user)s%(code)s: '
+                                  '%(levelname)s: %(message)s',
+                                  use_color=False,
+                                  user=getattr(logger, 'user', None),
+                                  code=getattr(logger, 'code', None)))
     handle.encodePriority(facility, priority)
 
     logger.addHandler(handle)
@@ -327,11 +330,10 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
         if prefix:
             format_string = '[%(levelname)s] ' + format_string
 
-    format = Formatter(format_string, use_color=use_color,
-                       user=getattr(logger, 'user', None),
-                       code=getattr(logger, 'code', None))
 
-    handle.setFormatter(format)
+    handle.setFormatter(Formatter(format_string, use_color=use_color,
+                                  user=getattr(logger, 'user', None),
+                                  code=getattr(logger, 'code', None)))
 
     if level is None:
         if stream == sys.stderr:
@@ -342,8 +344,7 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
     handle.setLevel(level)
 
     if nostderr:
-        filter = MaxLevelFilter(logging.WARNING)
-        handle.addFilter(filter)
+        handle.addFilter(MaxLevelFilter(logging.WARNING))
 
     logger.addHandler(handle)
 
@@ -365,6 +366,7 @@ def delete_stream(logger, fh_name):
 
 
 def main():
+    """Initialize things."""
     prefix = False   # Set to True for streams to have log level prefix
 
     logger = Logger('log_testing')

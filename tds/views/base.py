@@ -7,6 +7,7 @@ class Base(object):
     """Base class and interface for a tds.views class."""
 
     def __init__(self, output_format):
+        """Initialize object."""
         self.output_format = output_format
 
     def generate_result(self, view_name, tds_result):

@@ -131,7 +131,9 @@ class Notifier(object):
             destinations = ', '.join(deployment.target['hosts'])
         elif deployment.target.get('apptypes', None):
             dest_type = 'app tier(s)'
-            destinations = ', '.join(x.name for x in deployment.target['apptypes'])
+            destinations = ', '.join(
+                x.name for x in deployment.target['apptypes']
+            )
         else:
             dest_type = 'app tier(s)'
 

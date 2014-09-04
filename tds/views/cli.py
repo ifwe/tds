@@ -11,8 +11,14 @@ from .json_encoder import TDSEncoder
 
 
 def silence(*exc_classes):
+    """
+    Create a function to silence given exception classes when excecuting
+    a function.
+    """
     def wrap_func(f):
+        """Wrapper for exception silencing function."""
         def call_func(*a, **k):
+            """Exception silencing function."""
             try:
                 return f(*a, **k)
             except exc_classes:
@@ -84,6 +90,7 @@ PACKAGE_TEMPLATE = (
 
 
 def format_access_error(exc):
+    """Format an access error."""
     return (
         'You do not have the appropriate permissions to run this command. '
         'Contact your manager.'
@@ -113,6 +120,7 @@ def format_exception(exc):
 
 
 def format_exception_default(exc):
+    """Default exception formatter."""
     return exc.args[0] % exc.args[1:]
 
 
@@ -133,6 +141,7 @@ def format_project(project):
 
 
 def format_package(package):
+    """Format a package object."""
     return PACKAGE_TEMPLATE.format(self=package)
 
 
@@ -223,7 +232,7 @@ class CLI(Base):
         if result is None and error is not None:
             result = [error]
 
-        if self.output_format=="table":
+        if self.output_format == "table":
             print tabulate(tuple((project.name,)
                                  for project in result
                                  if not isinstance(project, Exception)),
@@ -233,12 +242,12 @@ class CLI(Base):
             print ''.join(tuple(format_exception(project) + '\n' for
                                 project in result if
                                 isinstance(project, Exception)))
-        elif self.output_format=="blocks":
+        elif self.output_format == "blocks":
             print ''.join(tuple(format_exception(project) + '\n' if
                                 isinstance(project, Exception) else
                                 format_project(project) for project in
                                 result))
-        elif self.output_format=="json":
+        elif self.output_format == "json":
             #TODO Figure out how to convert exceptions as well
             print '\n'.join(tuple(json.dumps(project.to_dict(),
                                              cls=TDSEncoder)
@@ -325,15 +334,15 @@ class CLI(Base):
                 result=result, error=error, **kwds
             )
 
-        if self.output_format=="table":
+        if self.output_format == "table":
             print tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
                                  pkg in result),
                            headers=('Project', 'Version', 'Revision'),
                            tablefmt="orgtbl")
-        elif self.output_format=="blocks":
+        elif self.output_format == "blocks":
             print '\n\n'.join(tuple(format_package(package) for package
                                     in result))
-        elif self.output_format=="json":
+        elif self.output_format == "json":
             print '\n'.join(tuple(json.dumps(package.to_dict(),
                                              cls=TDSEncoder)
                                   for package in result))
