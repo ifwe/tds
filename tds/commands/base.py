@@ -271,9 +271,74 @@ class BaseController(object):
 
         return dict(package=package)
 
-    def get_latest_app_version(self, project, app, **params):
-        targets = self.validate_targets(project=project.name, **params)
+    def get_latest_app_version(self, project, app, env, **params):
+        targets = self.validate_targets(project=project.name, env=env, **params)
 
-        hosts = targets.get('hosts', None)
-        apptypes = targets.get('apptypes', None)
+        host_targets = targets.get('hosts', None)
+        app_targets = targets.get('apptypes', None)
+        environment = tds.model.Environment.get(env=env)
 
+        is_apptier = host_targets is None
+
+        applications = [app]
+        assert len(applications) == len(project.targets)
+
+        def latest_deployed_package_for_app_target(app, app_target):
+            for app_dep in reversed(app_target.app_deployments):
+                if app_dep.status == 'invalidated':
+                    continue
+                if app_dep.deployment.package.application != app:
+                    continue
+
+                return app_dep.deployment.package
+
+            raise Exception(
+                "no deployed version found for target \"%s\"",
+                app_target.name
+            )
+
+        def latest_deployed_version_for_host_target(app, host_target):
+            for host_dep in reversed(host_target.host_deployments):
+                if host_dep.deployment.package.application == app:
+                    return host_dep.deployment.package
+
+            try:
+                return latest_deployed_package_for_app_target(
+                    app, host_dep.application
+                )
+            except Exception:
+                raise Exception(
+                    "no deployed version found for host \"%s\"",
+                    host_target.name
+                )
+
+        host_deployments = {}
+        app_deployments = {}
+        if is_apptier:
+            for app_target in app_targets:
+                app_deployments[app_target.id] = \
+                latest_deployed_package_for_app_target(app, app_target)
+        else:
+            for host_target in host_targets:
+                host_deployments[host_target.id] = \
+                    latest_deployed_version_for_host_target(app, host_target)
+
+        if not (host_deployments or app_deployments):
+            raise Exception(
+                'Application "%s" has no current tier/host '
+                'deployments to verify for the given apptypes/'
+                'hosts', app.name
+            )
+
+        versions = dict(
+            ((x.version, x.revision), x)
+            for x in (host_deployments.values() + app_deployments.values())
+        )
+
+        if len(versions) > 1:
+            raise ValueError(
+                'Multiple versions not allowed, found: %r',
+                list(sorted(versions.items()))
+            )
+
+        return versions.values()[0]
