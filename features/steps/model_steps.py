@@ -1,7 +1,13 @@
-from behave import given, then, when
+"""
+Steps for Behave feature tests.
+"""
+
 
 import os.path
 import yaml
+import json
+
+from behave import given, then, when
 
 import tagopsdb
 import tds.model
@@ -425,6 +431,17 @@ def then_the_output_describes_a_project_with_name_in_a_table(context, name):
             or
             pipe_appended in context.process.stdout)
 
+@then(u'the output describes a project with name="{name}" in json')
+def then_the_output_describes_a_project_with_name_in_json(context, name):
+    try:
+        json.loads(context.process.stdout)
+    except ValueError as e:
+        context.stderr.write("Output was not proper JSON.")
+        raise e
+
+    for expected in ('{', '}', '"id"', "name", name):
+        assert expected in context.process.stdout
+
 @then(u'the output describes the packages')
 def then_the_output_describes_the_packages(context):
     for package in context.tds_package_versions:
@@ -462,9 +479,10 @@ def then_the_output_describes_the_packages_in_a_table(context):
     assert ("|-" in context.process.stdout
             and
             "-|" in context.process.stdout)
-    context.execute_steps(u'''
-        Then the output is a table with a column containing "{header}"
-    '''.format(header="Version"))
+    for header in ('Project', 'Version', 'Revision'):
+        context.execute_steps(u'''
+            Then the output is a table with a column containing "{header}"
+        '''.format(header=header))
     for package in context.tds_package_versions:
         for pkg_attr in (package.version, package.name, package.revision):
             context.execute_steps(u'''
@@ -478,6 +496,21 @@ def then_the_output_is_a_table_with_a_column_containing(context, text):
     assert (pipe_prepended in context.process.stdout
             or
             pipe_appended in context.process.stdout)
+
+@then(u'the output describes the packages in json')
+def then_the_output_describes_the_packages_in_json(context):
+    try:
+        json.loads(context.process.stdout)
+    except ValueError as e:
+        context.stderr.write("Output was not proper JSON.")
+        raise e
+
+    for expected in ('{', '}', '"id"', 'version'):
+        assert expected in context.process.stdout
+
+    for package in context.tds_package_versions:
+        for pkg_attr in (package.version, package.name, package.revision):
+            assert pkg_attr in context.process.stdout
 
 @then(u'the output describes a project with {properties}')
 def then_the_output_describes_a_project_with_properties(context, properties):

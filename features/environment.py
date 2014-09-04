@@ -234,6 +234,10 @@ def after_scenario(context, scenario):
 
 
 def setup_temp_db(context, scenario):
+    """
+    Set up a temporary database for use in the test if 'no_db' is not
+    among the tags for the given scenario.
+    """
     dry_run = 'no_db' in context.tags
     db_info = {}
 

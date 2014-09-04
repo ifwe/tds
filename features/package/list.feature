@@ -57,3 +57,12 @@ Feature: The package list subcommand
         Given there is a package version with version="1"
         When I run "--output-format blocks package list --projects bar"
         Then the output describes the packages
+
+    Scenario: invalid output format
+        When I run "--output-format foo package list"
+        Then the output has "output-format must be one of"
+
+    Scenario: with json output format
+        Given there is a package version with version="1"
+        When I run "--output-format json package list --projects bar"
+        Then the output describes the packages in json

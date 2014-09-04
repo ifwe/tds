@@ -5,7 +5,7 @@ Behavior tests for TDS.  To run all tests, execute
 ```
 $ behave
 ```
-from the [root directory](../.) of TDS.
+from the [root directory](./..) of TDS.
 
 For more information on the structure of
 <a href="//pythonhosted.org/behave/" target="_blank">Behave</a>
