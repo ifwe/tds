@@ -71,7 +71,14 @@ Feature: deploy restart subcommand
 
     Scenario: restart a project with a multiple apptypes with all-apptypes option
         Given there is a deploy target with name="appbar"
+        And there are hosts:
+            | name          |
+            | appbar01      |
+            | appbar02      |
+        And the hosts are associated with the deploy target
         And the deploy target is a part of the project
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         When I run "deploy restart proj --all-apptypes"
         Then package "proj-name" was restarted on the deploy targets
 
