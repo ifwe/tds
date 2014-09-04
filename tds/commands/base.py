@@ -8,6 +8,41 @@ import tds.model
 import tds.authorize
 import tds.exceptions
 
+
+def latest_deployed_package_for_app_target(environment, app, app_target):
+    for app_dep in reversed(app_target.app_deployments):
+        if app_dep.environment != environment.environment:
+            print "environment didn't match", environment, app_dep
+            continue
+        if app_dep.status == 'invalidated':
+            print "bad status", app_dep.status
+            continue
+        if app_dep.deployment.package.application != app:
+            print "wrong app somehow", app_dep.deployment.package.application, app
+            continue
+
+        return app_dep.deployment.package
+
+    raise Exception(
+        "no deployed version found for target \"%s\"",
+        app_target.name
+    )
+
+def latest_deployed_version_for_host_target(environment, app, host_target):
+    for host_dep in reversed(host_target.host_deployments):
+        if host_dep.deployment.package.application == app:
+            return host_dep.deployment.package
+
+    try:
+        return latest_deployed_package_for_app_target(
+            environment, app, host_target.application
+        )
+    except Exception:
+        raise Exception(
+            "no deployed version found for host \"%s\"",
+            host_target.name
+        )
+
 def validate(attr):
     """
     Decorator for an action method, which
@@ -278,50 +313,20 @@ class BaseController(object):
         app_targets = targets.get('apptypes', None)
         environment = tds.model.Environment.get(env=env)
 
-        is_apptier = host_targets is None
-
-        applications = [app]
-        assert len(applications) == len(project.targets)
-
-        def latest_deployed_package_for_app_target(app, app_target):
-            for app_dep in reversed(app_target.app_deployments):
-                if app_dep.status == 'invalidated':
-                    continue
-                if app_dep.deployment.package.application != app:
-                    continue
-
-                return app_dep.deployment.package
-
-            raise Exception(
-                "no deployed version found for target \"%s\"",
-                app_target.name
-            )
-
-        def latest_deployed_version_for_host_target(app, host_target):
-            for host_dep in reversed(host_target.host_deployments):
-                if host_dep.deployment.package.application == app:
-                    return host_dep.deployment.package
-
-            try:
-                return latest_deployed_package_for_app_target(
-                    app, host_dep.application
-                )
-            except Exception:
-                raise Exception(
-                    "no deployed version found for host \"%s\"",
-                    host_target.name
-                )
-
         host_deployments = {}
         app_deployments = {}
-        if is_apptier:
-            for app_target in app_targets:
-                app_deployments[app_target.id] = \
-                latest_deployed_package_for_app_target(app, app_target)
-        else:
+        if host_targets:
             for host_target in host_targets:
                 host_deployments[host_target.id] = \
-                    latest_deployed_version_for_host_target(app, host_target)
+                    latest_deployed_version_for_host_target(
+                        environment, app, host_target
+                    )
+        else:
+            for app_target in app_targets:
+                app_deployments[app_target.id] = \
+                latest_deployed_package_for_app_target(
+                    environment, app, app_target
+                )
 
         if not (host_deployments or app_deployments):
             raise Exception(
