@@ -113,8 +113,8 @@ class PackageController(BaseController):
         return True
 
     @validate('project')
-    def add(self, project, **params):
-        """Add a given version of a package for a given project."""
+    def add(self, application, project, **params):
+        """Add a given version of a package for a given project"""
 
         log.debug(
             'Adding version %s of the package for project "%s" '
@@ -193,8 +193,8 @@ class PackageController(BaseController):
 
     @validate('package')
     @validate('project')
-    def delete(self, project, **params):
-        """Delete a given version of a package for a given project."""
+    def delete(self, application, project, **params):
+        """Delete a given version of a package for a given project"""
 
         log.debug(
             'Deleting version %s of the package for project "%s" '
@@ -218,10 +218,9 @@ class PackageController(BaseController):
         log.debug('Committed database changes')
 
     @validate('project')
-    def list(self, projects, **params):
-        """
-        Show information for all existing packages in the software
-        repository for requested projects (or all projects).
+    def list(self, applications, projects, **params):
+        """Show information for all existing packages in the software
+           repository for requested projects (or all projects)
         """
 
         packages_sorted = sorted(

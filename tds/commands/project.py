@@ -25,14 +25,14 @@ class ProjectController(BaseController):
         return dict(result=Project.create(name=project_name))
 
     @validate('project')
-    def delete(self, project, **_kwds):
+    def delete(self, application, project, **_kwds):
         """Remove a given project."""
         log.debug('Removing project %r', project.name)
         project.delete()
         return dict(result=project)
 
     @validate('project')
-    def list(self, projects=(), **_kwds):
+    def list(self, applications=(), projects=(), **_kwds):
         """Show information for requested projects (or all projects)."""
         if len(projects) == 0:
             projects = Project.all()

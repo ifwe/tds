@@ -1461,36 +1461,26 @@ class DeployController(BaseController):
         else:
             return (pkg, apptypes)
 
-    @input_validate('project')
-    def add_apptype(self, project, **params):
+    @input_validate('application')
+    def add_apptype(self, application, project, **params):
         """Add a specific application type to the given project"""
 
         log.debug('Adding application type for project')
 
         try:
             package_location = tagopsdb.deploy.repo.find_app_location(
-                project.name
+                application.name
             )
         except tagopsdb.exceptions.RepoException:
             raise Exception(
                 "RepoException when finding package location for project: %s",
-                project.name
-            )
-
-        try:
-            pkg_def = tagopsdb.deploy.package.find_package_definition(
-                project.id
-            )
-        except tagopsdb.exceptions.RepoException:
-            raise Exception(
-                # XXX: who cares?
-                "No packages associated with project: %s", project.name
+                application.name
             )
 
         try:
             tagopsdb.deploy.repo.add_app_packages_mapping(
                 project.delegate,
-                pkg_def,
+                application,
                 [params['apptype']]
             )
         except tagopsdb.exceptions.RepoException:
@@ -1509,7 +1499,7 @@ class DeployController(BaseController):
         )
 
     @input_validate('project')
-    def delete_apptype(self, project, **params):
+    def delete_apptype(self, application, project, **params):
         """Delete a specific application type from the given project"""
 
         log.debug('Removing application type for project')
@@ -1544,7 +1534,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def promote(self, project, package, hosts=None, apptypes=None, **params):
+    def promote(self, application, project, package, hosts=None, apptypes=None, **params):
         """Deploy given version of given project to requested application
            tiers or hosts
         """
@@ -1575,7 +1565,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def invalidate(self, project, package, hosts=None, apptypes=None, **params):
+    def invalidate(self, application, project, package, hosts=None, apptypes=None, **params):
         """Invalidate a given version of a given project"""
 
         log.debug('Invalidating for given project')
@@ -1608,7 +1598,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def show(self, project, package, version, apptypes=None, **params):
+    def show(self, application, project, package, version, apptypes=None, **params):
         """Show deployment information for a given project"""
 
         log.debug('Showing deployment information for given project')
@@ -1674,7 +1664,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def rollback(self, project, package, hosts=None, apptypes=None, **params):
+    def rollback(self, application, project, package, hosts=None, apptypes=None, **params):
         """Rollback to the previous validated deployed version of given
            project on requested application tiers or hosts
         """
@@ -1747,7 +1737,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def restart(self, project, package, hosts=None, apptypes=None, **params):
+    def restart(self, application, project, package, hosts=None, apptypes=None, **params):
         """Restart given project on requested application tiers or hosts"""
 
         log.debug('Restarting application for project')
@@ -1802,7 +1792,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def redeploy(self, project, package, hosts=None, apptypes=None, **params):
+    def redeploy(self, application, project, package, hosts=None, apptypes=None, **params):
         """Redeploy given project to requested application tiers or hosts"""
 
         log.debug('Redeploying project')
@@ -1835,7 +1825,7 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def validate(self, project, package, hosts=None, apptypes=None, **params):
+    def validate(self, application, project, package, hosts=None, apptypes=None, **params):
         """Validate a given version of a given project"""
 
         log.debug('Validating for given project')

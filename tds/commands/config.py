@@ -10,7 +10,7 @@ import tds.authorize
 import tds.exceptions
 import tds.model
 import tds.utils
-# TODO: this should be a subclass of ApplicationController (or removed)
+
 from .base import validate
 from .project import ProjectController
 from .deploy import DeployController
@@ -36,14 +36,14 @@ class ConfigController(DeployController):
 
     @validate('package')
     @validate('targets')
-    @validate('project')
+    @validate('application')
     def repush(self, **params):
         """Repush a version of a config project. Same as `deploy redeploy`."""
         return super(ConfigController, self).redeploy(**params)
 
     @validate('package')
     @validate('targets')
-    @validate('project')
+    @validate('application')
     def revert(self, **params):
         """
         Revert to the previous version of a config project.
@@ -53,7 +53,7 @@ class ConfigController(DeployController):
 
     @validate('package')
     @validate('targets')
-    @validate('project')
+    @validate('application')
     def push(self, **params):
         """Push a new version of a config project. Same as `deploy promote`."""
         return super(ConfigController, self).promote(**params)
@@ -77,7 +77,7 @@ class ConfigController(DeployController):
         # XXX: to ApplicationController(log).add(params)
         """Add a new config project to the system."""
 
-        log.debug('Creating new config project')
+        log.debug('Creating new config application')
 
         project_name = project
 
@@ -106,9 +106,9 @@ class ConfigController(DeployController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-        return dict(result=tds.model.Project.get(name=project_name))
+        return dict(result=tds.model.Application.get(name=project_name))
 
     @validate('project')
-    def delete(params):
+    def delete(**params):
         """Remove a config project from the system."""
         return ProjectController().delete(**params)
