@@ -1797,7 +1797,7 @@ class DeployController(BaseController):
 
         log.debug('Redeploying project')
 
-        package, apptypes, app_host_map = self.get_app_info(
+        _package, apptypes, app_host_map = self.get_app_info(
             project, None, hosts, apptypes, params, hostonly=True
         )
         app_dep_map = self.find_app_deployments(package, apptypes, params)
@@ -1809,8 +1809,7 @@ class DeployController(BaseController):
                 self.envs[params['env']]
             )
 
-        deployment = tagopsdb.Deployment.find(package_id=pkg.id)[0]
-
+        deployment = package.deployments[-1]
         self.send_notifications(project, hosts, apptypes, params)
         self.perform_redeployments(
             project, hosts, apptypes, params, deployment, app_host_map,
