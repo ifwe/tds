@@ -1468,16 +1468,6 @@ class DeployController(BaseController):
         log.debug('Adding application type for project')
 
         try:
-            package_location = tagopsdb.deploy.repo.find_app_location(
-                application.name
-            )
-        except tagopsdb.exceptions.RepoException:
-            raise Exception(
-                "RepoException when finding package location for project: %s",
-                application.name
-            )
-
-        try:
             tagopsdb.deploy.repo.add_app_packages_mapping(
                 project.delegate,
                 application,
