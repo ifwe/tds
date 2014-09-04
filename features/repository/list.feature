@@ -64,7 +64,6 @@ Feature: The repository list subcommand
             | foo     |
             | spammon |
 
-    @wip
     Scenario Outline: with table output format
         Given there is a project with name="<name>"
         When I run "--output-format table repository list --projects <name>"
