@@ -425,8 +425,8 @@ def then_the_output_describes_a_project_with_name_in_a_table(context, name):
     assert ('|-' in context.process.stdout
             or
             '-|' in context.process.stdout)
-    pipe_prepended = "| {name}".format(name=name)
-    pipe_appended = "{name} |".format(name=name)
+    pipe_prepended = "| {name} ".format(name=name)
+    pipe_appended = " {name} |".format(name=name)
     assert (pipe_prepended in context.process.stdout
             or
             pipe_appended in context.process.stdout)
@@ -434,13 +434,40 @@ def then_the_output_describes_a_project_with_name_in_a_table(context, name):
 @then(u'the output describes a project with name="{name}" in json')
 def then_the_output_describes_a_project_with_name_in_json(context, name):
     try:
-        json.loads(context.process.stdout)
+        actual = json.loads(context.process.stdout)
     except ValueError as e:
         context.stderr.write("Output was not proper JSON.")
         raise e
 
-    for expected in ('{', '}', '"id"', "name", name):
-        assert expected in context.process.stdout
+    expected = dict(id=1, name=name)
+    for k in expected:
+        assert expected[k] == actual[0][k]
+
+@then(u'the output describes a project with name="{name}" in latex')
+def then_the_output_describes_a_project_with_name_in_latex(context, name):
+    expected = (
+                '\\begin{tabular}{l}',
+                '\hline',
+                ' Project   \\\\',
+                ' {name}{spaces}\\\\'.format(name=name,
+                                             spaces=" " * (10 - len(name))
+                                            ),
+                '\end{tabular}',
+    )
+    output_lines = context.process.stdout.splitlines()
+    for line in expected:
+        assert line in output_lines
+
+@then(u'the output describes a project with name="{name}" in rst')
+def then_the_output_describes_a_project_with_name_in_rst(context, name):
+    expected = (
+                "=========",
+                "Project",
+                name,
+    )
+    output_lines = context.process.stdout.splitlines()
+    for line in expected:
+        assert line in output_lines
 
 @then(u'the output describes the packages')
 def then_the_output_describes_the_packages(context):
@@ -500,17 +527,52 @@ def then_the_output_is_a_table_with_a_column_containing(context, text):
 @then(u'the output describes the packages in json')
 def then_the_output_describes_the_packages_in_json(context):
     try:
-        json.loads(context.process.stdout)
+        actual = json.loads(context.process.stdout)
     except ValueError as e:
         context.stderr.write("Output was not proper JSON.")
         raise e
 
-    for expected in ('{', '}', '"id"', 'version'):
-        assert expected in context.process.stdout
-
     for package in context.tds_package_versions:
-        for pkg_attr in (package.version, package.name, package.revision):
-            assert pkg_attr in context.process.stdout
+        expected = dict(id=package.id,
+                        pkg_name=package.name,
+                        version=package.version)
+        for k in expected:
+            assert expected[k] == actual[int(package.version)-1][k]
+
+@then(u'the output describes the packages in latex')
+def then_the_output_describes_the_packages_in_latex(context):
+    output_lines = context.process.stdout.splitlines()
+    for package in context.tds_package_versions:
+        expected = (
+                    '\\begin{tabular}{lrr}',
+                    '\hline',
+                    ' Project   &   Version &   Revision \\\\',
+                    ' {package.name}{spaces}&         {package.version} &          {package.revision} \\\\'.format(
+                            package=package,
+                            spaces="       "[0:10-len(package.name)]
+                    ),
+                    '\end{tabular}',
+        )
+        for line in expected:
+            print line
+            assert line in output_lines
+
+@then(u'the output describes the packages in rst')
+def then_the_output_describes_the_packages_in_rst(context):
+    output_lines = context.process.stdout.splitlines()
+    for package in context.tds_package_versions:
+        expected = (
+                    "=========  =========  ==========",
+                    "Project      Version    Revision",
+                    "{package.name}{spaces1}{package.version}{spaces2}{package.revision}".format(
+                    package=package,
+                    spaces1=" " * (20 - len(package.name) - len(package.version)),
+                    spaces2=" " * (12 - len(package.revision)),
+                    ),
+        )
+        for line in expected:
+            print line
+            assert line in output_lines
 
 @then(u'the output describes a project with {properties}')
 def then_the_output_describes_a_project_with_properties(context, properties):

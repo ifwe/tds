@@ -107,18 +107,6 @@ class TDS(object):
         return authconfig
 
     @tds.utils.debug
-    def check_output_format(self):
-        """
-        Ensure that the output_format parameter is understood.
-        i.e., output_format must be one of:
-        ["blocks", "table", "json"]
-        """
-        if self.params.get('output_format') not in ["blocks", "table",
-                                                    "json"]:
-            raise ConfigurationError('output-format must be one of '
-                                     '[blocks|table|json]')
-
-    @tds.utils.debug
     def check_exclusive_options(self):
         """Ensure certain options are exclusive and set parameter
            to check for explicit hosts or application types

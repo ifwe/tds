@@ -87,3 +87,23 @@ Feature: The repository list subcommand
             | name    |
             | foo     |
             | spammon |
+
+    Scenario Outline: with latex output format
+        Given there is a project with name="<name>"
+        When I run "--output-format latex repository list --projects <name>"
+        Then the output describes a project with name="<name>" in latex
+
+        Examples:
+            | name    |
+            | foo     |
+            | spammon |
+
+    Scenario Outline: with rst output format
+        Given there is a project with name="<name>"
+        When I run "--output-format rst repository list --projects <name>"
+        Then the output describes a project with name="<name>" in rst
+
+        Examples:
+            | name    |
+            | foo     |
+            | spammon |
