@@ -229,6 +229,7 @@ class CLI(Base):
         """
         Show the view for a list of project objects.
         """
+        #TODO Output exceptions in some of these output formats.
         if result is None and error is not None:
             result = [error]
 
@@ -236,7 +237,7 @@ class CLI(Base):
             print tabulate(tuple((project.name,)
                                  for project in result
                                  if not isinstance(project, Exception)),
-                           headers=("Project"),
+                           headers=("Project",),
                            tablefmt="orgtbl")
             print '\n\n'
             print ''.join(tuple(format_exception(project) + '\n' for
@@ -248,11 +249,22 @@ class CLI(Base):
                                 format_project(project) for project in
                                 result))
         elif self.output_format == "json":
-            #TODO Figure out how to convert exceptions as well
-            print '\n'.join(tuple(json.dumps(project.to_dict(),
-                                             cls=TDSEncoder)
-                                  for project in result
-                                  if not isinstance(project, Exception)))
+            print json.dumps([project.to_dict() for project in result
+                                if not isinstance(project, Exception)],
+                             cls=TDSEncoder)
+        elif self.output_format == "latex":
+            print tabulate(tuple((project.name,)
+                                 for project in result
+                                 if not isinstance(project, Exception)),
+                           headers=("Project",),
+                           tablefmt="latex")
+        elif self.output_format == "rst":
+            #TODO Handle exceptions better in output
+            print tabulate(tuple((project.name,)
+                                 for project in result
+                                 if not isinstance(project, Exception)),
+                           headers=("Project",),
+                           tablefmt="rst")
 
     @staticmethod
     def generate_project_delete_result(result=None, error=None, **_kwds):
@@ -343,9 +355,19 @@ class CLI(Base):
             print '\n\n'.join(tuple(format_package(package) for package
                                     in result))
         elif self.output_format == "json":
-            print '\n'.join(tuple(json.dumps(package.to_dict(),
-                                             cls=TDSEncoder)
-                                  for package in result))
+            print json.dumps([package.to_dict() for package in result],
+                              cls=TDSEncoder)
+        elif self.output_format == "latex":
+            print tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
+                                 pkg in result),
+                           headers=('Project', 'Version', 'Revision'),
+                           tablefmt="latex")
+
+        elif self.output_format == "rst":
+            print tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
+                                 pkg in result),
+                           headers=('Project', 'Version', 'Revision'),
+                           tablefmt="rst")
 
     def generate_deploy_restart_result(self, result=None, error=None, **kwds):
         """Format the result of a "deploy restart" action."""

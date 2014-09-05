@@ -66,3 +66,13 @@ Feature: The package list subcommand
         Given there is a package version with version="1"
         When I run "--output-format json package list --projects bar"
         Then the output describes the packages in json
+
+    Scenario: with latex output format
+        Given there is a package version with version="1"
+        When I run "--output-format latex package list --projects bar"
+        Then the output describes the packages in latex
+
+    Scenario: with rst output format
+        Given there is a package version with version="1"
+        When I run "--output-format rst package list --project bar"
+        Then the output describes the packages in rst

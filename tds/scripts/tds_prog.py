@@ -60,7 +60,8 @@ def parse_command_line(sysargs):
                         default='/etc/tagops/')
     parser.add_argument('--output-format',
                         help='Display output in specified format'
-                             ' [blocks|table|json]. Default: blocks.',
+                             ' [blocks|table|json|latex|rst]. Default: blocks.',
+                        choices = ('blocks', 'table', 'json', 'latex', 'rst'),
                         default='blocks')
 
     create_subparsers(parser)
@@ -94,7 +95,6 @@ def _main(sysargs):
 
     try:
         prog.check_exclusive_options()
-        prog.check_output_format()
         prog.update_program_parameters()
         prog.initialize_db()
         prog.execute_command()
