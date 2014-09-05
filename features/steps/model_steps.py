@@ -135,10 +135,7 @@ def project_factory(context, **kwargs):
         Given there is an application with name="%s",path="%s"
     ''' % (project.name + '-name', project.name + '-path'))
 
-    application = tds.model.Application.get(
-        name=project.name + '-name',
-        path=project.name + '-path',
-    )
+    application = context.tds_applications[-1]
 
     tagopsdb.Session.add(application)
     tagopsdb.Session.flush()   # force generation of pkg_def.id

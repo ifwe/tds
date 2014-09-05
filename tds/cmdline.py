@@ -86,9 +86,9 @@ PACKAGE_DATA = odict([
     ('list', odict([
         ('help', 'List all current packages in deployment system'),
         ('subargs', odict([
-            (('--projects',), odict([
-                ('help', 'Specific projects to list'),
-                ('metavar', 'PROJECT'),
+            (('--applications',), odict([
+                ('help', 'Specific applications to list'),
+                ('metavar', 'APPLICATION'),
                 ('nargs', '*'),
             ])),
         ])),

@@ -6,7 +6,7 @@ Feature: The package list subcommand
     Background: User setup
         Given I have "dev" permissions
         And I am in the "dev" environment
-        And there are projects:
+        And there are applications:
             | name |
             | bar  |
             | foo  |
@@ -16,10 +16,10 @@ Feature: The package list subcommand
         Then the output is empty
 
         Examples:
-            | args                  |
-            |                       |
-            | --projects foo        |
-            | --projects foo bar    |
+            | args                      |
+            |                           |
+            | --application foo         |
+            | --applications foo bar    |
 
     Scenario: with multiple packages
         Given there are packages:
@@ -30,17 +30,17 @@ Feature: The package list subcommand
         When I run "package list"
         Then the output describes the packages
 
-    Scenario: with existing project specified
+    Scenario: with existing application specified
         Given there is a package with version="1"
-        When I run "package list --projects bar"
+        When I run "package list --applications bar"
         Then the output describes the packages
 
-    Scenario: with multiple existing projects specified
+    Scenario: with multiple existing application specified
         Given there are packages:
-            | project   | version |
-            | foo       | 1       |
-            | foo       | 2       |
-        When I run "package list --projects foo bar"
+            | name  | version |
+            | foo   | 1       |
+            | foo   | 2       |
+        When I run "package list --applications foo bar"
         Then the output describes the packages
 
     Scenario: with a missing project and an existing project specified
@@ -76,3 +76,8 @@ Feature: The package list subcommand
         Given there is a package version with version="1"
         When I run "--output-format rst package list --project bar"
         Then the output describes the packages in rst
+
+    Scenario: with a missing application and an existing application specified
+        Given there is a package with name="foo",version="5"
+        When I run "package list --applications foo bar"
+        Then the output describes a package with name="foo",version="5"

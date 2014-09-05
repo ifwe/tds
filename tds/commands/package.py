@@ -223,12 +223,14 @@ class PackageController(BaseController):
            repository for requested projects (or all projects)
         """
 
+        if not applications:
+            applications = tds.model.Application.all()
+
         packages_sorted = sorted(
             tagopsdb.deploy.package.list_packages(
                 [x.name for x in projects] or None
             ),
-            key=lambda package: (package.created, package.version,
-                                 package.revision)
+            key=lambda pkg: (pkg.name, pkg.created, pkg.version, pkg.revision)
         )
 
         return dict(result=packages_sorted)
