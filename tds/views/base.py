@@ -28,13 +28,13 @@ class Base(object):
         obj and items in iterable should have to_dict() methods that return
         a dictionary of fields and values.
 
-        If both iterable and obj are None, return the empty string "".
+        If both iterable and obj are None, return the empty array "[]".
         """
-        if iterable:
+        if iterable is not None:
             return json.dumps([item.to_dict() for item in iterable
                                if not isinstance(item, Exception)],
                                cls=TDSEncoder)
-        elif obj:
+        elif obj is not None:
             return json.dumps(obj.to_dict(), cls=TDSEncoder)
         else:
-            return ""
+            return "[]"
