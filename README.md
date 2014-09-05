@@ -53,7 +53,7 @@ The following command will run all
 ```
 $ behave
 ```
-You may specify a set of tags to restrict which behavior tests to run:
+You may specify a set of tags to restrict which feature tests to run:
 <table>
 <thead>
     <tr>

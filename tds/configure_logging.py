@@ -1,3 +1,7 @@
+"""
+Configure logging for TDS.
+"""
+
 import logging
 import os.path
 import sys
