@@ -2,12 +2,9 @@
 A command line view for TDS
 """
 
-import json
-
 from tabulate import tabulate
 
 from .base import Base
-from .json_encoder import TDSEncoder
 
 
 def silence(*exc_classes):
@@ -249,9 +246,7 @@ class CLI(Base):
                                 format_project(project) for project in
                                 result))
         elif self.output_format == "json":
-            print json.dumps([project.to_dict() for project in result
-                                if not isinstance(project, Exception)],
-                             cls=TDSEncoder)
+            print self.generate_json(iterable=result)
         elif self.output_format == "latex":
             print tabulate(tuple((project.name,)
                                  for project in result
@@ -355,8 +350,7 @@ class CLI(Base):
             print '\n\n'.join(tuple(format_package(package) for package
                                     in result))
         elif self.output_format == "json":
-            print json.dumps([package.to_dict() for package in result],
-                              cls=TDSEncoder)
+            print self.generate_json(iterable=result)
         elif self.output_format == "latex":
             print tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
                                  pkg in result),
