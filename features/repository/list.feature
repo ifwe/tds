@@ -76,7 +76,7 @@ Feature: The repository list subcommand
 
     Scenario: invalid output format
         When I run "--output-format foo repository list"
-        Then the output has "output-format must be one of"
+        Then the output has "usage:"
 
     Scenario Outline: with json output format
         Given there is a project with name="<name>"

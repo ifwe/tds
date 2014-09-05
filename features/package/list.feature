@@ -60,7 +60,7 @@ Feature: The package list subcommand
 
     Scenario: invalid output format
         When I run "--output-format foo package list"
-        Then the output has "output-format must be one of"
+        Then the output has "usage:"
 
     Scenario: with json output format
         Given there is a package version with version="1"

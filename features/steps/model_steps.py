@@ -547,9 +547,11 @@ def then_the_output_describes_the_packages_in_latex(context):
                     '\\begin{tabular}{lrr}',
                     '\hline',
                     ' Project   &   Version &   Revision \\\\',
-                    ' {package.name}{spaces}&         {package.version} &          {package.revision} \\\\'.format(
+                    ' {package.name}{s1}&{s2}{package.version} &{s3}{package.revision} \\\\'.format(
                             package=package,
-                            spaces="       "[0:10-len(package.name)]
+                            s1=" " * (10 - len(package.name)),
+                            s2=" " * (10 - len(package.version)),
+                            s3=" " * (11 - len(package.revision)),
                     ),
                     '\end{tabular}',
         )
@@ -564,10 +566,10 @@ def then_the_output_describes_the_packages_in_rst(context):
         expected = (
                     "=========  =========  ==========",
                     "Project      Version    Revision",
-                    "{package.name}{spaces1}{package.version}{spaces2}{package.revision}".format(
+                    "{package.name}{s1}{package.version}{s2}{package.revision}".format(
                     package=package,
-                    spaces1=" " * (20 - len(package.name) - len(package.version)),
-                    spaces2=" " * (12 - len(package.revision)),
+                    s1=" " * (20 - len(package.name) - len(package.version)),
+                    s2=" " * (12 - len(package.revision)),
                     ),
         )
         for line in expected:
