@@ -75,22 +75,21 @@ def host_factory(context, name, env=None, **kwargs):
     return host
 
 def package_factory(context, **kwargs):
-    pkg_def = None
-
     if 'name' in kwargs:
-        pkg_def = tagopsdb.PackageDefinition.get(name=kwargs['name'])
-
-    if 'project' in kwargs:
-        project = tagopsdb.Project.get(name=kwargs['project'])
+        application = tds.model.Application.get(name=kwargs['name'])
+    elif context.tds_applications:
+        application = context.tds_applications[-1]
     else:
-        project = tagopsdb.Project.first()
+        if 'project' in kwargs:
+            project = tds.model.Project.get(name=kwargs['project'])
+        else:
+            project = context.tds_projects[-1]
 
-    if pkg_def is None:
-        pkg_def = project.package_definitions[0]
+        application = project.applications[0]
 
     package = tagopsdb.Package(
-        pkg_def_id=pkg_def.id,
-        pkg_name=pkg_def.name,
+        pkg_def_id=application.id,
+        pkg_name=application.name,
         version=kwargs.get('version', 1),
         revision=kwargs.get('revision', 1),
         status=kwargs.get('status', 'completed'),
@@ -104,8 +103,20 @@ def package_factory(context, **kwargs):
     return package
 
 def application_factory(context, **kwargs):
-    # TODO: make package_definition, connect to project?, projectpackage?
-    raise NotImplementedError
+    fields = dict(
+        deploy_type='deploy',
+        validation_type='matching',
+        path='/some-path',
+        arch='noarch',
+        build_type='jenkins',
+        build_host='fakeci.example.org',
+    )
+    fields.update(kwargs)
+    application = tds.model.Application.create(**fields)
+
+    tagopsdb.Session.add(application)
+    tagopsdb.Session.commit()
+    return application
 
 
 def project_factory(context, **kwargs):
@@ -120,28 +131,30 @@ def project_factory(context, **kwargs):
         environment=False,
     ))
 
-    pkg_def = tagopsdb.PackageDefinition(
-        deploy_type='',
-        validation_type='',
-        pkg_name=project.name + '-name',
+    context.execute_steps('''
+        Given there is an application with name="%s",path="%s"
+    ''' % (project.name + '-name', project.name + '-path'))
+
+    application = tds.model.Application.get(
+        name=project.name + '-name',
         path=project.name + '-path',
-        build_host='host with the most',
     )
-    tagopsdb.Session.add(pkg_def)
+
+    tagopsdb.Session.add(application)
     tagopsdb.Session.flush()   # force generation of pkg_def.id
 
     pkg_name = tagopsdb.PackageName(
-        name=pkg_def.pkg_name,
-        pkg_def_id=pkg_def.id,
+        name=application.pkg_name,
+        pkg_def_id=application.id,
     )
     tagopsdb.Session.add(pkg_name)
 
-    app = tagopsdb.Application.get(name=tagopsdb.Application.dummy)
+    target = tds.model.AppTarget.get(name=tds.model.AppTarget.dummy)
 
     tagopsdb.Session.add(tagopsdb.ProjectPackage(
         project_id=project.id,
-        pkg_def_id=pkg_def.id,
-        app_id=app.id
+        pkg_def_id=application.id,
+        app_id=target.id
     ))
 
     tagopsdb.Session.commit()
@@ -256,11 +269,11 @@ model_builder(
 
 
 def add_target_to_project(project, target):
-    pkg_def = tagopsdb.PackageDefinition.get(name=project.name + '-name')
+    application = tds.model.Application.get(name=project.name + '-name')
 
     tagopsdb.Session.add(tagopsdb.ProjectPackage(
         project_id=project.id,
-        pkg_def_id=pkg_def.id,
+        pkg_def_id=application.id,
         app_id=target.id
     ))
     tagopsdb.Session.commit()
@@ -1046,3 +1059,37 @@ def given_the_hosts_are_associated_with_the_deploy_target(context):
 
     for host in hosts:
         associate_host_with_target(host, target)
+
+@given(u'the applications can be deployed to the deploy targets')
+def given_the_applications_can_be_deployed_to_the_deploy_targets(context):
+    return
+    for application in context.tds_applications:
+        for target in context.tds_targets:
+            if target in application.targets:
+                continue
+
+            project = target.projects[0]
+
+            print project, application, target
+
+            tagopsdb.Session.add(tagopsdb.ProjectPackage(
+                project_id=project.id,
+                pkg_def_id=application.id,
+                app_id=target.id
+            ))
+
+    tagopsdb.Session.commit()
+
+
+@given(u'the package with {package_props} is deployed on the deploy target with {target_props}')
+def given_the_package_is_deployed_on_the_target(context, package_props, target_props):
+    package_attrs = parse_properties(package_props)
+    target_attrs = parse_properties(target_props)
+
+    package = tagopsdb.Package.get(**package_attrs)
+    target = tds.model.AppTarget.get(**target_attrs)
+
+    assert package is not None, package_attrs
+    assert target is not None, target_attrs
+
+    deploy_package_to_target(package, target, context.tds_environment)
