@@ -1,7 +1,7 @@
 # Feature Tests
 
 ## Description
-Behavior tests for TDS.  To run all tests, execute
+Feature tests for TDS.  To run all tests, execute
 ```
 $ behave
 ```

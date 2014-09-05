@@ -7,3 +7,5 @@ Views for interacting with TDS.
 Base class and helpers for TDS interface.
 * [./cli.py](./cli.py) -
 Command line interface.
+* [./json_encoder.py](./json_encoder.py) -
+Custom JSON encoder for objects.

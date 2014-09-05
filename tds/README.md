@@ -16,8 +16,9 @@ Views for interacting with database.
 * [./authorize.py](./authorize.py) -
 Utilities for determining authorization level of actors.
 * [./cmdline.py](./cmdline.py) -
-Data for command line arguments, subsarguments and options.
-* [./configure_logging.py](.configure_logging.py)
+Declarations of command line arguments, subsarguments and options.
+* [./configure_logging.py](.configure_logging.py) -
+Logging configuration for TDS.
 * [./exceptions.py](./exceptions.py) -
 Definitions of exceptions.
 * [./logging_wrapper.py](./logging_wrapper.py) -
