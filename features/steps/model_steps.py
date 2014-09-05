@@ -436,7 +436,7 @@ def then_the_output_describes_a_project_with_name_in_json(context, name):
     try:
         actual = json.loads(context.process.stdout)
     except ValueError as e:
-        context.stderr.write("Output was not proper JSON.")
+        e.args += (context.process.stdout, context.process.stderr)
         raise e
 
     expected = dict(id=1, name=name)
@@ -529,7 +529,7 @@ def then_the_output_describes_the_packages_in_json(context):
     try:
         actual = json.loads(context.process.stdout)
     except ValueError as e:
-        context.stderr.write("Output was not proper JSON.")
+        e.args += (context.process.stdout, context.process.stderr)
         raise e
 
     for package in context.tds_package_versions:
