@@ -34,6 +34,7 @@ Feature: Real-life application usage
             | sb2  |
             | sb3  |
         And the hosts are associated with the deploy target
+        And the deploy targets are a part of the project
         And the applications can be deployed to the deploy targets
 
         And the package with name="tagconfig",version="456" is deployed on the deploy target with name="solrsearch"
@@ -42,12 +43,12 @@ Feature: Real-life application usage
         And the package with name="solr-app",version="123" is deployed on the deploy target with name="solrsearch"
         And the package with name="solr-app",version="124" is deployed on the deploy target with name="solrbrowse"
 
-    Scenario: deploy target with tagconfig and another app
-        When I run "deploy promote solr-app 124 --apptypes solrsearch"
+    Scenario: other app to deploy target with tagconfig and another app
+        When I run "deploy promote solr 124 --apptypes solrsearch"
         Then the output has "Completed: 3 out of 3 hosts"
         And package "solr-app" version "124" was deployed to the deploy target with name="solrsearch"
 
-    Scenario: deploy target with tagconfig and another app
+    Scenario: tagconfig to deploy target with tagconfig and another app
         When I run "deploy promote tagconfig 457 --apptypes solrsearch"
         Then the output has "Completed: 3 out of 3 hosts"
         And package "tagconfig" version "457" was deployed to the deploy target with name="solrsearch"
