@@ -21,6 +21,7 @@ PROJECT_TEMPLATE = (
 )
 APP_TEMPLATE = (
     'Application name: {self.pkg_name}\n'
+    'Architecture: {self.arch}\n'
     'Path: {self.path}\n'
     'Build host: {self.build_host}\n'
     'Environment Specific: {self.environment_specific}\n'
@@ -115,13 +116,16 @@ def format_project(project):
     'Format a project object'
     output = []
     output.append(PROJECT_TEMPLATE.format(self=project))
-    output.append(TARGET_TEMPLATE.format(
-        s=', '.join(x.app_type.encode('utf8') for x in project.targets)
-    ))
     for app in project.applications:
         app_result = []
         app_info = APP_TEMPLATE.format(self=app)
         app_result.extend(app_info.splitlines())
+        app_result.append(TARGET_TEMPLATE.format(
+            s=', '.join(
+                x.app_type.encode('utf8') for x in project.targets
+                if x.applications.name == app.name
+            )
+        ))
         output.append('\n\t'.join(app_result))
 
     return ''.join(output) + '\n'
