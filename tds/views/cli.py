@@ -124,21 +124,72 @@ def format_exception_default(exc):
     return exc.args[0] % exc.args[1:]
 
 
-def format_project(project):
-    """Format a project object."""
-    output = []
-    output.append(PROJECT_TEMPLATE.format(self=project))
-    output.append(TARGET_TEMPLATE.format(
-        s=', '.join(x.app_type.encode('utf8') for x in project.targets)
-    ))
-    for app in project.applications:
-        app_result = []
-        app_info = APP_TEMPLATE.format(self=app)
-        app_result.extend(app_info.splitlines())
-        output.append('\n\t'.join(app_result))
+def format_project(proj_result, output_format="blocks"):
+    """
+    Format a project object or iterable of projects in given output_format.
+    """
+    if output_format == "json":
+        return json.dumps(proj_result, cls=TDSEncoder)
+    try:
+        iterable = iter(proj_result)
+    except:
+        iterable = False
+    if output_format == "blocks":
+        if iterable:
+            return reduce(lambda x, y: x + '\n\n' + y,
+                   map(lambda x: format_project(x, "blocks")
+                       if not isinstance(x, Exception)
+                       else format_exception(x), proj_result), "")
+        elif isinstance(proj_result, Exception):
+            return format_exception(proj_result)
+        else:
+            output = []
+            output.append(PROJECT_TEMPLATE.format(self=proj_result))
+            output.append(TARGET_TEMPLATE.format(
+                s=', '.join(x.app_type.encode('utf8') for x in proj_result.targets)
+            ))
+            for app in proj_result.applications:
+                app_result = []
+                app_info = APP_TEMPLATE.format(self=app)
+                app_result.extend(app_info.splitlines())
+                output.append('\n\t'.join(app_result))
 
-    return ''.join(output) + '\n'
-
+            return ''.join(output) + '\n'
+    elif output_format == "table":
+        if iterable:
+            to_return = tabulate(tuple((p.name,) for p in proj_result
+                                       if not isinstance(p, Exception)),
+                                 headers=("Project",),
+                                 tablefmt="orgtbl")
+            to_return += '\n\n'
+            to_return += ''.join(tuple(format_exception(p) + '\n' for
+                                       p in proj_result if
+                                       isinstance(p, Exception)))
+            return to_return
+        else:
+            if isinstance(proj_result, Exception):
+                return format_exception(proj_result)
+            else:
+                return tabulate((proj_result.name,), headers=("Project",),
+                                tablefmt="orgtbl")
+    elif output_format == "latex":
+        if iterable:
+            return tabulate(tuple((p.name,) for p in proj_result
+                                  if not isinstance(p, Exception)),
+                            headers=("Project",),
+                            tablefmt="latex")
+        elif not isinstance(proj_result, Exception):
+            return tabulate((proj_result.name,), headers=("Project",),
+                            tablefmt="latex")
+    elif output_format == "rst":
+        if iterable:
+            return tabulate(tuple((p.name,) for p in proj_result
+                                  if not isinstance(p, Exception)),
+                            headers=("Project",),
+                            tablefmt="rst")
+        elif not isinstance(proj_result, Exception):
+            return tabulate((proj_result.name,), headers=("Project",),
+                            tablefmt="rst")
 
 def format_package(package):
     """Format a package object."""
@@ -233,36 +284,7 @@ class CLI(Base):
         if result is None and error is not None:
             result = [error]
 
-        if self.output_format == "table":
-            print tabulate(tuple((project.name,)
-                                 for project in result
-                                 if not isinstance(project, Exception)),
-                           headers=("Project",),
-                           tablefmt="orgtbl")
-            print '\n\n'
-            print ''.join(tuple(format_exception(project) + '\n' for
-                                project in result if
-                                isinstance(project, Exception)))
-        elif self.output_format == "blocks":
-            print ''.join(tuple(format_exception(project) + '\n' if
-                                isinstance(project, Exception) else
-                                format_project(project) for project in
-                                result))
-        elif self.output_format == "json":
-            print json.dumps(result, cls=TDSEncoder)
-        elif self.output_format == "latex":
-            print tabulate(tuple((project.name,)
-                                 for project in result
-                                 if not isinstance(project, Exception)),
-                           headers=("Project",),
-                           tablefmt="latex")
-        elif self.output_format == "rst":
-            #TODO Handle exceptions better in output
-            print tabulate(tuple((project.name,)
-                                 for project in result
-                                 if not isinstance(project, Exception)),
-                           headers=("Project",),
-                           tablefmt="rst")
+        print format_project(result, self.output_format)
 
     @staticmethod
     def generate_project_delete_result(result=None, error=None, **_kwds):
@@ -275,12 +297,12 @@ class CLI(Base):
         elif error is not None:
             print format_exception(error)
 
-    @staticmethod
-    def generate_project_create_result(result=None, error=None, **_kwds):
+    def generate_project_create_result(self, result=None, error=None, **_kwds):
         """Render view for a created project."""
         if result:
-            print 'Created %(name)s:' % dict(name=result.name)
-            print format_project(result)
+            if self.output_format == "blocks":
+                print 'Created %(name)s:' % dict(name=result.name)
+            print format_project(result, self.output_format)
         elif error:
             print format_exception(error)
 

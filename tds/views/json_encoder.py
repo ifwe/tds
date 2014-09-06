@@ -17,11 +17,9 @@ class TDSEncoder(json.JSONEncoder):
 
         # If iterable, convert to list:
         try:
-            obj = list(obj)
+            return list(obj)
         except:
             pass
-        else:
-            return obj
 
         # If the object has a to_dict callable, call it:
         if callable(getattr(obj, 'to_dict', None)):
