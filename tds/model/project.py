@@ -20,10 +20,10 @@ class Project(Base):
     @property
     def environment_specific(self):
         """
-        Returns False iff there are applications and at least
+        Returns True iff there are applications and at least
         one is env specific
         """
-        return all((not x.environment_specific) for x in self.applications)
+        return any(x.environment_specific for x in self.applications)
 
     @property
     def targets(self):
