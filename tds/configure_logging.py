@@ -1,3 +1,7 @@
+"""
+Configure logging for TDS.
+"""
+
 import logging
 import os.path
 import sys
@@ -67,8 +71,12 @@ def configure_logging(config_dir, verbosity, use_color, daemon=False):
     logger = logging.getLogger()
     logger.setLevel(1)
     log_wrap.add_syslog(logger, 'syslog',
-                        facility=log_wrap.facilities.get(syslog_facility, log_wrap.LOG_LOCAL4),
-                        priority=log_wrap.priorities.get(syslog_priority, log_wrap.LOG_DEBUG))
+                        facility=log_wrap.facilities.get(
+                                syslog_facility, log_wrap.LOG_LOCAL4
+                        ),
+                        priority=log_wrap.priorities.get(
+                                syslog_priority, log_wrap.LOG_DEBUG
+                        ))
 
     if not daemon:
         log_wrap.add_stream(logger, 'stderr', stream=sys.stderr,

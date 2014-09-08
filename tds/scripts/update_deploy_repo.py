@@ -1,5 +1,5 @@
 """Program to run a daemon on yum repository servers to manage
-   new packages being added to the deploy repository for TDS
+   new packages being added to the deploy repository for TDS.
 """
 
 import logging
@@ -30,16 +30,16 @@ log = logging.getLogger('update_deploy_repo')
 
 
 class ExtCommandError(Exception):
-    """Custom exception for external command errors"""
+    """Custom exception for external command errors."""
 
     pass
 
 
 class Zookeeper(object):
-    """Zookeeper management object"""
+    """Zookeeper management object."""
 
     def __init__(self, hostname, servers):
-        """Set up election for Zookeeper"""
+        """Set up election for Zookeeper."""
 
         self.zoo = KazooClient('hosts=%s' % ','.join(servers))
         self.zoo.start()
@@ -47,25 +47,25 @@ class Zookeeper(object):
         self.election = self.zoo.Election('/deployrepo', hostname)
 
     def my_listener(self, state):
-        """Manage connection to Zookeeper"""
+        """Manage connection to Zookeeper."""
 
         pass   # Do we need to do anything here?
 
     def run(self, elect_method, *args):
-        """Run passed method with given arguments when election is won"""
+        """Run passed method with given arguments when election is won."""
 
         log.info('Acquiring lock for processing...')
         self.election.run(elect_method, *args)
 
 
 class UpdateDeployRepoDaemon(Daemon):
-    """Daemon to manage updating the deploy repository with new packages"""
+    """Daemon to manage updating the deploy repository with new packages."""
 
     valid_rpms = None
 
     @staticmethod
     def remove_file(rpm):
-        """Remove file from system"""
+        """Remove file from system."""
 
         try:
             os.unlink(rpm)
@@ -73,7 +73,7 @@ class UpdateDeployRepoDaemon(Daemon):
             log.error('Unable to remove file %s: %s', rpm, exc)
 
     def check_rpm_file(self, rpm_to_process):
-        """Ensure file is a valid RPM"""
+        """Ensure file is a valid RPM."""
 
         rpm_info = None
         cmd = ['rpm', '-qp', '--queryformat',
@@ -97,7 +97,7 @@ class UpdateDeployRepoDaemon(Daemon):
         return rpm_info
 
     def prepare_rpms(self, incoming_dir, process_dir, files):
-        """Move RPMs in incoming directory to the processing directory"""
+        """Move RPMs in incoming directory to the processing directory."""
 
         log.info('Moving files in incoming directory to processing '
                  'directory...')
@@ -151,7 +151,7 @@ class UpdateDeployRepoDaemon(Daemon):
 
     @staticmethod
     def email_for_invalid_rpm(rpm_file):
-        """Send an email to engineering if a bad RPM is found"""
+        """Send an email to engineering if a bad RPM is found."""
 
         sender = 'siteops'
         sender_email = '%s@tagged.com' % sender
@@ -170,7 +170,7 @@ class UpdateDeployRepoDaemon(Daemon):
 
     def update_repo(self, repo_dir, process_dir):
         """Copy RPMs in processing directory to the repository and run
-           update the repo
+           update the repo.
         """
 
         for rpm in self.valid_rpms.keys():
@@ -240,7 +240,7 @@ class UpdateDeployRepoDaemon(Daemon):
             self.remove_file(os.path.join(process_dir, rpm_to_process))
 
     def process_incoming_directory(self, repo_dir, incoming_dir, process_dir):
-        """Look for files in 'incoming' directory and handle them"""
+        """Look for files in 'incoming' directory and handle them."""
 
         log.info('Checking for incoming files...')
 
@@ -258,7 +258,7 @@ class UpdateDeployRepoDaemon(Daemon):
     def main(self):
         """Read configuration file and get relevant information, then try
            to process files in the incoming directory if single system or
-           zookeeper leader in multi-system configuration
+           zookeeper leader in multi-system configuration.
         """
 
         data = None
@@ -327,7 +327,7 @@ class UpdateDeployRepoDaemon(Daemon):
 
     def run(self):
         """A wrapper for the main process to ensure any unhandled
-           exceptions are logged before the daemon exits
+           exceptions are logged before the daemon exits.
         """
 
         try:
@@ -340,7 +340,7 @@ class UpdateDeployRepoDaemon(Daemon):
 
 
 def daemon_main():
-    """Prepare logging then initialize daemon"""
+    """Prepare logging then initialize daemon."""
 
     pid = '/var/run/update_deploy_repo.pid'
     logfile = '/var/log/update_deploy_repo.log'

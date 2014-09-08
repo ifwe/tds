@@ -1,3 +1,7 @@
+"""
+Base class for controllers.
+"""
+
 import argparse
 
 import tds.model
@@ -23,7 +27,7 @@ def validate(attr):
 
 class BaseController(object):
     """
-    Base class for controllers
+    Base class for controllers.
     """
     access_levels = {}
 

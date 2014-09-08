@@ -47,3 +47,32 @@ Feature: The package list subcommand
         Given there is a package version with project="foo",version="5"
         When I run "package list --projects foo bar"
         Then the output describes a package version with name="foo-name",version="5"
+
+    Scenario: with table output format
+        Given there is a package version with version="1"
+        When I run "--output-format table package list --projects bar"
+        Then the output describes the packages in a table
+
+    Scenario: explicit blocks output format
+        Given there is a package version with version="1"
+        When I run "--output-format blocks package list --projects bar"
+        Then the output describes the packages
+
+    Scenario: invalid output format
+        When I run "--output-format foo package list"
+        Then the output has "usage:"
+
+    Scenario: with json output format
+        Given there is a package version with version="1"
+        When I run "--output-format json package list --projects bar"
+        Then the output describes the packages in json
+
+    Scenario: with latex output format
+        Given there is a package version with version="1"
+        When I run "--output-format latex package list --projects bar"
+        Then the output describes the packages in latex
+
+    Scenario: with rst output format
+        Given there is a package version with version="1"
+        When I run "--output-format rst package list --project bar"
+        Then the output describes the packages in rst

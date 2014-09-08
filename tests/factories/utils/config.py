@@ -12,7 +12,7 @@ from tests import FIXTURES_PATH
 
 
 class ConfigFactory(factory.Factory):
-    'Superclass to redirect to tests/fixtures/config directory'
+    """Superclass to redirect to tests/fixtures/config directory."""
     FACTORY_FOR = tds.utils.config.TDSConfig
 
     conf_dir = join(FIXTURES_PATH, 'config')
@@ -21,12 +21,12 @@ class ConfigFactory(factory.Factory):
 
 
 class DeployConfigFactory(ConfigFactory):
-    'A factory for a config that uses deploy.yml'
+    """A factory for a config that uses deploy.yml."""
     FACTORY_FOR = tds.utils.config.TDSDeployConfig
 
 
 class DatabaseTestConfigFactory(ConfigFactory):
-    'A factory for a config that uses dbaccess.%(access_level)s.yml'
+    """A factory for a config that uses dbaccess.%(access_level)s.yml."""
     FACTORY_FOR = tds.utils.config.TDSDatabaseConfig
 
     access_level = 'test'
@@ -34,6 +34,7 @@ class DatabaseTestConfigFactory(ConfigFactory):
 
 
 class AuthConfigFactory(factory.Factory):
+    """A factory for TDSAuthConfig."""
     FACTORY_FOR = tds.authorize.TDSAuthConfig
     filename = join(FIXTURES_PATH, 'config', 'auth.yml')
     __loaded = factory.PostGenerationMethodCall('load')
