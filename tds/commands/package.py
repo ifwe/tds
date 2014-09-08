@@ -1,7 +1,6 @@
 """Commands to support managing packages in the TDS system."""
 
 import os.path
-import socket
 import signal
 import time
 
@@ -11,7 +10,6 @@ import tagopsdb.deploy.repo
 import tagopsdb.deploy.deploy
 import tagopsdb.deploy.package
 
-import tds.authorize
 import tds.model
 import tds.utils
 
@@ -236,8 +234,11 @@ class PackageController(BaseController):
         """
 
         packages_sorted = sorted(
-            tagopsdb.deploy.package.list_packages([x.name for x in projects] or None),
-            key=lambda package: (package.created, package.version, package.revision)
+            tagopsdb.deploy.package.list_packages(
+                [x.name for x in projects] or None
+            ),
+            key=lambda package: (package.created, package.version,
+                                 package.revision)
         )
 
         return dict(result=packages_sorted)
