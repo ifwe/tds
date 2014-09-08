@@ -7,6 +7,7 @@ import datetime
 from time import mktime
 
 class TDSEncoder(json.JSONEncoder):
+    """Custom JSON encoder for a few object types."""
 
     def default(self, obj):
         """Return JSON serializable representation of obj."""
@@ -18,7 +19,7 @@ class TDSEncoder(json.JSONEncoder):
         # If iterable, convert to list:
         try:
             return list(obj)
-        except:
+        except TypeError:
             pass
 
         # If the object has a to_dict callable, call it:

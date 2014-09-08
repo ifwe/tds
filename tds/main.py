@@ -12,7 +12,7 @@ import tds.views
 import tds.utils
 
 import tagopsdb
-from tds.exceptions import AccessError, ConfigurationError
+from tds.exceptions import ConfigurationError
 from tds.model import LocalActor
 
 
@@ -53,25 +53,28 @@ class TDS(object):
 
     @property
     def config(self):
+        """Return configuration."""
         if self._config is None:
             self._config = self._load_config(self.params)
         return self._config
 
     @property
     def dbconfig(self):
+        """Return database configuration."""
         if self._dbconfig is None:
             self._dbconfig = self._load_dbconfig(self.params)
         return self._dbconfig
 
     @property
     def authconfig(self):
+        """Return auth configuration."""
         if self._authconfig is None:
             self._authconfig = self._load_authconfig(self.params)
         return self._authconfig
 
     @staticmethod
     def _load_config(params):
-        'Load app config'
+        """Load app config."""
         config = tds.utils.config.TDSDeployConfig(
             conf_dir=params.get(
                 'config_dir',
@@ -84,7 +87,7 @@ class TDS(object):
 
     @staticmethod
     def _load_dbconfig(params):
-        'Load database config'
+        """Load database config."""
         dbconfig = tds.utils.config.TDSDatabaseConfig(
             params.get('user_level', 'dev'),
             base_name_fragment='tagopsdb',
@@ -141,7 +144,9 @@ class TDS(object):
         self.params['user'] = pwd.getpwuid(os.getuid()).pw_name
         log.log(5, 'User is: %s', self.params['user'])
 
-        self.params['user_level'] = self.authconfig.get_access_level(LocalActor())
+        self.params['user_level'] = self.authconfig.get_access_level(
+                LocalActor()
+        )
         log.log(5, 'User level is: %s', self.params['user_level'])
 
         self.params['env'] = self.config['env.environment']
@@ -204,5 +209,6 @@ class TDS(object):
         return self.render(view_name, result)
 
     def render(self, *args, **kwargs):
+        """Render view."""
         return self.view(output_format=self.params['output_format']) \
             .generate_result(*args, **kwargs)
