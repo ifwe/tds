@@ -170,7 +170,7 @@ def format_project(proj_result, output_format="blocks"):
                             headers=("Project",),
                             tablefmt=TABULATE_FORMAT[output_format])
         else:
-            return tabulate((proj_result.name,), headers=("Project",),
+            return tabulate(((proj_result.name,),), headers=("Project",),
                             tablefmt=TABULATE_FORMAT[output_format])
 
 
