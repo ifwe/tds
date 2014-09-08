@@ -2,7 +2,6 @@
 MCO deploy strategy class.
 """
 
-import subprocess
 import json
 import re
 
@@ -93,7 +92,7 @@ class TDSMCODeployStrategy(DeployStrategy):
 
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
-        log.debug('Deploying to host %r' % dep_host)
+        log.debug('Deploying to host %r', dep_host)
 
         mco_cmd = [self.mco_bin, 'tds', '--discovery-timeout', '4',
                    '--timeout', '60', '-W', 'hostname=%s' % dep_host,

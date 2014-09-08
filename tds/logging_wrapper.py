@@ -4,7 +4,6 @@
 Wrapper around different logging facilities.
 """
 
-import platform
 import logging
 import logging.handlers
 import os
