@@ -26,6 +26,13 @@ def silence(*exc_classes):
         return call_func
     return wrap_func
 
+# Mapping of output_format argument to tabulate's tablefmt argument.
+TABULATE_FORMAT = {
+    'table': 'orgtbl',
+    'rst': 'rst',
+    'latex': 'latex',
+}
+
 # TODO: this isn't planned out AT ALL
 PROJECT_TEMPLATE = (
     'Project: {self.name}\n'
@@ -128,20 +135,21 @@ def format_project(proj_result, output_format="blocks"):
     """
     Format a project object or iterable of projects in given output_format.
     """
+    #TODO Output exceptions in some of these output formats.
     if output_format == "json":
         return json.dumps(proj_result, cls=TDSEncoder)
     try:
         iterable = iter(proj_result)
     except:
         iterable = False
+    if not iterable and isinstance(proj_result, Exception):
+        return format_exception(proj_result)
     if output_format == "blocks":
         if iterable:
             return reduce(lambda x, y: x + '\n\n' + y,
                    map(lambda x: format_project(x, "blocks")
                        if not isinstance(x, Exception)
                        else format_exception(x), proj_result), "")
-        elif isinstance(proj_result, Exception):
-            return format_exception(proj_result)
         else:
             output = []
             output.append(PROJECT_TEMPLATE.format(self=proj_result))
@@ -155,45 +163,46 @@ def format_project(proj_result, output_format="blocks"):
                 output.append('\n\t'.join(app_result))
 
             return ''.join(output) + '\n'
-    elif output_format == "table":
+    else:
         if iterable:
-            to_return = tabulate(tuple((p.name,) for p in proj_result
-                                       if not isinstance(p, Exception)),
-                                 headers=("Project",),
-                                 tablefmt="orgtbl")
-            to_return += '\n\n'
-            to_return += ''.join(tuple(format_exception(p) + '\n' for
-                                       p in proj_result if
-                                       isinstance(p, Exception)))
-            return to_return
+            return tabulate(tuple((p.name,) for p in proj_result
+                                  if not isinstance(p, Exception)),
+                            headers=("Project",),
+                            tablefmt=TABULATE_FORMAT[output_format])
         else:
-            if isinstance(proj_result, Exception):
-                return format_exception(proj_result)
-            else:
-                return tabulate((proj_result.name,), headers=("Project",),
-                                tablefmt="orgtbl")
-    elif output_format == "latex":
-        if iterable:
-            return tabulate(tuple((p.name,) for p in proj_result
-                                  if not isinstance(p, Exception)),
-                            headers=("Project",),
-                            tablefmt="latex")
-        elif not isinstance(proj_result, Exception):
             return tabulate((proj_result.name,), headers=("Project",),
-                            tablefmt="latex")
-    elif output_format == "rst":
-        if iterable:
-            return tabulate(tuple((p.name,) for p in proj_result
-                                  if not isinstance(p, Exception)),
-                            headers=("Project",),
-                            tablefmt="rst")
-        elif not isinstance(proj_result, Exception):
-            return tabulate((proj_result.name,), headers=("Project",),
-                            tablefmt="rst")
+                            tablefmt=TABULATE_FORMAT[output_format])
 
-def format_package(package):
-    """Format a package object."""
-    return PACKAGE_TEMPLATE.format(self=package)
+
+def format_package(pkg_result, output_format="blocks"):
+    """Format a package object or iterable of packages in output_format."""
+    if output_format == "json":
+        return json.dumps(pkg_result, cls=TDSEncoder)
+    try:
+        iterable = iter(pkg_result)
+    except:
+        iterable = False
+    if not iterable and isinstance(pkg_result, Exception):
+        return format_exception(pkg_result)
+    if output_format == "blocks":
+        if iterable:
+            return reduce(lambda x, y: x + '\n\n' + y,
+                   map(lambda x: format_package(x, "blocks")
+                       if not isinstance(x, Exception)
+                       else format_exception(x), pkg_result), "")
+        else:
+            return PACKAGE_TEMPLATE.format(self=pkg_result)
+    else:
+        if iterable:
+            return tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
+                                   pkg in pkg_result),
+                            headers=('Project', 'Version', 'Revision'),
+                            tablefmt=TABULATE_FORMAT[output_format])
+        else:
+            return tabulate(((pkg_result.name, pkg_result.version,
+                             pkg_result.revision),),
+                            headers=('Project', 'Version', 'Revision'),
+                            tablefmt=TABULATE_FORMAT[output_format])
 
 
 def format_deployments(deployments):
@@ -280,7 +289,6 @@ class CLI(Base):
         """
         Show the view for a list of project objects.
         """
-        #TODO Output exceptions in some of these output formats.
         if result is None and error is not None:
             result = [error]
 
@@ -366,27 +374,7 @@ class CLI(Base):
                 result=result, error=error, **kwds
             )
 
-        if self.output_format == "table":
-            print tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
-                                 pkg in result),
-                           headers=('Project', 'Version', 'Revision'),
-                           tablefmt="orgtbl")
-        elif self.output_format == "blocks":
-            print '\n\n'.join(tuple(format_package(package) for package
-                                    in result))
-        elif self.output_format == "json":
-            print json.dumps(result, cls=TDSEncoder)
-        elif self.output_format == "latex":
-            print tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
-                                 pkg in result),
-                           headers=('Project', 'Version', 'Revision'),
-                           tablefmt="latex")
-
-        elif self.output_format == "rst":
-            print tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
-                                 pkg in result),
-                           headers=('Project', 'Version', 'Revision'),
-                           tablefmt="rst")
+        print format_package(result, self.output_format)
 
     def generate_deploy_restart_result(self, result=None, error=None, **kwds):
         """Format the result of a "deploy restart" action."""
