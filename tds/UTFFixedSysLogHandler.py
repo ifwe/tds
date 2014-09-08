@@ -50,7 +50,6 @@ class UTFFixedSysLogHandler(SysLogHandler):
 
         # We need to convert record level to lowercase, maybe this will
         # change in the future.
-        """
         prio = '<%d>' % self.encodePriority(
             self.facility,
             self.mapPriority(record.levelname)
