@@ -28,10 +28,12 @@ class TDSAuthConfig(tds.utils.config.YAMLConfig):
 
     @property
     def access_levels(self):
+        """Return acces levels."""
         return ACCESS_LEVELS
 
     @property
     def access_mapping(self):
+        """Return mapping."""
         return self['mapping']
 
     def get_access_level(self, actor):

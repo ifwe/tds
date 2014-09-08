@@ -34,14 +34,19 @@ class DeployTarget(Base):
 
 
 class AppTarget(DeployTarget):
+    """An application target."""
+
     delegate = tagopsdb.AppDefinition
 
     @property
     def projects(self):
+        """Return list of projects for this AppTarget."""
         return [Project(delegate=p) for p in self.delegate.projects]
 
 
 class HostTarget(DeployTarget):
+    """A host target."""
+
     delegate = tagopsdb.Host
 
     @property

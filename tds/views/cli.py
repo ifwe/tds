@@ -140,7 +140,7 @@ def format_project(proj_result, output_format="blocks"):
         return json.dumps(proj_result, cls=TDSEncoder)
     try:
         iterable = iter(proj_result)
-    except:
+    except TypeError:
         iterable = False
     if not iterable and isinstance(proj_result, Exception):
         return format_exception(proj_result)
@@ -180,7 +180,7 @@ def format_package(pkg_result, output_format="blocks"):
         return json.dumps(pkg_result, cls=TDSEncoder)
     try:
         iterable = iter(pkg_result)
-    except:
+    except TypeError:
         iterable = False
     if not iterable and isinstance(pkg_result, Exception):
         return format_exception(pkg_result)
