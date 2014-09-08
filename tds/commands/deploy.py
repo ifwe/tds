@@ -1,5 +1,5 @@
 """
-Controller for 'deploy' commands
+Controller for 'deploy' commands.
 """
 import collections
 import progressbar
@@ -52,7 +52,7 @@ def create_deployment(project, hosts, apptypes, **params):
 
 class DeployController(BaseController):
 
-    """Commands to manage deployments for supported applications"""
+    """Commands to manage deployments for supported applications."""
 
     dep_types = {'promote': 'Deployment',
                  'redeploy': 'Redeployment',
@@ -89,7 +89,7 @@ class DeployController(BaseController):
     @property
     def deploy_strategy(self):
         """
-        Accessor for the DeployStrategy instance used by this object
+        Accessor for the DeployStrategy instance used by this object.
         """
         return self._deploy_strategy
 
@@ -97,7 +97,7 @@ class DeployController(BaseController):
     def check_previous_environment(self, project, params, package, apptype):
         """Ensure deployment for previous environment for given package
            and apptier was validated; this is only relevant for staging
-           and production environments
+           and production environments.
         """
         # Note: this will currently allow any user to force
         # a deployment without previous tier requirement;
@@ -158,8 +158,8 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def check_for_current_deployment(self, params, apptype, hosts=None):
-        """For the current app type, see if there are any current deployments
-           running and notify if there is
+        """For the current app type, see if there are any current
+           deployments running and notify if there is.
         """
 
         log.debug(
@@ -170,60 +170,63 @@ class DeployController(BaseController):
         time_delta = timedelta(hours=1)  # Harcoded to an hour for now
         log.log(5, 'time_delta is: %s', time_delta)
 
-        dep_info = tagopsdb.deploy.deploy.find_running_deployment(
+        dep = {}
+
+        dep['info'] = tagopsdb.deploy.deploy.find_running_deployment(
             apptype.id,
             self.envs[params['env']],
             hosts=[x.name for x in hosts] if hosts else None
         )
 
-        if dep_info:
+        if dep['info']:
             log.debug('Current deployment found')
 
-            dep_type, data = dep_info
-            log.log(5, 'Deployment type is: %s', dep_type)
+            dep['type'], data = dep['info']
+            log.log(5, 'Deployment type is: %s', dep['type'])
 
-            if dep_type == 'tier':
-                dep_user, dep_realized, dep_env, dep_apptype = data
-                log.log(5, 'Deployment user is: %s', dep_user)
-                log.log(5, 'Deployment realized is: %s', dep_realized)
-                log.log(5, 'Deployment environment is: %s', dep_env)
-                log.log(5, 'Deployment apptype is: %s', dep_apptype)
+            if dep['type'] == 'tier':
+                dep['user'], dep['realized'], dep['env'], dep['apptype'] = \
+                    data
+                log.log(5, 'Deployment user is: %s', dep['user'])
+                log.log(5, 'Deployment realized is: %s', dep['realized'])
+                log.log(5, 'Deployment environment is: %s', dep['env'])
+                log.log(5, 'Deployment apptype is: %s', dep['apptype'])
 
-                if datetime.now() - dep_realized < time_delta:
+                if datetime.now() - dep['realized'] < time_delta:
                     log.info(
                         'User "%s" is currently running a '
                         'deployment for the %s app tier in the %s '
                         'environment, skipping...',
-                        dep_user, dep_apptype, dep_env
+                        dep['user'], dep['apptype'], dep['env']
                     )
                     return True
-            else:   # dep_type is 'host'
-                dep_hosts = []
+            else:   # dep['type'] is 'host'
+                dep['hosts'] = []
 
                 for entry in data:
-                    dep_user, dep_realized, dep_hostname, dep_env = entry
-                    log.log(5, 'Deployment user is: %s', dep_user)
-                    log.log(5, 'Deployment realized is: %s', dep_realized)
-                    log.log(5, 'Deployment hostname is: %s', dep_hostname)
-                    log.log(5, 'Deployment environment is: %s', dep_env)
+                    dep['user'], dep['realized'], dep['hostname'], \
+                        dep['env'] = entry
+                    log.log(5, 'Deployment user is: %s', dep['user'])
+                    log.log(5, 'Deployment realized is: %s', dep['realized'])
+                    log.log(5, 'Deployment hostname is: %s', dep['hostname'])
+                    log.log(5, 'Deployment environment is: %s', dep['env'])
 
-                    if datetime.now() - dep_realized < time_delta:
+                    if datetime.now() - dep['realized'] < time_delta:
                         log.log(
                             5, 'Host %r active with deployment',
-                            dep_hostname
+                            dep['hostname']
                         )
-                        dep_hosts.append(dep_hostname)
+                        dep['hosts'].append(dep['hostname'])
 
-                if dep_hosts:
+                if dep['hosts']:
                     # Allow separate hosts to get simultaneous deployments
                     if (hosts is None or
-                            not set(dep_hosts).isdisjoint(set(hosts))):
-                        host_list = ', '.join(dep_hosts)
+                            not set(dep['hosts']).isdisjoint(set(hosts))):
                         log.info(
                             'User "%s" is currently running a '
                             'deployment for the hosts "%s" in '
                             'the %s environment, skipping...',
-                            dep_user, host_list, dep_env
+                            dep['user'], ', '.join(dep['hosts']), dep['env']
                         )
                         return True
 
@@ -233,7 +236,7 @@ class DeployController(BaseController):
     @tds.utils.debug
     def check_tier_state(self, project, params, pkg_id, app_dep):
         """Ensure state of tier (from given app deployment) is consistent
-           with state and deployment package versions
+           with state and deployment package versions.
         """
 
         log.debug('Checking state of tier')
@@ -282,7 +285,7 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
-        """Deploy specified package to a given host"""
+        """Deploy specified package to a given host."""
 
         return self.deploy_strategy.deploy_to_host(
             dep_host,
@@ -293,13 +296,13 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def restart_host(self, dep_host, app, retry=4):
-        'Restart a host'
+        """Restart a host."""
         return self.deploy_strategy.restart_host(dep_host, app, retry)
 
     @tds.utils.debug
     def deploy_to_hosts(self, project, params, dep_hosts, dep, redeploy=False):
         """Perform deployment on given set of hosts (only doing those
-           that previously failed with a redeploy)
+           that previously failed with a redeploy).
         """
 
         log.debug('Performing host deployments')
@@ -1266,7 +1269,7 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def restart_hosts(self, params, dep_hosts, dep_id):
-        """Restart application on a given set of hosts"""
+        """Restart application on a given set of hosts."""
 
         log.debug('Restarting application on given hosts')
 
@@ -1748,6 +1751,7 @@ class DeployController(BaseController):
 
     @staticmethod
     def get_package_for_target(target, environment):
+        """Return the package for the given target in the given environment."""
         deployments = target.app_deployments
         dep = None
         for dep in sorted(deployments, key=lambda x: x.realized, reverse=True):

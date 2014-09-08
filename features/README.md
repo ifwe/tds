@@ -1,11 +1,11 @@
-# Behavior Tests
+# Feature Tests
 
 ## Description
-Behavior tests for TDS.  To run all tests, execute
+Feature tests for TDS.  To run all tests, execute
 ```
 $ behave
 ```
-from the [root directory](../.) of TDS.
+from the [root directory](./..) of TDS.
 
 For more information on the structure of
 <a href="//pythonhosted.org/behave/" target="_blank">Behave</a>
@@ -14,14 +14,20 @@ tests, please see the
 documentation</a> for Behave.
 
 ## Navigation
-* ./authorizations/
-* ./config/
-* ./deploy/
-* ./helpers/
-* ./jenkinspackage/
-* ./package/
-* ./repository/
-* ./steps/ -
+* [./authorizations/](./authorizations/) -
+Authorization and permissions tests.
+* [./config/](./config/) -
+Tests for the `config` command.
+* [./deploy/](./deploy/) -
+Tests for the `deploy` command.
+* [./helpers/](./helpers/)
+* [./jenkinspackage/](./jenkinspackage/) -
+Tests for the `jenkins_package` command.
+* [./package/](./package/) -
+Tests for the `package` command.
+* [./repository/](./repository/) -
+Tests for the `repository` command.
+* [./steps/](./steps/) -
 Behave <a href="http://pythonhosted.org/behave/api.html#step-functions"
 target="_blank">steps</a>.
 * [./environment.py](./environment.py) -

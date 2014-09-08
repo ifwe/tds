@@ -36,7 +36,7 @@ def processing_handler(*_args):
 
 
 class PackageController(BaseController):
-    """Commands to manage packages for supported applications"""
+    """Commands to manage packages for supported applications."""
 
     access_levels = {
         'list': 'environment',
@@ -46,7 +46,7 @@ class PackageController(BaseController):
 
     @staticmethod
     def check_package_state(pkg_info):
-        """Check state of package in database"""
+        """Check state of package in database."""
 
         return tagopsdb.deploy.package.find_package(
             pkg_info['project'],
@@ -87,7 +87,7 @@ class PackageController(BaseController):
 
     @staticmethod
     def _queue_rpm(params, queued_rpm, rpm_name, app):
-        """Move requested RPM into queue for processing"""
+        """Move requested RPM into queue for processing."""
 
         # Verify required RPM exists and create hard link into
         # the incoming directory for the repository server to find
@@ -116,7 +116,7 @@ class PackageController(BaseController):
 
     @validate('project')
     def add(self, project, **params):
-        """Add a given version of a package for a given project"""
+        """Add a given version of a package for a given project."""
 
         log.debug(
             'Adding version %s of the package for project "%s" '
@@ -193,7 +193,7 @@ class PackageController(BaseController):
 
     @validate('project')
     def delete(self, project, **params):
-        """Delete a given version of a package for a given project"""
+        """Delete a given version of a package for a given project."""
 
         log.debug(
             'Deleting version %s of the package for project "%s" '
@@ -230,8 +230,9 @@ class PackageController(BaseController):
 
     @validate('project')
     def list(self, projects, **params):
-        """Show information for all existing packages in the software
-           repository for requested projects (or all projects)
+        """
+        Show information for all existing packages in the software
+        repository for requested projects (or all projects).
         """
 
         packages_sorted = sorted(

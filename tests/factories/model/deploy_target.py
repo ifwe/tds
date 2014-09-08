@@ -1,3 +1,7 @@
+"""
+Bacic factories for apptype deployment and host deployment targets.
+"""
+
 import factory
 import tds.model.deploy_target as d
 

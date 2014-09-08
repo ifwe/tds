@@ -1,7 +1,13 @@
-from behave import given, then, when
+"""
+Steps for Behave feature tests.
+"""
+
 
 import os.path
 import yaml
+import json
+
+from behave import given, then, when
 
 import tagopsdb
 import tds.model
@@ -414,6 +420,55 @@ def then_the_output_describes_the_projects(context):
             Then the output describes a project with name="%s"
         ''' % project.name)
 
+@then(u'the output describes a project with name="{name}" in a table')
+def then_the_output_describes_a_project_with_name_in_a_table(context, name):
+    assert ('|-' in context.process.stdout
+            or
+            '-|' in context.process.stdout)
+    pipe_prepended = "| {name} ".format(name=name)
+    pipe_appended = " {name} |".format(name=name)
+    assert (pipe_prepended in context.process.stdout
+            or
+            pipe_appended in context.process.stdout)
+
+@then(u'the output describes a project with name="{name}" in json')
+def then_the_output_describes_a_project_with_name_in_json(context, name):
+    try:
+        actual = json.loads(context.process.stdout)
+    except ValueError as e:
+        e.args += (context.process.stdout, context.process.stderr)
+        raise e
+
+    expected = dict(id=1, name=name)
+    for k in expected:
+        assert expected[k] == actual[0][k]
+
+@then(u'the output describes a project with name="{name}" in latex')
+def then_the_output_describes_a_project_with_name_in_latex(context, name):
+    expected = (
+                '\\begin{tabular}{l}',
+                '\hline',
+                ' Project   \\\\',
+                ' {name}{spaces}\\\\'.format(name=name,
+                                             spaces=" " * (10 - len(name))
+                                            ),
+                '\end{tabular}',
+    )
+    output_lines = context.process.stdout.splitlines()
+    for line in expected:
+        assert line in output_lines
+
+@then(u'the output describes a project with name="{name}" in rst')
+def then_the_output_describes_a_project_with_name_in_rst(context, name):
+    expected = (
+                "=========",
+                "Project",
+                name,
+    )
+    output_lines = context.process.stdout.splitlines()
+    for line in expected:
+        assert line in output_lines
+
 @then(u'the output describes the packages')
 def then_the_output_describes_the_packages(context):
     for package in context.tds_package_versions:
@@ -445,6 +500,81 @@ def then_the_output_describes_a_project_with_properties(context, properties):
     except AssertionError as e:
         e.args += (stdout, stderr),
         raise e
+
+@then(u'the output describes the packages in a table')
+def then_the_output_describes_the_packages_in_a_table(context):
+    assert ("|-" in context.process.stdout
+            and
+            "-|" in context.process.stdout)
+    for header in ('Project', 'Version', 'Revision'):
+        context.execute_steps(u'''
+            Then the output is a table with a column containing "{header}"
+        '''.format(header=header))
+    for package in context.tds_package_versions:
+        for pkg_attr in (package.version, package.name, package.revision):
+            context.execute_steps(u'''
+                Then the output is a table with a column containing "{attr}"
+            '''.format(attr=pkg_attr))
+
+@then(u'the output is a table with a column containing "{text}"')
+def then_the_output_is_a_table_with_a_column_containing(context, text):
+    pipe_prepended = '| {text} '.format(text=text)
+    pipe_appended = ' {text} |'.format(text=text)
+    assert (pipe_prepended in context.process.stdout
+            or
+            pipe_appended in context.process.stdout)
+
+@then(u'the output describes the packages in json')
+def then_the_output_describes_the_packages_in_json(context):
+    try:
+        actual = json.loads(context.process.stdout)
+    except ValueError as e:
+        e.args += (context.process.stdout, context.process.stderr)
+        raise e
+
+    for package in context.tds_package_versions:
+        expected = dict(id=package.id,
+                        pkg_name=package.name,
+                        version=package.version)
+        for k in expected:
+            assert expected[k] == actual[int(package.version)-1][k]
+
+@then(u'the output describes the packages in latex')
+def then_the_output_describes_the_packages_in_latex(context):
+    output_lines = context.process.stdout.splitlines()
+    for package in context.tds_package_versions:
+        expected = (
+                    '\\begin{tabular}{lrr}',
+                    '\hline',
+                    ' Project   &   Version &   Revision \\\\',
+                    ' {package.name}{s1}&{s2}{package.version} &{s3}{package.revision} \\\\'.format(
+                            package=package,
+                            s1=" " * (10 - len(package.name)),
+                            s2=" " * (10 - len(package.version)),
+                            s3=" " * (11 - len(package.revision)),
+                    ),
+                    '\end{tabular}',
+        )
+        for line in expected:
+            print line
+            assert line in output_lines
+
+@then(u'the output describes the packages in rst')
+def then_the_output_describes_the_packages_in_rst(context):
+    output_lines = context.process.stdout.splitlines()
+    for package in context.tds_package_versions:
+        expected = (
+                    "=========  =========  ==========",
+                    "Project      Version    Revision",
+                    "{package.name}{s1}{package.version}{s2}{package.revision}".format(
+                    package=package,
+                    s1=" " * (20 - len(package.name) - len(package.version)),
+                    s2=" " * (12 - len(package.revision)),
+                    ),
+        )
+        for line in expected:
+            print line
+            assert line in output_lines
 
 @then(u'the output describes a project with {properties}')
 def then_the_output_describes_a_project_with_properties(context, properties):
@@ -613,7 +743,7 @@ def then_there_is_no_project_with_properties(context, properties):
     attrs = parse_properties(properties)
     assert tds.model.Project.get(**attrs) is None
     if 'name' in attrs:
-        assert tagopsdb.PackageLocation.get(name=attrs['name']) is None
+        assert tagopsdb.PackageLocation.get(app_name=attrs['name']) is None
         assert tagopsdb.PackageDefinition.get(name=attrs['name']) is None
 
 @then(u'the package version is invalidated for deploy targets')

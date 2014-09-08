@@ -5,8 +5,9 @@ Kenneth Lareau
 ## Description
 TDS is a deployment system developed at Tagged with a database backend
 and a command line frontend.
-TDS is written primarily in Python.
-MySQL 5.1 was used as the database engine,
+The primary application is written in Python and integrates with several
+other applications.
+MySQL was used as the database engine,
 and SQLAlchemy as the object-relational mapper,
 with Alembic used for SQLAlchemy schema migrations.
 
@@ -46,13 +47,13 @@ The following command will run all unit tests:
 $ ./run_tests.py
 ```
 
-### Behavior tests
+### Feature tests
 The following command will run all
 <a href="//pythonhosted.org/behave/">Behave</a> tests:
 ```
 $ behave
 ```
-You may specify a set of tags to restrict which behavior tests to run:
+You may specify a set of tags to restrict which feature tests to run:
 <table>
 <thead>
     <tr>
@@ -73,20 +74,25 @@ You may specify a set of tags to restrict which behavior tests to run:
         <td>wip</td>
         <td>Works in progress</td>
     </tr>
+    <tr>
+        <td>delay</td>
+        <td>Commands with timed delays</td>
+    </tr>
 </tbody>
 </table>
 
 ## Navigation
-* [./.jenkins/](./.jenkins/README.md)
-* [./doc/](./doc/README.md) -
+* [./.jenkins/](./.jenkins/)
+* [./doc/](./doc/) -
 Documentation
-* [./etc/](./etc/README.md)
-* [./features/](./features/README.md) -
-Behavior tests
-* [./pkg/](./pkg/README.md)
-* [./share/](./share/README.md)
-* [./tds/](./tds/README.md)
-* [./tests/](./tests/README.md) -
+* [./etc/](./etc/)
+* [./features/](./features/) -
+Feature tests
+* [./pkg/](./pkg/)
+* [./share/](./share/)
+* [./tds/](./tds/) -
+Models, views, and controllers for TDS application.
+* [./tests/](./tests/) -
 Unit tests
 * [./requirements-dev.txt](./requirements-dev.txt) -
 Development and testing PyPI dependencies
@@ -122,6 +128,14 @@ functions related to object types are spread across the application.
         <td></td>
         <td></td>
         <td>`application.Application`</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>app type</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
         <td></td>
     </tr>
     <tr>
@@ -166,3 +180,7 @@ functions related to object types are spread across the application.
     </tr>
 </tbody>
 </table>
+
+## Roadmap
+See [roadmap.md](./doc/roadmap.md) for details on the release history and
+planned development of TDS.

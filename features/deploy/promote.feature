@@ -142,6 +142,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | config push       |
             | deploy promote    |
 
+    @delay
     Scenario Outline: promote version to with delay option
         When I run "<command> proj 123 --delay 10"
         Then the output has "Completed: 3 out of 3 hosts"
