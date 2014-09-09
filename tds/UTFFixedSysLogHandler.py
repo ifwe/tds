@@ -1,3 +1,11 @@
+"""
+A bug-fix sub-class of SysLogHandler that fixes the UTF-8 BOM syslog
+bug that caused UTF syslog entries to not go to the correct
+facility.  This is fixed by over-riding the 'emit' definition
+with one that puts the BOM in the right place (after prio, instead
+of before it).
+"""
+
 import sys
 import socket
 from logging.handlers import SysLogHandler
@@ -39,10 +47,9 @@ class UTFFixedSysLogHandler(SysLogHandler):
         exception information is present, it is NOT sent to the server.
         """
         msg = self.format(record) + '\000'
-        """
-        We need to convert record level to lowercase, maybe this will
-        change in the future.
-        """
+
+        # We need to convert record level to lowercase, maybe this will
+        # change in the future.
         prio = '<%d>' % self.encodePriority(
             self.facility,
             self.mapPriority(record.levelname)
