@@ -39,11 +39,8 @@ def run_command(cmd):
 def puppet_check():
     """Check for a running Puppet client process."""
 
-    pids = []
-
-    for proc in psutil.process_iter():
-        if proc.name == 'puppetd':
-            pids.append(proc.pid)
+    pids = [proc.pid if proc.name == 'puppetd'
+            for proc in psutil.process_iter()]
 
     if pids:
         return pids
