@@ -40,6 +40,7 @@ PROJECT_TEMPLATE = (
 )
 APP_TEMPLATE = (
     'Application name: {self.pkg_name}\n'
+    'Architecture: {self.arch}\n'
     'Path: {self.path}\n'
     'Build host: {self.build_host}\n'
 )
@@ -153,13 +154,19 @@ def format_project(proj_result, output_format="blocks"):
         else:
             output = []
             output.append(PROJECT_TEMPLATE.format(self=proj_result))
-            output.append(TARGET_TEMPLATE.format(
-                s=', '.join(x.app_type.encode('utf8') for x in proj_result.targets)
-            ))
             for app in proj_result.applications:
                 app_result = []
                 app_info = APP_TEMPLATE.format(self=app)
                 app_result.extend(app_info.splitlines())
+                app_names = set(x.name for x in proj_result.applications)
+                app_result.append(TARGET_TEMPLATE.format(
+                    s=', '.join(
+                        x.name.encode('utf8') for x in proj_result.targets
+                        if set(
+                            p.name for p in x.package_definitions
+                        ) & app_names
+                    )
+                ))
                 output.append('\n\t'.join(app_result))
 
             return ''.join(output) + '\n'
