@@ -17,7 +17,7 @@ import tds.utils.processes as processes
 import tds.utils.merge as merge
 
 DB_HOSTS = (
-    # 'dopsdbtds01.tag-dev.com',
+    'dopsdbtds01.tag-dev.com',
     'dopsdbtds02.tag-dev.com',
 )
 
