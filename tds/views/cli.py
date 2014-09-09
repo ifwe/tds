@@ -120,10 +120,11 @@ def format_project(project):
         app_result = []
         app_info = APP_TEMPLATE.format(self=app)
         app_result.extend(app_info.splitlines())
+        app_names = set(x.name for x in project.applications)
         app_result.append(TARGET_TEMPLATE.format(
             s=', '.join(
-                x.app_type.encode('utf8') for x in project.targets
-                if x.applications.name == app.name
+                x.name.encode('utf8') for x in project.targets
+                if set(p.name for p in x.package_definitions) & app_names
             )
         ))
         output.append('\n\t'.join(app_result))
