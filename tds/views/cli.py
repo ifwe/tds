@@ -148,9 +148,9 @@ def format_project(proj_result, output_format="blocks"):
     if output_format == "blocks":
         if iterable:
             return reduce(lambda x, y: x + '\n\n' + y,
-                   map(lambda x: format_project(x, "blocks")
-                       if not isinstance(x, Exception)
-                       else format_exception(x), proj_result), "")
+                          map(lambda x: format_project(x, "blocks")
+                              if not isinstance(x, Exception)
+                              else format_exception(x), proj_result), "")
         else:
             output = []
             output.append(PROJECT_TEMPLATE.format(self=proj_result))
@@ -194,9 +194,9 @@ def format_package(pkg_result, output_format="blocks"):
     if output_format == "blocks":
         if iterable:
             return reduce(lambda x, y: x + '\n\n' + y,
-                   map(lambda x: format_package(x, "blocks")
-                       if not isinstance(x, Exception)
-                       else format_exception(x), pkg_result), "")
+                          map(lambda x: format_package(x, "blocks")
+                              if not isinstance(x, Exception)
+                              else format_exception(x), pkg_result), "")
         else:
             return PACKAGE_TEMPLATE.format(self=pkg_result)
     else:
