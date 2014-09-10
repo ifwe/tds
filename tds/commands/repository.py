@@ -33,7 +33,19 @@ class RepositoryController(BaseController):
     @validate('project')
     def delete(self, **params):
         """Repository delete subcommand."""
-        return ProjectController(self.app_config).delete(**params)
+        proj = ProjectController(self.app_config).delete(**params)
+        pkg_loc = tagopsdb.PackageLocation.get(
+            app_name=proj['result'].name
+        )
+        if pkg_loc is not None:
+            pkg_loc.delete()
+        pkg_def = tagopsdb.PackageDefinition.get(
+            name=proj['result'].name
+        )
+        if pkg_def is not None:
+            pkg_def.delete()
+        tagopsdb.Session.commit()
+        return proj
 
     @staticmethod
     def verify_package_arch(arch):
