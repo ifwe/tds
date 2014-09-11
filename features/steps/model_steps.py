@@ -114,6 +114,13 @@ def project_factory(context, **kwargs):
         build_host='host with the most',
     )
     tagopsdb.Session.add(pkg_def)
+    tagopsdb.Session.flush()   # force generation of pkg_def.id
+
+    pkg_name = tagopsdb.PackageName(
+        name=pkg_def.pkg_name,
+        pkg_def_id=pkg_def.id,
+    )
+    tagopsdb.Session.add(pkg_name)
 
     app = tagopsdb.Application.get(name=tagopsdb.Application.dummy)
 
