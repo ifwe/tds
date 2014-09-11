@@ -617,8 +617,12 @@ def then_there_is_no_project_with_properties(context, properties):
     attrs = parse_properties(properties)
     assert tds.model.Project.get(**attrs) is None
     if 'name' in attrs:
-        assert tagopsdb.PackageLocation.get(name=attrs['name']) is None
-        assert tagopsdb.PackageDefinition.get(name=attrs['name']) is None
+        assert tagopsdb.PackageLocation.get(
+            name='%s-name' % attrs['name']
+        ) is None
+        assert tagopsdb.PackageDefinition.get(
+            name='%s-name' % attrs['name']
+        ) is None
 
 @then(u'the package version is invalidated for deploy targets')
 def then_the_package_is_invalidated_for_deploy_targets(context):
