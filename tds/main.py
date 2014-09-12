@@ -1,6 +1,6 @@
-'''
+"""
 Command and view resolver for TDS.
-'''
+"""
 import getpass
 import os
 import pwd

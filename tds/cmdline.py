@@ -1,4 +1,4 @@
-'''Data for command line arguments, subsarguments and options'''
+"""Data for command line arguments, subsarguments and options."""
 
 from collections import OrderedDict as odict
 

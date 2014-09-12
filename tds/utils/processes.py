@@ -1,4 +1,4 @@
-'Utilities to run subprocesses'
+"""Utilities to run subprocesses."""
 
 import time
 import shlex
@@ -13,12 +13,12 @@ def run(cmd, expect_return_code=0, shell=False, **kwds):
 
 
 def start_process(cmd, shell=False, **kwds):
-    '''
+    """
     Start a subprocess.
 
-    Returns a token-like object that can be used in a call to
+    Return a token-like object that can be used in a call to
     `wait_for_process` to end the process and get the results.
-    '''
+    """
     if isinstance(cmd, basestring):
         args = shlex.split(cmd.replace('\\', '\\\\'))
     else:
@@ -42,14 +42,14 @@ def start_process(cmd, shell=False, **kwds):
 
 
 def wait_for_process(proc, expect_return_code=0, **_kwds):
-    '''
-    Finalizes a process token and returns information about the ended process.
+    """
+    Finalize a process token and return information about the ended process.
 
     This is a blocking call if the subprocess has not yet finished.
 
     process.duration is not strictly correct -- if the process ended
     before the call to this function, the duration will be inflated.
-    '''
+    """
     stdout, stderr = proc.communicate()
     end = time.time()
     duration = end - proc.start_time
@@ -74,5 +74,3 @@ def wait_for_process(proc, expect_return_code=0, **_kwds):
         returncode=proc.returncode,
         duration=duration
     )
-
-
