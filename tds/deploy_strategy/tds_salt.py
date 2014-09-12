@@ -1,4 +1,4 @@
-"""Salt based DeployStrategy"""
+"""Salt-based DeployStrategy."""
 
 import salt.client
 import tds.utils
@@ -10,11 +10,11 @@ log = logging.getLogger('tds')
 
 
 class TDSSaltDeployStrategy(DeployStrategy):
-    """Salt (master publish.publish) based DeployStrategy"""
+    """Salt (master publish.publish) based DeployStrategy."""
 
     @staticmethod
     def _publish(host, cmd, app):
-        """dispatch to salt master"""
+        """Dispatch to salt master."""
         caller = salt.client.Caller()
         return caller.function('publish.publish', host, cmd, app)
 

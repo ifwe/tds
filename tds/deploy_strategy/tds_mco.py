@@ -1,5 +1,5 @@
 """
-MCO deploy strategy class.
+MCollective-based deploy strategy class.
 """
 
 import json
