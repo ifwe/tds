@@ -60,16 +60,16 @@ APP_DEPLOY_TEMPLATE = (
     'Install state: {app_dep.status}\n'
 )
 HOST_DEPLOY_HEADER_TEMPLATE = (
-    'Deployment of {pkg_dep[pkg_def].name} to hosts '
-    'in {pkg_dep[pkg_def].environment} environment:\n'
+    'Deployment of {host_dep[pkg_def].name} to hosts '
+    'in {host_dep[environment]} environment:\n'
     '==========\n'
 )
 # Note: the following template is unused for now and may be
 #       removed in the near future
 HOST_DEPLOY_MISSING_TEMPLATE = (
-    'No deployments to hosts for {pkg_dep[pkg_def].name} '
+    'No deployments to hosts for {host_dep[pkg_def].name} '
     '(for possible given version) '
-    'in {pkg_dep[environment]} environment\n'
+    'in {host_dep[environment]} environment\n'
 )
 HOST_DEPLOY_TEMPLATE = (
     'Version: {host_dep.deployment.package.version}-'
