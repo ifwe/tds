@@ -654,11 +654,6 @@ def then_the_output_describes_no_deployments(context):
         '\\(for possible given version\\) yet in (.+?) environment',
         stdout.splitlines()
     ), ("tiers didn't match", stdout, stderr)
-    assert find_substring_or_regex_in_lines(
-        'No deployments to hosts for (.+?) '
-        '\\(for possible given version\\) in (.+?) environment',
-        stdout.splitlines()
-    ), ("hosts didn't match", stdout, stderr)
 
 
 @when('the status is changed to "{status}" for package version with {properties}')
