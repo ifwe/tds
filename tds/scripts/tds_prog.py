@@ -10,8 +10,7 @@ import tds.configure_logging as conflog
 import tds.version
 
 from tds.exceptions import AccessError, ConfigurationError, \
-    WrongEnvironmentError, \
-    WrongProjectTypeError
+    WrongEnvironmentError, WrongProjectTypeError
 
 
 def create_subparsers(parser):

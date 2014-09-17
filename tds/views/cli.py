@@ -134,7 +134,9 @@ def format_project(project):
         app_names = set(x.name for x in project.applications)
         app_result.append(TARGET_TEMPLATE.format(
             s=', '.join(
-                x.name.encode('utf8') for x in project.targets
+                x.name.encode('utf8') for x in sorted(project.targets,
+                                                      key=lambda target:
+                                                      target.name.lower)
                 if set(p.name for p in x.package_definitions) & app_names
             )
         ))
