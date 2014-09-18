@@ -134,6 +134,11 @@ def project_factory(context, **kwargs):
     return project
 
 def parse_properties(properties):
+    """
+    Return a dictionary of attributes based on properties.
+    Convert properties of form "property1=value1,property2=value2, ..."
+    to {'property1': value1, 'property2': value2, ...}.
+    """
     pairs = [
         (k.strip(), eval(v.strip()))
         for k, v in
@@ -507,6 +512,7 @@ def then_the_output_describes_a_missing_project_with_properties(context, propert
 
 
 def find_substring_or_regex_in_lines(substr, lines):
+    """Return True iff substr can be found in any line of lines."""
     import re
     prog = re.compile(substr)
 
@@ -523,8 +529,8 @@ def then_the_output_describes_the_deployments(context):
     package = context.tds_package_versions[-1]
 
     context.execute_steps('''
-        Then the output describes a deployment with name="%s",version="%s"
-    ''' % (project.name, package.version))
+        Then the output describes a deployment with name="%s",version="%s",declaring_user="%s"
+    ''' % (project.name, package.version, package.creator))
 
 
 @then(u'the output describes a deployment with {properties}')
@@ -547,6 +553,24 @@ def then_the_output_describes_a_deployment_with_properties(context, properties):
                 'Version: %(version)s' % attrs, lines
             )
             processed_attrs.add('version')
+
+        if 'declaring_user' in attrs:
+            assert find_substring_or_regex_in_lines(
+                'Declaring user: %(declaring_user)s' % attrs, lines
+            )
+            processed_attrs.add('declaring_user')
+
+        if 'realizing_user' in attrs:
+            assert find_substring_or_regex_in_lines(
+                'Realizing_user: %(realizing_user)s' % attrs, lines
+            )
+            processed_attrs.add('realizing_user')
+
+        if 'install_state' in attrs:
+            assert find_substring_or_regex_in_lines(
+                'Install state: %(install_state)s' % attrs, lines
+            )
+            processed_attrs.add('install_state')
 
         unprocessed_attrs = set(attrs) - processed_attrs
         if unprocessed_attrs:
@@ -670,19 +694,12 @@ def given_the_package_version_has_been_validated(context, environment):
     targets = context.tds_targets
     package = context.tds_package_versions[-1]
     deployments = tagopsdb.Deployment.find(package_id=package.id)
-    dep_ids = [d.id for d in deployments]
-    target_ids = [t.id for t in targets]
 
-    for app_dep in tagopsdb.AppDeployment.all():
-        if app_dep.deployment_id not in dep_ids:
-            continue
-
-        if app_dep.app_id not in target_ids:
-            continue
-
-        if app_dep.environment != environment:
-            continue
-
+    for app_dep in tagopsdb.AppDeployment.filter(
+        AppDeployment.environment != environment,
+        ~AppDeployment.deployment_id.in_([d.id for d in deployments]),
+        ~AppDeployment.app_id.in_([t.id for t in targets]),
+    ):
         app_dep.status = 'validated'
         tagopsdb.Session.add(app_dep)
 
