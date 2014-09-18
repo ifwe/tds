@@ -78,7 +78,7 @@ HOST_DEPLOY_TEMPLATE = (
     'Declaring user: {host_dep.deployment.user}\n'
     'Realized: {host_dep.realized}\n'
     'Realizing user: {host_dep.user}\n'
-    'Hostname: {host_dep.host_id}\n'
+    'Hostname: {host_dep.host.name}\n'
     'Deploy state: {host_dep.deployment.dep_type}\n'
     'Install state: {host_dep.status}\n'
 )
