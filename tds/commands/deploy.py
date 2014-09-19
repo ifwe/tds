@@ -1494,10 +1494,8 @@ class DeployController(BaseController):
     def delete_apptype(self, application, project, apptypes, **params):
         """Delete a specific application type from the given project"""
 
-        app = tagopsdb.deploy.repo.find_app_location(project.name)
-
         tagopsdb.deploy.repo.delete_app_packages_mapping(
-            app,
+            tagopsdb.deploy.repo.find_app_location(project.name),
             [x.name for x in apptypes]
         )
 
