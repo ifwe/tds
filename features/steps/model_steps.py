@@ -268,7 +268,7 @@ def deploy_package_to_target(package, target, env):
 
     Host = tagopsdb.Host
     deploy_to_hosts(
-        Host.filter(Host.app_id==target.id),
+        Host.filter(Host.app_id == target.id),
         dep,
     )
 
@@ -583,8 +583,8 @@ def find_substring_or_regex_in_lines(substr, lines):
         return False
 
 
-@then(u'the output describes the deployments')
-def then_the_output_describes_the_deployments(context):
+@then(u'the output describes the app deployments')
+def then_the_output_describes_the_app_deployments(context):
     package = context.tds_package_versions[-1]
 
     context.execute_steps('''
@@ -603,7 +603,7 @@ def then_the_output_describes_a_deployment_with_properties(context, properties):
     try:
         if 'name' in attrs:
             assert find_substring_or_regex_in_lines(
-                'Deployments? of %(name)s to .* tier in .* environment' % attrs, lines
+                'Deployments? of %(name)s to [^ ]* tier in [^ ]* environment' % attrs, lines
             )
             processed_attrs.add('name')
 

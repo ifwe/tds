@@ -74,7 +74,7 @@ Feature: deploy/config show subcommand
         Given the package version is deployed on the deploy target
         And the package version is validated
         When I run "<command> show proj 123"
-        Then the output describes the deployments
+        Then the output describes the app deployments
 
         Examples:
             | command |
@@ -85,7 +85,7 @@ Feature: deploy/config show subcommand
         Given the package version is deployed on the deploy target
         And the package version is validated
         When I run "<command> show proj --apptypes foo"
-        Then the output describes the deployments
+        Then the output describes the app deployments
 
         Examples:
             | command |
@@ -96,7 +96,7 @@ Feature: deploy/config show subcommand
         Given the package version is deployed on the deploy target
         And the package version is validated
         When I run "<command> show proj 123 --apptypes foo"
-        Then the output describes the deployments
+        Then the output describes the app deployments
 
         Examples:
             | command |
@@ -106,7 +106,7 @@ Feature: deploy/config show subcommand
     Scenario Outline: without package version validation
         Given the package version is deployed on the deploy target
         When I run "<command> show proj 123 --apptypes foo"
-        Then the output describes the deployments
+        Then the output describes the app deployments
         And the output describes the host deployments
 
     Examples:
