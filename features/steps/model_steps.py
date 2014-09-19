@@ -266,9 +266,8 @@ def deploy_package_to_target(package, target, env):
     tagopsdb.Session.add(app_dep)
     tagopsdb.Session.commit()
 
-    Host = tagopsdb.Host
     deploy_to_hosts(
-        Host.filter(Host.app_id == target.id),
+        tagopsdb.Host.filter(tagopsdb.Host.app_id == target.id),
         dep,
     )
 
@@ -753,12 +752,11 @@ def given_the_package_version_has_been_validated(context, environment):
     targets = context.tds_targets
     package = context.tds_package_versions[-1]
     deployments = tagopsdb.Deployment.find(package_id=package.id)
-    AppDeployment = tagopsdb.AppDeployment
 
-    for app_dep in AppDeployment.filter(
-        AppDeployment.environment != environment,
-        ~AppDeployment.deployment_id.in_([d.id for d in deployments]),
-        ~AppDeployment.app_id.in_([t.id for t in targets]),
+    for app_dep in tagopsdb.AppDeployment.filter(
+        tagopsdb.AppDeployment.environment != environment,
+        ~tagopsdb.AppDeployment.deployment_id.in_([d.id for d in deployments]),
+        ~tagopsdb.AppDeployment.app_id.in_([t.id for t in targets]),
     ):
         app_dep.status = 'validated'
         tagopsdb.Session.add(app_dep)
