@@ -754,9 +754,9 @@ def given_the_package_version_has_been_validated(context, environment):
     deployments = tagopsdb.Deployment.find(package_id=package.id)
 
     for app_dep in tagopsdb.AppDeployment.filter(
-        tagopsdb.AppDeployment.environment != environment,
-        ~tagopsdb.AppDeployment.deployment_id.in_([d.id for d in deployments]),
-        ~tagopsdb.AppDeployment.app_id.in_([t.id for t in targets]),
+        tagopsdb.AppDeployment.environment == environment,
+        tagopsdb.AppDeployment.deployment_id.in_([d.id for d in deployments]),
+        tagopsdb.AppDeployment.app_id.in_([t.id for t in targets]),
     ):
         app_dep.status = 'validated'
         tagopsdb.Session.add(app_dep)
