@@ -50,7 +50,7 @@ Feature: deploy/config delete-apptype subcommand
     Scenario Outline: delete a target that doesn't exist from a project
         Given there is a project with name="proj"
         When I run "<command> delete-apptype targ proj"
-        Then the output is "Target "targ" does not exist"
+        Then the output is "Valid apptypes for project "proj" are: []"
 
         Examples:
             | command |
