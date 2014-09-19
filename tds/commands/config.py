@@ -94,7 +94,7 @@ class ConfigController(DeployController):
 
         # Project type matches project name
         tagopsdb.deploy.repo.add_app_location(
-            project_name,
+            'application',
             params['buildtype'],
             params['pkgname'],
             project_name,
