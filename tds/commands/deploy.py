@@ -1488,35 +1488,24 @@ class DeployController(BaseController):
             )
         )
 
+    @input_validate('targets')
+    @input_validate('application')
     @input_validate('project')
-    def delete_apptype(self, application, project, **params):
+    def delete_apptype(self, application, project, apptypes, **params):
         """Delete a specific application type from the given project"""
-
-        log.debug('Removing application type for project')
 
         app = tagopsdb.deploy.repo.find_app_location(project.name)
 
-        if app is None:
-            raise Exception(
-                'No app found for project "%s"', project.name
-            )
-
-        try:
-            tagopsdb.deploy.repo.delete_app_packages_mapping(
-                app,
-                [params['apptype']]
-            )
-        except tagopsdb.exceptions.RepoException:
-            raise Exception(
-                'Target "%s" does not exist', params['apptype']
-            )
+        tagopsdb.deploy.repo.delete_app_packages_mapping(
+            app,
+            [x.name for x in apptypes]
+        )
 
         tagopsdb.Session.commit()
-        log.debug('Committed database changes')
 
         return dict(
             result=dict(
-                target=params['apptype'],
+                targets=apptypes,
                 project=project.name
             )
         )
