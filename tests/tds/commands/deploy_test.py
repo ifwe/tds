@@ -8,6 +8,7 @@ from tests.factories.utils.config import DeployConfigFactory
 from tests.factories.model.project import ProjectFactory
 from tests.factories.model.package import PackageFactory
 from tests.factories.model.deploy_target import AppTargetFactory
+from tests.factories.model.application import ApplicationFactory
 
 import tagopsdb
 import tagopsdb.deploy.deploy
@@ -108,7 +109,9 @@ class TestPromoteAndPush(DeploySetUp):
         self.deploy.promote(
             user_level='dev',
             env='dev',
-            project=ProjectFactory(name='fake_app')
+            project=ProjectFactory(name='fake_app'),
+            application=ApplicationFactory(),
+            package=PackageFactory(version='whatever')
         )
 
         assert self.deploy.perform_deployments.called
@@ -121,7 +124,9 @@ class TestPromoteAndPush(DeploySetUp):
         self.deploy.promote(
             user_level='dev',
             env='dev',
-            project=ProjectFactory(name='fake_app')
+            project=ProjectFactory(name='fake_app'),
+            application=ApplicationFactory(),
+            package=PackageFactory(version='whatever')
         )
 
         assert self.deploy.perform_deployments.called
@@ -130,7 +135,11 @@ class TestPromoteAndPush(DeploySetUp):
         self.patch_method(self.config, 'send_notifications', None)
         self.config.ensure_newer_versions.return_value = False
 
-        self.config.push(project=ProjectFactory(name='fake_app'))
+        self.config.push(
+            project=ProjectFactory(name='fake_app'),
+            application=ApplicationFactory(),
+            package=PackageFactory(version='whatever')
+        )
 
         assert self.config.perform_deployments.called
 
@@ -149,6 +158,8 @@ class TestPromoteAndPush(DeploySetUp):
             subcommand_name='promote',  # TODO: mock BaseDeploy.dep_types
             command_name='deploy',
             version='badf00d',
+            application=ApplicationFactory(),
+            package=PackageFactory(version='whatever')
         )
 
         returned = getattr(self.deploy, params.get('subcommand_name'))(**params)
@@ -168,12 +179,11 @@ class TestAddApptype(DeploySetUp):
             user_level='admin',
             env='dev',  # TODO: mock BaseDeploy.envs
             project=ProjectFactory(name='fake_project'),
+            application=ApplicationFactory(),
             user='fake_user',
             groups=['engteam'],
-            apptypes=AppTargetFactory(name='fake_apptype'),
             subcommand_name='add-apptype',  # TODO: mock BaseDeploy.dep_types
             command_name='deploy',
-            version='badf00d',
         )
 
         with self.assertRaises(Exception) as raised:
@@ -200,6 +210,7 @@ class TestAddApptype(DeploySetUp):
             env='dev',  # TODO: mock BaseDeploy.envs
             project=ProjectFactory(name='fake_project'),
             user='fake_user',
+            application=ApplicationFactory(),
             groups=['engteam'],
             apptype='fake_apptype',
             subcommand_name='add-apptype',  # TODO: mock BaseDeploy.dep_types
