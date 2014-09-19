@@ -588,12 +588,12 @@ def then_the_output_describes_the_app_deployments(context):
     package = context.tds_package_versions[-1]
 
     context.execute_steps('''
-        Then the output describes a deployment with name="%s",version="%s",declaring_user="%s"
+        Then the output describes an app deployment with name="%s",version="%s",declaring_user="%s"
     ''' % (package.name, package.version, package.creator))
 
 
-@then(u'the output describes a deployment with {properties}')
-def then_the_output_describes_a_deployment_with_properties(context, properties):
+@then(u'the output describes an app deployment with {properties}')
+def then_the_output_describes_an_app_deployment_with_properties(context, properties):
     attrs = parse_properties(properties)
     stdout = context.process.stdout
     stderr = context.process.stderr
