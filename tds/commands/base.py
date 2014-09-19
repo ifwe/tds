@@ -186,7 +186,7 @@ class BaseController(object):
 
 
     def validate_targets(
-        self, env, hosts=None, apptypes=None, all_apptypes=None, **params
+        self, env, hosts=None, apptype=None, apptypes=None, all_apptypes=None, **params
     ):
         """
         Converts 'env', 'hosts', 'apptypes', and 'all_apptypes' parameters
@@ -198,10 +198,13 @@ class BaseController(object):
         Can raise an Exception from various different failure modes.
         """
 
-        if len(filter(None, [hosts, apptypes, all_apptypes])) > 1:
+        if len(filter(None, [hosts, apptype, apptypes, all_apptypes])) > 1:
             raise argparse.ArgumentError('These options are exclusive: %s'
                 ['hosts', 'apptypes', 'all_apptyes']
             )
+
+        if apptype is not None:
+            apptypes = [apptype]
 
         params.update(self.validate_project(**params))
         projects = params['projects']
