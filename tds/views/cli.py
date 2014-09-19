@@ -27,49 +27,60 @@ APP_TEMPLATE = (
     'Environment Specific: {self.environment_specific}\n'
 )
 TARGET_TEMPLATE = ('App types: {s}\n')
+PKG_DEPLOY_HEADER_TEMPLATE = (
+    'Deployments of package {pkg_dep[pkg_def].name} '
+    'to the following tiers:\n'
+    '==========\n'
+)
+PKG_DEPLOY_MISSING_TEMPLATE = (
+    'No deployments of package {pkg_dep[pkg_def].name} '
+    'to any of the given tiers\n'
+)
 APP_DEPLOY_HEADER_TEMPLATE = (
-    'Deployment of {self.deployment.package.name} '
-    'to {self.application.name} tier '
-    'in {self.environment} environment:\n'
+    'Deployment of {app_dep.deployment.package.name} '
+    'to {app_dep.application.name} tier '
+    'in {app_dep.environment} environment:\n'
     '==========\n'
 )
 APP_DEPLOY_MISSING_TEMPLATE = (
-    'No deployments to tiers for {self[pkg_def].name} '
+    'No deployments to tiers for {app_dep[pkg_def].name} '
     '(for possible given version) yet '
-    'in {self[environment]} environment\n'
+    'in {app_dep[environment]} environment\n'
 )
 APP_DEPLOY_TEMPLATE = (
-    'Version: {self.deployment.package.version}-'
-    '{self.deployment.package.revision}\n'
-    'Declared: {self.deployment.declared}\n'
-    'Declaring user: {self.deployment.user}\n'
-    'Realized: {self.realized}\n'
-    'Realizing user: {self.user}\n'
-    'App type: {self.application.name}\n'
-    'Environment: {self.environment}\n'
-    'Deploy state: {self.deployment.dep_type}\n'
-    'Install state: {self.status}\n'
+    'Version: {app_dep.deployment.package.version}-'
+    '{app_dep.deployment.package.revision}\n'
+    'Declared: {app_dep.deployment.declared}\n'
+    'Declaring user: {app_dep.deployment.user}\n'
+    'Realized: {app_dep.realized}\n'
+    'Realizing user: {app_dep.user}\n'
+    'App type: {app_dep.application.name}\n'
+    'Environment: {app_dep.environment}\n'
+    'Deploy state: {app_dep.deployment.dep_type}\n'
+    'Install state: {app_dep.status}\n'
 )
 HOST_DEPLOY_HEADER_TEMPLATE = (
-    'Deployment of {self.deployment.package.name} to hosts '
-    'in {self.environment} environment:\n'
+    'Deployment of {host_dep[pkg_def].name} to hosts '
+    'in {host_dep[environment]} environment:\n'
     '==========\n'
 )
+# Note: the following template is unused for now and may be
+#       removed in the near future
 HOST_DEPLOY_MISSING_TEMPLATE = (
-    'No deployments to hosts for {self[pkg_def].name} '
+    'No deployments to hosts for {host_dep[pkg_def].name} '
     '(for possible given version) '
-    'in {self[environment]} environment\n'
+    'in {host_dep[environment]} environment\n'
 )
 HOST_DEPLOY_TEMPLATE = (
-    'Version: {self.deployment.package.version}-'
-    '{self.deployment.package.revision}\n'
-    'Declared: {self.deployment.declared}\n'
-    'Declaring user: {self.deployment.user}\n'
-    'Realized: {self.realized}\n'
-    'Realizing user: {self.user}\n'
-    'Hostname: {self.host_id}\n'
-    'Deploy state: {self.deployment.dep_type}\n'
-    'Install state: {self.status}\n'
+    'Version: {host_dep.deployment.package.version}-'
+    '{host_dep.deployment.package.revision}\n'
+    'Declared: {host_dep.deployment.declared}\n'
+    'Declaring user: {host_dep.deployment.user}\n'
+    'Realized: {host_dep.realized}\n'
+    'Realizing user: {host_dep.user}\n'
+    'Hostname: {host_dep.host.name}\n'
+    'Deploy state: {host_dep.deployment.dep_type}\n'
+    'Install state: {host_dep.status}\n'
 )
 
 PACKAGE_TEMPLATE = (
@@ -120,10 +131,13 @@ def format_project(project):
         app_result = []
         app_info = APP_TEMPLATE.format(self=app)
         app_result.extend(app_info.splitlines())
+        app_names = set(x.name for x in project.applications)
         app_result.append(TARGET_TEMPLATE.format(
             s=', '.join(
-                x.app_type.encode('utf8') for x in project.targets
-                if x.applications.name == app.name
+                x.name.encode('utf8') for x in sorted(project.targets,
+                                                      key=lambda target:
+                                                      target.name.lower)
+                if set(p.name for p in x.package_definitions) & app_names
             )
         ))
         output.append('\n\t'.join(app_result))
@@ -138,50 +152,49 @@ def format_package(package):
 def format_deployments(deployments):
     'Format a list of deployments'
     output = []
-    for pkg_dep_info in deployments:
-        no_dep = {
+    for pkg_dep_info in sorted(deployments,
+                               key=lambda entry: entry['package'].name):
+        pkg_info = {
             'pkg_def': pkg_dep_info['package'],
             'environment': pkg_dep_info['environment'],
         }
 
         if pkg_dep_info['by_apptype']:
-            for target in pkg_dep_info['by_apptype']:
-                if target['current_deployment'] is not None:
-                    curr_dep = target['current_deployment']
-                    output.append(
-                        APP_DEPLOY_HEADER_TEMPLATE.format(self=curr_dep)
-                    )
-                    output.append(APP_DEPLOY_TEMPLATE.format(self=curr_dep))
+            for target in sorted(pkg_dep_info['by_apptype'],
+                                 key=lambda entry: entry['apptype'].name):
+                # TODO: Add header for package/apptype notification
+                if target['current_app_deployment'] is not None:
+                    curr_app_dep = target['current_app_deployment']
+                    output.append(APP_DEPLOY_HEADER_TEMPLATE.format(
+                        app_dep=curr_app_dep
+                    ))
+                    output.append(APP_DEPLOY_TEMPLATE.format(
+                        app_dep=curr_app_dep
+                    ))
+
+                    if target['previous_app_deployment'] is not None:
+                        prev_app_dep = target['previous_app_deployment']
+                        output.append(
+                            APP_DEPLOY_TEMPLATE.format(app_dep=prev_app_dep)
+                        )
                 else:
                     output.append(APP_DEPLOY_MISSING_TEMPLATE.format(
-                        self=no_dep
+                        app_dep=pkg_info
                     ))
-                    continue
 
-                if target['previous_deployment'] is not None:
-                    prev_dep = target['previous_deployment']
-                    output.append(
-                        APP_DEPLOY_TEMPLATE.format(self=prev_dep)
-                    )
-        else:
-            output.append(APP_DEPLOY_MISSING_TEMPLATE.format(self=no_dep))
+                if target['host_deployments']:
+                    output.append(HOST_DEPLOY_HEADER_TEMPLATE.format(
+                        host_dep=pkg_info
+                    ))
 
-        if pkg_dep_info['by_hosts']:
-            for target in pkg_dep_info['by_hosts']:
-                if target['deployment'] is not None:
-                    host_dep = target['deployment']
-                    output.append(
-                        HOST_DEPLOY_HEADER_TEMPLATE.format(self=host_dep)
-                    )
-                    output.append(HOST_DEPLOY_TEMPLATE.format(self=host_dep))
-                else:
-                    output.append(
-                        HOST_DEPLOY_MISSING_TEMPLATE.format(self=no_dep)
-                    )
+                    for host_dep in target['host_deployments']:
+                        output.append(HOST_DEPLOY_TEMPLATE.format(
+                            host_dep=host_dep
+                        ))
         else:
-            output.append(
-                HOST_DEPLOY_MISSING_TEMPLATE.format(self=no_dep)
-            )
+            output.append(PKG_DEPLOY_MISSING_TEMPLATE.format(
+                pkg_dep=pkg_info
+            ))
 
     return '\n\n'.join(output) + '\n'
 

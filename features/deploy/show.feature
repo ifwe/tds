@@ -9,6 +9,11 @@ Feature: deploy/config show subcommand
         And there is a project with name="proj"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
+        And there are hosts:
+            | name          |
+            | projhost01    |
+            | projhost02    |
+        And the hosts are associated with the deploy target
         And there is a package version with version="123"
 
     Scenario Outline: too few arguments
@@ -69,7 +74,7 @@ Feature: deploy/config show subcommand
         Given the package version is deployed on the deploy target
         And the package version is validated
         When I run "<command> show proj 123"
-        Then the output describes the deployments
+        Then the output describes the app deployments
 
         Examples:
             | command |
@@ -80,7 +85,7 @@ Feature: deploy/config show subcommand
         Given the package version is deployed on the deploy target
         And the package version is validated
         When I run "<command> show proj --apptypes foo"
-        Then the output describes the deployments
+        Then the output describes the app deployments
 
         Examples:
             | command |
@@ -91,11 +96,22 @@ Feature: deploy/config show subcommand
         Given the package version is deployed on the deploy target
         And the package version is validated
         When I run "<command> show proj 123 --apptypes foo"
-        Then the output describes the deployments
+        Then the output describes the app deployments
 
         Examples:
             | command |
             | deploy  |
             | config  |
+
+    Scenario Outline: without package version validation
+        Given the package version is deployed on the deploy target
+        When I run "<command> show proj 123 --apptypes foo"
+        Then the output describes the app deployments
+        And the output describes the host deployments
+
+    Examples:
+        | command |
+        | deploy  |
+        | config  |
 
 # TODO: need to write tests for host-only deployments
