@@ -368,8 +368,11 @@ class CLI(Base):
 
         print (
             ('Future deployments of "%(project)s" will no longer '
-                'affect "%(target)s"')
-            % result
+                'affect %(names)s')
+            % dict(
+                project=result['project'],
+                names=', '.join('"%s"' % x.name for x in result['targets'])
+            )
         )
 
     def generate_package_add_result(self, result=None, error=None, **kwds):
