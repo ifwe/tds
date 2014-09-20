@@ -267,7 +267,7 @@ def deploy_package_to_target(package, target, env):
     tagopsdb.Session.commit()
 
     deploy_to_hosts(
-        tagopsdb.Host.filter(tagopsdb.Host.app_id == target.id),
+        tagopsdb.Host.find(app_id=target.id),
         dep,
     )
 
@@ -277,14 +277,16 @@ def deploy_to_hosts(hosts, deployment):
     using the given deployment.
     """
     for host in hosts:
-        host_dep = tagopsdb.HostDeployment(
-            deployment_id=deployment.id,
-            host_id=host.id,
-            user='test-user',
-            status='ok',
-        )
-        tagopsdb.Session.add(host_dep)
-        tagopsdb.Session.commit()
+        if tagopsdb.HostDeployment(deployment_id=deployment.id,
+                                   host_id=host.id) is None:
+            host_dep = tagopsdb.HostDeployment(
+                deployment_id=deployment.id,
+                host_id=host.id,
+                user='test-user',
+                status='ok',
+            )
+            tagopsdb.Session.add(host_dep)
+            tagopsdb.Session.commit()
 
 @given(u'the package version is deployed on the deploy target')
 def given_the_package_version_is_deployed_on_the_deploy_target(context):
@@ -752,12 +754,19 @@ def given_the_package_version_has_been_validated(context, environment):
     targets = context.tds_targets
     package = context.tds_package_versions[-1]
     deployments = tagopsdb.Deployment.find(package_id=package.id)
+    dep_ids = [d.id for d in deployments]
+    target_ids = [t.id for t in targets]
 
-    for app_dep in tagopsdb.AppDeployment.filter(
-        tagopsdb.AppDeployment.environment == environment,
-        tagopsdb.AppDeployment.deployment_id.in_([d.id for d in deployments]),
-        tagopsdb.AppDeployment.app_id.in_([t.id for t in targets]),
-    ):
+    for app_dep in tagopsdb.AppDeployment.all():
+        if app_dep.deployment_id not in dep_ids:
+            continue
+
+        if app_dep.app_id not in target_ids:
+            continue
+
+        if app_dep.environment != environment:
+            continue
+
         app_dep.status = 'validated'
         tagopsdb.Session.add(app_dep)
 

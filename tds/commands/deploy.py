@@ -228,7 +228,7 @@ class DeployController(BaseController):
         return False
 
     @tds.utils.debug
-    def check_tier_state(self, project, params, pkg_id, app_dep):
+    def check_tier_state(self, project, params, pkg, app_dep):
         """Ensure state of tier (from given app deployment) is consistent
            with state and deployment package versions
         """
@@ -244,7 +244,7 @@ class DeployController(BaseController):
 
         dep_hosts = \
             tagopsdb.deploy.deploy.find_host_deployments_by_package_name(
-                project.name,
+                pkg.pkg_name,
                 apptype_hostnames
             )
         dep_hostnames = [x.hostname for x in dep_hosts]
@@ -260,7 +260,7 @@ class DeployController(BaseController):
             log.log(5, 'Version differences on: %s', ', '.join(version_diffs))
 
         not_ok_hosts = tagopsdb.deploy.deploy.find_host_deployments_not_ok(
-            pkg_id,
+            pkg.id,
             app_dep.app_id,
             self.envs[params['environment']]
         )
@@ -792,7 +792,7 @@ class DeployController(BaseController):
             if valid:
                 # Ensure tier state is consistent
                 result, missing, diffs, not_ok_hostnames = \
-                    self.check_tier_state(project, params, pkg_id, app_dep)
+                    self.check_tier_state(project, params, pkg, app_dep)
 
                 if result != 'ok':
                     log.info(
