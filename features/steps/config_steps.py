@@ -14,7 +14,9 @@ def given_i_am_in_environment(context, env):
     with open(context.TDS_CONFIG_FILE, 'wb') as f:
         f.write(yaml.dump(config))
 
-    context.tds_environment = env
+    context.tds_env = env
+    environment = tds.commands.DeployController.envs.get(env, env)
+    context.tds_environment = environment.decode('utf8')
 
     if 'no_db' not in context.tags:
         tagopsdb.Session.add(tagopsdb.Environment(
