@@ -10,9 +10,9 @@ Feature: deploy/config show subcommand
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         And there are hosts:
-            | name          |
-            | projhost01    |
-            | projhost02    |
+            | name          | env   |
+            | projhost01    | dev   |
+            | projhost02    | dev   |
         And the hosts are associated with the deploy target
         And there is a package version with version="123"
 

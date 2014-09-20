@@ -58,7 +58,7 @@ def host_factory(context, name, env=None, **kwargs):
         console_port='abcdef',
         power_port='ghijkl',
         power_circuit='12345',
-        environment_id=tagopsdb.Environment.get(env=context.tds_environment).id,
+        environment_id=env_id,
     )
 
     tagopsdb.Session.add(host)
@@ -258,6 +258,7 @@ def given_the_deploy_targets_are_a_part_of_the_project(context):
 
 
 def deploy_package_to_target(package, target, env):
+    env_id = tagopsdb.Environment.get(env=env).id
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
@@ -277,14 +278,14 @@ def deploy_package_to_target(package, target, env):
         app_id=target.id,
         user=dep.user,
         status='complete',
-        environment_id=tagopsdb.Environment.get(env=env).id,
+        environment_id=env_id,
     )
 
     tagopsdb.Session.add(app_dep)
     tagopsdb.Session.commit()
 
     deploy_to_hosts(
-        tagopsdb.Host.find(app_id=target.id),
+        tagopsdb.Host.find(app_id=target.id, environment_id=env_id),
         dep,
     )
 
@@ -294,8 +295,8 @@ def deploy_to_hosts(hosts, deployment):
     using the given deployment.
     """
     for host in hosts:
-        if tagopsdb.HostDeployment(deployment_id=deployment.id,
-                                   host_id=host.id) is None:
+        if tagopsdb.HostDeployment.get(deployment_id=deployment.id,
+                                       host_id=host.id) is None:
             host_dep = tagopsdb.HostDeployment(
                 deployment_id=deployment.id,
                 host_id=host.id,
@@ -310,7 +311,7 @@ def given_the_package_version_is_deployed_on_the_deploy_target(context):
     deploy_package_to_target(
         context.tds_package_versions[-1],
         context.tds_targets[-1],
-        context.tds_environment,
+        context.tds_env,
     )
 
 @given(u'the package version "{version}" is deployed on the deploy target')
@@ -325,7 +326,7 @@ def given_the_package_version_is_deployed_on_the_deploy_target(context, version)
     deploy_package_to_target(
         pkg,
         context.tds_targets[-1],
-        context.tds_environment,
+        context.tds_env,
     )
 
 @given(u'the package version is deployed on the deploy targets')
@@ -334,7 +335,7 @@ def given_the_package_version_is_deployed_on_the_deploy_targets(context):
         deploy_package_to_target(
             context.tds_package_versions[-1],
             target,
-            context.tds_environment,
+            context.tds_env,
         )
 
 @given(u'the package version is deployed on the deploy targets in the "{env}" env')
@@ -392,10 +393,6 @@ def given_the_package_version_is_deployed_on_hosts(context):
 
 @given(u'the package version failed to deploy on the host with {properties}')
 def given_the_package_version_failed_to_deploy_on_host(context, properties):
-    context.execute_steps('''
-        Given the package version is deployed on the host with %s
-    ''' % properties)
-
     attrs = parse_properties(properties)
     package = context.tds_package_versions[-1]
 
@@ -410,12 +407,9 @@ def given_the_package_version_failed_to_deploy_on_host(context, properties):
     tagopsdb.Session.commit()
 
 def set_status_for_package_version(package, status):
-    print "status:", status, "for package", package
     for deployment in package.deployments:
-        print "\tdep", deployment
         for app_dep in deployment.app_deployments:
             app_dep.status = status
-            print "\t\tapp_dep", app_dep
             tagopsdb.Session.add(app_dep)
 
     tagopsdb.Session.commit()
@@ -759,8 +753,7 @@ def when_package_version_state_is_changed(context, status, properties):
     tagopsdb.Session.commit()
 
 
-@given(u'the package version has been validated in the "{environment}" environment')
-def given_the_package_version_has_been_validated(context, environment):
+def given_the_package_version_has_status_set_with_properties(context, environment, status):
     targets = context.tds_targets
     package = context.tds_package_versions[-1]
     deployments = tagopsdb.Deployment.find(package_id=package.id)
@@ -777,10 +770,43 @@ def given_the_package_version_has_been_validated(context, environment):
         if app_dep.environment != environment:
             continue
 
-        app_dep.status = 'validated'
+        app_dep.status = status
         tagopsdb.Session.add(app_dep)
 
+    for host_dep in tagopsdb.HostDeployment.all():
+        if host_dep.deployment_id not in dep_ids:
+            continue
+
+        if host_dep.host.environment != environment:
+            continue
+
+        tagopsdb.Session.delete(host_dep)
+
     tagopsdb.Session.commit()
+
+
+@given(u'the package version has been validated in the "{environment}" environment')
+def given_the_package_version_has_been_validated_with_properties(context, environment):
+    given_the_package_version_has_status_set_with_properties(context, environment, 'validated')
+
+
+@given(u'the package version has been invalidated in the "{environment}" environment')
+def given_the_package_version_has_been_invalidated_with_properties(context, environment):
+    given_the_package_version_has_status_set_with_properties(context, environment, 'invalidated')
+
+
+@given(u'the package version has been validated')
+def given_the_package_version_has_been_validated(context):
+    context.execute_steps('''
+        Given the package version has been validated in the "%s" environment
+    ''' % context.tds_environment)
+
+
+@given(u'the package version has been invalidated')
+def given_the_package_version_has_been_invalidated(context):
+    context.execute_steps('''
+        Given the package version has been invalidated in the "%s" environment
+    ''' % context.tds_environment)
 
 
 def associate_host_with_target(host, target):
