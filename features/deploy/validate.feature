@@ -83,11 +83,17 @@ Feature: deploy/config validate subcommand
             | deploy  |
             | config  |
 
+    @wip
     Scenario Outline: validate a package from a project with single apptype
         Given there is a project with name="proj"
         And there is a package version with version="123"
         And there is a deploy target with name="foo"
+        And there are hosts:
+            | name          |
+            | projhost01    |
+            | projhost02    |
         And the deploy target is a part of the project
+        And the hosts are associated with the deploy target
         And the package version is deployed on the deploy target
         When I run "<command> validate proj 123 --apptype foo"
         Then the output is empty
