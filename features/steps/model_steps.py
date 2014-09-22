@@ -122,18 +122,19 @@ def application_factory(context, **kwargs):
 def project_factory(context, **kwargs):
     project = tds.model.Project.create(**kwargs)
 
-    tagopsdb.Session.add(tagopsdb.PackageLocation(
+    pkg_loc = tagopsdb.PackageLocation(
         app_name=project.name,
         pkg_name=project.name + '-name',
         pkg_type='jenkins',  # gets mapped into Package.builder
         path=project.name + '-path',
         build_host='',
         environment=False,
-    ))
+    )
+    tagopsdb.Session.add(pkg_loc)
 
     context.execute_steps('''
         Given there is an application with name="%s",path="%s"
-    ''' % (project.name + '-name', project.name + '-path'))
+    ''' % (pkg_loc.pkg_name, pkg_loc.path))
 
     application = context.tds_applications[-1]
 
@@ -1061,7 +1062,7 @@ def given_the_hosts_are_associated_with_the_deploy_target(context):
 
 @given(u'the applications can be deployed to the deploy targets')
 def given_the_applications_can_be_deployed_to_the_deploy_targets(context):
-    return
+    assert False
     for application in context.tds_applications:
         for target in context.tds_targets:
             if target in application.targets:

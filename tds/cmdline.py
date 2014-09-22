@@ -366,11 +366,11 @@ DEPLOY_DATA = odict([
     ('promote', odict([
         ('help', 'Promote project to next environment'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application in repository'),
             ])),
             (('version',), odict([
-                ('help', 'Release version number for project'),
+                ('help', 'Release version number for application'),
                 ('type', str),
             ])),
             (('--force', '-f'), odict([

@@ -35,7 +35,7 @@ Feature: Real-life application usage
             | sb3  |
         And the hosts are associated with the deploy target
         And the deploy targets are a part of the project
-        And the applications can be deployed to the deploy targets
+        # And the applications can be deployed to the deploy targets
 
         And the package with name="tagconfig",version="456" is deployed on the deploy target with name="solrsearch"
         And the package with name="tagconfig",version="457" is deployed on the deploy target with name="solrbrowse"

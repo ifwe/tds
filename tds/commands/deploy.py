@@ -1511,27 +1511,28 @@ class DeployController(BaseController):
     @input_validate('package')
     @input_validate('targets')
     @input_validate('project')
-    def promote(self, application, project, package, hosts=None, apptypes=None, **params):
+    def promote(self, application, package, hosts=None, apptypes=None, **params):
         """Deploy given version of given project to requested application
            tiers or hosts
         """
         log.debug('Deploying project')
 
+
         _package, apptypes, app_host_map = self.get_app_info(
-            project, package, hosts, apptypes, params
+            None, package, hosts, apptypes, params
         )
 
         params['package_name'] = package.name
 
         app_dep_map = self.find_app_deployments(package, apptypes, params)
         app_host_map, app_dep_map = self.determine_new_deployments(
-                project, hosts, apptypes, params, package, app_host_map,
+                None, hosts, apptypes, params, package, app_host_map,
                 app_dep_map
             )
 
-        self.send_notifications(project, hosts, apptypes, params)
+        self.send_notifications(None, hosts, apptypes, params)
         self.perform_deployments(
-            project, hosts, apptypes, package, params, app_dep_map,
+            None, hosts, apptypes, package, params, app_dep_map,
             app_host_map
         )
 
