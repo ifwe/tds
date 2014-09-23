@@ -27,7 +27,6 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         And the package version is deployed on the deploy targets in the "stage" env
         And the package version failed to deploy on the host with name="sprojhost02"
 
-    @wip
     Scenario Outline: redeploy project that doesn't exist
         When I run "<command> doesnt-exist"
         Then the output has "Project "doesnt-exist" does not exist"

@@ -97,6 +97,7 @@ Feature: deploy/config show subcommand
         And the package version is validated
         When I run "<command> show proj 123 --apptypes foo"
         Then the output describes the app deployments
+        And the output describes the host deployments
 
         Examples:
             | command |
@@ -114,4 +115,22 @@ Feature: deploy/config show subcommand
         | deploy  |
         | config  |
 
-# TODO: need to write tests for host-only deployments
+    Scenario Outline: host-only deployments with all-apptypes
+        Given the package version is deployed on the hosts
+        When I run "<command> show proj 123 --all-apptypes"
+        Then the output describes the host deployments
+
+        Examples:
+            | command |
+            | deploy  |
+            | config  |
+
+    Scenario Outline: host-only deployments with specific apptype
+        Given the package version is deployed on the hosts
+        When I run "<command> show proj 123 --apptypes foo"
+        Then the output describes the host deployments
+
+        Examples:
+            | command |
+            | deploy  |
+            | config  |
