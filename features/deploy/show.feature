@@ -134,3 +134,28 @@ Feature: deploy/config show subcommand
             | command |
             | deploy  |
             | config  |
+
+    Scenario Outline: with a different version deployed to hosts
+        Given the package version is deployed on the deploy target
+        And there is a package version with version="200"
+        And the package version is deployed on the hosts
+        When I run "<command> show proj --apptypes foo"
+        Then the output describes the host deployments
+        And the output describes an app deployment with version="123"
+
+        Examples:
+            | command |
+            | deploy  |
+            | config  |
+
+    Scenario Outline: check host output for different deployment to hosts
+        Given the package version is deployed on the deploy target
+        And there is a package version with version="200"
+        And the package version is deployed on the hosts
+        When I run "<command> show proj 200 --apptypes foo"
+        Then the output describes the host deployments
+
+        Examples:
+            | command |
+            | deploy  |
+            | config  |
