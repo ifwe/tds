@@ -39,7 +39,9 @@ def rpm_factory(context, **kwargs):
     with open(full_path, 'wb') as f:
         f.write(yaml.dump(kwargs))
 
-def host_factory(context, name, **kwargs):
+def host_factory(context, name, env=None, **kwargs):
+    env = env or context.tds_env
+    env_id = get_environment(env).id
 
     host = tagopsdb.Host(
         state='operational',
@@ -183,6 +185,21 @@ def model_builder(single_string, multiple_string, dest, model_name):
     def _handle_single(context, properties):
         create_model(context, dest, model_name, properties)
 
+def get_environment(env):
+    env_obj = tagopsdb.Environment.get(env=env)
+    if env_obj is None:
+        env_obj = tagopsdb.Environment(
+            env=env,
+            environment=tds.commands.DeployController.envs.get(env, env),
+            domain=env + 'example.com',
+            prefix=env[0]
+        )
+        tagopsdb.Session.add(env_obj)
+        tagopsdb.Session.commit()
+
+    return env_obj
+
+
 model_builder(
     'there is a project with %s',
     'there are projects',
@@ -323,20 +340,13 @@ def given_the_package_version_is_deployed_on_the_deploy_targets(context):
 @given(u'the package version is deployed on the deploy targets in the "{env}" env')
 def given_the_package_version_is_deployed_on_the_deploy_targets(context, env):
 
-    if tagopsdb.Environment.get(env=env) is None:
-        tagopsdb.Session.add(tagopsdb.Environment(
-            env=env,
-            environment=tds.commands.DeployController.envs.get(env, env),
-            domain=env + 'example.com',
-            prefix=env[0]
-        ))
-        tagopsdb.Session.commit()
+    env_obj = get_environment(env)
 
     for target in context.tds_targets:
         deploy_package_to_target(
             context.tds_package_versions[-1],
             target,
-            env,
+            env_obj.env,
         )
 
 
