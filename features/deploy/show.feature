@@ -154,6 +154,21 @@ Feature: deploy/config show subcommand
         And the package version is deployed on the hosts
         When I run "<command> show proj 200 --apptypes foo"
         Then the output describes the host deployments
+        And the output does not describe an app deployment with version="123"
+
+        Examples:
+            | command |
+            | deploy  |
+            | config  |
+
+    Scenario Outline: check app output for different deployment to hosts
+        Given the package version is deployed on the deploy target
+        And there is a package version with version="200"
+        And the package version is deployed on the hosts
+        When I run "<command> show proj 123 --apptypes foo"
+        Then the output describes an app deployment with version="123"
+        And the output does not describe a host deployment with pkg_name="proj-name",host_name="projhost01"
+        And the output does not describe a host deployment with host_name="projhost02"
 
         Examples:
             | command |
