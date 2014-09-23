@@ -12,9 +12,11 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         And there are hosts:
-            | name          |
-            | projhost01    |
-            | projhost02    |
+            | name          | env   |
+            | dprojhost01   | dev   |
+            | dprojhost02   | dev   |
+            | sprojhost01   | stage |
+            | sprojhost02   | stage |
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
 
@@ -59,7 +61,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         Then the output has "Package "proj@124" never validated in "dev" environment for target "the-apptype""
 
     Scenario Outline: promote version to hosts
-        When I run "<command> proj 123 --hosts projhost01 projhost02"
+        When I run "<command> proj 123 --hosts sprojhost01 sprojhost02"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "proj-name" version "123" was deployed to the hosts
 
@@ -96,10 +98,10 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | deploy promote    |
 
     Scenario Outline: promote version to hosts with a failure
-        Given the host "projhost01" will fail to deploy
-        When I run "<command> proj 123 --hosts projhost01 projhost02"
+        Given the host "sprojhost01" will fail to deploy
+        When I run "<command> proj 123 --hosts sprojhost01 sprojhost02"
         Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost01"
+        And the output has "Hostname: sprojhost01"
 
 
         Examples:
@@ -108,10 +110,10 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | deploy promote    |
 
     Scenario Outline: promote version to apptype with a failure
-        Given the host "projhost01" will fail to deploy
+        Given the host "sprojhost01" will fail to deploy
         When I run "<command> proj 123 --apptype the-apptype"
         Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost01"
+        And the output has "Hostname: sprojhost01"
 
         Examples:
             | command           |
@@ -119,10 +121,10 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | deploy promote    |
 
     Scenario Outline: promote version to all apptypes with a failure
-        Given the host "projhost01" will fail to deploy
+        Given the host "sprojhost01" will fail to deploy
         When I run "<command> proj 123 --all-apptypes"
         Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost01"
+        And the output has "Hostname: sprojhost01"
 
         Examples:
             | command           |

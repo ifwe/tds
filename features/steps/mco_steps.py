@@ -81,7 +81,10 @@ def check_deployment_on_hosts(context, hostnames, pkg, version):
 def then_package_version_was_deployed_to_hosts(context, pkg, version):
     assert check_deployment_on_hosts(
         context,
-        [x.hostname for x in context.tds_hosts],
+        [
+            x.hostname for x in context.tds_hosts
+            if x.environment_obj.env == context.tds_env
+        ],
         pkg,
         version
     )
@@ -107,7 +110,7 @@ def then_the_package_version_was_deployed_to_deploy_target(context, pkg, version
         [
             x.hostname
             for x in context.tds_targets[-1].hosts
-            if x.environment_obj.env == context.tds_environment
+            if x.environment_obj.env == context.tds_env
         ],
         pkg,
         version
@@ -124,7 +127,7 @@ def then_package_was_restarted_on_a_specific_deploy_target(context, pkg, version
             x.hostname
             for target in targets
             for x in target.hosts
-            if x.environment_obj.env == context.tds_environment
+            if x.environment_obj.env == context.tds_env
         ],
         pkg,
         version
@@ -138,7 +141,7 @@ def then_the_package_version_was_deployed_to_deploy_target(context, pkg, version
             x.hostname
             for target in context.tds_targets
             for x in target.hosts
-            if x.environment_obj.env == context.tds_environment
+            if x.environment_obj.env == context.tds_env
         ],
         pkg,
         version
@@ -169,7 +172,7 @@ def check_restart_on_targets(context, targets, pkg):
             x
             for target in targets
             for x in target.hosts
-            if x.environment_obj.env == context.tds_environment
+            if x.environment_obj.env == context.tds_env
         ],
         pkg
     )
