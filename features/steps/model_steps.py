@@ -359,6 +359,12 @@ def given_the_package_version_is_deployed_on_host(context, properties):
     host = tagopsdb.Host.get(**attrs)
     assert host
 
+    if tagopsdb.HostDeployment.get(host_id=host.id) is not None:
+        tagopsdb.Session.delete(
+            tagopsdb.HostDeployment.get(host_id=host.id)
+        )
+        tagopsdb.Session.commit()
+
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
         package_id=package.id,
@@ -397,6 +403,7 @@ def given_the_package_version_failed_to_deploy_on_host(context, properties):
     package = context.tds_package_versions[-1]
 
     host = tagopsdb.Host.get(**attrs)
+
     deployment = tagopsdb.Deployment.get(package_id=package.id)
     host_dep = tagopsdb.HostDeployment.get(
         host_id=host.id, deployment_id=deployment.id
@@ -534,11 +541,11 @@ def then_the_output_describes_the_host_deployments(context):
 
     for host in context.tds_hosts:
         context.execute_steps('''
-            Then the output describes a host with host_name="%s",pkg_name="%s"
+            Then the output describes a host deployment with host_name="%s",pkg_name="%s"
         ''' % (host.name, package.name))
 
-@then(u'the output describes a host with {properties}')
-def then_the_output_describes_a_host_with_properties(context, properties):
+@then(u'the output describes a host deployment with {properties}')
+def then_the_output_describes_a_host_deployment_with_properties(context, properties):
     attrs = parse_properties(properties)
     stdout = context.process.stdout
     stderr = context.process.stderr
@@ -561,11 +568,43 @@ def then_the_output_describes_a_host_with_properties(context, properties):
 
         unprocessed_attrs = set(attrs) - processed_attrs
         if unprocessed_attrs:
-            assert len(unprocessed_attrs) == 0, unprocesed_attrs
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
 
     except AssertionError as e:
         e.args += (stdout, stderr),
         raise e
+
+
+@then(u'the output does not describe a host deployment with {properties}')
+def then_the_output_describes_a_host_with_properties(context, properties):
+    attrs = parse_properties(properties)
+    stdout = context.process.stdout
+    stderr = context.process.stderr
+
+    lines = stdout.splitlines()
+    processed_attrs = set()
+    try:
+        if 'pkg_name' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Deployments? of %(pkg_name)s to hosts in .* environment'
+                % attrs, lines
+            )
+            processed_attrs.add('pkg_name')
+
+        if 'host_name' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Hostname: %(host_name)s' % attrs, lines
+            )
+            processed_attrs.add('host_name')
+
+        unprocessed_attrs = set(attrs) - processed_attrs
+        if unprocessed_attrs:
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
+
+    except AssertionError as e:
+        e.args += (stdout, stderr),
+        raise e
+
 
 @then(u'the output describes a missing project with {properties}')
 def then_the_output_describes_a_missing_project_with_properties(context, properties):
@@ -644,6 +683,53 @@ def then_the_output_describes_an_app_deployment_with_properties(context, propert
         e.args += (stdout, stderr),
         raise e
 
+
+@then(u'the output does not describe an app deployment with {properties}')
+def then_the_output_describes_an_app_deployment_with_properties(context, properties):
+    attrs = parse_properties(properties)
+    stdout = context.process.stdout
+    stderr = context.process.stderr
+
+    lines = stdout.splitlines()
+    processed_attrs = set()
+    try:
+        if 'name' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Deployments? of %(name)s to [^ ]* tier in [^ ]* environment' % attrs, lines
+            )
+            processed_attrs.add('name')
+
+        if 'version' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Version: %(version)s' % attrs, lines
+            )
+            processed_attrs.add('version')
+
+        if 'declaring_user' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Declaring user: %(declaring_user)s' % attrs, lines
+            )
+            processed_attrs.add('declaring_user')
+
+        if 'realizing_user' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Realizing_user: %(realizing_user)s' % attrs, lines
+            )
+            processed_attrs.add('realizing_user')
+
+        if 'install_state' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Install state: %(install_state)s' % attrs, lines
+            )
+            processed_attrs.add('install_state')
+
+        unprocessed_attrs = set(attrs) - processed_attrs
+        if unprocessed_attrs:
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
+
+    except AssertionError as e:
+        e.args += (stdout, stderr),
+        raise e
 
 @then(u'the package version is validated')
 def then_the_package_is_validated(context):
