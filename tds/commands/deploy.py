@@ -710,7 +710,6 @@ class DeployController(BaseController):
             valid = True
 
             _app_dep, app_name, _dep_type, package = app_dep_map[apptype.id]
-            print _app_dep, app_name, _dep_type, package, apptype
 
             pkg_def = package.package_definition
 
@@ -1499,7 +1498,6 @@ class DeployController(BaseController):
 
         try:
             tagopsdb.deploy.repo.add_app_packages_mapping(
-                package_location,
                 project.delegate,
                 pkg_def,
                 [params['apptype']]
@@ -1633,6 +1631,7 @@ class DeployController(BaseController):
 
         log.debug('Showing deployment information for given project')
 
+        version = params.get('version', None)
         pkg_def_app_map = collections.defaultdict(list)
 
         for target in apptypes:
@@ -1654,7 +1653,7 @@ class DeployController(BaseController):
             for target in pkg_def_app_map[pkg_def]:
                 func_args = [
                     pkg_def.name,
-                    self.envs[params['environment']],
+                    self.envs[params['env']],
                     target
                 ]
 
@@ -1835,10 +1834,9 @@ class DeployController(BaseController):
                 self.envs[params['env']]
             )
 
-        dep_id = self.determine_redeployments(pkg_id)
-        deployment = tagopsdb.Deployment.get(id=dep_id)
+        deployment = tagopsdb.Deployment.find(package_id=pkg.id)[0]
 
-        self.send_notifications(project, params)
+        self.send_notifications(project, hosts, apptypes, params)
         self.perform_redeployments(
             project, hosts, apptypes, params, deployment, app_host_map,
             app_dep_map
