@@ -15,12 +15,12 @@ def silence(*exc_classes):
     Create a function to silence given exception classes when excecuting
     a function.
     """
-    def wrap_func(f):
+    def wrap_func(func):
         """Wrapper for exception silencing function."""
         def call_func(*a, **k):
             """Exception silencing function."""
             try:
-                return f(*a, **k)
+                return func(*a, **k)
             except exc_classes:
                 return None
         return call_func
@@ -159,9 +159,9 @@ def format_project(proj_result, output_format="blocks"):
     if output_format == "blocks":
         if iterable:
             return reduce(lambda x, y: x + '\n\n' + y,
-                          map(lambda x: format_project(x, "blocks")
-                              if not isinstance(x, Exception)
-                              else format_exception(x), proj_result), "")
+                          (format_project(p, "blocks")
+                           if not isinstance(p, Exception)
+                           else format_exception(p) for p in proj_result), "")
         else:
             output = []
             output.append(PROJECT_TEMPLATE.format(self=proj_result))
@@ -209,9 +209,9 @@ def format_package(pkg_result, output_format="blocks"):
     if output_format == "blocks":
         if iterable:
             return reduce(lambda x, y: x + '\n\n' + y,
-                          map(lambda x: format_package(x, "blocks")
-                              if not isinstance(x, Exception)
-                              else format_exception(x), pkg_result), "")
+                          (format_package(p, "blocks")
+                           if not isinstance(p, Exception)
+                           else format_exception(p) for p in pkg_result), "")
         else:
             return PACKAGE_TEMPLATE.format(self=pkg_result)
     else:
