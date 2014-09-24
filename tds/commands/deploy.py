@@ -710,7 +710,6 @@ class DeployController(BaseController):
             valid = True
 
             _app_dep, app_name, _dep_type, package = app_dep_map[apptype.id]
-            print _app_dep, app_name, _dep_type, package, apptype
 
             pkg_def = package.package_definition
 
