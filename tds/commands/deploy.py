@@ -1834,10 +1834,9 @@ class DeployController(BaseController):
                 self.envs[params['env']]
             )
 
-        dep_id = self.determine_redeployments(pkg_id)
-        deployment = tagopsdb.Deployment.get(id=dep_id)
+        deployment = tagopsdb.Deployment.find(package_id=pkg.id)[0]
 
-        self.send_notifications(project, params)
+        self.send_notifications(project, hosts, apptypes, params)
         self.perform_redeployments(
             project, hosts, apptypes, params, deployment, app_host_map,
             app_dep_map

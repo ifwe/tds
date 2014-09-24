@@ -174,7 +174,7 @@ class BaseController(object):
                     # "Apptypes dont all match. found=%r, wanted=%r",
                     # sorted(discovered_apptypes), sorted(set(apptypes))
                     raise Exception(
-                        'Valid deploy targets for project "%s" are: %r',
+                        'Valid apptypes for project "%s" are: %r',
                         proj.name, sorted(str(x.name) for x in proj.targets)
                     )
             return dict(apptypes=targets, hosts=None)
