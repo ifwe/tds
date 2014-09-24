@@ -387,13 +387,6 @@ def given_the_package_version_is_deployed_on_host(context, properties):
 @given(u'the package version is deployed on the hosts')
 def given_the_package_version_is_deployed_on_hosts(context):
     for host in context.tds_hosts:
-
-        if tagopsdb.HostDeployment.get(host_id=host.id) is not None:
-            tagopsdb.Session.delete(tagopsdb.HostDeployment.get(
-                host_id=host.id
-            ))
-            tagopsdb.Session.commit()
-
         context.execute_steps('''
             Given the package version is deployed on the host with name="%s"
         ''' % host.name)
@@ -404,6 +397,13 @@ def given_the_package_version_failed_to_deploy_on_host(context, properties):
     package = context.tds_package_versions[-1]
 
     host = tagopsdb.Host.get(**attrs)
+
+    if tagopsdb.HostDeployment.get(host_id=host.id) is not None:
+        tagopsdb.Session.delete(
+            tagopsdb.HostDeployment.get(host_id=host.id)
+        )
+        tagopsdb.Session.commit()
+
     deployment = tagopsdb.Deployment.get(package_id=package.id)
     host_dep = tagopsdb.HostDeployment.get(
         host_id=host.id, deployment_id=deployment.id
