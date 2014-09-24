@@ -64,7 +64,7 @@ Feature: deploy/config validate subcommand
 
     Scenario Outline: validate a package from a project with one of several apptypes that doesn't exist
         When I run "<command> validate proj 123 --apptype foo bar"
-        Then the output is "Valid apptypes for project "proj" are: ['foo']"
+        Then the output is "Valid deploy targets for project "proj" are: ['foo']"
 
         Examples:
             | command |
