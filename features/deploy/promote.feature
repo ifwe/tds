@@ -187,7 +187,6 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | config push       |
             | deploy promote    |
 
-    @wip
     Scenario Outline: deploying to multiple hosts of different apptypes
         Given there is a deploy target with name="other-apptype"
         And there are hosts:
