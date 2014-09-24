@@ -24,6 +24,7 @@ DB_HOSTS = (
 COVERAGE_REPORT_FILENAME = 'coverage.xml'
 COVERAGE_DATA_FILENAME = '.coverage'
 
+
 def before_all(context):
     context.coverage_enabled = True
     context.PROJECT_ROOT = os.path.normpath(opj(dirname(__file__), '..'))
@@ -66,7 +67,8 @@ def setup_workspace(context):
 def teardown_workspace(context):
     shutil.rmtree(context.WORK_DIR)
 
-def setup_jenkins_server(context, scenario):
+
+def setup_jenkins_server(context):
     if not os.path.isdir(context.JENKINS_SERVER_DIR):
         os.makedirs(context.JENKINS_SERVER_DIR)
 
@@ -88,7 +90,8 @@ def setup_jenkins_server(context, scenario):
         dict(jobs=[])
     )
 
-    context.build_jenkins_url = lambda pth: 'http://localhost:%s/%s' % (port, pth)
+    context.build_jenkins_url = \
+        lambda pth: 'http://localhost:%s/%s' % (port, pth)
 
 
 def update_jenkins(context, path, data):
@@ -107,7 +110,8 @@ def update_jenkins(context, path, data):
     with open(item, 'wb') as f:
         f.write(repr(merge.merge(old_data, data)))
 
-def teardown_jenkins_server(context, scenario):
+
+def teardown_jenkins_server(context):
     context.tds_jenkins_server_proc.terminate()
     context.tds_jenkins_server_proc = processes.wait_for_process(
         context.tds_jenkins_server_proc,
@@ -121,24 +125,27 @@ def teardown_jenkins_server(context, scenario):
 
 def setup_conf_file(context):
     shutil.copyfile(
-        opj(context.PROJECT_ROOT, 'tests', 'fixtures', 'config', 'deploy.yml'),
+        opj(context.PROJECT_ROOT, 'tests',
+            'fixtures', 'config', 'deploy.yml'),
         context.TDS_CONFIG_FILE
     )
     shutil.copyfile(
-        opj(context.PROJECT_ROOT, 'tests', 'fixtures', 'config', 'tagopsdb.yml'),
+        opj(context.PROJECT_ROOT, 'tests',
+            'fixtures', 'config', 'tagopsdb.yml'),
         context.DB_CONFIG_FILE
     )
 
     auth_levels = tds.authorize.ACCESS_LEVELS
 
-    conf_dir, filename = os.path.split(context.DB_CONFIG_FILE)
+    _conf_dir, filename = os.path.split(context.DB_CONFIG_FILE)
     _basename, ext = os.path.splitext(filename)
 
     auth_fnames = ['dbaccess.%s%s' % (level, ext) for level in auth_levels]
 
     for fname in auth_fnames:
         shutil.copyfile(
-            opj(context.PROJECT_ROOT, 'tests', 'fixtures', 'config', 'dbaccess.test.yml'),
+            opj(context.PROJECT_ROOT, 'tests',
+                'fixtures', 'config', 'dbaccess.test.yml'),
             opj(os.path.dirname(context.DB_CONFIG_FILE), fname)
         )
 
@@ -172,6 +179,7 @@ def add_config_val(context, key, val):
     with open(context.TDS_CONFIG_FILE, 'wb') as conf_file:
         conf_file.write(yaml.dump(full_conf))
 
+
 def setup_auth_file(context):
     shutil.copyfile(
         opj(context.PROJECT_ROOT, 'tests', 'fixtures', 'config', 'auth.yml'),
@@ -193,9 +201,9 @@ def before_scenario(context, scenario):
     setup_conf_file(context)
 
     if 'jenkins_server' in context.tags:
-        setup_jenkins_server(context, scenario)
+        setup_jenkins_server(context)
 
-    setup_temp_db(context, scenario)
+    setup_temp_db(context)
 
 
 def after_scenario(context, scenario):
@@ -212,7 +220,9 @@ def after_scenario(context, scenario):
 
     if 'no_db' not in context.tags:
         if verbose:
-            for table_name, table in sorted(tagopsdb.Base.metadata.tables.items()):
+            for table_name, table in sorted(
+                    tagopsdb.Base.metadata.tables.items()
+            ):
                 result = tagopsdb.Session.query(table).all()
                 if len(result) == 0:
                     continue
@@ -225,15 +235,15 @@ def after_scenario(context, scenario):
                     ))
                 print
 
-    teardown_temp_db(context, scenario)
+    teardown_temp_db(context)
 
     if 'jenkins_server' in context.tags:
-        teardown_jenkins_server(context, scenario)
+        teardown_jenkins_server(context)
 
     teardown_workspace(context)
 
 
-def setup_temp_db(context, scenario):
+def setup_temp_db(context):
     """
     Set up a temporary database for use in the test if 'no_db' is not
     among the tags for the given scenario.
@@ -269,7 +279,10 @@ def setup_temp_db(context, scenario):
             try:
                 processes.run(
                     base_mysql_args +
-                    ['--execute', 'CREATE DATABASE IF NOT EXISTS %s;' % db_name]
+                    [
+                        '--execute',
+                        'CREATE DATABASE IF NOT EXISTS %s;' % db_name
+                    ]
                 )
             except Exception as exc:
                 # assume it's a host problem
@@ -314,6 +327,7 @@ def setup_temp_db(context, scenario):
 
     # tagopsdb.Base.metadata.bind.echo = True
 
+
 def seed_db():
     import tagopsdb
     ganglia = tagopsdb.Ganglia.update_or_create(dict(
@@ -333,7 +347,7 @@ def seed_db():
     tagopsdb.Session.commit()
 
 
-def teardown_temp_db(context, *_args):
+def teardown_temp_db(context):
     dry_run = 'no_db' in context.tags
     if dry_run:
         return
