@@ -54,7 +54,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: with a project and an apptype that doesn't exist
         When I run "<command> show proj --apptypes bar"
-        Then the output is "Valid apptypes for project "proj" are: ['foo']"
+        Then the output is "Valid deploy targets for project "proj" are: ['foo']"
 
         Examples:
             | command |
