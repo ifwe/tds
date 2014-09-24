@@ -1631,6 +1631,7 @@ class DeployController(BaseController):
 
         log.debug('Showing deployment information for given project')
 
+        version = params.get('version', None)
         pkg_def_app_map = collections.defaultdict(list)
 
         for target in apptypes:
@@ -1652,7 +1653,7 @@ class DeployController(BaseController):
             for target in pkg_def_app_map[pkg_def]:
                 func_args = [
                     pkg_def.name,
-                    self.envs[params['environment']],
+                    self.envs[params['env']],
                     target
                 ]
 
