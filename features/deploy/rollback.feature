@@ -139,13 +139,13 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
         And the host is associated with the deploy target
 
         And the package version "121" is deployed on the deploy target
-        And the package version is validated
+        And the package version has been validated
 
         And the package version "122" is deployed on the deploy target
-        And the package version is invalidated
+        And the package version has been invalidated
 
         And the package version "123" is deployed on the deploy target
-        And the package version is validated
+        And the package version has been validated
 
         And the host "projhost01" will fail to deploy
         When I run "<command> proj --all-apptypes"

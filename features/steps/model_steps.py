@@ -359,6 +359,12 @@ def given_the_package_version_is_deployed_on_host(context, properties):
     host = tagopsdb.Host.get(**attrs)
     assert host
 
+    if tagopsdb.HostDeployment.get(host_id=host.id) is not None:
+        tagopsdb.Session.delete(
+            tagopsdb.HostDeployment.get(host_id=host.id)
+        )
+        tagopsdb.Session.commit()
+
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
         package_id=package.id,
@@ -397,12 +403,6 @@ def given_the_package_version_failed_to_deploy_on_host(context, properties):
     package = context.tds_package_versions[-1]
 
     host = tagopsdb.Host.get(**attrs)
-
-    if tagopsdb.HostDeployment.get(host_id=host.id) is not None:
-        tagopsdb.Session.delete(
-            tagopsdb.HostDeployment.get(host_id=host.id)
-        )
-        tagopsdb.Session.commit()
 
     deployment = tagopsdb.Deployment.get(package_id=package.id)
     host_dep = tagopsdb.HostDeployment.get(
