@@ -10,22 +10,22 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
         And there is a deploy target with name="the-apptype"
         And the deploy target is a part of the project
         And there are hosts:
-            | name          |
-            | projhost01    |
-            | projhost02    |
+            | name          | env   |
+            | projhost01    | stage |
+            | projhost02    | stage |
         And the hosts are associated with the deploy target
 
         And there is a package version with version="121"
         And the package version is deployed on the deploy target
-        And the package version is validated
+        And the package version has been validated
 
         And there is a package version with version="122"
         And the package version is deployed on the deploy target
-        And the package version is invalidated
+        And the package version has been invalidated
 
         And there is a package version with version="123"
         And the package version is deployed on the deploy target
-        And the package version is validated
+        And the package version has been validated
 
     Scenario Outline: rollback project that doesn't exist
         When I run "<command> doesnt-exist"
@@ -139,13 +139,13 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
         And the host is associated with the deploy target
 
         And the package version "121" is deployed on the deploy target
-        And the package version is validated
+        And the package version has been validated
 
         And the package version "122" is deployed on the deploy target
-        And the package version is invalidated
+        And the package version has been invalidated
 
         And the package version "123" is deployed on the deploy target
-        And the package version is validated
+        And the package version has been validated
 
         And the host "projhost01" will fail to deploy
         When I run "<command> proj --all-apptypes"

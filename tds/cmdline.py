@@ -282,12 +282,12 @@ CONFIG_DATA = odict([
                 ('nargs', '?'),
             ])),
             (('--apptypes',), odict([
-                ('help', 'Specific app type(s) for reversion'),
+                ('help', 'Specific app type(s) to show information'),
                 ('metavar', 'APPTYPE'),
                 ('nargs', '*'),
             ])),
             (('--all-apptypes',), odict([
-                ('help', 'Handle all app types for reversion'),
+                ('help', 'Handle all app types to show information'),
                 ('action', 'store_true'),
             ])),
         ])),
@@ -489,12 +489,12 @@ DEPLOY_DATA = odict([
                 ('nargs', '?'),
             ])),
             (('--apptypes',), odict([
-                ('help', 'Specific app type(s) for reversion'),
+                ('help', 'Specific app type(s) to show information'),
                 ('metavar', 'APPTYPE'),
                 ('nargs', '*'),
             ])),
             (('--all-apptypes',), odict([
-                ('help', 'Handle all app types for reversion'),
+                ('help', 'Handle all app types to show information'),
                 ('action', 'store_true'),
             ])),
         ])),
