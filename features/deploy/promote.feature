@@ -75,8 +75,8 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         Then the output has "Completed: 2 out of 2 hosts"
         And package "proj-name" version "123" was deployed to these hosts:
             | name          |
-            | projhost01    |
-            | projhost02    |
+            | sprojhost01   |
+            | sprojhost02   |
 
         Examples:
             | command           |
@@ -85,7 +85,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
 
     Scenario Outline: promote version to apptype
         When I run "<command> proj 123 --apptype the-apptype"
-        Then the output has "Completed: 3 out of 3 hosts"
+        Then the output has "Completed: 2 out of 2 hosts"
         And package "proj-name" version "123" was deployed to the deploy target
 
         Examples:
@@ -101,7 +101,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         When I run "<command> proj 123 --all-apptypes"
-        Then the output has "Completed: 3 out of 3 hosts"
+        Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Completed: 1 out of 1 hosts"
         And package "proj-name" version "123" was deployed to the deploy targets
 
@@ -146,7 +146,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
     @delay
     Scenario Outline: promote version to with delay option
         When I run "<command> proj 123 --delay 10"
-        Then the output has "Completed: 3 out of 3 hosts"
+        Then the output has "Completed: 2 out of 2 hosts"
         And package "proj-name" version "123" was deployed to the deploy target
         And it took at least 10 seconds
 
@@ -158,7 +158,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
     Scenario Outline: promote version that isn't validated in previous env with force option
         Given there is a package version with version="124"
         When I run "deploy promote <switch> proj 124"
-        Then the output has "Completed: 3 out of 3 hosts"
+        Then the output has "Completed: 2 out of 2 hosts"
         And package "proj-name" version "124" was deployed to the deploy target
 
         Examples:
@@ -166,7 +166,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | -f        |
             | --force   |
 
-    Scenario Outline: promote a version that that has already been deployed
+    Scenario Outline: promote a version that has already been deployed
         Given the package version is deployed on the deploy targets in the "stage" env
         When I run "<command> proj 123"
         Then the output has "Application "proj" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
@@ -176,7 +176,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | config push       |
             | deploy promote    |
 
-    Scenario Outline: promote a version that that has already been validated
+    Scenario Outline: promote a version that has already been validated
         Given the package version is deployed on the deploy targets in the "stage" env
         And the package version has been validated in the "staging" environment
         When I run "<command> proj 123"
@@ -187,24 +187,27 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | config push       |
             | deploy promote    |
 
+    @wip
     Scenario Outline: deploying to multiple hosts of different apptypes
         Given there is a deploy target with name="other-apptype"
         And there are hosts:
-            | name       |
-            | other01    |
-            | other02    |
+            | name       | env    |
+            | dother01   | dev    |
+            | dother02   | dev    |
+            | sother01   | stage  |
+            | sother02   | stage  |
         And the hosts are associated with the deploy target
         And the deploy target is a part of the project
         And there is a package version with version="124"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
-        When I run "<command> proj 124 --hosts projhost01 projhost02 other01"
+        When I run "<command> proj 124 --hosts sprojhost01 sprojhost02 sother01"
         Then the output has "Completed: 3 out of 3 hosts"
         And package "proj-name" version "124" was deployed to these hosts:
             | name          |
-            | projhost01    |
-            | projhost02    |
-            | other01       |
+            | sprojhost01   |
+            | sprojhost02   |
+            | sother01      |
 
         Examples:
             | command           |
