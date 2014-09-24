@@ -1517,7 +1517,6 @@ class DeployController(BaseController):
         """
         log.debug('Deploying project')
 
-
         _package, apptypes, app_host_map = self.get_app_info(
             None, package, hosts, apptypes, params
         )

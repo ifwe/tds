@@ -150,8 +150,6 @@ class BaseController(object):
 
         project = None
         project_objects = []
-        application = None
-        application_objects = []
 
         for project_name in projects:
             project = tds.model.Project.get(name=project_name)
@@ -171,18 +169,35 @@ class BaseController(object):
                     sorted(', '.join(x.name for x in project.applications))
                 )
 
-            application = project.applications[0]
-            application_objects.append(application)
             project_objects.append(project)
 
         return dict(
             projects=project_objects,
             project=project,
+        )
+
+    def validate_application(self, application=None, applications=None, **params):
+        if applications is None:
+            applications = []
+
+        if application is not None:
+            applications.append(application)
+
+        application = None
+        application_objects = []
+
+        for app in applications:
+            application = tds.model.Application.get(name=app)
+
+            if application is None:
+                raise Exception("Couldnt find app: %r", app)
+
+            application_objects.append(application)
+
+        return dict(
             application=application,
             applications=application_objects
         )
-
-    validate_application = validate_project
 
 
     def validate_targets(
@@ -276,26 +291,24 @@ class BaseController(object):
         raise NotImplementedError
 
     def validate_package(self, version=None, **params):
-        params.update(self.validate_project(**params))
-        project = params.pop('project')
-        params.pop('projects', None)
+        params.update(self.validate_application(**params))
+        project = params.pop('project', None)
+        application = params.pop('application')
+        applications = params.pop('applications', [])
 
-        all_apps = project.applications
-
-        if len(all_apps) > 1:
+        if len(applications) > 1:
             raise Exception(
                 'Project "%s" has too many applications associated with it: %s',
-                project.name, sorted(x.name for x in all_apps)
+                getattr(project, 'name', None),
+                sorted(x.name for x in applications)
             )
 
-        app = all_apps[0]
-
         if version is None:
-            package = self.get_latest_app_version(project, app, **params)
+            package = self.get_latest_app_version(None, application, **params)
             if package is None:
                 raise Exception("couldnt determine latest version")
         else:
-            for package in app.packages:
+            for package in application.packages:
                 if version == package.version:
                     break
             else:
@@ -304,7 +317,7 @@ class BaseController(object):
         if package is None:
             raise Exception(
                 'Package "%s@%s" does not exist',
-                app.name, version
+                application.name, version
             )
 
         return dict(package=package)
