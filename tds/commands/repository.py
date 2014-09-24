@@ -107,7 +107,6 @@ class RepositoryController(BaseController):
 
             log.debug('Mapping Location ID to various applications')
             tagopsdb.deploy.repo.add_app_packages_mapping(
-                project,
                 project_new,
                 pkg_def,
                 params['apptypes']
@@ -138,7 +137,6 @@ class RepositoryController(BaseController):
                     params['config'], config.id
                 )
                 tagopsdb.deploy.repo.add_app_packages_mapping(
-                    config,
                     config_new,
                     config_def,
                     params['apptypes']
