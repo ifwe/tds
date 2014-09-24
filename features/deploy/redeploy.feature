@@ -10,9 +10,11 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         And there is a deploy target with name="the-apptype"
         And the deploy target is a part of the project
         And there are hosts:
-            | name          |
-            | projhost01    |
-            | projhost02    |
+            | name          | env     |
+            | dprojhost01   | dev     |
+            | dprojhost02   | dev     |
+            | sprojhost01   | stage   |
+            | sprojhost02   | stage   |
         And the hosts are associated with the deploy target
 
         And there is a package version with version="122"
@@ -23,8 +25,7 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         And the package version is deployed on the deploy targets in the "stage" env
-        And the package version is deployed on the host with name="projhost01"
-        And the package version failed to deploy on the host with name="projhost02"
+        And the package version failed to deploy on the host with name="sprojhost02"
 
     Scenario Outline: redeploy project that doesn't exist
         When I run "<command> doesnt-exist"
@@ -54,9 +55,9 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
             | deploy redeploy   |
 
     Scenario Outline: redeploy to hosts
-        When I run "<command> proj --hosts projhost02"
+        When I run "<command> proj --hosts sprojhost02"
         Then the output has "Completed: 1 out of 1 hosts"
-        And package "proj-name" version "123" was deployed to host "projhost02"
+        And package "proj-name" version "123" was deployed to host "sprojhost02"
 
         Examples:
             | command           |
@@ -66,8 +67,8 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
     Scenario Outline: redeploy to apptype
         When I run "<command> proj --apptype the-apptype"
         Then the output has "Completed: 2 out of 2 hosts"
-        And the output has "Host "projhost01" already has "proj-name@123" successfully deployed, skipping"
-        And package "proj-name" version "123" was deployed to host "projhost02"
+        And the output has "Host "sprojhost01" already has "proj-name@123" successfully deployed, skipping"
+        And package "proj-name" version "123" was deployed to host "sprojhost02"
 
         Examples:
             | command           |
@@ -84,7 +85,7 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         When I run "<command> proj --all-apptypes"
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Completed: 1 out of 1 hosts"
-        And package "proj-name" version "123" was deployed to host "projhost02"
+        And package "proj-name" version "123" was deployed to host "sprojhost02"
         And package "proj-name" version "123" was deployed to host "anotherhost01"
 
         Examples:
@@ -93,10 +94,10 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
             | deploy redeploy   |
 
     Scenario Outline: redeploy to host with a failure
-        Given the host "projhost02" will fail to deploy
-        When I run "<command> proj --hosts projhost02"
+        Given the host "sprojhost02" will fail to deploy
+        When I run "<command> proj --hosts sprojhost02"
         Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost02"
+        And the output has "Hostname: sprojhost02"
 
         Examples:
             | command           |
@@ -104,10 +105,10 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
             | deploy redeploy   |
 
     Scenario Outline: redeploy to apptype with a failure
-        Given the host "projhost02" will fail to deploy
+        Given the host "sprojhost02" will fail to deploy
         When I run "<command> proj --apptype the-apptype"
         Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost02"
+        And the output has "Hostname: sprojhost02"
 
         Examples:
             | command           |
@@ -115,10 +116,10 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
             | deploy redeploy   |
 
     Scenario Outline: redeploy to all apptypes with a failure
-        Given the host "projhost02" will fail to deploy
+        Given the host "sprojhost02" will fail to deploy
         When I run "<command> proj --all-apptypes"
         Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost02"
+        And the output has "Hostname: sprojhost02"
 
         Examples:
             | command           |
@@ -129,8 +130,8 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
     Scenario Outline: redeploy with delay option
         When I run "<command> proj --delay 10"
         Then the output has "Completed: 2 out of 2 hosts"
-        And package "proj-name" version "123" was deployed to host "projhost02"
-        And the output has "Host "projhost01" already has "proj-name@123" successfully deployed, skipping"
+        And package "proj-name" version "123" was deployed to host "sprojhost02"
+        And the output has "Host "sprojhost01" already has "proj-name@123" successfully deployed, skipping"
         And it took at least 10 seconds
 
         Examples:

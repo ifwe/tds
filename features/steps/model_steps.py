@@ -45,7 +45,9 @@ def rpm_factory(context, **kwargs):
     with open(full_path, 'wb') as f:
         f.write(yaml.dump(kwargs))
 
-def host_factory(context, name, **kwargs):
+def host_factory(context, name, env=None, **kwargs):
+    env = env or context.tds_env
+    env_id = get_environment(env).id
 
     host = tagopsdb.Host(
         state='operational',
@@ -62,7 +64,7 @@ def host_factory(context, name, **kwargs):
         console_port='abcdef',
         power_port='ghijkl',
         power_circuit='12345',
-        environment_id=tagopsdb.Environment.get(env=context.tds_environment).id,
+        environment_id=env_id,
     )
 
     tagopsdb.Session.add(host)
@@ -120,6 +122,13 @@ def project_factory(context, **kwargs):
         build_host='host with the most',
     )
     tagopsdb.Session.add(pkg_def)
+    tagopsdb.Session.flush()   # force generation of pkg_def.id
+
+    pkg_name = tagopsdb.PackageName(
+        name=pkg_def.pkg_name,
+        pkg_def_id=pkg_def.id,
+    )
+    tagopsdb.Session.add(pkg_name)
 
     app = tagopsdb.Application.get(name=tagopsdb.Application.dummy)
 
@@ -133,6 +142,11 @@ def project_factory(context, **kwargs):
     return project
 
 def parse_properties(properties):
+    """
+    Return a dictionary of attributes based on properties.
+    Convert properties of form "property1=value1,property2=value2, ..."
+    to {'property1': value1, 'property2': value2, ...}.
+    """
     pairs = [
         (k.strip(), eval(v.strip()))
         for k, v in
@@ -176,6 +190,21 @@ def model_builder(single_string, multiple_string, dest, model_name):
     @given(single_string % '{properties}')
     def _handle_single(context, properties):
         create_model(context, dest, model_name, properties)
+
+def get_environment(env):
+    env_obj = tagopsdb.Environment.get(env=env)
+    if env_obj is None:
+        env_obj = tagopsdb.Environment(
+            env=env,
+            environment=tds.commands.DeployController.envs.get(env, env),
+            domain=env + 'example.com',
+            prefix=env[0]
+        )
+        tagopsdb.Session.add(env_obj)
+        tagopsdb.Session.commit()
+
+    return env_obj
+
 
 model_builder(
     'there is a project with %s',
@@ -235,6 +264,7 @@ def given_the_deploy_targets_are_a_part_of_the_project(context):
 
 
 def deploy_package_to_target(package, target, env):
+    env_id = tagopsdb.Environment.get(env=env).id
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
@@ -254,18 +284,40 @@ def deploy_package_to_target(package, target, env):
         app_id=target.id,
         user=dep.user,
         status='complete',
-        environment_id=tagopsdb.Environment.get(env=env).id,
+        environment_id=env_id,
     )
 
     tagopsdb.Session.add(app_dep)
     tagopsdb.Session.commit()
+
+    deploy_to_hosts(
+        tagopsdb.Host.find(app_id=target.id, environment_id=env_id),
+        dep,
+    )
+
+def deploy_to_hosts(hosts, deployment):
+    """
+    Add a host deployment entry for the given package to every host in hosts,
+    using the given deployment.
+    """
+    for host in hosts:
+        if tagopsdb.HostDeployment.get(deployment_id=deployment.id,
+                                       host_id=host.id) is None:
+            host_dep = tagopsdb.HostDeployment(
+                deployment_id=deployment.id,
+                host_id=host.id,
+                user='test-user',
+                status='ok',
+            )
+            tagopsdb.Session.add(host_dep)
+            tagopsdb.Session.commit()
 
 @given(u'the package version is deployed on the deploy target')
 def given_the_package_version_is_deployed_on_the_deploy_target(context):
     deploy_package_to_target(
         context.tds_package_versions[-1],
         context.tds_targets[-1],
-        context.tds_environment,
+        context.tds_env,
     )
 
 @given(u'the package version "{version}" is deployed on the deploy target')
@@ -280,7 +332,7 @@ def given_the_package_version_is_deployed_on_the_deploy_target(context, version)
     deploy_package_to_target(
         pkg,
         context.tds_targets[-1],
-        context.tds_environment,
+        context.tds_env,
     )
 
 @given(u'the package version is deployed on the deploy targets')
@@ -289,26 +341,19 @@ def given_the_package_version_is_deployed_on_the_deploy_targets(context):
         deploy_package_to_target(
             context.tds_package_versions[-1],
             target,
-            context.tds_environment,
+            context.tds_env,
         )
 
 @given(u'the package version is deployed on the deploy targets in the "{env}" env')
 def given_the_package_version_is_deployed_on_the_deploy_targets(context, env):
 
-    if tagopsdb.Environment.get(env=env) is None:
-        tagopsdb.Session.add(tagopsdb.Environment(
-            env=env,
-            environment=tds.commands.DeployController.envs.get(env, env),
-            domain=env + 'example.com',
-            prefix=env[0]
-        ))
-        tagopsdb.Session.commit()
+    env_obj = get_environment(env)
 
     for target in context.tds_targets:
         deploy_package_to_target(
             context.tds_package_versions[-1],
             target,
-            env,
+            env_obj.env,
         )
 
 
@@ -319,6 +364,12 @@ def given_the_package_version_is_deployed_on_host(context, properties):
 
     host = tagopsdb.Host.get(**attrs)
     assert host
+
+    if tagopsdb.HostDeployment.get(host_id=host.id) is not None:
+        tagopsdb.Session.delete(
+            tagopsdb.HostDeployment.get(host_id=host.id)
+        )
+        tagopsdb.Session.commit()
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
@@ -354,14 +405,11 @@ def given_the_package_version_is_deployed_on_hosts(context):
 
 @given(u'the package version failed to deploy on the host with {properties}')
 def given_the_package_version_failed_to_deploy_on_host(context, properties):
-    context.execute_steps('''
-        Given the package version is deployed on the host with %s
-    ''' % properties)
-
     attrs = parse_properties(properties)
     package = context.tds_package_versions[-1]
 
     host = tagopsdb.Host.get(**attrs)
+
     deployment = tagopsdb.Deployment.get(package_id=package.id)
     host_dep = tagopsdb.HostDeployment.get(
         host_id=host.id, deployment_id=deployment.id
@@ -372,12 +420,9 @@ def given_the_package_version_failed_to_deploy_on_host(context, properties):
     tagopsdb.Session.commit()
 
 def set_status_for_package_version(package, status):
-    print "status:", status, "for package", package
     for deployment in package.deployments:
-        print "\tdep", deployment
         for app_dep in deployment.app_deployments:
             app_dep.status = status
-            print "\t\tapp_dep", app_dep
             tagopsdb.Session.add(app_dep)
 
     tagopsdb.Session.commit()
@@ -477,7 +522,7 @@ def then_the_output_describes_the_packages(context):
         ''' % package.version)
 
 @then(u'the output describes a package version with {properties}')
-def then_the_output_describes_a_project_with_properties(context, properties):
+def then_the_output_describes_a_package_version_with_properties(context, properties):
     attrs = parse_properties(properties)
     stdout = context.process.stdout
     stderr = context.process.stderr
@@ -616,6 +661,77 @@ def then_the_output_describes_a_project_with_properties(context, properties):
         e.args += (stdout, stderr),
         raise e
 
+@then(u'the output describes the host deployments')
+def then_the_output_describes_the_host_deployments(context):
+    package = context.tds_package_versions[-1]
+
+    for host in context.tds_hosts:
+        context.execute_steps('''
+            Then the output describes a host deployment with host_name="%s",pkg_name="%s"
+        ''' % (host.name, package.name))
+
+@then(u'the output describes a host deployment with {properties}')
+def then_the_output_describes_a_host_deployment_with_properties(context, properties):
+    attrs = parse_properties(properties)
+    stdout = context.process.stdout
+    stderr = context.process.stderr
+
+    lines = stdout.splitlines()
+    processed_attrs = set()
+    try:
+        if 'pkg_name' in attrs:
+            assert find_substring_or_regex_in_lines(
+                'Deployments? of %(pkg_name)s to hosts in .* environment'
+                % attrs, lines
+            )
+            processed_attrs.add('pkg_name')
+
+        if 'host_name' in attrs:
+            assert find_substring_or_regex_in_lines(
+                'Hostname: %(host_name)s' % attrs, lines
+            )
+            processed_attrs.add('host_name')
+
+        unprocessed_attrs = set(attrs) - processed_attrs
+        if unprocessed_attrs:
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
+
+    except AssertionError as e:
+        e.args += (stdout, stderr),
+        raise e
+
+
+@then(u'the output does not describe a host deployment with {properties}')
+def then_the_output_describes_a_host_with_properties(context, properties):
+    attrs = parse_properties(properties)
+    stdout = context.process.stdout
+    stderr = context.process.stderr
+
+    lines = stdout.splitlines()
+    processed_attrs = set()
+    try:
+        if 'pkg_name' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Deployments? of %(pkg_name)s to hosts in .* environment'
+                % attrs, lines
+            )
+            processed_attrs.add('pkg_name')
+
+        if 'host_name' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Hostname: %(host_name)s' % attrs, lines
+            )
+            processed_attrs.add('host_name')
+
+        unprocessed_attrs = set(attrs) - processed_attrs
+        if unprocessed_attrs:
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
+
+    except AssertionError as e:
+        e.args += (stdout, stderr),
+        raise e
+
+
 @then(u'the output describes a missing project with {properties}')
 def then_the_output_describes_a_missing_project_with_properties(context, properties):
     attrs = parse_properties(properties)
@@ -626,6 +742,7 @@ def then_the_output_describes_a_missing_project_with_properties(context, propert
 
 
 def find_substring_or_regex_in_lines(substr, lines):
+    """Return True iff substr can be found in any line of lines."""
     import re
     prog = re.compile(substr)
 
@@ -636,18 +753,17 @@ def find_substring_or_regex_in_lines(substr, lines):
         return False
 
 
-@then(u'the output describes the deployments')
-def then_the_output_describes_the_deployments(context):
-    project = context.tds_projects[-1]
+@then(u'the output describes the app deployments')
+def then_the_output_describes_the_app_deployments(context):
     package = context.tds_package_versions[-1]
 
     context.execute_steps('''
-        Then the output describes a deployment with name="%s",version="%s"
-    ''' % (project.name, package.version))
+        Then the output describes an app deployment with name="%s",version="%s",declaring_user="%s"
+    ''' % (package.name, package.version, package.creator))
 
 
-@then(u'the output describes a deployment with {properties}')
-def then_the_output_describes_a_deployment_with_properties(context, properties):
+@then(u'the output describes an app deployment with {properties}')
+def then_the_output_describes_an_app_deployment_with_properties(context, properties):
     attrs = parse_properties(properties)
     stdout = context.process.stdout
     stderr = context.process.stderr
@@ -657,7 +773,7 @@ def then_the_output_describes_a_deployment_with_properties(context, properties):
     try:
         if 'name' in attrs:
             assert find_substring_or_regex_in_lines(
-                'Deployments? of %(name)s' % attrs, lines
+                'Deployments? of %(name)s to [^ ]* tier in [^ ]* environment' % attrs, lines
             )
             processed_attrs.add('name')
 
@@ -667,6 +783,24 @@ def then_the_output_describes_a_deployment_with_properties(context, properties):
             )
             processed_attrs.add('version')
 
+        if 'declaring_user' in attrs:
+            assert find_substring_or_regex_in_lines(
+                'Declaring user: %(declaring_user)s' % attrs, lines
+            )
+            processed_attrs.add('declaring_user')
+
+        if 'realizing_user' in attrs:
+            assert find_substring_or_regex_in_lines(
+                'Realizing_user: %(realizing_user)s' % attrs, lines
+            )
+            processed_attrs.add('realizing_user')
+
+        if 'install_state' in attrs:
+            assert find_substring_or_regex_in_lines(
+                'Install state: %(install_state)s' % attrs, lines
+            )
+            processed_attrs.add('install_state')
+
         unprocessed_attrs = set(attrs) - processed_attrs
         if unprocessed_attrs:
             assert len(unprocessed_attrs) == 0, unprocessed_attrs
@@ -675,6 +809,53 @@ def then_the_output_describes_a_deployment_with_properties(context, properties):
         e.args += (stdout, stderr),
         raise e
 
+
+@then(u'the output does not describe an app deployment with {properties}')
+def then_the_output_describes_an_app_deployment_with_properties(context, properties):
+    attrs = parse_properties(properties)
+    stdout = context.process.stdout
+    stderr = context.process.stderr
+
+    lines = stdout.splitlines()
+    processed_attrs = set()
+    try:
+        if 'name' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Deployments? of %(name)s to [^ ]* tier in [^ ]* environment' % attrs, lines
+            )
+            processed_attrs.add('name')
+
+        if 'version' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Version: %(version)s' % attrs, lines
+            )
+            processed_attrs.add('version')
+
+        if 'declaring_user' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Declaring user: %(declaring_user)s' % attrs, lines
+            )
+            processed_attrs.add('declaring_user')
+
+        if 'realizing_user' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Realizing_user: %(realizing_user)s' % attrs, lines
+            )
+            processed_attrs.add('realizing_user')
+
+        if 'install_state' in attrs:
+            assert not find_substring_or_regex_in_lines(
+                'Install state: %(install_state)s' % attrs, lines
+            )
+            processed_attrs.add('install_state')
+
+        unprocessed_attrs = set(attrs) - processed_attrs
+        if unprocessed_attrs:
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
+
+    except AssertionError as e:
+        e.args += (stdout, stderr),
+        raise e
 
 @then(u'the package version is validated')
 def then_the_package_is_validated(context):
@@ -743,8 +924,8 @@ def then_there_is_no_project_with_properties(context, properties):
     attrs = parse_properties(properties)
     assert tds.model.Project.get(**attrs) is None
     if 'name' in attrs:
-        assert tagopsdb.PackageLocation.get(app_name=attrs['name']) is None
-        assert tagopsdb.PackageDefinition.get(name=attrs['name']) is None
+        assert tagopsdb.PackageLocation.get(name='%s-name' % attrs['name']) is None
+        assert tagopsdb.PackageDefinition.get(name='%s-name' % attrs['name']) is None
 
 @then(u'the package version is invalidated for deploy targets')
 def then_the_package_is_invalidated_for_deploy_targets(context):
@@ -769,11 +950,6 @@ def then_the_output_describes_no_deployments(context):
         '\\(for possible given version\\) yet in (.+?) environment',
         stdout.splitlines()
     ), ("tiers didn't match", stdout, stderr)
-    assert find_substring_or_regex_in_lines(
-        'No deployments to hosts for (.+?) '
-        '\\(for possible given version\\) in (.+?) environment',
-        stdout.splitlines()
-    ), ("hosts didn't match", stdout, stderr)
 
 
 @when('the status is changed to "{status}" for package version with {properties}')
@@ -785,8 +961,7 @@ def when_package_version_state_is_changed(context, status, properties):
     tagopsdb.Session.commit()
 
 
-@given(u'the package version has been validated in the "{environment}" environment')
-def given_the_package_version_has_been_validated(context, environment):
+def given_the_package_version_has_status_set_with_properties(context, environment, status):
     targets = context.tds_targets
     package = context.tds_package_versions[-1]
     deployments = tagopsdb.Deployment.find(package_id=package.id)
@@ -803,10 +978,43 @@ def given_the_package_version_has_been_validated(context, environment):
         if app_dep.environment != environment:
             continue
 
-        app_dep.status = 'validated'
+        app_dep.status = status
         tagopsdb.Session.add(app_dep)
 
+    for host_dep in tagopsdb.HostDeployment.all():
+        if host_dep.deployment_id not in dep_ids:
+            continue
+
+        if host_dep.host.environment != environment:
+            continue
+
+        tagopsdb.Session.delete(host_dep)
+
     tagopsdb.Session.commit()
+
+
+@given(u'the package version has been validated in the "{environment}" environment')
+def given_the_package_version_has_been_validated_with_properties(context, environment):
+    given_the_package_version_has_status_set_with_properties(context, environment, 'validated')
+
+
+@given(u'the package version has been invalidated in the "{environment}" environment')
+def given_the_package_version_has_been_invalidated_with_properties(context, environment):
+    given_the_package_version_has_status_set_with_properties(context, environment, 'invalidated')
+
+
+@given(u'the package version has been validated')
+def given_the_package_version_has_been_validated(context):
+    context.execute_steps('''
+        Given the package version has been validated in the "%s" environment
+    ''' % context.tds_environment)
+
+
+@given(u'the package version has been invalidated')
+def given_the_package_version_has_been_invalidated(context):
+    context.execute_steps('''
+        Given the package version has been invalidated in the "%s" environment
+    ''' % context.tds_environment)
 
 
 def associate_host_with_target(host, target):

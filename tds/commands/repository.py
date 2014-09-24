@@ -31,21 +31,31 @@ class RepositoryController(BaseController):
         return ProjectController(self.app_config).list(**params)
 
     @validate('project')
-    def delete(self, **params):
+    def delete(self, project, **params):
         """Repository delete subcommand."""
-        proj = ProjectController(self.app_config).delete(**params)
+        # Note: this will go away when project/app are separated
+        pkg_def_ids = set([x.pkg_def_id for x in
+                           tagopsdb.ProjectPackage.find(project_id=project.id)
+        ])
+
+        proj = ProjectController(self.app_config).delete(
+            project=project, **params
+        )
+
+        # Note: package_locations table will be removed for 2.0
         pkg_loc = tagopsdb.PackageLocation.get(
             app_name=proj['result'].name
         )
+
         if pkg_loc is not None:
             pkg_loc.delete()
-        pkg_def = tagopsdb.PackageDefinition.get(
-            name=proj['result'].name
-        )
-        if pkg_def is not None:
-            pkg_def.delete()
+
+        # Note: this will go away when project/app are separated
+        for pkg_def_id in pkg_def_ids:
+            tagopsdb.PackageDefinition.get(id=pkg_def_id).delete()
+
         tagopsdb.Session.commit()
-        return proj_dict
+        return proj
 
     @staticmethod
     def verify_package_arch(arch):

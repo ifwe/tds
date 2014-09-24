@@ -10,9 +10,9 @@ Feature: deploy restart subcommand
         And there is a deploy target with name="appfoo"
         And the deploy target is a part of the project
         And there are hosts:
-            | name          |
-            | appfoo01      |
-            | appfoo02      |
+            | name          | env   |
+            | appfoo01      | dev   |
+            | appfoo02      | dev   |
         And the hosts are associated with the deploy target
         And there is a package version with version="123"
         And the package version is deployed on the deploy targets in the "dev" env

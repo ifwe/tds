@@ -129,7 +129,9 @@ class PackageController(BaseController):
                     'revision': '1', }
 
         pkg_loc = tagopsdb.PackageLocation.get(app_name=project.name)
-        pkg = tagopsdb.Package.get(name=pkg_loc.name)
+        pkg = tagopsdb.Package.get(
+            name=pkg_loc.name, version=params['version']
+        )
 
         if pkg is not None:
             raise Exception(
