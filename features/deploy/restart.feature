@@ -32,11 +32,11 @@ Feature: deploy restart subcommand
 
     Scenario: restart a project for an apptype that doesn't exist
         When I run "deploy restart proj --apptypes badapp"
-        Then the output has "Valid deploy targets for project "proj" are: ['appfoo']"
+        Then the output has "Valid apptypes for project "proj" are: ['appfoo']"
 
     Scenario: restart a project for several apptypes where one apptype doesn't exist
         When I run "deploy restart proj --apptypes appfoo badapp"
-        Then the output has "Valid deploy targets for project "proj" are: ['appfoo']"
+        Then the output has "Valid apptypes for project "proj" are: ['appfoo']"
 
     Scenario: restart a project for a host that doesn't exist
         When I run "deploy restart proj --hosts badhost"
