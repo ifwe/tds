@@ -61,7 +61,7 @@ def merge_values(mapping, key, value, keytransform=None):
 
     curval = mapping.get(key, SENTINEL)
     if (curval is not SENTINEL and isMappingType(curval)
-                and isMappingType(value)):
+            and isMappingType(value)):
         # key exists in old and new, and both values are mappings--recursively
         # merge those mappings
         for subkey, subvalue in value.iteritems():
@@ -73,7 +73,7 @@ def merge_values(mapping, key, value, keytransform=None):
 
 
 def lower_if_string(val):
-    'Calls val.lower(), returning the original val if not supported'
+    """Calls val.lower(), returning the original val if not supported."""
     try:
         return val.lower()
     except AttributeError:
@@ -81,10 +81,10 @@ def lower_if_string(val):
 
 
 def merge_keys(mapping, maptype=dict):
-    '''
+    """
     Recursively merges all keys of d (and its sub dictionaries), case
     insensitively.
-    '''
+    """
 
     if not mapping:
         return mapping
@@ -96,7 +96,7 @@ def merge_keys(mapping, maptype=dict):
 
 
 def tolower(mapping, maptype=dict):
-    'Returns a copy of a mapping tree with all string keys lowercased.'
+    """Returns a copy of a mapping tree with all string keys lowercased."""
 
     return maptype(
         (
