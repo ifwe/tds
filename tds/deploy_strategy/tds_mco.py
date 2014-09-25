@@ -17,9 +17,9 @@ log = logging.getLogger('tds')
 class TDSMCODeployStrategy(DeployStrategy):
     """MCO deploy strategy class."""
 
-    def __init__(self, bin, **kwargs):
+    def __init__(self, mco_bin, **kwargs):
         """Initialize object."""
-        self.mco_bin = bin
+        self.mco_bin = mco_bin
 
     @tds.utils.debug
     def _process_mco_command(self, mco_cmd, retry):
