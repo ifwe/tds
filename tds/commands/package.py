@@ -11,7 +11,6 @@ import tagopsdb.deploy.deploy
 import tagopsdb.deploy.package
 
 import tds.model
-import tds.utils
 
 import logging
 

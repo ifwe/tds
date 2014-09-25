@@ -14,6 +14,7 @@ from tests.factories.utils.config import (
 
 from datetime import datetime, timedelta
 
+
 class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
     def get_mock_app_dep(self, actor, package):
         tds_deployment = Mock(
@@ -38,13 +39,17 @@ class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
         deployment = app_deployment.deployment
         application = app_deployment.application
 
-        result = SH.UnvalidatedDeploymentNotifier.convert_deployment(app_deployment)
+        result = SH.UnvalidatedDeploymentNotifier.convert_deployment(
+            app_deployment
+        )
 
-        # assert result.actor == actor  # XXX: skipped for now. groups don't match
+        # XXX: skipped for now. groups don't match
+        # assert result.actor == actor
         assert result.actor.name == actor.name
         assert result.action['command'] == 'unvalidated'
         assert result.project['name'] == package.name
-        assert result.package == vars(package)  # TODO: shouldn't have to call vars
+        # TODO: shouldn't have to call vars
+        assert result.package == vars(package)
         assert result.target['environment'] == deployment.environment
         assert result.target['apptypes'] == [application.app_type]
 
@@ -80,6 +85,7 @@ class TDPProvider(unittest2.TestCase):
         patch.stopall()
         super(TDPProvider, self).tearDown()
 
+
 class DefaultTDPProvider(TDPProvider):
     def __init__(self, *a, **k):
         dbconfig = DatabaseTestConfigFactory()
@@ -91,6 +97,7 @@ class DefaultTDPProvider(TDPProvider):
             ]
 
         super(DefaultTDPProvider, self).__init__(dbconfig, app_deps, *a, **k)
+
 
 class TestTagopsdbDeploymentProvider(DefaultTDPProvider):
     def test_init_and_get_all(self):

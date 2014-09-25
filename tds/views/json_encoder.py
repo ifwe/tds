@@ -6,6 +6,7 @@ import json
 import datetime
 from time import mktime
 
+
 class TDSEncoder(json.JSONEncoder):
     """Custom JSON encoder for a few object types."""
 

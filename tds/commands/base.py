@@ -8,6 +8,7 @@ import tds.model
 import tds.authorize
 import tds.exceptions
 
+
 def validate(attr):
     """
     Decorator for an action method, which
@@ -52,7 +53,6 @@ class BaseController(object):
                 )
             except tds.exceptions.AccessError as exc:
                 return dict(error=exc)
-
 
         handler = getattr(self, action, None)
 
@@ -99,7 +99,6 @@ class BaseController(object):
 
         return result
 
-
     def validate_project(self, project=None, projects=None, **params):
         """
         Converts 'project' and 'projects' parameters from string names that
@@ -129,7 +128,6 @@ class BaseController(object):
             project=project,
         )
 
-
     def validate_targets(
         self, env, hosts=None, apptypes=None, all_apptypes=None, **params
     ):
@@ -145,8 +143,7 @@ class BaseController(object):
 
         if len(filter(None, [hosts, apptypes, all_apptypes])) > 1:
             raise argparse.ArgumentError('These options are exclusive: %s'
-                ['hosts', 'apptypes', 'all_apptyes']
-            )
+                                         ['hosts', 'apptypes', 'all_apptyes'])
 
         params = self.validate_project(**params)
         projects = params['projects']

@@ -145,7 +145,7 @@ class TDS(object):
         log.log(5, 'User is: %s', self.params['user'])
 
         self.params['user_level'] = self.authconfig.get_access_level(
-                LocalActor()
+            LocalActor()
         )
         log.log(5, 'User level is: %s', self.params['user_level'])
 

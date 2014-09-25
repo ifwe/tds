@@ -1,7 +1,6 @@
 from mock import patch, Mock
 from unittest_data_provider import data_provider
 import unittest2
-import logging
 
 from tests.factories.model.deployment import DeploymentFactory
 from tests.factories.utils.config import DeployConfigFactory
@@ -13,7 +12,6 @@ import tagopsdb
 import tagopsdb.deploy.deploy
 import tds.commands
 import tds.model
-import tds.utils.config as tds_config
 
 
 class DeploySetUp(unittest2.TestCase):
@@ -78,7 +76,7 @@ class TestPromoteAndPush(DeploySetUp):
         self.patch_method(
             tagopsdb.deploy.deploy,
             'find_app_deployment',
-            [(None,None,None,None)]
+            [(None, None, None, None)]
         )
         self.session = patch(
             'tagopsdb.Session',

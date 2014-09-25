@@ -35,8 +35,7 @@ class RepositoryController(BaseController):
         """Repository delete subcommand."""
         # Note: this will go away when project/app are separated
         pkg_def_ids = set([x.pkg_def_id for x in
-                           tagopsdb.ProjectPackage.find(project_id=project.id)
-        ])
+                          tagopsdb.ProjectPackage.find(project_id=project.id)])
 
         proj = ProjectController(self.app_config).delete(
             project=project, **params
