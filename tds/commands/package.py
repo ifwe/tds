@@ -10,8 +10,6 @@ import tagopsdb.deploy.repo
 import tagopsdb.deploy.deploy
 import tagopsdb.deploy.package
 
-import tds.model
-
 import logging
 
 from .base import BaseController, validate

@@ -49,8 +49,7 @@ class DeploySetUp(unittest2.TestCase):
                 dict(
                     project=ProjectFactory(name=kw['project']),
                     projects=[ProjectFactory(name=kw['project'])]
-                )
-            )
+                ))
         ]
 
         for (key, return_value) in deploy_methods:
@@ -149,7 +148,7 @@ class TestPromoteAndPush(DeploySetUp):
             version='badf00d',
         )
 
-        returned = getattr(self.deploy, params.get('subcommand_name'))(**params)
+        getattr(self.deploy, params.get('subcommand_name'))(**params)
 
         deployment = DeploymentFactory()
         Notifications.assert_called_with(DeployConfigFactory())
