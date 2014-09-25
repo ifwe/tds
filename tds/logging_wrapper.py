@@ -16,8 +16,6 @@ try:
 except ImportError:
     from UTFFixedSysLogHandler import UTFFixedSysLogHandler
 
-SYSLOGHANDLER = logging.handlers.SysLogHandler
-
 
 def _create_facilities(handler, facilities=dict()):
     """Initialize a facilities dictionary."""
@@ -40,6 +38,8 @@ def _add_log_levels():
     for idx in xrange(1, 11):
         logging.addLevelName(idx, 'DEBUG')
 
+
+SYSLOGHANDLER = logging.handlers.SysLogHandler
 
 # Basic dictionary settings
 FACILITIES = _create_facilities(SYSLOGHANDLER)

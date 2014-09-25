@@ -71,7 +71,7 @@ class ConfigController(DeployController):
 
     def create(self, project, **params):
         # XXX: Replace this with a call
-        # XXX: to ApplicationController(log).add(params)
+        # to ApplicationController(log).add(params)
         """Add a new config project to the system."""
 
         log.debug('Creating new config project')

@@ -119,9 +119,9 @@ class UpdateDeployRepoDaemon(Daemon):
                 self.remove_file(src_rpm)
 
                 # XXX: Unsure what to do here for the database info,
-                # XXX: since acquiring the proper version and release
-                # XXX: isn't easily doable from the file name (though
-                # XXX: it is possible).
+                # since acquiring the proper version and release
+                # isn't easily doable from the file name (though
+                # it is possible).
                 continue
 
             pkg = package.find_package(*rpm_info[1:])
