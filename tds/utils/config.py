@@ -16,6 +16,7 @@ __all__ = [
 
 log = logging.getLogger('tds.util.config')
 
+
 def update_recurse(mapping, update):
     '''
     Descend through keypaths of 'update', updating the mapping when scalar
@@ -27,6 +28,7 @@ def update_recurse(mapping, update):
         else:
             mapping[key] = val
     return mapping
+
 
 class DottedDict(dict):
     """Allow dictionary keys to be accessed like attributes"""

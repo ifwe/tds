@@ -13,6 +13,7 @@ class BaseMeta(type):
             except AttributeError:
                 raise e
 
+
 class _Base(object):
     """Base class for Base to absorb all kwds."""
 
@@ -21,6 +22,7 @@ class _Base(object):
 
     def __init__(self, **_kwds):
         super(_Base, self).__init__()
+
 
 class Base(_Base):
     """Base class for TDS objects."""

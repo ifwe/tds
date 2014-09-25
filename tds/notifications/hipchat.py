@@ -46,7 +46,7 @@ class HipchatNotifier(Notifier):
         ]
 
         log.log(5, 'HipChat rooms to notify: %s',
-                  ', '.join(self.rooms))
+                ', '.join(self.rooms))
         log.log(5, 'HipChat token: %s', self.token)
 
         log.debug('Sending HipChat notification(s)')

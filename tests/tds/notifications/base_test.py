@@ -12,6 +12,7 @@ from tests.factories.model.deployment import (
     AllApptypesDeploymentFactory,
 )
 
+
 class AppConfigProvider(unittest2.TestCase):
     def setUp(self):
         self.app_config = DeployConfigFactory()
@@ -86,7 +87,9 @@ class TestNotifierClass(AppConfigProvider):
     ]
 
     @data_provider(deployment_factory_provider)
-    def test_message_for_deploy_promote(self, deployment_factory, subject, body):
+    def test_message_for_deploy_promote(
+        self, deployment_factory, subject, body
+    ):
         with patch('tds.model.Project') as Project:
             Project.get.return_value.targets = [
                 Mock(app_type=x) for x in ('fake_apptype1', 'fake_apptype2')

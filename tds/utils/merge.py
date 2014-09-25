@@ -14,6 +14,7 @@ from heapq import heapreplace, heappop
 if 'SENTINEL' not in globals():
     SENTINEL = object()
 
+
 def merge(*mappings, **opts):
     '''
     Merges all mappings given as arguments.
@@ -46,7 +47,8 @@ def merge(*mappings, **opts):
 
     return mapping
 
-def merge_values(mapping, key, value, keytransform = None):
+
+def merge_values(mapping, key, value, keytransform=None):
     '''
     Exactly like mapping.update({key: value}) except that if both values are
     mappings, then they are merged recursively.
@@ -59,7 +61,7 @@ def merge_values(mapping, key, value, keytransform = None):
 
     curval = mapping.get(key, SENTINEL)
     if (curval is not SENTINEL and isMappingType(curval)
-        and isMappingType(value)):
+                and isMappingType(value)):
         # key exists in old and new, and both values are mappings--recursively
         # merge those mappings
         for subkey, subvalue in value.iteritems():
@@ -77,6 +79,7 @@ def lower_if_string(val):
     except AttributeError:
         return val
 
+
 def merge_keys(mapping, maptype=dict):
     '''
     Recursively merges all keys of d (and its sub dictionaries), case
@@ -87,9 +90,10 @@ def merge_keys(mapping, maptype=dict):
         return mapping
 
     return tolower(
-        merge(mapping, keytransform = lower_if_string),
+        merge(mapping, keytransform=lower_if_string),
         maptype=maptype
     )
+
 
 def tolower(mapping, maptype=dict):
     'Returns a copy of a mapping tree with all string keys lowercased.'
@@ -101,6 +105,7 @@ def tolower(mapping, maptype=dict):
         )
         for k, v in mapping.iteritems()
     )
+
 
 def imerge(*iterlist, **key):
     """Merge a sequence of sorted iterables.
@@ -116,7 +121,7 @@ the items one by one.
     if key.keys() not in ([], ["key"]):
         raise TypeError("Excess keyword arguments for imerge")
 
-    key = key.get("key", lambda x:x)
+    key = key.get("key", lambda x: x)
 
     # initialize the heap containing this tuple:
     #   (inited, value, index, currentItem, iterator)
@@ -136,7 +141,7 @@ the items one by one.
         else:
             heapreplace(heap, (True, key(item), index, item, iterator))
 
-def lazy_sorted_merge(*iterables, **k):
-    'Merge and sort iterables lazily with optional key function'
-    return (value for value, index in imerge(*iterables, **k))
 
+def lazy_sorted_merge(*iterables, **k):
+    """Merge and sort iterables lazily with optional key function."""
+    return (value for value, index in imerge(*iterables, **k))

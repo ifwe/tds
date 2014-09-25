@@ -217,7 +217,7 @@ def format_package(pkg_result, output_format="blocks"):
     else:
         if iterable:
             return tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
-                                   pkg in pkg_result),
+                                  pkg in pkg_result),
                             headers=('Project', 'Version', 'Revision'),
                             tablefmt=TABULATE_FORMAT[output_format])
         else:
@@ -343,8 +343,8 @@ class CLI(Base):
         elif error:
             print format_exception(error)
 
-    def generate_deploy_add_apptype_result(self,
-        result=None, error=None, **kwds
+    def generate_deploy_add_apptype_result(
+        self, result=None, error=None, **kwds
     ):
         """Format the result of a "deploy add-apptype" action."""
         if error is not None:
@@ -357,8 +357,8 @@ class CLI(Base):
             % result
         )
 
-    def generate_deploy_delete_apptype_result(self,
-        result=None, error=None, **kwds
+    def generate_deploy_delete_apptype_result(
+        self, result=None, error=None, **kwds
     ):
         """Format the result of a "deploy delete-apptype" action."""
         if error is not None:
@@ -414,10 +414,9 @@ class CLI(Base):
                 host, pkg = key
                 print "%s (%s)" % (host.name, pkg.name)
 
-
     generate_deploy_invalidate_result = \
-    generate_deploy_promote_result = \
-    generate_deploy_validate_result = \
-    generate_deploy_rollback_result = \
-    generate_deploy_redeploy_result = \
-    silence(NotImplementedError)(generate_default_result)
+        generate_deploy_promote_result = \
+        generate_deploy_validate_result = \
+        generate_deploy_rollback_result = \
+        generate_deploy_redeploy_result = \
+        silence(NotImplementedError)(generate_default_result)

@@ -2,7 +2,7 @@
 
 import unittest2
 
-from mock import Mock, patch
+from mock import Mock
 
 import tds.model
 

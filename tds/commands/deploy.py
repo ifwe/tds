@@ -607,7 +607,6 @@ class DeployController(BaseController):
 
         return app_dep_map
 
-
     @tds.utils.debug
     def determine_new_deployments(self, project, hosts, apptypes, params,
                                   package, app_host_map, app_dep_map):
@@ -980,7 +979,6 @@ class DeployController(BaseController):
         else:
             log.log(5, 'Verification is for application tiers...')
 
-
             pkg, apptypes = self.verify_package(
                 project, hosts, apptypes, params
             )
@@ -1290,7 +1288,6 @@ class DeployController(BaseController):
                 )
                 failed_hosts.append((dep_host.hostname, info))
 
-
             delay = params.get('delay', None)
             if delay is not None:
                 log.log(5, 'Sleeping for %d seconds...', delay)
@@ -1462,7 +1459,7 @@ class DeployController(BaseController):
         if hosts:
             app_host_map = dict(
                 (k, list(v))
-                for k,v in itertools.groupby(
+                for k, v in itertools.groupby(
                     sorted(hosts, key=app_id_key), app_id_key
                 )
             )
@@ -1572,9 +1569,9 @@ class DeployController(BaseController):
 
         app_dep_map = self.find_app_deployments(package, apptypes, params)
         app_host_map, app_dep_map = self.determine_new_deployments(
-                project, hosts, apptypes, params, package, app_host_map,
-                app_dep_map
-            )
+            project, hosts, apptypes, params, package, app_host_map,
+            app_dep_map
+        )
 
         self.send_notifications(project, hosts, apptypes, params)
         self.perform_deployments(

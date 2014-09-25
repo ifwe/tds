@@ -9,6 +9,7 @@ import tds.model
 
 __all__ = ['Notifications', 'Notifier']
 
+
 class Notifications(object):
     """Manage various notification mechanisms for deployments"""
 
