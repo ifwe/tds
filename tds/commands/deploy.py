@@ -83,7 +83,7 @@ class DeployController(BaseController):
         """Basic initialization"""
         super(DeployController, self).__init__(config)
         self._deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy(
-            **self.app_config['mco']
+            mco_bin=self.app_config['mco']['bin']
         )
 
     @property

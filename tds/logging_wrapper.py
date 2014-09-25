@@ -342,7 +342,6 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
         if prefix:
             format_string = '[%(levelname)s] ' + format_string
 
-
     handle.setFormatter(Formatter(format_string, use_color=use_color,
                                   user=getattr(logger, 'user', None),
                                   code=getattr(logger, 'code', None)))
