@@ -12,6 +12,7 @@ import tagopsdb.deploy.package
 
 import logging
 
+import tds.exceptions
 from .base import BaseController, validate
 
 log = logging.getLogger('tds')
@@ -131,7 +132,7 @@ class PackageController(BaseController):
         )
 
         if pkg is not None:
-            raise Exception(
+            raise tds.exceptions.AlreadyExistsError(
                 'Package version "%s@%s" already exists',
                 pkg.name, pkg.version
             )
@@ -164,7 +165,7 @@ class PackageController(BaseController):
 
             if not self._queue_rpm(params, pending_rpm, rpm_name, app):
                 log.info('Failed to copy RPM into incoming directory')
-                raise Exception(
+                raise tds.exceptions.NotFoundError(
                     'Package "%s@%s" does not exist',
                     app.pkg_name, params['version']
                 )
@@ -205,7 +206,7 @@ class PackageController(BaseController):
         )
 
         if self.check_package_state(pkg_info) is None:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
             )

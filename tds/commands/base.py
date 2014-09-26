@@ -58,7 +58,7 @@ class BaseController(object):
 
         try:
             if handler is None:
-                raise Exception(
+                raise tds.exceptions.NotFoundError(
                     "Unknown action for %s: %s", type(self).__name__, action
                 )
 
@@ -90,7 +90,7 @@ class BaseController(object):
         for key in validate_attrs:
             validator = getattr(self, 'validate_' + key, None)
             if validator is None:
-                raise Exception(
+                raise tds.exceptions.TDSException(
                     "Can't validate %r for class = %r",
                     key, type(self)
                 )
@@ -119,7 +119,9 @@ class BaseController(object):
             project = tds.model.Project.get(name=project_name)
 
             if project is None:
-                raise Exception('Project "%s" does not exist', project_name)
+                raise tds.exceptions.NotFoundError(
+                    'Project "%s" does not exist', project_name
+                )
 
             project_objects.append(project)
 
@@ -154,7 +156,7 @@ class BaseController(object):
         if not (hosts or apptypes):
             targets.extend(sum((p.targets for p in projects), []))
             if not all_apptypes and len(targets) > 1:
-                raise Exception(
+                raise tds.exceptions.TDSException(
                     "Specify a target constraint (too many targets found: %s)",
                     ', '.join(sorted([x.name for x in targets]))
                 )
@@ -170,7 +172,7 @@ class BaseController(object):
                 if discovered_apptypes != set(apptypes):
                     # "Apptypes dont all match. found=%r, wanted=%r",
                     # sorted(discovered_apptypes), sorted(set(apptypes))
-                    raise Exception(
+                    raise tds.exceptions.InvalidInputError(
                         'Valid apptypes for project "%s" are: %r',
                         proj.name, sorted(str(x.name) for x in proj.targets)
                     )
@@ -191,13 +193,13 @@ class BaseController(object):
                     targets.append(host)
 
             if no_exist_hosts:
-                raise Exception(
+                raise tds.exceptions.NotFoundError(
                     "These hosts do not exist: %s",
                     ', '.join(sorted(no_exist_hosts))
                 )
 
             if bad_hosts:
-                raise Exception(
+                raise tds.exceptions.WrongEnvironmentError(
                     'These hosts are not in the "%s" environment: %s',
                     environment.environment, ', '.join(sorted(bad_hosts))
                 )
@@ -205,7 +207,7 @@ class BaseController(object):
             for project in projects:
                 for target in targets:
                     if project not in target.application.projects:
-                        raise Exception(
+                        raise tds.exceptions.NotFoundError(
                             "Host %r not a part of project %r",
                             target, project
                         )

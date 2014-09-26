@@ -9,6 +9,7 @@ from behave import given, then, when
 import tagopsdb
 import tds.model
 import tds.commands
+import tds.exceptions
 
 
 def get_model_factory(name):
@@ -176,8 +177,10 @@ def create_model(context, dest, model_name, properties):
     attrs = parse_properties(properties)
     model_factory = get_model_factory(model_name)
     if model_factory is None:
-        raise Exception("Don't know how to make a %r with properties %r"
-                        % (model_name, attrs))
+        raise tds.exceptions.TDSException(
+            "Don't know how to make a %r with properties %r"
+            % (model_name, attrs)
+        )
 
     things.append(model_factory(context, **attrs))
 

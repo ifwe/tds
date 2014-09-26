@@ -12,6 +12,8 @@ import os
 import os.path
 from os.path import dirname, join as opj
 
+from subprocess import CalledProcessError
+
 import tds.authorize
 import tds.utils.processes as processes
 import tds.utils.merge as merge
@@ -284,7 +286,8 @@ def setup_temp_db(context):
                         'CREATE DATABASE IF NOT EXISTS %s;' % db_name
                     ]
                 )
-            except Exception as exc:
+            # Expecting CalledProcessError from tds.process.wait_for_process
+            except CalledProcessError as exc:
                 # assume it's a host problem
                 if db_hosts:
                     exc = None

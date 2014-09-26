@@ -63,7 +63,7 @@ class ConfigController(DeployController):
         arches = table.columns['arch'].type.enums
 
         if arch not in arches:
-            raise Exception(
+            raise tds.exceptions.InvalidInputError(
                 "Invalid architecture: %s. Should be one of: %s",
                 arch,
                 u', '.join(sorted(arches))
@@ -83,7 +83,7 @@ class ConfigController(DeployController):
         existing_proj = tds.model.Project.get(name=project_name)
 
         if existing_proj is not None:
-            raise Exception(
+            raise tds.exceptions.AlreadyExistsError(
                 "Project already exists: %s", existing_proj.name
             )
 
