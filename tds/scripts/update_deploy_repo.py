@@ -87,7 +87,8 @@ class UpdateDeployRepoDaemon(Daemon):
 
             try:
                 self.email_for_invalid_rpm(rpm_to_process)
-            except Exception as exc:   # Email send failed?  Tough noogies.
+            # Email send failed?  Tough noogies.
+            except smtp.SMTPException as exc:
                 log.error('Email send failed: %s', exc)
 
         if rpm_info is not None:
