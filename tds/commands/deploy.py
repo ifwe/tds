@@ -125,7 +125,7 @@ class DeployController(BaseController):
             # There might be no deployment available; otherwise
             # there should only be one deployment here
             if not prev_deps:
-                raise Exception(
+                raise tds.exceptions.TDSException(
                     'Package "%s@%s" never validated in "%s" environment for '
                     'target "%s"',
                     project.name, params['version'],
@@ -591,7 +591,7 @@ class DeployController(BaseController):
 
             if valid:
                 if app_dep.status != 'validated':
-                    raise Exception(
+                    raise tds.exceptions.TDSException(
                         'Package "%s@%s" currently deployed on target "%s"',
                         pkg.name, pkg.version, app_type
                     )
@@ -1074,7 +1074,7 @@ class DeployController(BaseController):
         )
 
         if pkg is None:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Package "%s@%s" does not exist',
                 project.name,
                 version
@@ -1478,7 +1478,7 @@ class DeployController(BaseController):
                 project.name
             )
         except tagopsdb.exceptions.RepoException:
-            raise Exception(
+            raise tds.exceptions.TDSException(
                 "RepoException when finding package location for project: %s",
                 project.name
             )
@@ -1488,7 +1488,7 @@ class DeployController(BaseController):
                 project.id
             )
         except tagopsdb.exceptions.RepoException:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 # XXX: who cares?
                 "No packages associated with project: %s", project.name
             )
@@ -1500,6 +1500,11 @@ class DeployController(BaseController):
                 [params['apptype']]
             )
         except tagopsdb.exceptions.RepoException:
+            # TODO: Change this to a custome exception
+            # Changing this to a custom exception causes failures in feature
+            # and unit tests.  test_missing_apptypes in
+            # tests/tds/commands/deploy_test throws an error at the last line.
+            # It says 'module' has no attribute 'exception' at that line.
             raise Exception(
                 "Deploy target does not exist: %s", params['apptype']
             )
@@ -1523,7 +1528,7 @@ class DeployController(BaseController):
         app = tagopsdb.deploy.repo.find_app_location(project.name)
 
         if app is None:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'No app found for project "%s"', project.name
             )
 
@@ -1533,7 +1538,7 @@ class DeployController(BaseController):
                 [params['apptype']]
             )
         except tagopsdb.exceptions.RepoException:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Target "%s" does not exist', params['apptype']
             )
 
@@ -1560,7 +1565,7 @@ class DeployController(BaseController):
         )
 
         if package is None:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
             )
@@ -1598,7 +1603,7 @@ class DeployController(BaseController):
         )
 
         if pkg is None:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
             )
@@ -1606,7 +1611,7 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'No deployments to invalidate for application %r '
                 'with version %r in %s environment',
                 project.name, params['version'],
@@ -1701,7 +1706,7 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Nothing to roll back for application %r in %s '
                 'environment', project.name,
                 self.envs[params['env']]
@@ -1742,7 +1747,7 @@ class DeployController(BaseController):
                 continue
 
             if dep.status in ('inprogress', 'incomplete'):
-                raise Exception(
+                raise tds.exceptions.TDSException(
                     'Deploy target "%s" is being deployed to currently',
                     target.name
                 )
@@ -1784,14 +1789,16 @@ class DeployController(BaseController):
 
         elif hosts:
             for host in hosts:
-                pkg = self.get_package_for_target(host.application, environment)
+                pkg = self.get_package_for_target(
+                    host.application, environment
+                )
                 if pkg is None:
                     continue
 
                 restart_targets.append((host, pkg))
 
         if not restart_targets:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Nothing to restart for project "%s" in %s environment',
                 project.name, environment.environment
             )
@@ -1825,7 +1832,7 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Nothing to redeploy for application %r in %s '
                 'environment', project.name,
                 self.envs[params['env']]
@@ -1859,7 +1866,7 @@ class DeployController(BaseController):
         )
 
         if pkg is None:
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'Package "%s@%s" does not exist',
                 project.name, params['version']
             )
@@ -1867,7 +1874,7 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(pkg, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
-            raise Exception(
+            raise tds.exceptions.NotFoundError(
                 'No deployments to validate for application "%s" '
                 'in %s environment', project.name,
                 self.envs[params['env']]
