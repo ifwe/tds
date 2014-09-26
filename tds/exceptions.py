@@ -33,6 +33,12 @@ class ConfigurationError(TDSException):
     pass
 
 
+class ExtCommandError(TDSException):
+    """Custom exception for external command errors."""
+
+    pass
+
+
 class FailedConnectionError(TDSException):
     """Exception for when connections with Jenkins, etc. fail."""
 
