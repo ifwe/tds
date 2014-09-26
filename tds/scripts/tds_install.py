@@ -15,9 +15,7 @@ import time
 
 import psutil
 
-
-class ExtCommandError(Exception):
-    """Error running external command."""
+import tds.exceptions
 
 
 def run_command(cmd):
@@ -31,7 +29,8 @@ def run_command(cmd):
 
     if proc.returncode:
         cmdline = ' '.join(cmd)
-        raise ExtCommandError('Command "%s" failed:\n%s' % (cmdline, stderr))
+        raise tds.exceptions.ExtCommandError('Command "%s" failed:\n%s'
+                                             % (cmdline, stderr))
 
     return stdout
 
@@ -109,7 +108,7 @@ def manage_services(action):
 
     try:
         run_command(svc_cmd)
-    except ExtCommandError as e:
+    except tds.exceptions.ExtCommandError as e:
         sys.exit('Failed to perform action "%s" on defined services: %s'
                  % (action, e))
 
@@ -127,7 +126,7 @@ def app_install(app, version, inst_version):
     makecache_cmd = ['/usr/bin/yum', 'makecache']
     try:
         run_command(makecache_cmd)
-    except ExtCommandError as e:
+    except tds.exceptions.ExtCommandError as e:
         sys.exit('Unable to run "yum makecache": %s' % e)
 
     # Stop services before install, then restart them after install
@@ -137,7 +136,7 @@ def app_install(app, version, inst_version):
                    '%s-%s-1' % (app, version)]
     try:
         run_command(install_cmd)
-    except ExtCommandError as e:
+    except tds.exceptions.ExtCommandError as e:
         sys.exit('Unable to install application via yum: %s' % e)
 
     manage_services('start')
@@ -153,7 +152,7 @@ def app_uninstall(app):
 
     try:
         run_command(uninstall_cmd)
-    except ExtCommandError as e:
+    except tds.exceptions.ExtCommandError as e:
         sys.exit('Unable to uninstall application via yum: %s' % e)
 
 
@@ -170,7 +169,7 @@ def verify_install(app, version):
 
     try:
         inst_version = get_version(app)
-    except ExtCommandError as e:
+    except tds.exceptions.ExtCommandError as e:
         sys.exit('Unable to query for installed version of "%s": %s'
                  % (app, e))
 
@@ -184,7 +183,7 @@ def do_install(app, version):
     app_check(app)
     try:
         inst_version = get_version(app)
-    except ExtCommandError:
+    except tds.exceptions.ExtCommandError:
         inst_version = None  # Assume app not installed
     if inst_version == version:
         return  # Nothing to do

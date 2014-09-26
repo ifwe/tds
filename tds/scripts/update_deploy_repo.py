@@ -29,12 +29,6 @@ import tds.utils as utils
 log = logging.getLogger('update_deploy_repo')
 
 
-class ExtCommandError(Exception):
-    """Custom exception for external command errors."""
-
-    pass
-
-
 class Zookeeper(object):
     """Zookeeper management object."""
 
