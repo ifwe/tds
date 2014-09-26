@@ -1,5 +1,4 @@
 #  pylint: disable=C0111
-from subprocess import CalledProcessError
 import socket
 import pprint
 import time
@@ -12,6 +11,8 @@ import contextlib
 import os
 import os.path
 from os.path import dirname, join as opj
+
+from subprocess import CalledProcessError
 
 import tds.authorize
 import tds.utils.processes as processes

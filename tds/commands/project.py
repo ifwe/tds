@@ -1,7 +1,7 @@
 """Commands to manage the TDS projects."""
 import logging
 
-from tds.exceptions import AlreadyExistsError
+import tds.exceptions
 from tds.model import Project
 from .base import BaseController, validate
 
@@ -18,7 +18,7 @@ class ProjectController(BaseController):
         project_name = project
         project = Project.get(name=project_name)
         if project is not None:
-            raise AlreadyExistsError(
+            raise tds.exceptions.AlreadyExistsError(
                 "Project already exists: %s", project.name
             )
 

@@ -1500,6 +1500,7 @@ class DeployController(BaseController):
                 [params['apptype']]
             )
         except tagopsdb.exceptions.RepoException:
+            # TODO: Change this to a custome exception
             # Changing this to a custom exception causes failures in feature
             # and unit tests.  test_missing_apptypes in
             # tests/tds/commands/deploy_test throws an error at the last line.
@@ -1788,7 +1789,9 @@ class DeployController(BaseController):
 
         elif hosts:
             for host in hosts:
-                pkg = self.get_package_for_target(host.application, environment)
+                pkg = self.get_package_for_target(
+                    host.application, environment
+                )
                 if pkg is None:
                     continue
 

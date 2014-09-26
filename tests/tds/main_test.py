@@ -98,7 +98,9 @@ class TestTDS(unittest2.TestCase):
             t = tds.main.TDS(dict(user_level='something'))
             t.initialize_db()
 
-            # init_session.assert_called_once_with('fakityfake', 'superpassword')
+            # init_session.assert_called_once_with(
+            #     'fakityfake', 'superpassword'
+            # )
 
     @unittest2.skip('empty test')
     def test_execute_command(self):

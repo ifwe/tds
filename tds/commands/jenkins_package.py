@@ -10,7 +10,7 @@ except ImportError:
 from .package import PackageController
 
 import logging
-from tds.exceptions import TDSException, FailedConnectionError, NotFoundError
+import tds.exceptions
 
 log = logging.getLogger('tds')
 
@@ -29,7 +29,7 @@ class JenkinspackageController(PackageController):
         try:
             jenkins = jenkinsapi.jenkins.Jenkins(params['jenkins_url'])
         except Exception:
-            raise FailedConnectionError(
+            raise tds.exceptions.FailedConnectionError(
                 'Unable to contact Jenkins server "%s"',
                 params['jenkins_url']
             )
@@ -37,7 +37,7 @@ class JenkinspackageController(PackageController):
         try:
             job = jenkins[job_name]
         except KeyError:
-            raise NotFoundError('Job "%s" not found', job_name)
+            raise tds.exceptions.NotFoundError('Job "%s" not found', job_name)
 
         try:
             build = job.get_build(buildnum)
@@ -47,7 +47,7 @@ class JenkinspackageController(PackageController):
             NotFound
         ) as exc:
             log.error(exc)
-            raise NotFoundError(
+            raise tds.exceptions.NotFoundError(
                 'Build "%s@%s" does not exist on %s',
                 params['job_name'],
                 params['version'],
@@ -62,7 +62,7 @@ class JenkinspackageController(PackageController):
             JenkinsAPIException,
             NotFound
         ):
-            raise NotFoundError(
+            raise tds.exceptions.NotFoundError(
                 'Artifact not found for "%s@%s" on %s',
                 params['job_name'],
                 params['version'],
