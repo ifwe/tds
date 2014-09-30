@@ -1,4 +1,4 @@
-"""Data for command line arguments, subsarguments and options."""
+"""Data for command line arguments, subarguments and options."""
 
 from collections import OrderedDict as odict
 
@@ -61,6 +61,9 @@ PACKAGE_DATA = odict([
             (('project',), odict([
                 ('help', 'Name of project in repository'),
             ])),
+            (('job_name',), odict([
+                ('help', 'Jenkins job name'),
+            ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
                 ('type', str),
@@ -90,24 +93,6 @@ PACKAGE_DATA = odict([
                 ('help', 'Specific projects to list'),
                 ('metavar', 'PROJECT'),
                 ('nargs', '*'),
-            ])),
-        ])),
-    ])),
-])
-
-JENKINSPACKAGE_DATA = odict([
-    ('add', odict([
-        ('help', 'Add new package to deployment system'),
-        ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
-            ])),
-            (('job_name',), odict([
-                ('help', 'Jenkins job name'),
-            ])),
-            (('version',), odict([
-                ('help', 'Release version number for project'),
-                ('type', str),
             ])),
         ])),
     ])),
@@ -529,7 +514,6 @@ DEPLOY_DATA = odict([
 PARSER_DATA = odict([
     ('repository', REPOSITORY_DATA),
     ('package', PACKAGE_DATA),
-    ('jenkinspackage', JENKINSPACKAGE_DATA),
     ('config', CONFIG_DATA),
     ('deploy', DEPLOY_DATA),
 ])
