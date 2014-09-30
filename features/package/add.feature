@@ -71,6 +71,6 @@ Feature: package add subcommand
         When I start to run "package add proj job 123"
         And I wait 16 seconds
         And the command finishes
-        Then the output has "Please contact SiteOps for assistance."
+        Then the output has "Please open a JIRA issue in the TDS project."
 
      # TODO: There are probably more failure tests that can be written here!
