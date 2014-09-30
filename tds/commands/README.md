@@ -9,8 +9,6 @@ Abstract base controller
 Commands to manage config-type projects.
 * [./deploy.py](./deploy.py) -
 Commands to manage deployments.
-* [./jenkins_package.py](./jenkins_package.py) -
-Commands to manage Jenkins packages.
 * [./package.py](./package.py) -
 Commands to manage packages.
 * [./project.py](./project.py) -

@@ -29,7 +29,6 @@ class TDS(object):
     view = tds.views.CLI
 
     views = {
-        ('jenkinspackage', 'add'): 'package_add',
         ('deploy', 'redeploy'): 'deploy_promote',
         ('config', 'add_apptype'): 'deploy_add_apptype',
         ('config', 'create'): 'project_create',

@@ -21,8 +21,6 @@ Tests for the `config` command.
 * [./deploy/](./deploy/) -
 Tests for the `deploy` command.
 * [./helpers/](./helpers/)
-* [./jenkinspackage/](./jenkinspackage/) -
-Tests for the `jenkins_package` command.
 * [./package/](./package/) -
 Tests for the `package` command.
 * [./repository/](./repository/) -

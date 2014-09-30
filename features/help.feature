@@ -19,8 +19,6 @@ Feature: Help switches
             | package add           | -h        |
             | package delete        | -h        |
             | package list          | -h        |
-            | jenkinspackage        | -h        |
-            | jenkinspackage add    | -h        |
             | config                | -h        |
             | config add-apptype    | -h        |
             | config create         | -h        |
@@ -50,8 +48,6 @@ Feature: Help switches
             | package add           | --help    |
             | package delete        | --help    |
             | package list          | --help    |
-            | jenkinspackage        | --help    |
-            | jenkinspackage add    | --help    |
             | config                | --help    |
             | config add-apptype    | --help    |
             | config create         | --help    |
