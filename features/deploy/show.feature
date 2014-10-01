@@ -70,6 +70,15 @@ Feature: deploy/config show subcommand
             | deploy  |
             | config  |
 
+    Scenario Outline: with --apptypes and --all-apptypes
+        When I run "<command> show proj 123 --all-apptypes --apptypes foo"
+        Then the output is "Only one of the "--hosts", "--apptypes" or "--all-apptypes" options may be used at a given time"
+
+        Examples:
+            | command |
+            | deploy  |
+            | config  |
+
     Scenario Outline: with a project and a version for a tier
         Given the package version is deployed on the deploy target
         And the package version has been validated
