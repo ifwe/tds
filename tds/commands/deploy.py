@@ -1751,6 +1751,8 @@ class DeployController(BaseController):
             )
 
         deployment = tagopsdb.Deployment.find(package_id=pkg.id)[0]
+        params['package_name'] = deployment.package.name
+        params['version'] = deployment.package.version
 
         self.send_notifications(project, hosts, apptypes, params)
         self.perform_redeployments(
