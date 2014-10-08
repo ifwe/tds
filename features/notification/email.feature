@@ -30,3 +30,15 @@ Feature: email notifications
         And the package version failed to deploy on the host with name="dprojhost02"
         When I run "deploy redeploy proj"
         Then an email is sent with the info deptype="redeploy",version="123",name="proj-name",apptype="the-apptype",env="dev"
+
+    @wip
+    @email_server
+    Scenario: rollback occurs with working mail notification
+        Given email notification is enabled
+        And the package version is deployed on the deploy target
+        And the package version has been validated
+        And there is a package version with version="124"
+        And the package version is deployed on the deploy target
+        And the package version has been validated
+        When I run "deploy rollback proj"
+        Then an email is sent with the info deptype="rollback",version="124",name="proj-name",apptype="the-apptype",env="dev"
