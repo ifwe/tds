@@ -1,23 +1,23 @@
-'''
-Notifier and helpers for sending notifications via email
-'''
-import logging
-log = logging.getLogger('tds')
+"""Notifier and helpers for sending notifications via email"""
 
+import logging
 import smtplib
+
 from email.mime.text import MIMEText
 
 from .base import Notifications, Notifier
 
+log = logging.getLogger('tds')
+
 
 @Notifications.add('email')
 class EmailNotifier(Notifier):
-    '''
-    Send email notification via smtp
-    '''
+    """Send email notification via SMTP"""
+
     def __init__(self, app_config, config):
         super(EmailNotifier, self).__init__(app_config, config)
         self.receiver = config.get('receiver')
+        self.port = config.get('port', 25)
 
     def notify(self, deployment):
         """Send an email notification for a given action"""
@@ -37,10 +37,14 @@ class EmailNotifier(Notifier):
         msg['From'] = sender_addr
         msg['To'] = ', '.join(receiver_emails)
 
-        smtp = smtplib.SMTP('localhost')
-        smtp.sendmail(
-            deployment.actor.name,
-            receiver_emails,
-            msg.as_string()
-        )
-        smtp.quit()
+        smtp = smtplib.SMTP('localhost', self.port)
+        try:
+            smtp.sendmail(
+                deployment.actor.name,
+                receiver_emails,
+                msg.as_string()
+            )
+        except smtplib.SMTPException as exc:
+            log.error('Mail server failure: %s', exc)
+        finally:
+            smtp.quit()
