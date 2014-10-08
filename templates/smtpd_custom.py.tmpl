@@ -1,0 +1,33 @@
+"""Customized SMTP server for testing"""
+
+import asyncore
+import json
+import smtpd
+import smtplib
+
+
+class CustomSMTPServer(smtpd.SMTPServer):
+    """Test mail server for feature tests"""
+
+    def process_message(self, peer, mailfrom, rcpttos, data):
+        """Handle incoming message"""
+
+        if 'serverfail@example.com' in mailfrom:
+            raise smtplib.SMTPException('Server crashed, try again')
+
+        results = dict(
+            origin=peer,
+            sender=mailfrom,
+            receiver=rcpttos,
+            contents=data
+        )
+
+        with open('message.json', 'wb') as fh:
+            fh.write(json.dumps(results))
+
+        return
+
+
+server = CustomSMTPServer(('127.0.0.1', {port}), None)
+
+asyncore.loop()
