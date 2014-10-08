@@ -1,9 +1,11 @@
+#!/usr/bin/env python2.7
 """Customized SMTP server for testing"""
 
 import asyncore
 import json
 import smtpd
 import smtplib
+import sys
 
 
 class CustomSMTPServer(smtpd.SMTPServer):
@@ -28,6 +30,7 @@ class CustomSMTPServer(smtpd.SMTPServer):
         return
 
 
-server = CustomSMTPServer(('127.0.0.1', {port}), None)
+if __name__ == '__main__':
+    server = CustomSMTPServer(('127.0.0.1', int(sys.argv[1])), None)
 
-asyncore.loop()
+    asyncore.loop()
