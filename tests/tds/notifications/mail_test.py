@@ -30,7 +30,7 @@ class TestEmailNotifier(unittest2.TestCase):
 
             e.notify(deployment)
 
-        SMTP.assert_called_with('localhost')
+        SMTP.assert_called_with('localhost', 1025)
         (sender, recvrs, content), _kw = SMTP.return_value.sendmail.call_args
         assert sender == deployment.actor.name
         self.assertItemsEqual(
