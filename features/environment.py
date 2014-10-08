@@ -64,7 +64,6 @@ def setup_workspace(context):
     context.HIPCHAT_SERVER_DIR = opj(context.WORK_DIR, 'hipchat-server')
     context.REPO_DIR = opj(context.WORK_DIR, 'package-repo')
     context.BIN_DIR = opj(context.PROJECT_ROOT, 'features', 'helpers', 'bin')
-    context.TEMPLATE_DIR = opj(context.PROJECT_ROOT, 'templates')
 
     for d in (
         context.WORK_DIR,
@@ -90,20 +89,9 @@ def setup_email_server(context):
     with open(context.TDS_CONFIG_FILE) as f_tmpl:
         deploy_info.update(yaml.load(f_tmpl.read()))
 
-    SMTP_SERVER_TMPL = opj(
-        context.TEMPLATE_DIR,
-        SMTP_SERVER_PROGRAM + '.tmpl'
-    )
-
-    with open(opj(context.EMAIL_SERVER_DIR, SMTP_SERVER_PROGRAM), 'w') as fh:
-        fh.write(open(SMTP_SERVER_TMPL).read().format(
-            **deploy_info['notifications']['email']
-        ))
-
     context.tds_email_server_proc = processes.start_process([
-        sys.executable,
-        '-m',
-        'smtpd_custom',
+        opj(context.BIN_DIR, SMTP_SERVER_PROGRAM),
+        deploy_info['notifications']['email']['port'],
     ], cwd=context.EMAIL_SERVER_DIR)
 
 

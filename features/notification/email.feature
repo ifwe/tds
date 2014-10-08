@@ -31,7 +31,6 @@ Feature: email notifications
         When I run "deploy redeploy proj"
         Then an email is sent with the info deptype="redeploy",version="123",name="proj-name",apptype="the-apptype",env="dev"
 
-    @wip
     @email_server
     Scenario: rollback occurs with working mail notification
         Given email notification is enabled
