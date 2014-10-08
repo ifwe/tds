@@ -1633,6 +1633,11 @@ class DeployController(BaseController):
             self.determine_rollbacks(hosts, apptypes, params, app_host_map,
                                      app_dep_map)
 
+        # May need to change when 'package' has name removed (found
+        # via 'package_definition')
+        params['package_name'] = pkg.name
+        params['version'] = pkg.version
+
         self.send_notifications(project, hosts, apptypes, params)
         self.perform_rollbacks(
             project, hosts, apptypes, params, app_pkg_map, app_host_map,
