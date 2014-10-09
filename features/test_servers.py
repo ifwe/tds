@@ -52,7 +52,7 @@ class HipChatServer(HTTPServer):
         """Perform and return response for a POST request to self."""
         address = self.address
         if path is not None:
-            address = "%s:%s" % (self.address, path)
+            address = "%s%s" % (self.address, path)
         return requests.post(self.address, params=payload)
 
     def start(self):

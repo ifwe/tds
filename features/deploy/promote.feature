@@ -187,7 +187,6 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | config push       |
             | deploy promote    |
 
-    @hipchat_server
     Scenario Outline: deploying to multiple hosts of different apptypes
         Given there is a deploy target with name="other-apptype"
         And there are hosts:
@@ -208,7 +207,6 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | sprojhost01   |
             | sprojhost02   |
             | sother01      |
-        And there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
 
         Examples:
             | command           |

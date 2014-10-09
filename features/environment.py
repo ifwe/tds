@@ -133,7 +133,7 @@ def setup_hipchat_server(context):
     Set up the mock HipChat server.
     """
     server_name = ''
-    server_port = 8888
+    server_port = 0
 
     context.hipchat_server = HipChatServer(
         (server_name, server_port),
@@ -146,8 +146,15 @@ def setup_hipchat_server(context):
         'hipchat',
         dict(url=context.hipchat_server.address)
     )
-    add_config_val(context, 'notifications',
-                   dict(enabled_methods=['hipchat']))
+
+    with open(context.TDS_CONFIG_FILE) as f:
+        config = yaml.load(f.read())
+
+    config['notifications']['hipchat']['receiver'] = \
+        context.hipchat_server.address
+
+    with open(context.TDS_CONFIG_FILE, 'wb') as f:
+        f.write(yaml.dump(config))
 
 
 def teardown_hipchat_server(context):
@@ -244,14 +251,6 @@ def before_scenario(context, scenario):
 
     if 'hipchat_server' in context.tags:
         setup_hipchat_server(context)
-        with open(context.TDS_CONFIG_FILE) as f:
-            config = yaml.load(f.read())
-
-        config['notifications']['hipchat']['receiver'] = \
-            context.hipchat_server.address
-
-        with open(context.TDS_CONFIG_FILE, 'wb') as f:
-            f.write(yaml.dump(config))
 
     setup_temp_db(context)
 
