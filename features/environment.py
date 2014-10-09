@@ -18,6 +18,8 @@ import tds.authorize
 import tds.utils.processes as processes
 import tds.utils.merge as merge
 
+from test_servers import HipChatServer
+
 DB_HOSTS = (
     'dopsdbtds01.tag-dev.com',
     'dopsdbtds02.tag-dev.com',
@@ -52,6 +54,7 @@ def setup_workspace(context):
     context.DB_CONFIG_FILE = opj(context.WORK_DIR, 'tagopsdb.yml')
     context.TDS_CONFIG_FILE = opj(context.WORK_DIR, 'deploy.yml')
     context.JENKINS_SERVER_DIR = opj(context.WORK_DIR, 'jenkins-server')
+    context.HIPCHAT_SERVER_DIR = opj(context.WORK_DIR, 'hipchat-server')
     context.REPO_DIR = opj(context.WORK_DIR, 'package-repo')
     context.BIN_DIR = opj(context.PROJECT_ROOT, 'features', 'helpers', 'bin')
 
@@ -123,6 +126,47 @@ def teardown_jenkins_server(context):
     if 'wip' in context.tags:
         print 'jenkins stdout:', context.tds_jenkins_server_proc.stdout
         print 'jenkins stderr:', context.tds_jenkins_server_proc.stderr
+
+
+def setup_hipchat_server(context):
+    """
+    Set up the mock HipChat server.
+    """
+    server_name = ''
+    server_port = 0
+
+    context.hipchat_server = HipChatServer(
+        (server_name, server_port),
+        opj(context.HIPCHAT_SERVER_DIR, 'notifications.txt'),
+    )
+    context.hipchat_server.start()
+
+    add_config_val(
+        context,
+        'hipchat',
+        dict(url=context.hipchat_server.address)
+    )
+
+    with open(context.TDS_CONFIG_FILE) as f:
+        config = yaml.load(f.read())
+
+    config['notifications']['hipchat']['receiver'] = \
+        context.hipchat_server.address
+
+    with open(context.TDS_CONFIG_FILE, 'wb') as f:
+        f.write(yaml.dump(config))
+
+
+def teardown_hipchat_server(context):
+    """
+    Halt server and print out info if @wip tagged.
+    """
+    notifications = context.hipchat_server.get_notifications()
+
+    context.hipchat_server.halt()
+
+    if 'wip' in context.tags:
+        print 'hipchat notifications:', notifications
 
 
 def setup_conf_file(context):
@@ -205,6 +249,9 @@ def before_scenario(context, scenario):
     if 'jenkins_server' in context.tags:
         setup_jenkins_server(context)
 
+    if 'hipchat_server' in context.tags:
+        setup_hipchat_server(context)
+
     setup_temp_db(context)
 
 
@@ -241,6 +288,9 @@ def after_scenario(context, scenario):
 
     if 'jenkins_server' in context.tags:
         teardown_jenkins_server(context)
+
+    if 'hipchat_server' in context.tags:
+        teardown_hipchat_server(context)
 
     teardown_workspace(context)
 

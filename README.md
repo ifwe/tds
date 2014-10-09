@@ -71,6 +71,10 @@ You may specify a set of tags to restrict which feature tests to run:
         <td>Set up and use a Jenkins server mimic</td>
     </tr>
     <tr>
+        <td>hipchat_server</td>
+        <td>Set up and use a HipChat server mimic</td>
+    </tr>
+    <tr>
         <td>wip</td>
         <td>Works in progress</td>
     </tr>
