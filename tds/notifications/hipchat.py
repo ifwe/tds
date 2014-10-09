@@ -1,6 +1,6 @@
-'''
+"""
 Support for hipchat notifications
-'''
+"""
 import requests
 
 import logging
@@ -12,17 +12,21 @@ from .base import Notifications, Notifier
 
 @Notifications.add('hipchat')
 class HipchatNotifier(Notifier):
-    '''
+    """
     Notifier for hipchat
-    '''
+    """
     def __init__(self, app_config, config):
         super(HipchatNotifier, self).__init__(app_config, config)
         self.token = config['token']
         self.rooms = config['rooms']
+        self.receiver = config.get(
+            'receiver',
+            'https://api.hipchat.com/v1/rooms/message'
+        )
 
     @property
     def proxies(self):
-        'Determine proxies for request'
+        """Determine proxies for request."""
         proxies = {}
         config_proxies = self.app_config.get('proxy', {})
         for proto in ('http', 'https'):
@@ -32,8 +36,7 @@ class HipchatNotifier(Notifier):
         return proxies
 
     def notify(self, deployment):
-        """Send a HipChat message for a given action"""
-
+        """Send a HipChat message for a given action."""
         message = self.message_for_deployment(deployment)
 
         # Query DB for any additional HipChat rooms
@@ -59,7 +62,7 @@ class HipchatNotifier(Notifier):
             )
 
     def send_hipchat_message(self, room, user, message):
-        'Perform the necessary http request to send a hipchat message'
+        """Perform the necessary http request to send a hipchat message."""
         payload = {
             'auth_token': self.token,
             'room_id': room,
@@ -71,7 +74,7 @@ class HipchatNotifier(Notifier):
         headers = {'Content-Length': '0'}
 
         resp = requests.post(
-            'https://api.hipchat.com/v1/rooms/message',
+            self.receiver,
             params=payload,
             headers=headers,
             proxies=self.proxies
