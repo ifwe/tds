@@ -34,7 +34,7 @@ def email_is_sent_with_relevant_information(context, properties):
     attrs = parse_properties(properties)
 
     with open(os.path.join(context.EMAIL_SERVER_DIR, 'message.json')) as fh:
-        email_data = json.loads(fh.read())
+        email_data_list = json.loads(fh.read())
 
     with open(context.TDS_CONFIG_FILE) as fh:
         deploy_info = yaml.load(fh.read())
@@ -48,24 +48,25 @@ def email_is_sent_with_relevant_information(context, properties):
         receiver=[curr_user + '@tagged.com', curr_receiver],
     )
 
-    for key in ['sender', 'receiver']:
-        compare_values(original_data, email_data, key)
+    for email_data in email_data_list:
+        for key in ['sender', 'receiver']:
+            compare_values(original_data, email_data, key)
 
-    email_content = email.message_from_string(email_data['contents'])
-    email_headers = dict(email_content._headers)
-    email_body = email_content._payload
+        email_content = email.message_from_string(email_data['contents'])
+        email_headers = dict(email_content._headers)
+        email_body = email_content._payload
 
-    subject_re = re.compile(
-        r'\[TDS\] %(deptype)s of version %(version)s of %(name)s '
-        r'on app tier\(s\) %(apptype)s\n in %(env)s' % attrs, flags=re.I
-    )
-    assert subject_re.match(email_headers['Subject']), \
-        (email_headers['Subject'], subject_re.pattern, subject_re.flags)
+        subject_re = re.compile(
+            r'\[TDS\] %(deptype)s of version %(version)s of %(name)s '
+            r'on app tier\(s\) %(apptype)s\n in %(env)s' % attrs, flags=re.I
+        )
+        assert subject_re.match(email_headers['Subject']), \
+            (email_headers['Subject'], subject_re.pattern, subject_re.flags)
 
-    body_re = re.compile(
-        r'%(curr_user)s performed a "tds deploy %(deptype)s" for the '
-        r'following app tier\(s\) in %(env)s:.*%(apptype)s' % attrs,
-        flags=re.S
-    )
-    assert body_re.match(email_body), \
-        (email_body, body_re.pattern, body_re.flags)
+        body_re = re.compile(
+            r'%(curr_user)s performed a "tds deploy %(deptype)s" for the '
+            r'following app tier\(s\) in %(env)s:.*%(apptype)s' % attrs,
+            flags=re.S
+        )
+        assert body_re.match(email_body), \
+            (email_body, body_re.pattern, body_re.flags)
