@@ -32,3 +32,17 @@ def then_there_is_a_hipchat_notification_with_message(context, properties):
             assert any(req[attr] == attrs[attr] for (req, _) in notifications)
         except KeyError:
             assert False
+
+
+@then(u'a hipchat notification message contains {snippets}')
+def then_there_is_a_hipchat_notification_with_message_that_contains(context, snippets):
+    context.execute_steps(u"Then there is a hipchat notification")
+
+    notifications = context.hipchat_server.get_notifications()
+
+    snippets = snippets.split(',')
+
+    for snippet in snippets:
+        assert any(
+            eval(snippet) in req['message'] for (req, _) in notifications
+        )
