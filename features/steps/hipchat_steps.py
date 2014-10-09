@@ -2,7 +2,14 @@
 
 from behave import then
 
-from model_steps import parse_properties
+from .model_steps import parse_properties
+from ..environment import add_config_val
+
+
+@given(u'hipchat notifications are enabled')
+def given_hipchat_notifications_are_enabled(context):
+    add_config_val(context, 'notifications',
+                   dict(enabled_methods=['hipchat']))
 
 
 @then(u'there is a hipchat notification')
