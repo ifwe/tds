@@ -17,17 +17,21 @@ class CustomSMTPServer(smtpd.SMTPServer):
         if 'serverfail@example.com' in mailfrom:
             raise smtplib.SMTPException('Server crashed, try again')
 
-        results = dict(
+        try:
+            with open('message.json') as fh:
+                email_list = json.loads(fh.read())
+        except IOError:  # File does not yet exist, new list
+            email_list = []
+
+        email_list.append(dict(
             origin=peer,
             sender=mailfrom,
             receiver=rcpttos,
             contents=data
-        )
+        ))
 
         with open('message.json', 'wb') as fh:
-            fh.write(json.dumps(results))
-
-        return
+            fh.write(json.dumps(email_list))
 
 
 if __name__ == '__main__':
