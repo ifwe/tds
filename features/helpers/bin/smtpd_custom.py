@@ -14,7 +14,7 @@ class CustomSMTPServer(smtpd.SMTPServer):
     def process_message(self, peer, mailfrom, rcpttos, data):
         """Handle incoming message"""
 
-        if 'serverfail@example.com' in mailfrom:
+        if 'serverfail@example.com' in rcpttos:
             raise smtplib.SMTPException('Server crashed, try again')
 
         try:
