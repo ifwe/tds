@@ -33,7 +33,7 @@ class HipChatHandler(BaseHTTPRequestHandler):
         return
 
 
-class HipChatServer(HTTPServer):
+class HipChatServer(HTTPServer, object):
     """
     Wrapper around HTTPServer with HipChatHandler.
     """
