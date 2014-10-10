@@ -33,16 +33,17 @@ class HipChatHandler(BaseHTTPRequestHandler):
         return
 
 
-class HipChatServer(HTTPServer, object):
+class HipChatServer(HTTPServer):
     """
     Wrapper around HTTPServer with HipChatHandler.
     """
 
-    def __init__(self, addr, filename, *args, **kwargs):
+    def __init__(self, addr, *args, **kwargs):
         """Initialize the object."""
         HTTPServer.__init__(self, addr, HipChatHandler, *args, **kwargs)
+
         self.address = 'http://%s:%s' % (self.server_name, self.server_port)
-        self.filename = filename
+
         self._manager = Manager()
         self.notifications = self._manager.list()
 
@@ -54,12 +55,16 @@ class HipChatServer(HTTPServer, object):
         return requests.post(self.address, params=payload)
 
     def serve_forever(self, notifications):
+        """Add notifications to self and serve forever."""
         self.notifications = notifications
         HTTPServer.serve_forever(self)
 
     def start(self):
         """Start serving."""
-        self.server_process = Process(target=self.serve_forever, args=(self.notifications,))
+        self.server_process = Process(
+            target=self.serve_forever,
+            args=(self.notifications,)
+        )
         self.server_process.start()
 
     def add_notification(self, notification):
