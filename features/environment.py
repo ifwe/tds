@@ -32,6 +32,8 @@ DB_HOSTS = (
 COVERAGE_REPORT_FILENAME = 'coverage.xml'
 COVERAGE_DATA_FILENAME = '.coverage'
 
+SMTP_SERVER_PROGRAM = 'smtpd_custom.py'
+
 
 def before_all(context):
     context.coverage_enabled = True
@@ -57,6 +59,7 @@ def setup_workspace(context):
     context.AUTH_CONFIG_FILE = opj(context.WORK_DIR, 'auth.yml')
     context.DB_CONFIG_FILE = opj(context.WORK_DIR, 'tagopsdb.yml')
     context.TDS_CONFIG_FILE = opj(context.WORK_DIR, 'deploy.yml')
+    context.EMAIL_SERVER_DIR = opj(context.WORK_DIR, 'email-server')
     context.JENKINS_SERVER_DIR = opj(context.WORK_DIR, 'jenkins-server')
     context.HIPCHAT_SERVER_DIR = opj(context.WORK_DIR, 'hipchat-server')
     context.REPO_DIR = opj(context.WORK_DIR, 'package-repo')
@@ -75,6 +78,33 @@ def setup_workspace(context):
 
 def teardown_workspace(context):
     shutil.rmtree(context.WORK_DIR)
+
+
+def setup_email_server(context):
+    if not os.path.isdir(context.EMAIL_SERVER_DIR):
+        os.makedirs(context.EMAIL_SERVER_DIR)
+
+    deploy_info = {}
+
+    with open(context.TDS_CONFIG_FILE) as f_tmpl:
+        deploy_info.update(yaml.load(f_tmpl.read()))
+
+    context.tds_email_server_proc = processes.start_process([
+        opj(context.BIN_DIR, SMTP_SERVER_PROGRAM),
+        deploy_info['notifications']['email']['port'],
+    ], cwd=context.EMAIL_SERVER_DIR)
+
+
+def teardown_email_server(context):
+    context.tds_email_server_proc.terminate()
+    context.tds_email_server_proc = processes.wait_for_process(
+        context.tds_email_server_proc,
+        expect_return_code=None
+    )
+
+    if 'wip' in context.tags:
+        print 'email server stdout:', context.tds_email_server_proc.stdout
+        print 'email server stderr:', context.tds_email_server_proc.stderr
 
 
 def setup_jenkins_server(context):
@@ -256,6 +286,9 @@ def before_scenario(context, scenario):
     if 'hipchat_server' in context.tags:
         setup_hipchat_server(context)
 
+    if 'email_server' in context.tags:
+        setup_email_server(context)
+
     setup_temp_db(context)
 
 
@@ -289,6 +322,9 @@ def after_scenario(context, scenario):
                 print
 
     teardown_temp_db(context)
+
+    if 'email_server' in context.tags:
+        teardown_email_server(context)
 
     if 'jenkins_server' in context.tags:
         teardown_jenkins_server(context)

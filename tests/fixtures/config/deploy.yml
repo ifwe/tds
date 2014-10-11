@@ -1,26 +1,32 @@
 ---
-env: {environment: fakedev}
-logging: {syslog_facility: fakelocal3, syslog_priority: fakedebug}
-proxy:
-  https: https://proxy.example.com:443
-  fakeproto: svn://svn.example.com:12345
+env:
+  environment: fakedev
+jenkins:
+  url: https://example.org:8080
+logging:
+  syslog_facility: fakelocal3
+  syslog_priority: fakedebug
+mco:
+  bin: 'mco'
 notifications:
-  email: {receiver: fake@example.com}
+  email:
+    receiver: fake@example.com
+    port: 1025
   enabled_methods: []
-  hipchat:
-    rooms: [fakeroom]
-    token: deadbeef
   graphite:
     host: graphite.example.com
     port: 9999
     prefix: 'tagged.deploy'
+  hipchat:
+    rooms: [fakeroom]
+    token: deadbeef
   validation_time: 10
+proxy:
+  http: http://proxy.example.com:80
+  https: http://proxy.example.com:443
+  fakeproto: svn://svn.example.com:12345
 repo:
-    build_base: /fake/mnt/deploy/builds
-    incoming: /fake/mnt/deploy/incoming
-    processing: /fake/mnt/deploy/processing
-    update_timeout: 15
-jenkins:
-    url: "https://example.org:8080"
-mco:
-    bin: 'mco'
+  build_base: /fake/mnt/deploy/builds
+  incoming: /fake/mnt/deploy/incoming
+  processing: /fake/mnt/deploy/processing
+  update_timeout: 15
