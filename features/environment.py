@@ -18,7 +18,11 @@ import tds.authorize
 import tds.utils.processes as processes
 import tds.utils.merge as merge
 
-from test_servers import HipChatServer
+sys.path.insert(
+    0, opj(os.path.dirname(os.path.realpath(__file__)), 'helpers', 'bin')
+)
+
+from hipchat_server import HipChatServer
 
 DB_HOSTS = (
     'dopsdbtds01.tag-dev.com',
