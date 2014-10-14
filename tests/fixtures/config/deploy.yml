@@ -22,7 +22,6 @@ notifications:
     token: deadbeef
   validation_time: 10
 proxy:
-  http: http://proxy.example.com:80
   https: http://proxy.example.com:443
   fakeproto: svn://svn.example.com:12345
 repo:
