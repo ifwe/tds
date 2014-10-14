@@ -177,19 +177,9 @@ def setup_hipchat_server(context):
 
     add_config_val(
         context,
-        'hipchat',
-        dict(url=context.hipchat_server.address)
+        'notifications.hipchat',
+        dict(receiver=context.hipchat_server.address)
     )
-
-    with open(context.TDS_CONFIG_FILE) as f:
-        config = yaml.load(f.read())
-
-    config['notifications']['hipchat']['receiver'] = \
-        context.hipchat_server.address
-
-    with open(context.TDS_CONFIG_FILE, 'wb') as f:
-        f.write(yaml.dump(config))
-
 
 def teardown_hipchat_server(context):
     """
