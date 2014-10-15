@@ -34,12 +34,9 @@ def when_i_start_to_run(context, command):
     cmd_parts = shlex.split(command.encode('utf8'))
 
     if getattr(context, 'coverage_enabled', False):
-        cmd_executable = [
-            "coverage", "run",
+        cmd_executable = context.coverage_cmd('run') + [
             "--append",
             "--branch",
-            '--rcfile="%s"' % os.path.join(context.PROJECT_ROOT,
-                                           'coverage.rc'),
             '--source=%s' % ','.join(['tds']),
         ]
     else:
