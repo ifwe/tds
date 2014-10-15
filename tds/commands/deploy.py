@@ -1175,14 +1175,6 @@ class DeployController(BaseController):
         )
 
     @tds.utils.debug
-    def perform_restarts(self, params, dep_id, app_host_map, app_dep_map):
-        """Perform all restarts to the requested application tiers or hosts"""
-
-        log.debug('Performing restart to application tiers or hosts')
-
-        self.restart_hosts_or_tiers(params, dep_id, app_host_map, app_dep_map)
-
-    @tds.utils.debug
     def perform_rollbacks(self, project, hosts, apptypes, params, app_pkg_map,
                           app_host_map, app_dep_map):
         """Perform all rollbacks to the requested application tiers
@@ -1263,83 +1255,6 @@ class DeployController(BaseController):
                 app_dep.app_id,
                 self.envs[params['env']]
             )
-
-    @tds.utils.debug
-    def restart_hosts(self, params, dep_hosts, dep_id):
-        """Restart application on a given set of hosts."""
-
-        log.debug('Restarting application on given hosts')
-
-        failed_hosts = []
-
-        for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
-            log.log(5, 'Hostname is: %s', dep_host.hostname)
-
-            pkg = tagopsdb.deploy.deploy.find_app_by_depid(dep_id)
-            app = pkg.pkg_name
-            log.log(5, 'Application is: %s', app)
-
-            success, info = self.restart_host(dep_host.hostname, app)
-
-            if not success:
-                log.log(
-                    5, 'Failed to restart application on host %r',
-                    dep_host.hostname
-                )
-                failed_hosts.append((dep_host.hostname, info))
-
-            delay = params.get('delay', None)
-            if delay is not None:
-                log.log(5, 'Sleeping for %d seconds...', delay)
-                time.sleep(delay)
-
-        # If any hosts failed, show failure information for each
-        if failed_hosts:
-            log.info('Some hosts had failures:\n')
-
-            for failed_host, reason in failed_hosts:
-                log.info('-----')
-                log.info('Hostname: %s', failed_host)
-                log.info('Reason: %s', reason)
-
-    @tds.utils.debug
-    def restart_hosts_or_tiers(self, params, dep_id, app_host_map,
-                               app_dep_map):
-        """Restart the application on the requested hosts or application
-           tiers
-        """
-
-        log.debug(
-            'Restarting application on requested application '
-            'tiers or hosts'
-        )
-
-        if params['hosts']:
-            log.log(5, 'Restarts are for hosts...')
-
-            hostnames = []
-
-            for hosts in app_host_map.itervalues():
-                hostnames.extend(hosts)
-
-            log.log(5, 'Hostnames are: %s', ', '.join(hostnames))
-
-            dep_hosts = map(
-                tagopsdb.deploy.deploy.find_host_by_hostname,
-                hostnames
-            )
-            self.restart_hosts(params, dep_hosts, dep_id)
-        else:
-            log.log(5, 'Restarts are for application tiers...')
-
-            for app_id in app_dep_map.iterkeys():
-                log.log(5, 'Application ID is: %s', app_id)
-
-                dep_hosts = tagopsdb.deploy.deploy.find_hosts_for_app(
-                    app_id,
-                    self.envs[params['env']]
-                )
-                self.restart_hosts(params, dep_hosts, dep_id)
 
     @tds.utils.debug
     def send_notifications(self, project, hosts, apptypes, params):
