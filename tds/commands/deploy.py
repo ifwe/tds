@@ -824,61 +824,6 @@ class DeployController(BaseController):
         return app_dep_map
 
     @tds.utils.debug
-    def ensure_newer_versions(self, project, params):
-        """Ensure version being deployed is more recent than
-           the currently deployed versions on requested app types
-        """
-
-        log.debug(
-            'Ensuring version to deploy is newer than the '
-            'currently deployed version'
-        )
-
-        newer_versions = []
-        dep_versions = tagopsdb.deploy.deploy.find_latest_deployed_version(
-            project.name,
-            self.envs[params['env']],
-            apptier=True
-        )
-
-        for dep_app_type, dep_version, dep_revision in dep_versions:
-            if params['apptypes'] and dep_app_type not in params['apptypes']:
-                continue
-
-            log.log(
-                5, 'Deployment application type is: %s',
-                dep_app_type
-            )
-            log.log(5, 'Deployment version is: %s', dep_version)
-            log.log(5, 'Deployment revision is: %s', dep_revision)
-
-            # Currently not using revision (always '1' at the moment)
-            # 'dep_version' must be typecast to an integer as well,
-            # since the DB stores it as a string - may move away from
-            # integers for versions in the future, so take note here
-            warnings.warn(
-                'Package versions are being compared with string semantics'
-            )
-            if params['version'] < dep_version:
-                log.log(
-                    5, 'Deployment version %r is newer than '
-                    'requested version %r', dep_version,
-                    params['version']
-                )
-                newer_versions.append(dep_app_type)
-
-        if newer_versions:
-            app_type_list = ', '.join(['"%s"' % x for x in newer_versions])
-            log.info(
-                'Application %r for app types %s have newer '
-                'versions deployed than the requested version %r',
-                project.name, app_type_list, params['version']
-            )
-            return False
-
-        return True
-
-    @tds.utils.debug
     def find_app_deployments(self, package, apptypes, params):
         """Find all relevant application deployments for the requested
         app types and create an application/deployment mapping,
