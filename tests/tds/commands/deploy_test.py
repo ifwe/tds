@@ -43,7 +43,6 @@ class DeploySetUp(unittest2.TestCase):
             )),
             ('perform_deployments', None),
             ('find_app_deployments', {}),
-            ('ensure_newer_versions', False),
             ('determine_new_deployments', ({}, {})),
             ('validate_project', lambda **kw:
                 dict(
@@ -100,7 +99,6 @@ class TestPromoteAndPush(DeploySetUp):
 
     def test_promote_new_version(self):
         self.patch_method(self.deploy, 'send_notifications', None)
-        self.deploy.ensure_newer_versions.return_value = True
 
         self.deploy.promote(
             user_level='dev',
@@ -113,7 +111,6 @@ class TestPromoteAndPush(DeploySetUp):
     @data_provider(lambda: [(True,), (False,)])
     def test_promote_version(self, version_is_new):
         self.patch_method(self.deploy, 'send_notifications', None)
-        self.deploy.ensure_newer_versions.return_value = version_is_new
 
         self.deploy.promote(
             user_level='dev',
@@ -125,7 +122,6 @@ class TestPromoteAndPush(DeploySetUp):
 
     def test_push_old_version(self):
         self.patch_method(self.config, 'send_notifications', None)
-        self.config.ensure_newer_versions.return_value = False
 
         self.config.push(project=ProjectFactory(name='fake_app'))
 

@@ -675,20 +675,6 @@ class DeployController(BaseController):
 
         return (app_host_map, app_dep_map)
 
-    @staticmethod
-    def determine_restarts(pkg_id):
-        """Determine which application tiers or hosts need restarts"""
-
-        log.debug(
-            'Determining restarts for requested application '
-            'types or hosts'
-        )
-
-        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(pkg_id)
-        last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
-
-        return last_pkg_dep.id
-
     @tds.utils.debug
     def determine_rollbacks(self, hosts, apptypes, params, app_host_map,
                             app_dep_map):
@@ -836,61 +822,6 @@ class DeployController(BaseController):
         log.log(5, 'Deployment/application map is: %r', app_dep_map)
 
         return app_dep_map
-
-    @tds.utils.debug
-    def ensure_newer_versions(self, project, params):
-        """Ensure version being deployed is more recent than
-           the currently deployed versions on requested app types
-        """
-
-        log.debug(
-            'Ensuring version to deploy is newer than the '
-            'currently deployed version'
-        )
-
-        newer_versions = []
-        dep_versions = tagopsdb.deploy.deploy.find_latest_deployed_version(
-            project.name,
-            self.envs[params['env']],
-            apptier=True
-        )
-
-        for dep_app_type, dep_version, dep_revision in dep_versions:
-            if params['apptypes'] and dep_app_type not in params['apptypes']:
-                continue
-
-            log.log(
-                5, 'Deployment application type is: %s',
-                dep_app_type
-            )
-            log.log(5, 'Deployment version is: %s', dep_version)
-            log.log(5, 'Deployment revision is: %s', dep_revision)
-
-            # Currently not using revision (always '1' at the moment)
-            # 'dep_version' must be typecast to an integer as well,
-            # since the DB stores it as a string - may move away from
-            # integers for versions in the future, so take note here
-            warnings.warn(
-                'Package versions are being compared with string semantics'
-            )
-            if params['version'] < dep_version:
-                log.log(
-                    5, 'Deployment version %r is newer than '
-                    'requested version %r', dep_version,
-                    params['version']
-                )
-                newer_versions.append(dep_app_type)
-
-        if newer_versions:
-            app_type_list = ', '.join(['"%s"' % x for x in newer_versions])
-            log.info(
-                'Application %r for app types %s have newer '
-                'versions deployed than the requested version %r',
-                project.name, app_type_list, params['version']
-            )
-            return False
-
-        return True
 
     @tds.utils.debug
     def find_app_deployments(self, package, apptypes, params):
@@ -1175,14 +1106,6 @@ class DeployController(BaseController):
         )
 
     @tds.utils.debug
-    def perform_restarts(self, params, dep_id, app_host_map, app_dep_map):
-        """Perform all restarts to the requested application tiers or hosts"""
-
-        log.debug('Performing restart to application tiers or hosts')
-
-        self.restart_hosts_or_tiers(params, dep_id, app_host_map, app_dep_map)
-
-    @tds.utils.debug
     def perform_rollbacks(self, project, hosts, apptypes, params, app_pkg_map,
                           app_host_map, app_dep_map):
         """Perform all rollbacks to the requested application tiers
@@ -1263,83 +1186,6 @@ class DeployController(BaseController):
                 app_dep.app_id,
                 self.envs[params['env']]
             )
-
-    @tds.utils.debug
-    def restart_hosts(self, params, dep_hosts, dep_id):
-        """Restart application on a given set of hosts."""
-
-        log.debug('Restarting application on given hosts')
-
-        failed_hosts = []
-
-        for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
-            log.log(5, 'Hostname is: %s', dep_host.hostname)
-
-            pkg = tagopsdb.deploy.deploy.find_app_by_depid(dep_id)
-            app = pkg.pkg_name
-            log.log(5, 'Application is: %s', app)
-
-            success, info = self.restart_host(dep_host.hostname, app)
-
-            if not success:
-                log.log(
-                    5, 'Failed to restart application on host %r',
-                    dep_host.hostname
-                )
-                failed_hosts.append((dep_host.hostname, info))
-
-            delay = params.get('delay', None)
-            if delay is not None:
-                log.log(5, 'Sleeping for %d seconds...', delay)
-                time.sleep(delay)
-
-        # If any hosts failed, show failure information for each
-        if failed_hosts:
-            log.info('Some hosts had failures:\n')
-
-            for failed_host, reason in failed_hosts:
-                log.info('-----')
-                log.info('Hostname: %s', failed_host)
-                log.info('Reason: %s', reason)
-
-    @tds.utils.debug
-    def restart_hosts_or_tiers(self, params, dep_id, app_host_map,
-                               app_dep_map):
-        """Restart the application on the requested hosts or application
-           tiers
-        """
-
-        log.debug(
-            'Restarting application on requested application '
-            'tiers or hosts'
-        )
-
-        if params['hosts']:
-            log.log(5, 'Restarts are for hosts...')
-
-            hostnames = []
-
-            for hosts in app_host_map.itervalues():
-                hostnames.extend(hosts)
-
-            log.log(5, 'Hostnames are: %s', ', '.join(hostnames))
-
-            dep_hosts = map(
-                tagopsdb.deploy.deploy.find_host_by_hostname,
-                hostnames
-            )
-            self.restart_hosts(params, dep_hosts, dep_id)
-        else:
-            log.log(5, 'Restarts are for application tiers...')
-
-            for app_id in app_dep_map.iterkeys():
-                log.log(5, 'Application ID is: %s', app_id)
-
-                dep_hosts = tagopsdb.deploy.deploy.find_hosts_for_app(
-                    app_id,
-                    self.envs[params['env']]
-                )
-                self.restart_hosts(params, dep_hosts, dep_id)
 
     @tds.utils.debug
     def send_notifications(self, project, hosts, apptypes, params):
