@@ -5,7 +5,6 @@ import collections
 import progressbar
 import itertools
 import time
-import warnings
 from datetime import datetime, timedelta
 
 import tagopsdb
@@ -1232,9 +1231,7 @@ class DeployController(BaseController):
         log.debug('Adding application type for project')
 
         try:
-            package_location = tagopsdb.deploy.repo.find_app_location(
-                project.name
-            )
+            tagopsdb.deploy.repo.find_app_location(project.name)
         except tagopsdb.exceptions.RepoException:
             raise tds.exceptions.TDSException(
                 "RepoException when finding package location for project: %s",
@@ -1258,7 +1255,7 @@ class DeployController(BaseController):
                 [params['apptype']]
             )
         except tagopsdb.exceptions.RepoException:
-            # TODO: Change this to a custome exception
+            # TODO: Change this to a custom exception
             # Changing this to a custom exception causes failures in feature
             # and unit tests.  test_missing_apptypes in
             # tests/tds/commands/deploy_test throws an error at the last line.
