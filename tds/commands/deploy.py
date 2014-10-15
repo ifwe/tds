@@ -675,20 +675,6 @@ class DeployController(BaseController):
 
         return (app_host_map, app_dep_map)
 
-    @staticmethod
-    def determine_restarts(pkg_id):
-        """Determine which application tiers or hosts need restarts"""
-
-        log.debug(
-            'Determining restarts for requested application '
-            'types or hosts'
-        )
-
-        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(pkg_id)
-        last_pkg_dep = pkg_deps[0]  # Guaranteed to have at least one
-
-        return last_pkg_dep.id
-
     @tds.utils.debug
     def determine_rollbacks(self, hosts, apptypes, params, app_host_map,
                             app_dep_map):
