@@ -47,3 +47,9 @@ def then_there_are_hipchat_notifications(context, number):
     notifications = context.hipchat_server.get_notifications()
     assert notifications is not None
     assert len(notifications) == number
+
+@then(u'there is a hipchat failure')
+def then_there_is_a_hipchat_failure(context):
+    notifications = context.hipchat_server.get_notifications()
+    assert notifications is not None
+    assert any(resp != 200 for (_, resp) in notifications)
