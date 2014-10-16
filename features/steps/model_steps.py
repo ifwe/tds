@@ -277,7 +277,7 @@ def given_the_deploy_targets_are_a_part_of_the_project(context):
         add_target_to_project(context.tds_projects[-1], target)
 
 
-def deploy_package_to_target(package, target, env):
+def deploy_package_to_target(package, target, env, status='complete'):
     env_id = tagopsdb.Environment.get(env=env).id
 
     # XXX: fix update_or_create so it can be used here
@@ -297,7 +297,7 @@ def deploy_package_to_target(package, target, env):
         deployment_id=dep.id,
         app_id=target.id,
         user=dep.user,
-        status='complete',
+        status=status,
         environment_id=env_id,
     )
 
@@ -310,22 +310,30 @@ def deploy_package_to_target(package, target, env):
     )
 
 
-def deploy_to_hosts(hosts, deployment):
+def deploy_to_hosts(hosts, deployment, status='ok'):
     """
     Add a host deployment entry for the given package to every host in hosts,
     using the given deployment.
     """
     for host in hosts:
+
         if tagopsdb.HostDeployment.get(deployment_id=deployment.id,
                                        host_id=host.id) is None:
             host_dep = tagopsdb.HostDeployment(
                 deployment_id=deployment.id,
                 host_id=host.id,
                 user='test-user',
-                status='ok',
+                status=status,
             )
             tagopsdb.Session.add(host_dep)
-            tagopsdb.Session.commit()
+
+        else:
+            tagopsdb.HostDeployment.update().values(status=status).where(
+                deployment_id=deployment.id,
+                host_id=host.id,
+            )
+
+        tagopsdb.Session.commit()
 
 
 @given(u'the package version is deployed on the deploy target')
@@ -1106,3 +1114,37 @@ def given_the_hosts_are_associated_with_the_deploy_target(context):
 
     for host in hosts:
         associate_host_with_target(host, target)
+
+
+@given(u'there is an ongoing deployment on the hosts="{hosts}"')
+def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
+    host_names = hosts.split(',')
+
+    package_id = context.tds_package_versions[-1].id
+
+    dep_props = dict(
+        package_id=package_id,
+        user='test-user',
+        dep_type='deploy',
+    )
+
+    deployment = tagopsdb.Deployment.get(**dep_props)
+    if deployment is None:
+        deployment = tagopsdb.Deployment(**dep_props)
+        tagopsdb.Session.add(deployment)
+        tagopsdb.Session.commit()
+
+    hosts = [tagopsdb.Host.get(hostname=host_name)
+             for host_name in host_names]
+
+    deploy_to_hosts(hosts, deployment, 'inprogress')
+
+
+@given(u'there is an ongoing deployment on the deploy target')
+def given_there_is_an_ongoing_deployment_on_the_deploy_target(context):
+    deploy_package_to_target(
+        context.tds_package_versions[-1],
+        context.tds_targets[-1],
+        context.tds_env,
+        'inprogress',
+    )
