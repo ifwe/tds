@@ -165,3 +165,22 @@ Feature: HipChat notifications
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "rollback","of+version","sprojhost01","in+stage"
         And there are 1 hipchat notifications
+
+    @hipchat_server
+    Scenario: hipchat server failure
+        Given the package version is deployed on the deploy target
+        And the package version has been validated
+
+        And there is a package version with version="200"
+        And the package version is deployed on the deploy target
+        And the package version has been validated
+
+        And there is a package version with version="201"
+        And the package version is deployed on the deploy target
+        And the package version has been invalidated
+
+        And hipchat notifications are enabled
+
+        When I run "deploy rollback proj --hosts sprojhost01"
+        Then there is a hipchat failure
+        And the output has "Notification to HipChat failed, status code is: 403"
