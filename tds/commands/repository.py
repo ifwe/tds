@@ -7,6 +7,7 @@ import tagopsdb.exceptions
 import tagopsdb.deploy.package
 import tagopsdb.deploy.repo
 
+import tds.exceptions
 import tds.authorize
 import tds.model
 import tds.utils
@@ -35,8 +36,7 @@ class RepositoryController(BaseController):
         """Repository delete subcommand."""
         # Note: this will go away when project/app are separated
         pkg_def_ids = set([x.pkg_def_id for x in
-                           tagopsdb.ProjectPackage.find(project_id=project.id)
-        ])
+                          tagopsdb.ProjectPackage.find(project_id=project.id)])
 
         proj = ProjectController(self.app_config).delete(
             project=project, **params
@@ -65,7 +65,7 @@ class RepositoryController(BaseController):
         arches = table.columns['arch'].type.enums
 
         if arch not in arches:
-            raise Exception(
+            raise tds.exceptions.InvalidInputError(
                 "Invalid architecture: %s. Should be one of: %s",
                 arch,
                 u', '.join(sorted(arches))
@@ -83,7 +83,7 @@ class RepositoryController(BaseController):
         for apptype in params['apptypes']:
             target = tds.model.AppTarget.get(name=apptype)
             if target is None:
-                raise Exception(
+                raise tds.exceptions.NotFoundError(
                     "Apptype '%s' does not exist", apptype
                 )
 

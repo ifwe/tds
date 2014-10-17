@@ -1,4 +1,4 @@
-'Utilities for determining authorization level of actors'
+"""Utilities for determining authorization level of actors."""
 import logging
 
 import tds.utils
@@ -15,6 +15,7 @@ DEFAULT_ACCESS_MAPPING = {
 }
 
 log = logging.getLogger('tds')
+
 
 class TDSAuthConfig(tds.utils.config.YAMLConfig):
 
@@ -58,6 +59,6 @@ def verify_access(user_level, access_level):
 
     log.debug('Ensuring user has necessary access')
 
-    if user_level not in ACCESS_LEVELS or \
-        ACCESS_LEVELS.index(user_level) > ACCESS_LEVELS.index(access_level):
+    if user_level not in ACCESS_LEVELS or ACCESS_LEVELS.index(user_level) > \
+            ACCESS_LEVELS.index(access_level):
         raise AccessError()

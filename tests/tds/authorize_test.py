@@ -1,8 +1,7 @@
-'''Tests for authorize module'''
+"""Tests for authorize module."""
 
 import unittest2
 
-from mock import patch
 from unittest_data_provider import data_provider
 
 import tds.authorize
@@ -21,7 +20,7 @@ GROUPS = {
 
 
 def map_level(gr_name):
-    'Find access level for a given group'
+    """Find access level for a given group."""
     for auth_level, group in tds.authorize.DEFAULT_ACCESS_MAPPING.iteritems():
         if gr_name == group:
             return auth_level
@@ -34,7 +33,7 @@ GROUP_PROVIDER = lambda: [
 
 
 class TestAuthorization(unittest2.TestCase):
-    'Tests for authorization module'
+    """Tests for authorization module."""
 
     @data_provider(GROUP_PROVIDER)
     def test_get_access_level(self, gid, auth_level):

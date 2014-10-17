@@ -2,6 +2,7 @@
 Abstract base DeployStrategy class.
 """
 
+
 class DeployStrategy(object):
     """Abstract base DeployStrategy class."""
 

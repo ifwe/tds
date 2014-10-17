@@ -1,3 +1,5 @@
+"""Jenkins configuration for feature tests"""
+
 import os.path
 import collections
 import shutil
@@ -5,6 +7,7 @@ import shutil
 from behave import given
 
 from ..environment import update_jenkins
+
 
 @given(u'there is a jenkins job with name="{name}"')
 def given_there_is_a_jenkins_job_with_name(context, name):
@@ -20,10 +23,11 @@ def given_there_is_a_jenkins_job_with_name(context, name):
         context, 'api/python',
         dict(
             jobs=[dict(
-            color='blue',
-            name=name,
-            url=job_url
-        )])
+                color='blue',
+                name=name,
+                url=job_url
+            )]
+        )
     )
 
     update_jenkins(
@@ -44,6 +48,7 @@ def given_there_is_a_jenkins_job_with_name(context, name):
             lastStableBuild=None,
         )
     )
+
 
 @given(u'the job has a build with number="{number}"')
 def given_the_job_has_a_build(context, number):
@@ -104,5 +109,7 @@ def given_jenkins_does_not_have_the_artifact(context):
 
     path_fragment = 'job/%s/%s' % (job, number)
 
-    artifact_dir = os.path.join(context.JENKINS_SERVER_DIR, path_fragment, 'artifact')
+    artifact_dir = os.path.join(
+        context.JENKINS_SERVER_DIR, path_fragment, 'artifact'
+    )
     shutil.rmtree(artifact_dir)

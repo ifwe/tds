@@ -33,7 +33,6 @@ class UnvalidatedDeploymentNotifier(tds.notifications.Notifications):
             )
         )
 
-
     def notify(self, app_deployments):
         for app_dep in app_deployments:
             deployment = self.convert_deployment(app_dep)
@@ -99,4 +98,3 @@ class ValidationMonitor(object):
             self.should_be_validated,
             self.deployment_provider.get_all(self.environment)
         )
-

@@ -1,8 +1,11 @@
+"""Environment configuration for feature tests"""
+
 import yaml
 from behave import given
 
 import tds.commands
 import tagopsdb
+
 
 @given(u'I am in the "{env}" environment')
 def given_i_am_in_environment(context, env):

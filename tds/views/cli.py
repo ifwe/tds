@@ -15,12 +15,12 @@ def silence(*exc_classes):
     Create a function to silence given exception classes when excecuting
     a function.
     """
-    def wrap_func(f):
+    def wrap_func(func):
         """Wrapper for exception silencing function."""
         def call_func(*a, **k):
             """Exception silencing function."""
             try:
-                return f(*a, **k)
+                return func(*a, **k)
             except exc_classes:
                 return None
         return call_func
@@ -159,9 +159,9 @@ def format_project(proj_result, output_format="blocks"):
     if output_format == "blocks":
         if iterable:
             return reduce(lambda x, y: x + '\n\n' + y,
-                          map(lambda x: format_project(x, "blocks")
-                              if not isinstance(x, Exception)
-                              else format_exception(x), proj_result), "")
+                          (format_project(p, "blocks")
+                           if not isinstance(p, Exception)
+                           else format_exception(p) for p in proj_result), "")
         else:
             output = []
             output.append(PROJECT_TEMPLATE.format(self=proj_result))
@@ -209,15 +209,15 @@ def format_package(pkg_result, output_format="blocks"):
     if output_format == "blocks":
         if iterable:
             return reduce(lambda x, y: x + '\n\n' + y,
-                          map(lambda x: format_package(x, "blocks")
-                              if not isinstance(x, Exception)
-                              else format_exception(x), pkg_result), "")
+                          (format_package(p, "blocks")
+                           if not isinstance(p, Exception)
+                           else format_exception(p) for p in pkg_result), "")
         else:
             return PACKAGE_TEMPLATE.format(self=pkg_result)
     else:
         if iterable:
             return tabulate(tuple((pkg.name, pkg.version, pkg.revision) for
-                                   pkg in pkg_result),
+                                  pkg in pkg_result),
                             headers=('Project', 'Version', 'Revision'),
                             tablefmt=TABULATE_FORMAT[output_format])
         else:
@@ -343,8 +343,8 @@ class CLI(Base):
         elif error:
             print format_exception(error)
 
-    def generate_deploy_add_apptype_result(self,
-        result=None, error=None, **kwds
+    def generate_deploy_add_apptype_result(
+        self, result=None, error=None, **kwds
     ):
         """Format the result of a "deploy add-apptype" action."""
         if error is not None:
@@ -357,8 +357,8 @@ class CLI(Base):
             % result
         )
 
-    def generate_deploy_delete_apptype_result(self,
-        result=None, error=None, **kwds
+    def generate_deploy_delete_apptype_result(
+        self, result=None, error=None, **kwds
     ):
         """Format the result of a "deploy delete-apptype" action."""
         if error is not None:
@@ -417,10 +417,9 @@ class CLI(Base):
                 host, pkg = key
                 print "%s (%s)" % (host.name, pkg.name)
 
-
     generate_deploy_invalidate_result = \
-    generate_deploy_promote_result = \
-    generate_deploy_validate_result = \
-    generate_deploy_rollback_result = \
-    generate_deploy_redeploy_result = \
-    silence(NotImplementedError)(generate_default_result)
+        generate_deploy_promote_result = \
+        generate_deploy_validate_result = \
+        generate_deploy_rollback_result = \
+        generate_deploy_redeploy_result = \
+        silence(NotImplementedError)(generate_default_result)

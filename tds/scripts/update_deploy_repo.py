@@ -29,12 +29,6 @@ import tds.utils as utils
 log = logging.getLogger('update_deploy_repo')
 
 
-class ExtCommandError(Exception):
-    """Custom exception for external command errors."""
-
-    pass
-
-
 class Zookeeper(object):
     """Zookeeper management object."""
 
@@ -87,7 +81,8 @@ class UpdateDeployRepoDaemon(Daemon):
 
             try:
                 self.email_for_invalid_rpm(rpm_to_process)
-            except Exception as exc:   # Email send failed?  Tough noogies.
+            # Email send failed?  Tough noogies.
+            except smtplib.SMTPException as exc:
                 log.error('Email send failed: %s', exc)
 
         if rpm_info is not None:
@@ -119,9 +114,9 @@ class UpdateDeployRepoDaemon(Daemon):
                 self.remove_file(src_rpm)
 
                 # XXX: Unsure what to do here for the database info,
-                # XXX: since acquiring the proper version and release
-                # XXX: isn't easily doable from the file name (though
-                # XXX: it is possible).
+                # since acquiring the proper version and release
+                # isn't easily doable from the file name (though
+                # it is possible).
                 continue
 
             pkg = package.find_package(*rpm_info[1:])

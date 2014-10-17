@@ -16,31 +16,46 @@ try:
 except ImportError:
     from UTFFixedSysLogHandler import UTFFixedSysLogHandler
 
-sysloghandler = logging.handlers.SysLogHandler
+
+def _create_facilities(handler, facilities=dict()):
+    """Initialize a facilities dictionary."""
+    for facility in handler.facility_names.keys():
+        if getattr(handler, 'LOG_%s' % facility.upper(), None) is not None:
+            facilities[facility] = handler.facility_names[facility]
+    return facilities
+
+
+def _create_priorities(handler, priorities=dict()):
+    """Initialize a priorities dictionary."""
+    for priority in handler.priority_names.keys():
+        if getattr(handler, 'LOG_%s' % priority.upper(), None) is not None:
+            priorities[priority] = handler.priority_names[priority]
+    return priorities
+
+
+def _add_log_levels():
+    """Add debug logging level names."""
+    for idx in xrange(1, 11):
+        logging.addLevelName(idx, 'DEBUG')
+
+
+SYSLOGHANDLER = logging.handlers.SysLogHandler
 
 # Basic dictionary settings
-facilities = {}
-for facility in sysloghandler.facility_names.keys():
-    if getattr(sysloghandler, 'LOG_%s' % facility.upper(), None) is not None:
-        facilities[facility] = sysloghandler.facility_names[facility]
-
-priorities = {}
-for priority in sysloghandler.priority_names.keys():
-    if getattr(sysloghandler, 'LOG_%s' % priority.upper(), None) is not None:
-        priorities[priority] = sysloghandler.priority_names[priority]
+FACILITIES = _create_facilities(SYSLOGHANDLER)
+PRIORITIES = _create_priorities(SYSLOGHANDLER)
 
 # Extend DEBUG settings for level
-for idx in xrange(1, 11):
-    logging.addLevelName(idx, 'DEBUG')
+_add_log_levels()
 
 # Common settings to use in following code
-LOG_DAEMON = facilities['daemon']
-LOG_LOCAL3 = facilities['local3']
-LOG_LOCAL4 = facilities['local4']
+LOG_DAEMON = FACILITIES['daemon']
+LOG_LOCAL3 = FACILITIES['local3']
+LOG_LOCAL4 = FACILITIES['local4']
 
-LOG_DEBUG = priorities['debug']
-LOG_INFO = priorities['info']
-LOG_ERR = priorities['err']
+LOG_DEBUG = PRIORITIES['debug']
+LOG_INFO = PRIORITIES['info']
+LOG_ERR = PRIORITIES['err']
 
 
 def _extract_from_dict(dictionary, key, default=None):
@@ -149,13 +164,13 @@ class Formatter(logging.Formatter):
             record.code = ''
 
         # Set color
-        cc = ColorCodes()
+        color_codes = ColorCodes()
         levelname = record.levelname
 
-        if self.use_color and levelname in cc.c_map.keys():
-            level_color = cc.c_map[levelname]
+        if self.use_color and levelname in color_codes.c_map.keys():
+            level_color = color_codes.c_map[levelname]
             message = logging.Formatter.format(self, record)
-            message = level_color + message + cc.END
+            message = level_color + message + color_codes.END
         else:
             message = logging.Formatter.format(self, record)
 
@@ -188,11 +203,9 @@ class Logger(logging.Logger, object):
 
         for handler in (getattr(self, 'stream_handlers', {}).values() +
                         getattr(self, 'syslog_handlers', {}).values()):
-            f = handler.formatter
-
-            if f is not None:
-                f.set_user(self.user)
-                f.set_code(self.code)
+            if handler.formatter is not None:
+                handler.formatter.set_user(self.user)
+                handler.formatter.set_code(self.code)
 
     def set_user(self, user=None):
         """Set user in formatter"""
@@ -328,7 +341,6 @@ def add_stream(logger, fh_name, stream=None, level=None, nostderr=False,
 
         if prefix:
             format_string = '[%(levelname)s] ' + format_string
-
 
     handle.setFormatter(Formatter(format_string, use_color=use_color,
                                   user=getattr(logger, 'user', None),

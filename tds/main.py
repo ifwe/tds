@@ -29,7 +29,6 @@ class TDS(object):
     view = tds.views.CLI
 
     views = {
-        ('jenkinspackage', 'add'): 'package_add',
         ('deploy', 'redeploy'): 'deploy_promote',
         ('config', 'add_apptype'): 'deploy_add_apptype',
         ('config', 'create'): 'project_create',
@@ -145,7 +144,7 @@ class TDS(object):
         log.log(5, 'User is: %s', self.params['user'])
 
         self.params['user_level'] = self.authconfig.get_access_level(
-                LocalActor()
+            LocalActor()
         )
         log.log(5, 'User level is: %s', self.params['user_level'])
 

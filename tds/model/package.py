@@ -3,6 +3,7 @@
 from .base import Base
 import tagopsdb
 
+
 class Package(Base):
     """Represents a deployable package for a version of an application."""
     # name

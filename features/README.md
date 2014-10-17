@@ -21,8 +21,9 @@ Tests for the `config` command.
 * [./deploy/](./deploy/) -
 Tests for the `deploy` command.
 * [./helpers/](./helpers/)
-* [./jenkinspackage/](./jenkinspackage/) -
-Tests for the `jenkins_package` command.
+Helper applications for deployment tests.
+* [./notification/](./notification/)
+Tests for supported notifications.
 * [./package/](./package/) -
 Tests for the `package` command.
 * [./repository/](./repository/) -

@@ -9,6 +9,7 @@ import tds.model
 
 __all__ = ['Notifications', 'Notifier']
 
+
 class Notifications(object):
     """Manage various notification mechanisms for deployments"""
 
@@ -126,10 +127,12 @@ class Notifier(object):
 
         dep_type = deployment.action['subcommand'].capitalize()
 
-        if deployment.target.get('hosts', None):
+        if deployment.target.get('hosts', None) is not None:
             dest_type = 'hosts'
-            destinations = ', '.join(deployment.target['hosts'])
-        elif deployment.target.get('apptypes', None):
+            destinations = ', '.join(
+                x.name for x in deployment.target['hosts']
+            )
+        elif deployment.target.get('apptypes', None) is not None:
             dest_type = 'app tier(s)'
             destinations = ', '.join(
                 x.name for x in deployment.target['apptypes']

@@ -12,9 +12,17 @@ import os
 import os.path
 from os.path import dirname, join as opj
 
+from subprocess import CalledProcessError
+
 import tds.authorize
 import tds.utils.processes as processes
 import tds.utils.merge as merge
+
+sys.path.insert(
+    0, opj(os.path.dirname(os.path.realpath(__file__)), 'helpers', 'bin')
+)
+
+from hipchat_server import HipChatServer
 
 DB_HOSTS = (
     'dopsdbtds01.tag-dev.com',
@@ -23,6 +31,9 @@ DB_HOSTS = (
 
 COVERAGE_REPORT_FILENAME = 'coverage.xml'
 COVERAGE_DATA_FILENAME = '.coverage'
+
+SMTP_SERVER_PROGRAM = 'smtpd_custom.py'
+
 
 def before_all(context):
     context.coverage_enabled = True
@@ -48,7 +59,9 @@ def setup_workspace(context):
     context.AUTH_CONFIG_FILE = opj(context.WORK_DIR, 'auth.yml')
     context.DB_CONFIG_FILE = opj(context.WORK_DIR, 'tagopsdb.yml')
     context.TDS_CONFIG_FILE = opj(context.WORK_DIR, 'deploy.yml')
+    context.EMAIL_SERVER_DIR = opj(context.WORK_DIR, 'email-server')
     context.JENKINS_SERVER_DIR = opj(context.WORK_DIR, 'jenkins-server')
+    context.HIPCHAT_SERVER_DIR = opj(context.WORK_DIR, 'hipchat-server')
     context.REPO_DIR = opj(context.WORK_DIR, 'package-repo')
     context.BIN_DIR = opj(context.PROJECT_ROOT, 'features', 'helpers', 'bin')
 
@@ -66,7 +79,35 @@ def setup_workspace(context):
 def teardown_workspace(context):
     shutil.rmtree(context.WORK_DIR)
 
-def setup_jenkins_server(context, scenario):
+
+def setup_email_server(context):
+    if not os.path.isdir(context.EMAIL_SERVER_DIR):
+        os.makedirs(context.EMAIL_SERVER_DIR)
+
+    deploy_info = {}
+
+    with open(context.TDS_CONFIG_FILE) as f_tmpl:
+        deploy_info.update(yaml.load(f_tmpl.read()))
+
+    context.tds_email_server_proc = processes.start_process([
+        opj(context.BIN_DIR, SMTP_SERVER_PROGRAM),
+        deploy_info['notifications']['email']['port'],
+    ], cwd=context.EMAIL_SERVER_DIR)
+
+
+def teardown_email_server(context):
+    context.tds_email_server_proc.terminate()
+    context.tds_email_server_proc = processes.wait_for_process(
+        context.tds_email_server_proc,
+        expect_return_code=None
+    )
+
+    if 'wip' in context.tags:
+        print 'email server stdout:', context.tds_email_server_proc.stdout
+        print 'email server stderr:', context.tds_email_server_proc.stderr
+
+
+def setup_jenkins_server(context):
     if not os.path.isdir(context.JENKINS_SERVER_DIR):
         os.makedirs(context.JENKINS_SERVER_DIR)
 
@@ -88,7 +129,8 @@ def setup_jenkins_server(context, scenario):
         dict(jobs=[])
     )
 
-    context.build_jenkins_url = lambda pth: 'http://localhost:%s/%s' % (port, pth)
+    context.build_jenkins_url = \
+        lambda pth: 'http://localhost:%s/%s' % (port, pth)
 
 
 def update_jenkins(context, path, data):
@@ -107,7 +149,8 @@ def update_jenkins(context, path, data):
     with open(item, 'wb') as f:
         f.write(repr(merge.merge(old_data, data)))
 
-def teardown_jenkins_server(context, scenario):
+
+def teardown_jenkins_server(context):
     context.tds_jenkins_server_proc.terminate()
     context.tds_jenkins_server_proc = processes.wait_for_process(
         context.tds_jenkins_server_proc,
@@ -119,26 +162,60 @@ def teardown_jenkins_server(context, scenario):
         print 'jenkins stderr:', context.tds_jenkins_server_proc.stderr
 
 
+def setup_hipchat_server(context):
+    """
+    Set up the mock HipChat server.
+    """
+    server_name = ''
+    server_port = 0
+
+    context.hipchat_server = HipChatServer(
+        (server_name, server_port),
+        opj(context.HIPCHAT_SERVER_DIR, 'notifications.txt'),
+    )
+    context.hipchat_server.start()
+
+    add_config_val(
+        context,
+        'notifications.hipchat',
+        dict(receiver=context.hipchat_server.address)
+    )
+
+def teardown_hipchat_server(context):
+    """
+    Halt server and print out info if @wip tagged.
+    """
+    notifications = context.hipchat_server.get_notifications()
+
+    context.hipchat_server.halt()
+
+    if 'wip' in context.tags:
+        print 'hipchat notifications:', notifications
+
+
 def setup_conf_file(context):
     shutil.copyfile(
-        opj(context.PROJECT_ROOT, 'tests', 'fixtures', 'config', 'deploy.yml'),
+        opj(context.PROJECT_ROOT, 'tests',
+            'fixtures', 'config', 'deploy.yml'),
         context.TDS_CONFIG_FILE
     )
     shutil.copyfile(
-        opj(context.PROJECT_ROOT, 'tests', 'fixtures', 'config', 'tagopsdb.yml'),
+        opj(context.PROJECT_ROOT, 'tests',
+            'fixtures', 'config', 'tagopsdb.yml'),
         context.DB_CONFIG_FILE
     )
 
     auth_levels = tds.authorize.ACCESS_LEVELS
 
-    conf_dir, filename = os.path.split(context.DB_CONFIG_FILE)
+    _conf_dir, filename = os.path.split(context.DB_CONFIG_FILE)
     _basename, ext = os.path.splitext(filename)
 
     auth_fnames = ['dbaccess.%s%s' % (level, ext) for level in auth_levels]
 
     for fname in auth_fnames:
         shutil.copyfile(
-            opj(context.PROJECT_ROOT, 'tests', 'fixtures', 'config', 'dbaccess.test.yml'),
+            opj(context.PROJECT_ROOT, 'tests',
+                'fixtures', 'config', 'dbaccess.test.yml'),
             opj(os.path.dirname(context.DB_CONFIG_FILE), fname)
         )
 
@@ -172,6 +249,7 @@ def add_config_val(context, key, val):
     with open(context.TDS_CONFIG_FILE, 'wb') as conf_file:
         conf_file.write(yaml.dump(full_conf))
 
+
 def setup_auth_file(context):
     shutil.copyfile(
         opj(context.PROJECT_ROOT, 'tests', 'fixtures', 'config', 'auth.yml'),
@@ -193,9 +271,15 @@ def before_scenario(context, scenario):
     setup_conf_file(context)
 
     if 'jenkins_server' in context.tags:
-        setup_jenkins_server(context, scenario)
+        setup_jenkins_server(context)
 
-    setup_temp_db(context, scenario)
+    if 'hipchat_server' in context.tags:
+        setup_hipchat_server(context)
+
+    if 'email_server' in context.tags:
+        setup_email_server(context)
+
+    setup_temp_db(context)
 
 
 def after_scenario(context, scenario):
@@ -212,7 +296,9 @@ def after_scenario(context, scenario):
 
     if 'no_db' not in context.tags:
         if verbose:
-            for table_name, table in sorted(tagopsdb.Base.metadata.tables.items()):
+            for table_name, table in sorted(
+                    tagopsdb.Base.metadata.tables.items()
+            ):
                 result = tagopsdb.Session.query(table).all()
                 if len(result) == 0:
                     continue
@@ -225,15 +311,21 @@ def after_scenario(context, scenario):
                     ))
                 print
 
-    teardown_temp_db(context, scenario)
+    teardown_temp_db(context)
+
+    if 'email_server' in context.tags:
+        teardown_email_server(context)
 
     if 'jenkins_server' in context.tags:
-        teardown_jenkins_server(context, scenario)
+        teardown_jenkins_server(context)
+
+    if 'hipchat_server' in context.tags:
+        teardown_hipchat_server(context)
 
     teardown_workspace(context)
 
 
-def setup_temp_db(context, scenario):
+def setup_temp_db(context):
     """
     Set up a temporary database for use in the test if 'no_db' is not
     among the tags for the given scenario.
@@ -269,9 +361,13 @@ def setup_temp_db(context, scenario):
             try:
                 processes.run(
                     base_mysql_args +
-                    ['--execute', 'CREATE DATABASE IF NOT EXISTS %s;' % db_name]
+                    [
+                        '--execute',
+                        'CREATE DATABASE IF NOT EXISTS %s;' % db_name
+                    ]
                 )
-            except Exception as exc:
+            # Expecting CalledProcessError from tds.process.wait_for_process
+            except CalledProcessError as exc:
                 # assume it's a host problem
                 if db_hosts:
                     exc = None
@@ -314,6 +410,7 @@ def setup_temp_db(context, scenario):
 
     # tagopsdb.Base.metadata.bind.echo = True
 
+
 def seed_db():
     import tagopsdb
     ganglia = tagopsdb.Ganglia.update_or_create(dict(
@@ -333,7 +430,7 @@ def seed_db():
     tagopsdb.Session.commit()
 
 
-def teardown_temp_db(context, *_args):
+def teardown_temp_db(context):
     dry_run = 'no_db' in context.tags
     if dry_run:
         return
