@@ -1180,13 +1180,12 @@ class DeployController(BaseController):
             )
 
     @tds.utils.debug
-    def send_notifications(self, project, hosts, apptypes, params):
+    def send_notifications(self, hosts, apptypes, **params):
         """Send notifications for a given deployment"""
 
         log.debug('Sending notifications for given deployment')
 
         deployment = create_deployment(
-            project=project,
             hosts=hosts,
             apptypes=apptypes,
             **params
@@ -1290,7 +1289,7 @@ class DeployController(BaseController):
             app_dep_map
         )
 
-        self.send_notifications(None, hosts, apptypes, params)
+        self.send_notifications(hosts=hosts, apptypes=apptypes, **params)
         self.perform_deployments(
             None, hosts, apptypes, package, params, app_dep_map,
             app_host_map
@@ -1435,7 +1434,7 @@ class DeployController(BaseController):
         params['package_name'] = pkg.name
         params['version'] = pkg.version
 
-        self.send_notifications(project, hosts, apptypes, params)
+        self.send_notifications(hosts, apptypes, project=project, **params)
         self.perform_rollbacks(
             project, hosts, apptypes, params, app_pkg_map, app_host_map,
             app_dep_map
@@ -1558,7 +1557,7 @@ class DeployController(BaseController):
         params['package_name'] = deployment.package.name
         params['version'] = deployment.package.version
 
-        self.send_notifications(project, hosts, apptypes, params)
+        self.send_notifications(hosts, apptypes, project=project, **params)
         self.perform_redeployments(
             project, hosts, apptypes, params, deployment, app_host_map,
             app_dep_map
