@@ -316,7 +316,6 @@ def deploy_to_hosts(hosts, deployment, status='ok'):
     using the given deployment.
     """
     for host in hosts:
-
         if tagopsdb.HostDeployment.get(deployment_id=deployment.id,
                                        host_id=host.id) is None:
             host_dep = tagopsdb.HostDeployment(
@@ -325,15 +324,9 @@ def deploy_to_hosts(hosts, deployment, status='ok'):
                 user='test-user',
                 status=status,
             )
+
             tagopsdb.Session.add(host_dep)
-
-        else:
-            tagopsdb.HostDeployment.update().values(status=status).where(
-                deployment_id=deployment.id,
-                host_id=host.id,
-            )
-
-        tagopsdb.Session.commit()
+            tagopsdb.Session.commit()
 
 
 @given(u'the package version is deployed on the deploy target')
