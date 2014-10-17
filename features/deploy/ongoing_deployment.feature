@@ -62,3 +62,35 @@ Feature: Ongoing deployments blocking attempted new ones
         And there is an ongoing deployment on the hosts="dprojhost01"
         When I run "deploy promote proj 123 --hosts dprojhost02"
         Then the output has "Completed: 1 out of 1 hosts"
+
+    Scenario Outline: redeploy with ongoing apptype deployment
+        Given I have "stage" permissions
+        And I am in the "stage" environment
+        And there is a project with name="proj"
+        And there is a deploy target with name="the-apptype"
+        And the deploy target is a part of the project
+        And there are hosts:
+            | name          | env     |
+            | dprojhost01   | dev     |
+            | dprojhost02   | dev     |
+            | sprojhost01   | stage   |
+            | sprojhost02   | stage   |
+        And the hosts are associated with the deploy target
+
+        And there is a package version with version="122"
+        And the package version is deployed on the deploy targets in the "stage" env
+        And the package version has been validated in the "staging" environment
+
+        And there is a package version with version="123"
+        And the package version is deployed on the deploy targets in the "dev" env
+        And the package version has been validated in the "development" environment
+        And the package version is deployed on the deploy targets in the "stage" env
+        And there is an ongoing deployment on the deploy target
+        When I run "deploy redeploy proj <targets>"
+        Then the output has "User "test-user" is currently running a deployment for the the-apptype app tier in the staging environment, skipping..."
+
+    Examples:
+        | targets                   |
+        | --hosts sprojhost02       |
+        | --all-apptypes            |
+        | --apptypes the-apptype    |
