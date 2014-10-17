@@ -259,8 +259,8 @@ model_builder(
 )
 
 model_builder(
-    'there is a package with %s',
-    'there are packages',
+    'there is a package version with %s',
+    'there are package versions',
     'tds_package_versions',
     'package'
 )
