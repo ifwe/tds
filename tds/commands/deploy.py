@@ -1217,8 +1217,7 @@ class DeployController(BaseController):
             return (pkg, apptypes)
 
     @input_validate('application')
-    @input_validate('targets')
-    def add_apptype(self, application, project, apptypes, **params):
+    def add_apptype(self, application, project, apptype, **params):
         """Add a specific application type to the given project"""
 
         log.debug('Adding application type for project')
@@ -1227,7 +1226,7 @@ class DeployController(BaseController):
             tagopsdb.deploy.repo.add_app_packages_mapping(
                 project.delegate,
                 application,
-                [x.name for x in apptypes]
+                [apptype]
             )
         except tagopsdb.exceptions.RepoException:
             # TODO: Change this to a custom exception
@@ -1236,7 +1235,7 @@ class DeployController(BaseController):
             # tests/tds/commands/deploy_test throws an error at the last line.
             # It says 'module' has no attribute 'exception' at that line.
             raise Exception(
-                "Deploy target does not exist: %s", params['apptype']
+                "Deploy target does not exist: %s", apptype
             )
 
         tagopsdb.Session.commit()
@@ -1244,7 +1243,7 @@ class DeployController(BaseController):
 
         return dict(
             result=dict(
-                target=params['apptype'],
+                target=apptype,
                 project=project.name
             )
         )
