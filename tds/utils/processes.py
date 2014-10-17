@@ -5,6 +5,7 @@ import shlex
 import subprocess
 import collections
 
+
 def run(cmd, expect_return_code=0, shell=False, **kwds):
     """Wrapper to run external command"""
 

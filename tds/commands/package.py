@@ -1,8 +1,15 @@
 """Commands to support managing packages in the TDS system."""
 
+import logging
 import os.path
 import signal
 import time
+
+import jenkinsapi.jenkins
+try:
+    from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
+except ImportError:
+    from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
 import tagopsdb
 import tagopsdb.exceptions
@@ -10,11 +17,7 @@ import tagopsdb.deploy.repo
 import tagopsdb.deploy.deploy
 import tagopsdb.deploy.package
 
-import tds.model
-import tds.utils
-
-import logging
-
+import tds.exceptions
 from .base import BaseController, validate
 
 log = logging.getLogger('tds')
@@ -29,7 +32,7 @@ def processing_handler(*_args):
     raise tagopsdb.exceptions.PackageException(
         'The file placed in the incoming or '
         'processing queue was not removed.\n'
-        'Please contact SiteOps for assistance.'
+        'Please open a JIRA issue in the TDS project.'
     )
 
 
@@ -83,33 +86,69 @@ class PackageController(BaseController):
                 tagopsdb.Session.remove()
                 time.sleep(0.5)
 
-    @staticmethod
-    def _queue_rpm(params, queued_rpm, rpm_name, app):
-        """Move requested RPM into queue for processing."""
+    def _queue_rpm(self, params, queued_rpm, rpm_name, app):
+        """Move requested RPM into queue for processing"""
 
-        # Verify required RPM exists and create hard link into
-        # the incoming directory for the repository server to find
-        build_base = params['repo']['build_base']
-        src_rpm = os.path.join(build_base, app.path, rpm_name)
-        log.log(5, 'Source RPM is: %s', src_rpm)
+        buildnum = int(params['version'])
+        job_name = params['job_name']
 
-        log.info('Checking for existence of file "%s"...', src_rpm)
-
-        if not os.path.isfile(src_rpm):
-            log.info('File "%s" is not found in "%s"',
-                     src_rpm, build_base)
-            return False
-
-        log.info('Build host "%s" built RPM successfully',
-                 app.build_host)
-        log.info('Linking RPM into incoming directory...')
         try:
-            os.link(src_rpm, queued_rpm)
-        except OSError as e:
-            log.error(e)
-            return False
+            jenkins = jenkinsapi.jenkins.Jenkins(params['jenkins_url'])
+        except Exception:
+            raise tds.exceptions.FailedConnectionError(
+                'Unable to contact Jenkins server "%s"',
+                params['jenkins_url']
+            )
 
-        log.info('RPM successfully linked')
+        try:
+            job = jenkins[job_name]
+        except KeyError:
+            raise tds.exceptions.NotFoundError('Job "%s" not found', job_name)
+
+        try:
+            build = job.get_build(buildnum)
+        except (
+            KeyError,
+            JenkinsAPIException,
+            NotFound
+        ) as exc:
+            log.error(exc)
+            raise tds.exceptions.NotFoundError(
+                'Build "%s@%s" does not exist on %s',
+                params['job_name'],
+                params['version'],
+                params['jenkins_url']
+            )
+
+        try:
+            artifacts = build.get_artifact_dict()[rpm_name]
+            data = artifacts.get_data()
+        except (
+            KeyError,
+            JenkinsAPIException,
+            NotFound
+        ):
+            raise tds.exceptions.NotFoundError(
+                'Artifact not found for "%s@%s" on %s',
+                params['job_name'],
+                params['version'],
+                params['jenkins_url']
+            )
+
+        tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)),
+                               'tmp', rpm_name)
+
+        for tmpfile in (tmpname, queued_rpm):
+            tmpdir = os.path.dirname(tmpfile)
+            if not os.path.isdir(tmpdir):
+                os.makedirs(tmpdir)
+
+        with open(tmpname, 'wb') as tmp_rpm:
+            tmp_rpm.write(data)
+
+        os.link(tmpname, queued_rpm)
+        os.unlink(tmpname)
+
         return True
 
     @validate('project')
@@ -134,7 +173,7 @@ class PackageController(BaseController):
         )
 
         if pkg is not None:
-            raise Exception(
+            raise tds.exceptions.AlreadyExistsError(
                 'Package version "%s@%s" already exists',
                 pkg.name, pkg.version
             )
@@ -167,7 +206,7 @@ class PackageController(BaseController):
 
             if not self._queue_rpm(params, pending_rpm, rpm_name, app):
                 log.info('Failed to copy RPM into incoming directory')
-                raise Exception(
+                raise tds.exceptions.NotFoundError(
                     'Package "%s@%s" does not exist',
                     app.pkg_name, params['version']
                 )

@@ -60,7 +60,7 @@ def parse_command_line(sysargs):
     parser.add_argument('--output-format',
                         help='Display output in specified format'
                              ' [blocks|table|json|latex|rst]. Default: blocks.',
-                        choices = ('blocks', 'table', 'json', 'latex', 'rst'),
+                        choices=('blocks', 'table', 'json', 'latex', 'rst'),
                         default='blocks')
 
     create_subparsers(parser)

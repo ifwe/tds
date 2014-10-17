@@ -1,7 +1,6 @@
 from mock import patch, Mock
 from unittest_data_provider import data_provider
 import unittest2
-import logging
 
 from tests.factories.model.deployment import DeploymentFactory
 from tests.factories.utils.config import DeployConfigFactory
@@ -14,7 +13,6 @@ import tagopsdb
 import tagopsdb.deploy.deploy
 import tds.commands
 import tds.model
-import tds.utils.config as tds_config
 
 
 class DeploySetUp(unittest2.TestCase):
@@ -46,14 +44,12 @@ class DeploySetUp(unittest2.TestCase):
             )),
             ('perform_deployments', None),
             ('find_app_deployments', {}),
-            ('ensure_newer_versions', False),
             ('determine_new_deployments', ({}, {})),
             ('validate_project', lambda **kw:
                 dict(
                     project=ProjectFactory(name=kw['project']),
                     projects=[ProjectFactory(name=kw['project'])]
-                )
-            )
+                ))
         ]
 
         for (key, return_value) in deploy_methods:
@@ -79,7 +75,7 @@ class TestPromoteAndPush(DeploySetUp):
         self.patch_method(
             tagopsdb.deploy.deploy,
             'find_app_deployment',
-            [(None,None,None,None)]
+            [(None, None, None, None)]
         )
         self.session = patch(
             'tagopsdb.Session',
@@ -104,7 +100,6 @@ class TestPromoteAndPush(DeploySetUp):
 
     def test_promote_new_version(self):
         self.patch_method(self.deploy, 'send_notifications', None)
-        self.deploy.ensure_newer_versions.return_value = True
 
         self.deploy.promote(
             user_level='dev',
@@ -119,7 +114,6 @@ class TestPromoteAndPush(DeploySetUp):
     @data_provider(lambda: [(True,), (False,)])
     def test_promote_version(self, version_is_new):
         self.patch_method(self.deploy, 'send_notifications', None)
-        self.deploy.ensure_newer_versions.return_value = version_is_new
 
         self.deploy.promote(
             user_level='dev',
@@ -133,7 +127,6 @@ class TestPromoteAndPush(DeploySetUp):
 
     def test_push_old_version(self):
         self.patch_method(self.config, 'send_notifications', None)
-        self.config.ensure_newer_versions.return_value = False
 
         self.config.push(
             project=ProjectFactory(name='fake_app'),
@@ -162,7 +155,7 @@ class TestPromoteAndPush(DeploySetUp):
             package=PackageFactory(version='whatever')
         )
 
-        returned = getattr(self.deploy, params.get('subcommand_name'))(**params)
+        getattr(self.deploy, params.get('subcommand_name'))(**params)
 
         deployment = DeploymentFactory()
         Notifications.assert_called_with(DeployConfigFactory())

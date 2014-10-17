@@ -71,11 +71,11 @@ def configure_logging(config_dir, verbosity, use_color, daemon=False):
     logger = logging.getLogger()
     logger.setLevel(1)
     log_wrap.add_syslog(logger, 'syslog',
-                        facility=log_wrap.facilities.get(
-                                syslog_facility, log_wrap.LOG_LOCAL4
+                        facility=log_wrap.FACILITIES.get(
+                            syslog_facility, log_wrap.LOG_LOCAL4
                         ),
-                        priority=log_wrap.priorities.get(
-                                syslog_priority, log_wrap.LOG_DEBUG
+                        priority=log_wrap.PRIORITIES.get(
+                            syslog_priority, log_wrap.LOG_DEBUG
                         ))
 
     if not daemon:

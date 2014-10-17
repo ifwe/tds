@@ -1,3 +1,5 @@
+"""Execution management for feature tests"""
+
 import os
 import time
 import shlex
@@ -5,13 +7,14 @@ import sys
 import subprocess
 
 import tds
-import tds.utils as utils
+import tds.scripts.tds_prog
 import tds.utils.processes as processes
-import tds.scripts.tds_prog as prog
-from behave import given, when, then
+
+from behave import when, then
 
 TDS_SCRIPT = tds.scripts.tds_prog.__file__
 TRACEBACK_TEXT = 'Traceback (most recent call last)'
+
 
 @when(u'I run "{command}"')
 def when_i_run_command(context, command):
@@ -19,6 +22,7 @@ def when_i_run_command(context, command):
         When I start to run "%s"
         And the command finishes
     ''' % command)
+
 
 @when(u'I start to run "{command}"')
 def when_i_start_to_run(context, command):
@@ -34,7 +38,8 @@ def when_i_start_to_run(context, command):
             "coverage", "run",
             "--append",
             "--branch",
-            '--rcfile="%s"' % os.path.join(context.PROJECT_ROOT, 'coverage.rc'),
+            '--rcfile="%s"' % os.path.join(context.PROJECT_ROOT,
+                                           'coverage.rc'),
             '--source=%s' % ','.join(['tds']),
         ]
     else:
@@ -55,14 +60,16 @@ def when_i_start_to_run(context, command):
             cwd=context.PROJECT_ROOT,
             env=env
         )
-    except subprocess.CalledProcessError as proc:
+    except subprocess.CalledProcessError:
         pass
 
     context.process = proc
 
+
 @when(u'I wait {number} seconds')
 def when_i_wait_seconds(context, number):
     time.sleep(int(number))
+
 
 @when(u'the command finishes')
 def when_the_command_finishes(context):
@@ -80,6 +87,7 @@ def output_checker(context, check):
     stderr = context.process.stderr.strip()
 
     assert check(stdout, stderr), (stdout, stderr)
+
 
 @then(u'the output has "{text}"')
 def then_the_output_has_text(context, text):
@@ -107,6 +115,7 @@ def then_the_output_is_empty(context):
 @then(u'it took at least {seconds} seconds')
 def then_it_took_at_least_seconds(context, seconds):
     assert context.process.duration >= float(seconds)
+
 
 @then(u'the test fails')
 def then_the_test_fails(context):
