@@ -1066,12 +1066,10 @@ def given_the_package_version_has_status_set_with_properties(context, environmen
         if app_dep.app_id not in target_ids:
             continue
 
-    for app_dep in tagopsdb.AppDeployment.filter(
-        tagopsdb.AppDeployment.environment != environment,
-        ~tagopsdb.AppDeployment.deployment_id.in_([d.id for d in deployments]),
-        ~tagopsdb.AppDeployment.app_id.in_([t.id for t in targets]),
-    ):
-        app_dep.status = 'validated'
+        if app_dep.environment != environment:
+            continue
+
+        app_dep.status = status
         tagopsdb.Session.add(app_dep)
 
     for host_dep in tagopsdb.HostDeployment.all():
