@@ -644,7 +644,8 @@ class DeployController(BaseController):
                 log.log(5, 'Deployment type is: %s', dep_type)
                 log.log(5, 'Package is: %r', pkg)
 
-                if (app_dep.status != 'invalidated' and dep_type == 'deploy'
+                if (app_dep.status in ('validated', 'complete')
+                        and dep_type == 'deploy'
                         and pkg.version == params['version']):
                     log.info(
                         'Application "%s" with version "%s" '
