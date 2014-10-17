@@ -18,7 +18,8 @@ def latest_deployed_package_for_app_target(environment, app, app_target):
             print "bad status", app_dep.status
             continue
         if app_dep.deployment.package.application != app:
-            print "wrong app somehow", app_dep.deployment.package.application, app
+            print "wrong app somehow", \
+                app_dep.deployment.package.application, app
             continue
 
         return app_dep.deployment.package
@@ -178,7 +179,8 @@ class BaseController(object):
             project=project,
         )
 
-    def validate_application(self, application=None, applications=None, **params):
+    def validate_application(self, application=None, applications=None,
+                             **params):
         if applications is None:
             applications = []
 
@@ -201,9 +203,8 @@ class BaseController(object):
             applications=application_objects
         )
 
-    def validate_targets(
-        self, env, hosts=None, apptype=None, apptypes=None, all_apptypes=None, **params
-    ):
+    def validate_targets(self, env, hosts=None, apptype=None, apptypes=None,
+                         all_apptypes=None, **params):
         """
         Converts 'env', 'hosts', 'apptypes', and 'all_apptypes' parameters
         into just 'hosts' and 'apptypes' parameters.
@@ -231,8 +232,8 @@ class BaseController(object):
             targets.extend(sum((p.targets for p in projects), []))
             if not all_apptypes and len(targets) > 1:
                 raise tds.exceptions.TDSException(
-                    "Specify a target constraint (too many targets found: %s)",
-                    ', '.join(sorted([x.name for x in targets]))
+                    "Specify a target constraint (too many targets found:"
+                    " %s)", ', '.join(sorted([x.name for x in targets]))
                 )
             return dict(apptypes=targets, hosts=None)
         elif apptypes:
@@ -298,8 +299,8 @@ class BaseController(object):
 
         if len(applications) > 1:
             raise Exception(
-                'Project "%s" has too many applications associated with it: %s',
-                getattr(project, 'name', None),
+                'Project "%s" has too many applications associated with it:'
+                ' %s', getattr(project, 'name', None),
                 sorted(x.name for x in applications)
             )
 
@@ -323,7 +324,11 @@ class BaseController(object):
         return dict(package=package)
 
     def get_latest_app_version(self, project, app, env, **params):
-        targets = self.validate_targets(project=project.name, env=env, **params)
+        targets = self.validate_targets(
+            project=project.name,
+            env=env,
+            **params
+        )
 
         host_targets = targets.get('hosts', None)
         app_targets = targets.get('apptypes', None)
@@ -340,9 +345,9 @@ class BaseController(object):
         else:
             for app_target in app_targets:
                 app_deployments[app_target.id] = \
-                latest_deployed_package_for_app_target(
-                    environment, app, app_target
-                )
+                    latest_deployed_package_for_app_target(
+                        environment, app, app_target
+                    )
 
         if not (host_deployments or app_deployments):
             raise Exception(
