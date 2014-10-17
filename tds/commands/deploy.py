@@ -1217,7 +1217,8 @@ class DeployController(BaseController):
             return (pkg, apptypes)
 
     @input_validate('application')
-    def add_apptype(self, application, project, **params):
+    @input_validate('targets')
+    def add_apptype(self, application, project, apptypes, **params):
         """Add a specific application type to the given project"""
 
         log.debug('Adding application type for project')
@@ -1226,7 +1227,7 @@ class DeployController(BaseController):
             tagopsdb.deploy.repo.add_app_packages_mapping(
                 project.delegate,
                 application,
-                [params['apptype']]
+                [x.name for x in apptypes]
             )
         except tagopsdb.exceptions.RepoException:
             # TODO: Change this to a custom exception
