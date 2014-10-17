@@ -17,7 +17,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the hosts are associated with the deploy target
         And there is an ongoing deployment on the deploy target
         When I run "deploy promote proj 123 <targets>"
-        Then the output has "Application "proj" with version "123" already deployed to this environment (development) for apptype "the-apptype""
+        Then the output has "User "test-user" is currently running a deployment for the the-apptype app tier in the development environment, skipping..."
 
     Examples:
         | targets                   |
