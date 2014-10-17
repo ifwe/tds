@@ -156,7 +156,7 @@ class DeployController(BaseController):
         return True
 
     @tds.utils.debug
-    def check_for_current_deployment(self, params, apptype, hosts=None):
+    def check_for_current_deployment(self, params, apptype, hosts=[]):
         """For the current app type, see if there are any current
            deployments running and notify if there is.
         """
@@ -219,7 +219,8 @@ class DeployController(BaseController):
 
                 if dep['hosts']:
                     # Allow separate hosts to get simultaneous deployments
-                    if (hosts is None or
+                    hosts = [host.name for host in hosts]
+                    if (not hosts or
                             not set(dep['hosts']).isdisjoint(set(hosts))):
                         log.info(
                             'User "%s" is currently running a '
@@ -644,7 +645,8 @@ class DeployController(BaseController):
                 log.log(5, 'Deployment type is: %s', dep_type)
                 log.log(5, 'Package is: %r', pkg)
 
-                if (app_dep.status != 'invalidated' and dep_type == 'deploy'
+                if (app_dep.status in ('validated', 'complete')
+                        and dep_type == 'deploy'
                         and pkg.version == params['version']):
                     log.info(
                         'Application "%s" with version "%s" '
