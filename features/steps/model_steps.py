@@ -1168,7 +1168,7 @@ def given_the_package_is_deployed_on_the_target(context, package_props, target_p
     assert package is not None, package_attrs
     assert target is not None, target_attrs
 
-    deploy_package_to_target(package, target, context.tds_environment)
+    deploy_package_to_target(package, target, context.tds_env)
 
 
 @given(u'there is an ongoing deployment on the hosts="{hosts}"')
