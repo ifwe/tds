@@ -82,14 +82,17 @@ class Notifier(object):
         '''
 
         method_name = 'message_for_%s' % deployment.action['command']
-        return getattr(self, method_name, self.message_for_default)(deployment)
+        return getattr(self, method_name, self.message_for_default)(
+            deployment
+        )
 
     def message_for_default(self, deployment):
         '''Return message object for the deployment. Dispatches
             on the deployment's action's "subcommand" property, or uses
             the default method, "message_for_default_default".
         '''
-        method_name = 'message_for_default_%s' % deployment.action['subcommand']
+        method_name = 'message_for_default_%s' \
+            % deployment.action['subcommand']
         return getattr(
             self, method_name, self.message_for_default_default
         )(deployment)
