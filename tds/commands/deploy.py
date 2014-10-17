@@ -219,7 +219,9 @@ class DeployController(BaseController):
 
                 if dep['hosts']:
                     # Allow separate hosts to get simultaneous deployments
-                    if not hosts or set(dep['hosts']).isdisjoint(set(hosts)):
+                    hosts = [host.name for host in hosts]
+                    if (not hosts or
+                            not set(dep['hosts']).isdisjoint(set(hosts))):
                         log.info(
                             'User "%s" is currently running a '
                             'deployment for the hosts "%s" in '
