@@ -256,8 +256,8 @@ class PackageController(BaseController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-    @validate('project')
-    def list(self, applications, projects, **params):
+    @validate('application')
+    def list(self, applications=None, **params):
         """Show information for all existing packages in the software
            repository for requested projects (or all projects)
         """
@@ -267,7 +267,7 @@ class PackageController(BaseController):
 
         packages_sorted = sorted(
             tagopsdb.deploy.package.list_packages(
-                [x.name for x in projects] or None
+                [x.name for x in applications] or None
             ),
             key=lambda pkg: (pkg.name, pkg.created, pkg.version, pkg.revision)
         )
