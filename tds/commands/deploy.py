@@ -1221,6 +1221,7 @@ class DeployController(BaseController):
             return (pkg, apptypes)
 
     @input_validate('application')
+    @input_validate('project')
     def add_apptype(self, application, project, apptype, **params):
         """Add a specific application type to the given project"""
 
@@ -1258,9 +1259,8 @@ class DeployController(BaseController):
     def delete_apptype(self, application, project, apptypes, **params):
         """Delete a specific application type from the given project"""
 
-        tagopsdb.deploy.repo.delete_app_packages_mapping(
-            tagopsdb.deploy.repo.find_app_location(project.name),
-            [x.name for x in apptypes]
+        tagopsdb.deploy.repo.delete_project_packages_mapping(
+            project, application, apptypes
         )
 
         tagopsdb.Session.commit()

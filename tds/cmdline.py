@@ -58,14 +58,14 @@ PACKAGE_DATA = odict([
     ('add', odict([
         ('help', 'Add new package to deployment system'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application in repository'),
             ])),
             (('job_name',), odict([
                 ('help', 'Jenkins job name'),
             ])),
             (('version',), odict([
-                ('help', 'Release version number for project'),
+                ('help', 'Release version number for application'),
                 ('type', str),
             ])),
             (('--force', '-f'), odict([
@@ -77,11 +77,11 @@ PACKAGE_DATA = odict([
     ('delete', odict([
         ('help', 'Remove given package from deployment system'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application in repository'),
             ])),
             (('version',), odict([
-                ('help', 'Release version number for project'),
+                ('help', 'Release version number for application'),
                 ('type', str),
             ])),
         ])),

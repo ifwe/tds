@@ -194,7 +194,7 @@ class BaseController(object):
             application = tds.model.Application.get(name=app)
 
             if application is None:
-                raise Exception("Couldnt find app: %r", app)
+                raise Exception('Couldn\'t find app: "%s"', app)
 
             application_objects.append(application)
 

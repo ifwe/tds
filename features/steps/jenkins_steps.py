@@ -76,7 +76,9 @@ def given_the_job_has_a_build(context, number):
         )
     )
 
-    artifact_filename = 'proj-name-123-1.noarch.rpm'
+    artifact_filename = '%s-%s-1.noarch.rpm' % (
+        context.tds_applications[-1].name, number
+    )
 
     update_jenkins(
         context,
