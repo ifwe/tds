@@ -10,7 +10,7 @@ Feature: Debug switches
             | name |
             | bar  |
             | foo  |
-        And there are package versions:
+        And there are packages:
             | version   |
             | 1         |
             | 2         |
@@ -29,7 +29,7 @@ Feature: Debug switches
         And I am in the "stage" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         And there are hosts:
@@ -60,7 +60,7 @@ Feature: Debug switches
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is a deploy target with name="foo"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are hosts:
             | name          |
             | projhost01    |
@@ -81,7 +81,7 @@ Feature: Debug switches
         Given I have "dev" permissions
         And I am in the "dev" environment
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         And the package version is deployed on the deploy targets

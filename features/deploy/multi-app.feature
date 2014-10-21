@@ -9,13 +9,13 @@ Feature: Real-life application usage
 
         And there is a project with name="solr"
         And there is an application with name="solr-app"
-        And there are package versions:
+        And there are packages:
             | version |
             | 123     |
             | 124     |
             | 125     |
         And there is an application with name="tagconfig"
-        And there are package versions:
+        And there are packages:
             | version |
             | 456     |
             | 457     |

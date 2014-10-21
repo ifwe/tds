@@ -14,7 +14,7 @@ Feature: deploy/config show subcommand
             | projhost01    | dev   |
             | projhost02    | dev   |
         And the hosts are associated with the deploy target
-        And there is a package version with version="123"
+        And there is a package with version="123"
 
     Scenario Outline: too few arguments
         When I run "<command> show"
@@ -145,7 +145,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: with a different version deployed to hosts
         Given the package version is deployed on the deploy target
-        And there is a package version with version="200"
+        And there is a package with version="200"
         And the package version is deployed on the hosts
         When I run "<command> show proj --apptypes foo"
         Then the output describes the host deployments
@@ -158,7 +158,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: check host output for different deployment to hosts
         Given the package version is deployed on the deploy target
-        And there is a package version with version="200"
+        And there is a package with version="200"
         And the package version is deployed on the hosts
         When I run "<command> show proj 200 --apptypes foo"
         Then the output describes the host deployments
@@ -171,7 +171,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: check app output for different deployment to hosts
         Given the package version is deployed on the deploy target
-        And there is a package version with version="200"
+        And there is a package with version="200"
         And the package version is deployed on the hosts
         When I run "<command> show proj 123 --apptypes foo"
         Then the output describes an app deployment with version="123"
@@ -184,7 +184,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: different version deployed to only one host
         Given the package version is deployed on the deploy target
-        And there is a package version with version="200"
+        And there is a package with version="200"
         And the package version is deployed on the host with name="projhost01"
         When I run "<command> show proj 200 --apptypes foo"
         Then the output describes a host deployment with pkg_name="proj-name",host_name="projhost01"
@@ -198,7 +198,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: check app output with different version deployed to only one host
         Given the package version is deployed on the deploy target
-        And there is a package version with version="200"
+        And there is a package with version="200"
         And the package version is deployed on the host with name="projhost01"
         When I run "<command> show proj 123 --apptypes foo"
         Then the output describes a host deployment with pkg_name="proj-name",host_name="projhost02"
@@ -213,7 +213,7 @@ Feature: deploy/config show subcommand
     Scenario Outline: different versions with validation
         Given the package version is deployed on the deploy target
         And the package version has been validated
-        And there is a package version with version="200"
+        And there is a package with version="200"
         And the package version is deployed on the host with name="projhost01"
         When I run "<command> show proj 123 --apptypes foo"
         Then the output describes an app deployment with name="proj-name",version="123"
@@ -227,7 +227,7 @@ Feature: deploy/config show subcommand
     Scenario Outline: host output with different version with validation
         Given the package version is deployed on the deploy target
         And the package version has been validated
-        And there is a package version with version="200"
+        And there is a package with version="200"
         And the package version is deployed on the host with name="projhost01"
         When I run "<command> show proj 200 --apptypes foo"
         Then the output describes a host deployment with pkg_name="proj-name",host_name="projhost01"
