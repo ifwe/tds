@@ -23,3 +23,25 @@ class Application(Base):
             for x in self.delegate.targets
             if x.name != x.dummy
         ]
+
+
+    def get_version(self, version, revision='1'):
+        from . import Package
+        return Package.get(name=self.name, version=version, revision=revision)
+
+    def create_version(self, version, revision, creator, **attrs):
+        from . import Package
+
+        defaults = dict(
+            pkg_def_id=self.id,
+            name=self.name,
+            version=version,
+            revision=revision,
+            status='pending',
+            creator=creator,
+            builder=self.build_type,
+            project_type='application'
+        )
+
+        defaults.update(attrs)
+        return Package.create(**defaults)
