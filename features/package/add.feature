@@ -48,7 +48,7 @@ Feature: package add subcommand
     @jenkins_server
     Scenario: add a package to a project again
         Given there is a project with name="proj"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there is a jenkins job with name="job"
         And the job has a build with number="123"
         When I run "package add proj job 123"

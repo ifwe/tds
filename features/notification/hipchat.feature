@@ -8,7 +8,7 @@ Feature: HipChat notifications
         And I am in the "stage" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         And there are hosts:
@@ -31,7 +31,7 @@ Feature: HipChat notifications
             | sother02   | stage  |
         And the hosts are associated with the deploy target
         And the deploy target is a part of the project
-        And there is a package version with version="124"
+        And there is a package with version="124"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         And hipchat notifications are enabled
@@ -44,7 +44,7 @@ Feature: HipChat notifications
 
     @hipchat_server
     Scenario: deploying to all apptypes
-        Given there is a package version with version="124"
+        Given there is a package with version="124"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         And hipchat notifications are enabled
@@ -55,7 +55,7 @@ Feature: HipChat notifications
 
     @hipchat_server
     Scenario: deploying to specific apptypes
-        Given there is a package version with version="124"
+        Given there is a package with version="124"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         And hipchat notifications are enabled
@@ -111,11 +111,11 @@ Feature: HipChat notifications
         Given the package version is deployed on the deploy target
         And the package version has been validated
 
-        And there is a package version with version="121"
+        And there is a package with version="121"
         And the package version is deployed on the deploy target
         And the package version has been validated
 
-        And there is a package version with version="122"
+        And there is a package with version="122"
         And the package version is deployed on the deploy target
         And the package version has been invalidated
 
@@ -131,11 +131,11 @@ Feature: HipChat notifications
         Given the package version is deployed on the deploy target
         And the package version has been validated
 
-        And there is a package version with version="121"
+        And there is a package with version="121"
         And the package version is deployed on the deploy target
         And the package version has been validated
 
-        And there is a package version with version="122"
+        And there is a package with version="122"
         And the package version is deployed on the deploy target
         And the package version has been invalidated
 
@@ -151,11 +151,11 @@ Feature: HipChat notifications
         Given the package version is deployed on the deploy target
         And the package version has been validated
 
-        And there is a package version with version="121"
+        And there is a package with version="121"
         And the package version is deployed on the deploy target
         And the package version has been validated
 
-        And there is a package version with version="122"
+        And there is a package with version="122"
         And the package version is deployed on the deploy target
         And the package version has been invalidated
 
@@ -171,11 +171,11 @@ Feature: HipChat notifications
         Given the package version is deployed on the deploy target
         And the package version has been validated
 
-        And there is a package version with version="200"
+        And there is a package with version="200"
         And the package version is deployed on the deploy target
         And the package version has been validated
 
-        And there is a package version with version="201"
+        And there is a package with version="201"
         And the package version is deployed on the deploy target
         And the package version has been invalidated
 

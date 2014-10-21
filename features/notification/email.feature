@@ -9,7 +9,7 @@ Feature: email notifications
         And email notification is enabled
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are hosts:
             | name          | env   |
             | dprojhost01   | dev   |
@@ -71,7 +71,7 @@ Feature: email notifications
         Given email notification is enabled
         And the package version is deployed on the deploy targets
         And the package version has been validated
-        And there is a package version with version="124"
+        And there is a package with version="124"
         And the package version is deployed on the deploy targets
         And the package version has been validated
         When I run "deploy rollback proj --apptypes the-apptype"
@@ -82,7 +82,7 @@ Feature: email notifications
         Given email notification is enabled
         And the package version is deployed on the deploy targets
         And the package version has been validated
-        And there is a package version with version="124"
+        And there is a package with version="124"
         And the package version is deployed on the deploy targets
         And the package version has been validated
         When I run "deploy rollback proj --all-apptypes"
@@ -93,7 +93,7 @@ Feature: email notifications
         Given email notification is enabled
         And the package version is deployed on the deploy targets
         And the package version has been validated
-        And there is a package version with version="124"
+        And there is a package with version="124"
         And the package version is deployed on the deploy targets
         When I run "deploy rollback proj --hosts dprojhost01 danotherhost01"
         Then an email is sent with the relevant information for deptype="rollback",hosts="dprojhost01:danotherhost01"

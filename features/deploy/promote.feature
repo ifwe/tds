@@ -197,7 +197,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | sother02   | stage  |
         And the hosts are associated with the deploy target
         And the deploy target is a part of the project
-        And there is a package version with version="124"
+        And there is a package with version="124"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         When I run "<command> proj 124 --hosts sprojhost01 sprojhost02 sother01"

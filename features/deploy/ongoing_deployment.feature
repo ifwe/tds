@@ -8,7 +8,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are hosts:
             | name          | env   |
             | dprojhost01   | dev   |
@@ -30,7 +30,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are hosts:
             | name          | env   |
             | dprojhost01   | dev   |
@@ -52,7 +52,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are hosts:
             | name          | env   |
             | dprojhost01   | dev   |
@@ -77,11 +77,11 @@ Feature: Ongoing deployments blocking attempted new ones
             | sprojhost02   | stage   |
         And the hosts are associated with the deploy target
 
-        And there is a package version with version="122"
+        And there is a package with version="122"
         And the package version is deployed on the deploy targets in the "stage" env
         And the package version has been validated in the "staging" environment
 
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
         And the package version is deployed on the deploy targets in the "stage" env

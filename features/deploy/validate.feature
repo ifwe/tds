@@ -8,7 +8,7 @@ Feature: deploy/config validate subcommand
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is a deploy target with name="foo"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are hosts:
             | name          |
             | projhost01    |
