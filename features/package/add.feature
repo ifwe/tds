@@ -21,6 +21,11 @@ Feature: package add subcommand
         When I run "package add myapp job 123"
         Then the output is "Couldn't find app: "myapp""
 
+    Scenario: add a package with force flag should not succeed
+        Given there is an application with name="myapp"
+        When I run "package add --force myapp job 123"
+        Then the output has "Force not implemented yet"
+
     @jenkins_server
     Scenario: add a package to an application with a job name that doesn't exist
         Given there is an application with name="myapp"
@@ -41,8 +46,9 @@ Feature: package add subcommand
         And there is a jenkins job with name="job"
         And the job has a build with number="123"
         When I start to run "package add myapp job 123"
-        And I wait 10 seconds
-        And the status is changed to "completed" for package with name="myapp",version=123
+        And I wait 5 seconds
+        And the status is changed to "completed" for package with name="myapp",version="123"
+        And I wait 5 seconds
         And the command finishes
         Then the output has "Added package: "myapp@123""
 
