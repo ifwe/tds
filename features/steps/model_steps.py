@@ -259,8 +259,8 @@ model_builder(
 )
 
 model_builder(
-    'there is a package version with %s',
-    'there are package versions',
+    'there is a package with %s',
+    'there are packages',
     'tds_package_versions',
     'package version'
 )
@@ -582,9 +582,8 @@ def then_the_output_describes_the_packages(context):
         ''' % package.version)
 
 
-@then(u'the output describes a package version with {properties}')
-def then_the_output_describes_a_package_version_with_properties(context,
-                                                                properties):
+@then(u'the output describes a package with {properties}')
+def then_the_output_describes_a_package_with_properties(context, properties):
     attrs = parse_properties(properties)
     stdout = context.process.stdout
     stderr = context.process.stderr
