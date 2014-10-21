@@ -50,7 +50,7 @@ class PackageController(BaseController):
         """Check state of package in database."""
 
         return tagopsdb.deploy.package.find_package(
-            pkg_info['project'],
+            pkg_info['application'],
             pkg_info['version'],
             pkg_info['revision']
         )
@@ -151,25 +151,25 @@ class PackageController(BaseController):
 
         return True
 
-    @validate('project')
-    def add(self, application, project, **params):
+    @validate('application')
+    def add(self, application, **params):
         """Add a given version of a package for a given project"""
 
         log.debug(
             'Adding version %s of the package for project "%s" '
             'to software repository', params['version'],
-            project.name
+            application.name
         )
 
         # The real 'revision' is hardcoded to 1 for now
         # This needs to be changed at some point
-        pkg_info = {'project': project.name,
+        pkg_info = {'application': application.name,
                     'version': params['version'],
                     'revision': '1', }
 
-        pkg_loc = tagopsdb.PackageLocation.get(app_name=project.name)
+        pkg_def = tagopsdb.PackageDefinition.get(pkg_name=application.name)
         pkg = tagopsdb.Package.get(
-            name=pkg_loc.name, version=params['version']
+            name=pkg_def.name, version=params['version']
         )
 
         if pkg is not None:
@@ -181,7 +181,7 @@ class PackageController(BaseController):
         if self.check_package_state(pkg_info) is None:
             try:
                 tagopsdb.deploy.package.add_package(
-                    project.name,
+                    application.name,
                     params['version'],
                     '1',
                     params['user']
@@ -194,7 +194,9 @@ class PackageController(BaseController):
             log.debug('Committed database changes')
 
             # Get repo information for package
-            app = tagopsdb.deploy.repo.find_app_location(project.name)
+            app = tagopsdb.deploy.package.find_package_definition(
+                application.name
+            )
 
             # Revision hardcoded for now
             rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, params['version'],
@@ -227,25 +229,24 @@ class PackageController(BaseController):
         signal.alarm(0)
 
         return dict(result=dict(
-            project_name=project.name, package=package
+            project_name=application.name, package=package
         ))
 
     @validate('package')
-    @validate('project')
-    def delete(self, application, project, **params):
+    def delete(self, package, **params):
         """Delete a given version of a package for a given project"""
 
         log.debug(
-            'Deleting version %s of the package for project "%s" '
+            'Deleting version %s of the package for application "%s" '
             'from software repository', params['version'],
-            project.name
+            package.application.name
         )
 
         try:
             # The real 'revision' is hardcoded to 1 for now
             # This needs to be changed at some point
             tagopsdb.deploy.package.delete_package(
-                project.name,
+                package.application.name,
                 params['version'],
                 '1'
             )

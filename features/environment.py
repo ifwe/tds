@@ -289,7 +289,7 @@ def after_scenario(context, scenario):
     if verbose and getattr(context, 'process', None):
         print "subprocess result:"
         print "\tcmd: %r" % context.process.cmd
-        print "\tduration: %0.2fs" % context.process.duration
+        print "\tduration: %0.2fs" % getattr(context.process, 'duration', 0),
         print "\treturncode: %r" % context.process.returncode
         print "\tstdout: '''%s'''" % context.process.stdout
         print "\tstderr: '''%s'''" % context.process.stderr
