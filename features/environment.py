@@ -306,20 +306,7 @@ def after_scenario(context, scenario):
 
     if 'no_db' not in context.tags:
         if verbose:
-            for table_name, table in sorted(
-                    tagopsdb.Base.metadata.tables.items()
-            ):
-                result = tagopsdb.Session.query(table).all()
-                if len(result) == 0:
-                    continue
-
-                print table_name.ljust(80, '-')
-                for row in result:
-                    pprint.pprint(zip(
-                        (x.name for x in table.columns),
-                        row
-                    ))
-                print
+            print dump_temp_db()
 
     teardown_temp_db(context)
 
@@ -438,6 +425,26 @@ def seed_db():
     ))
 
     tagopsdb.Session.commit()
+
+def dump_temp_db():
+    import tagopsdb
+    res = []
+    for table_name, table in sorted(
+        tagopsdb.Base.metadata.tables.items()
+    ):
+        result = tagopsdb.Session.query(table).all()
+        if len(result) == 0:
+            continue
+
+        res.append(table_name.ljust(80, '-'))
+        for row in result:
+            res.append(pprint.pformat(zip(
+                (x.name for x in table.columns),
+                row
+            )))
+        res.append('')
+
+    return '\n'.join(res)
 
 
 def teardown_temp_db(context):
