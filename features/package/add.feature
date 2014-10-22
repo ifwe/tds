@@ -39,7 +39,6 @@ Feature: package add subcommand
         When I run "package add myapp job 123"
         Then the output has "Build "job@123" does not exist on"
 
-    @wip
     @jenkins_server
     Scenario: add a package to an application
         Given there is an application with name="myapp"
@@ -52,7 +51,6 @@ Feature: package add subcommand
         And the command finishes
         Then the output has "Added package version: "myapp@123""
 
-    @wip
     @jenkins_server
     Scenario: add a package to an application again
         Given there is an application with name="myapp"
@@ -62,7 +60,6 @@ Feature: package add subcommand
         When I run "package add myapp job 123"
         Then the output has "Package version "myapp@123-1" already exists"
 
-    @wip
     @jenkins_server
     Scenario: add a package to an application where actual package isn't available
         Given there is an application with name="myapp"
@@ -72,7 +69,6 @@ Feature: package add subcommand
         When I run "package add myapp job 123"
         Then the output has "Artifact not found for "job@123" on"
 
-    @wip
     @jenkins_server
     Scenario: add a package to an application where repo update daemon fails to return in time
         Given there is an application with name="myapp"
