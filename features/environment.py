@@ -321,7 +321,7 @@ def after_scenario(context, scenario):
                     ))
                 print
 
-    # teardown_temp_db(context)
+    teardown_temp_db(context)
 
     if 'email_server' in context.tags:
         teardown_email_server(context)
@@ -332,7 +332,7 @@ def after_scenario(context, scenario):
     if 'hipchat_server' in context.tags:
         teardown_hipchat_server(context)
 
-    # teardown_workspace(context)
+    teardown_workspace(context)
 
 
 def setup_temp_db(context):
