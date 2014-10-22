@@ -54,6 +54,12 @@ class Base(_Base):
             except AttributeError:
                 raise e
 
+    def __setattr__(self, key, val):
+        if hasattr(self.delegate, key):
+            setattr(self.delegate, key, val)
+        else:
+            _Base.__setattr__(self, key, val)
+
     def delete(self, commit=True, *args, **kwargs):
         """Delete action with default auto-commit."""
         self.delegate.delete(*args, **kwargs)

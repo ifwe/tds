@@ -50,6 +50,7 @@ class PackageController(BaseController):
 
         while True:
             previous_status = package.status
+            tagopsdb.Session.commit()  # WTF
             package.refresh()
 
             if package.status == 'completed':
@@ -69,8 +70,6 @@ class PackageController(BaseController):
                 log.log(5, 'State of package is now: %s', package.status)
 
             time.sleep(0.5)
-
-        return package
 
     @property
     def jenkins_url(self):
@@ -206,13 +205,11 @@ class PackageController(BaseController):
         signal.alarm(params['package_add_timeout'])
 
         log.log(5, 'Waiting for status update in database for package')
-        package = self.wait_for_state_change(package)
+        self.wait_for_state_change(package)
 
         signal.alarm(0)
 
-        return dict(result=dict(
-            package=package
-        ))
+        return dict(result=dict(package=package))
 
     @validate('package')
     def delete(self, package, **params):
