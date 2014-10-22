@@ -1045,9 +1045,10 @@ def then_the_output_describes_no_deployments(context):
 @when('the status is changed to "{status}" for package with {properties}')
 def when_package_version_state_is_changed(context, status, properties):
     attrs = parse_properties(properties)
-    pkg = tagopsdb.Package.get(**attrs)
+    print "here are all the packages:", tds.model.Package.all()
+    pkg = tds.model.Package.get(**attrs)
     pkg.status = status
-    tagopsdb.Session.add(pkg)
+    tagopsdb.Session.add(pkg.delegate)
     tagopsdb.Session.commit()
 
 

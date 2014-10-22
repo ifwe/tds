@@ -288,11 +288,21 @@ def after_scenario(context, scenario):
 
     if verbose and getattr(context, 'process', None):
         print "subprocess result:"
+
+        if getattr(context.process, 'duration', None) is None:
+            print "\twaiting to finish..."
+            # process was never finished
+            context.process = processes.wait_for_process(
+                context.process,
+                expect_return_code=None
+            )
+
         print "\tcmd: %r" % context.process.cmd
-        print "\tduration: %0.2fs" % getattr(context.process, 'duration', 0),
+        print "\tduration: %0.2fs" % context.process.duration
         print "\treturncode: %r" % context.process.returncode
         print "\tstdout: '''%s'''" % context.process.stdout
         print "\tstderr: '''%s'''" % context.process.stderr
+
 
     if 'no_db' not in context.tags:
         if verbose:
@@ -311,7 +321,7 @@ def after_scenario(context, scenario):
                     ))
                 print
 
-    teardown_temp_db(context)
+    # teardown_temp_db(context)
 
     if 'email_server' in context.tags:
         teardown_email_server(context)
@@ -322,7 +332,7 @@ def after_scenario(context, scenario):
     if 'hipchat_server' in context.tags:
         teardown_hipchat_server(context)
 
-    teardown_workspace(context)
+    # teardown_workspace(context)
 
 
 def setup_temp_db(context):
