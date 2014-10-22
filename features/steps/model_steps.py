@@ -667,7 +667,6 @@ def then_the_output_describes_the_packages_in_latex(context):
             '\end{tabular}',
         )
         for line in expected:
-            print line
             assert line in output_lines
 
 
@@ -686,7 +685,6 @@ def then_the_output_describes_the_packages_in_rst(context):
             ),
         )
         for line in expected:
-            print line
             assert line in output_lines
 
 
@@ -1045,7 +1043,6 @@ def then_the_output_describes_no_deployments(context):
 @when('the status is changed to "{status}" for package with {properties}')
 def when_package_version_state_is_changed(context, status, properties):
     attrs = parse_properties(properties)
-    print "here are all the packages:", tds.model.Package.all()
     pkg = tds.model.Package.get(**attrs)
     pkg.status = status
     tagopsdb.Session.add(pkg.delegate)
@@ -1143,8 +1140,6 @@ def given_the_applications_can_be_deployed_to_the_deploy_targets(context):
                 continue
 
             project = target.projects[0]
-
-            print project, application, target
 
             tagopsdb.Session.add(tagopsdb.ProjectPackage(
                 project_id=project.id,

@@ -51,7 +51,6 @@ class PackageController(BaseController):
         while True:
             previous_status = package.status
             package.refresh()
-            print 'all packages', tds.model.Package.all()
 
             if package.status == 'completed':
                 break
@@ -183,10 +182,6 @@ class PackageController(BaseController):
             raise Exception(
                 'Failed to add package "%s@%s"', package.name, package.version
             )
-
-        print 'created package:', package
-        package.refresh()
-        print 'refreshed package:', package
 
         # TODO: add property to Package to generate this
         rpm_name = '%s-%s-%s.%s.rpm' % (
