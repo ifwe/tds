@@ -1900,6 +1900,13 @@ class DeployController(BaseController):
         app_pkg_map, app_host_map, app_dep_map = \
             self.determine_rollbacks(params, app_ids, app_host_map,
                                      app_dep_map)
+
+        pkg = tagopsdb.Package.get(id=pkg_id)
+        # May need to change when 'package' has name removed (found
+        # via 'package_definition')
+        params['package_name'] = pkg.name
+        params['version'] = pkg.version
+
         self.send_notifications(project, params)
         self.perform_rollbacks(
             project, params, app_pkg_map, app_host_map, app_dep_map
@@ -2062,6 +2069,12 @@ class DeployController(BaseController):
             )
 
         dep_id = self.determine_redeployments(pkg_id)
+
+        deployment = tagopsdb.Deployment.find(package_id=pkg_id)[0]
+
+        params['package_name'] = deployment.package.name
+        params['version'] = deployment.package.version
+
         self.send_notifications(project, params)
         self.perform_redeployments(
             project, params, dep_id, app_host_map, app_dep_map
