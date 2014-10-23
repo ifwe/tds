@@ -34,7 +34,6 @@ class TestPackageAdd(unittest2.TestCase):
 
         package_methods = [
             ('_queue_rpm', True),
-            ('check_package_state', 'Not_None'),
             ('wait_for_state_change', None),
         ]
 
