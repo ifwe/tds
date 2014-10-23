@@ -75,7 +75,7 @@ Feature: HipChat notifications
         And hipchat notifications are enabled
         When I run "deploy redeploy proj --all-apptypes"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "redeploy","of+version","+on+app+tier","the-apptype","another-apptype","in+stage"
+        And a hipchat notification message contains "redeploy","of+version+123+of+proj-name+on+app+tier","the-apptype","another-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
@@ -89,7 +89,7 @@ Feature: HipChat notifications
         And hipchat notifications are enabled
         When I run "deploy redeploy proj --apptypes another-apptype"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "redeploy","of+version","+on+app+tier","another-apptype","in+stage"
+        And a hipchat notification message contains "redeploy","of+version+123+of+proj-name+on+app+tier","another-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
@@ -103,7 +103,7 @@ Feature: HipChat notifications
         And hipchat notifications are enabled
         When I run "deploy redeploy proj --hosts anotherhost01"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "redeploy","of+version","on+hosts+anotherhost01","in+stage"
+        And a hipchat notification message contains "redeploy","of+version+123+of+proj-name+on+hosts+anotherhost01","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
@@ -123,7 +123,7 @@ Feature: HipChat notifications
 
         When I run "deploy rollback proj --apptype the-apptype"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "rollback","of+version","app+tier","the-apptype","in+stage"
+        And a hipchat notification message contains "rollback","of+version+121+of+proj-name+on+app+tier","the-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
@@ -143,7 +143,7 @@ Feature: HipChat notifications
 
         When I run "deploy rollback proj --all-apptypes"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "rollback","of+version","app+tier","the-apptype","in+stage"
+        And a hipchat notification message contains "rollback","of+version+121+of+proj-name+on+app+tier","the-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
@@ -163,7 +163,7 @@ Feature: HipChat notifications
 
         When I run "deploy rollback proj --hosts sprojhost01"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "rollback","of+version","sprojhost01","in+stage"
+        And a hipchat notification message contains "rollback","of+version+121+of+proj-name+on+hosts","sprojhost01","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
