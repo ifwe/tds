@@ -424,6 +424,15 @@ def seed_db():
         ganglia=ganglia,
     ))
 
+    pkg_name = tagopsdb.PackageDefinition.dummy
+    tagopsdb.PackageDefinition.update_or_create(dict(
+        deploy_type='deploy',
+        validation_type='matching',
+        pkg_name=pkg_name,
+        path='/some-path',
+        build_host='fakeci.example.org',
+    ))
+
     tagopsdb.Session.commit()
 
 def dump_temp_db():
