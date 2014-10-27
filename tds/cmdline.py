@@ -131,11 +131,16 @@ CONFIG_DATA = odict([
     ('add-apptype', odict([
         ('help', 'Add app type to a config project'),
         ('subargs', odict([
-            (('apptype',), odict([
-                ('help', 'App type to add to config project'),
-            ])),
             (('project',), odict([
                 ('help', 'Name of config project in system'),
+            ])),
+            (('application',), odict([
+                ('help', 'Name of application'),
+            ])),
+            (('apptypes',), odict([
+                ('help', 'App type to add to config project'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '+'),
             ])),
         ])),
     ])),
@@ -337,11 +342,16 @@ DEPLOY_DATA = odict([
     ('add-apptype', odict([
         ('help', 'Add app type to a project'),
         ('subargs', odict([
-            (('apptype',), odict([
-                ('help', 'App type to add to project'),
-            ])),
             (('project',), odict([
                 ('help', 'Name of project in system'),
+            ])),
+            (('application',), odict([
+                ('help', 'Name of application'),
+            ])),
+            (('apptypes',), odict([
+                ('help', 'App type to add to project'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '+'),
             ])),
         ])),
     ])),

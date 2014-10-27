@@ -1222,27 +1222,29 @@ class DeployController(BaseController):
 
     @input_validate('application')
     @input_validate('project')
-    def add_apptype(self, application, project, apptype, **params):
-        """Add a specific application type to the given project"""
+    def add_apptype(self, project, application, apptypes, **params):
+        """Add a specific application type (or types) to the given project
+           and application pair
+        """
 
-        log.debug('Adding application type for project')
+        log.debug('Adding application type for a given project/application '
+                  'pair')
 
-        try:
-            tagopsdb.deploy.repo.add_app_packages_mapping(
-                project.delegate,
-                application,
-                [apptype]
-            )
-        except tagopsdb.exceptions.RepoException:
-            # TODO: Change this to a custom exception
-            # Changing this to a custom exception causes failures in feature
-            # and unit tests.  test_missing_apptypes in
-            # tests/tds/commands/deploy_test throws an error at the last line.
-            # It says 'module' has no attribute 'exception' at that line.
-            raise Exception(
-                "Deploy target does not exist: %s", apptype
-            )
+        # Validate apptypes (targets) first and get target objects
+        targets = []
 
+        for apptype in apptypes:
+            target = tds.model.AppTarget.get(name=apptype)
+            if target is None:
+                raise tds.exceptions.NotFoundError(
+                    'Deploy target does not exist: "%s"', apptype
+                )
+            else:
+                targets.append(target)
+
+        tagopsdb.deploy.repo.add_project_package_mapping(
+            project, application, targets
+        )
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
