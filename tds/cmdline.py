@@ -54,6 +54,35 @@ REPOSITORY_DATA = odict([
     ])),
 ])
 
+PROJECT_DATA = odict([
+    ('add', odict([
+        ('help', 'Add new project to deployment system'),
+        ('subargs', odict([
+            (('project',), odict([
+                ('help', 'Name of project'),
+            ])),
+        ])),
+    ])),
+    ('delete', odict([
+        ('help', 'Remove given project from deployment system'),
+        ('subargs', odict([
+            (('project',), odict([
+                ('help', 'Name of project'),
+            ])),
+        ])),
+    ])),
+    ('list', odict([
+        ('help', 'List some/all current projects in repository'),
+        ('subargs', odict([
+            (('--projects',), odict([
+                ('help', 'Specific projects to list'),
+                ('metavar', 'PROJECT'),
+                ('nargs', '*'),
+            ])),
+        ])),
+    ])),
+])
+
 PACKAGE_DATA = odict([
     ('add', odict([
         ('help', 'Add new package to deployment system'),
@@ -513,6 +542,7 @@ DEPLOY_DATA = odict([
 
 PARSER_DATA = odict([
     ('repository', REPOSITORY_DATA),
+    ('project', PROJECT_DATA),
     ('package', PACKAGE_DATA),
     ('config', CONFIG_DATA),
     ('deploy', DEPLOY_DATA),

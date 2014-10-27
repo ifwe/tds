@@ -326,7 +326,7 @@ class CLI(Base):
         elif error is not None:
             print format_exception(error)
 
-    def generate_project_create_result(self, result=None, error=None, **_kwds):
+    def generate_project_add_result(self, result=None, error=None, **_kwds):
         """Render view for a created project."""
         if result:
             if self.output_format == "blocks":
