@@ -22,7 +22,6 @@ Feature: project add project
         And the output has "Created proj:"
         And the output describes a project with name="proj"
 
-    @wip
     Scenario: add project that already exists
         Given there is a project with name="proj"
         When I run "project add proj"
