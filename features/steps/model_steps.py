@@ -75,6 +75,7 @@ def host_factory(context, name, env=None, **_kwargs):
 
     return host
 
+
 def package_version_factory(context, **kwargs):
     pkg_def = None
 
@@ -104,6 +105,7 @@ def package_version_factory(context, **kwargs):
     tagopsdb.Session.commit()
 
     return package
+
 
 def application_factory(context, **kwargs):
     fields = dict(
@@ -229,6 +231,7 @@ model_builder(
     'tds_projects',
     'project',
 )
+
 
 model_builder(
     'there is a host with %s',
