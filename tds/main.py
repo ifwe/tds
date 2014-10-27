@@ -39,9 +39,6 @@ class TDS(object):
         ('config', 'validate'): 'deploy_validate',
         ('config', 'repush'): 'deploy_promote',
         ('config', 'revert'): 'deploy_rollback',
-        ('repository', 'add'): 'project_create',
-        ('repository', 'delete'): 'project_delete',
-        ('repository', 'list'): 'project_list',
     }
 
     def __init__(self, params):
