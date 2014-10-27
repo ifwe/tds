@@ -125,38 +125,24 @@ def application_factory(context, **kwargs):
 def project_factory(context, **kwargs):
     project = tds.model.Project.create(**kwargs)
 
-    pkg_loc = tagopsdb.PackageLocation(
-        app_name=project.name,
-        pkg_name=project.name + '-name',
-        pkg_type='jenkins',  # gets mapped into Package.builder
-        path=project.name + '-path',
-        build_host='',
-        environment=False,
-    )
-    tagopsdb.Session.add(pkg_loc)
-
-    context.execute_steps('''
-        Given there is an application with name="%s",path="%s"
-    ''' % (pkg_loc.pkg_name, pkg_loc.path))
-
-    application = context.tds_applications[-1]
-
-    tagopsdb.Session.add(application)
-    tagopsdb.Session.flush()   # force generation of pkg_def.id
-
-    pkg_name = tagopsdb.PackageName(
-        name=application.pkg_name,
-        pkg_def_id=application.id,
-    )
-    tagopsdb.Session.add(pkg_name)
-
-    target = tds.model.AppTarget.get(name=tds.model.AppTarget.dummy)
-
-    tagopsdb.Session.add(tagopsdb.ProjectPackage(
-        project_id=project.id,
-        pkg_def_id=application.id,
-        app_id=target.id
-    ))
+    # NOTE: the commented out code below will need to be handled
+    # in other factories
+    #
+    #application = tds.model.Application.get(name=tds.model.Application.dummy)
+    #
+    #pkg_name = tagopsdb.PackageName(
+    #    name=application.pkg_name,
+    #    pkg_def_id=application.id,
+    #)
+    #tagopsdb.Session.add(pkg_name)
+    #
+    #target = tds.model.AppTarget.get(name=tds.model.AppTarget.dummy)
+    #
+    #tagopsdb.Session.add(tagopsdb.ProjectPackage(
+    #    project_id=project.id,
+    #    pkg_def_id=application.id,
+    #    app_id=target.id
+    #))
 
     tagopsdb.Session.commit()
     return project
@@ -280,9 +266,26 @@ model_builder(
 )
 
 
+@then(u'there is a project with {properties}')
+def then_there_is_a_project(context, properties):
+    attrs = parse_properties(properties)
+    proj = tds.model.Project.get(**attrs)
+
+    assert proj is not None
+
+
 def add_target_to_project(project, target):
     application = tds.model.Application.get(name=project.name + '-name')
 
+    tagopsdb.Session.add(tagopsdb.ProjectPackage(
+        project_id=project.id,
+        pkg_def_id=application.id,
+        app_id=target.id
+    ))
+    tagopsdb.Session.commit()
+
+
+def add_target_to_proj_app(project, application, target):
     tagopsdb.Session.add(tagopsdb.ProjectPackage(
         project_id=project.id,
         pkg_def_id=application.id,
@@ -296,10 +299,29 @@ def given_the_deploy_target_is_a_part_of_the_project(context):
     add_target_to_project(context.tds_projects[-1], context.tds_targets[-1])
 
 
+@given(u'the deploy target is a part of the project-application pair')
+def given_the_deploy_target_is_a_part_of_the_proj_app_pair(context):
+    add_target_to_proj_app(
+        context.tds_projects[-1],
+        context.tds_applications[-1],
+        context.tds_targets[-1]
+    )
+
+
 @given(u'the deploy targets are a part of the project')
 def given_the_deploy_targets_are_a_part_of_the_project(context):
     for target in context.tds_targets:
         add_target_to_project(context.tds_projects[-1], target)
+
+
+@given(u'the deploy targets are a part of the project-application pair')
+def given_the_deploy_targets_are_a_part_of_the_proj_app_pair(context):
+    for target in context.tds_targets:
+        add_target_to_proj_app(
+            context.tds_projects[-1],
+            context.tds_applications[-1],
+            target
+        )
 
 
 def deploy_package_to_target(package, target, env, status='complete'):
@@ -810,7 +832,8 @@ def then_the_output_describes_a_missing_project_with_properties(context,
 
     stdout = context.process.stdout
     stderr = context.process.stderr
-    assert ('Project "%(name)s" does not exist' % attrs) \
+    names = attrs['name'] if isinstance(attrs['name'], list) else [attrs['name']]
+    assert 'Project(s) do not exist: %s' % ', '.join(names) \
         in stdout.splitlines(), (stdout, stderr)
 
 

@@ -15,6 +15,10 @@ Feature: Help switches
             | repository list       | -h        |
             | repository add        | -h        |
             | repository delete     | -h        |
+            | project               | -h        |
+            | project add           | -h        |
+            | project delete        | -h        |
+            | project list          | -h        |
             | package               | -h        |
             | package add           | -h        |
             | package delete        | -h        |
@@ -44,6 +48,10 @@ Feature: Help switches
             | repository list       | --help    |
             | repository add        | --help    |
             | repository delete     | --help    |
+            | project               | --help    |
+            | project add           | --help    |
+            | project delete        | --help    |
+            | project list          | --help    |
             | package               | --help    |
             | package add           | --help    |
             | package delete        | --help    |
