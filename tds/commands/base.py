@@ -151,28 +151,21 @@ class BaseController(object):
 
         project = None
         project_objects = []
+        missing_projects = []
 
         for project_name in projects:
             project = tds.model.Project.get(name=project_name)
 
             if project is None:
-                raise tds.exceptions.NotFoundError(
-                    'Project "%s" does not exist', project_name
-                )
+                missing_projects.append(project_name)
+            else:
+                project_objects.append(project)
 
-            if len(project.applications) == 0:
-                raise Exception(
-                    'Project "%s" has no applications', project_name,
-                )
-
-            if len(project.applications) > 1:
-                raise Exception(
-                    'Project "%s" has too many applications: %s',
-                    project_name,
-                    sorted(', '.join(x.name for x in project.applications))
-                )
-
-            project_objects.append(project)
+        if len(missing_projects):
+            raise tds.exceptions.NotFoundError(
+                'Project(s) do not exist: %s',
+                ', '.join(missing_projects)
+            )
 
         return dict(
             projects=project_objects,

@@ -9,11 +9,16 @@ log = logging.getLogger('tds')
 
 
 class ProjectController(BaseController):
-
     """Commands to manage TDS projects."""
 
+    access_levels = dict(
+        list='environment',
+        add='admin',
+        delete='admin',
+    )
+
     @staticmethod
-    def create(project, **_kwds):
+    def add(project, **_kwds):
         """Add a project."""
         project_name = project
         project = Project.get(name=project_name)
