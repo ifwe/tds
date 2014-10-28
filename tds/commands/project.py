@@ -31,7 +31,7 @@ class ProjectController(BaseController):
         return dict(result=Project.create(name=project_name))
 
     @validate('project')
-    def delete(self, application, project, **_kwds):
+    def delete(self, project, **_kwds):
         """Remove a given project."""
         log.debug('Removing project %r', project.name)
         project.delete()
