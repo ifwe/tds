@@ -3,6 +3,7 @@
 import os.path
 import yaml
 import json
+from time import mktime
 
 from behave import given, then, when
 
@@ -672,11 +673,38 @@ def then_the_output_describes_a_missing_application_with_properties(
         in stdout.splitlines(), (stdout, stderr)
 
 
-@then(u'the output describes an application with name="{name}" in format="{format}"')
+@then(u'the output describes an application in {output_format} with name="{name}"')
 def then_the_output_describes_an_application_with_name_in_format(
-        context, name, format
+        context, output_format, name
 ):
-    pass
+    lines = context.process.stdout.splitlines()
+    if output_format == 'json':
+        try:
+            actual = json.loads(context.process.stdout)
+        except ValueError as exc:
+            exc.args += (context.process.stdout, context.process.stderr)
+            raise exc
+
+        expected = tds.model.Application.get(name=name).to_dict()
+        for k in expected:
+            print "%s, %s" % (expected[k], actual[-1][k])
+            if k == 'created':
+                expected[k] = int(mktime(expected[k].timetuple()))
+            assert expected[k] == actual[-1][k]
+    elif output_format in ('table', 'a table'):
+        assert any('| Application' in line for line in lines)
+        assert any('|---' in line for line in lines)
+        assert any('---|' in line for line in lines)
+        assert any('| {name} '.format(name=name) in line for line in lines)
+    elif output_format == 'rst':
+        expected = "=============\nApplication\n=============\napp1\n=============\n"
+        assert context.process.stdout == expected
+    elif output_format == 'latex':
+        expected = "\\begin{tabular}{l}\n\\hline\n Application   \\\\\n\\hline\n app1          \\\\\n\hline\n\\end{tabular}\n"
+        assert context.process.stdout == expected
+    else:
+        context.stdout += "\n\nUnrecognized output format: %s" % output_format
+        assert False
 
 
 @then(u'the output describes the packages')

@@ -45,10 +45,11 @@ Feature: application list [app [app [...]]]
 
     Scenario Outline: with various output format
         When I run "--output-format <format> application list app1"
-        Then the output describes a project with name="app1" in format="<format>"
+        Then the output describes an application in <format> with name="app1"
 
         Examples:
             | format  |
             | table   |
             | json    |
             | rst     |
+            | latex   |
