@@ -194,7 +194,9 @@ class BaseController(object):
 
         if len(missing_applications):
             raise tds.exceptions.NotFoundError(
-                'Application(s) do not exist: %s',
+                'Application%s do%s not exist: %s',
+                '' if len(missing_applications) == 1 else 's',
+                'es' if len(missing_applications) == 1 else '',
                 ', '.join(missing_applications)
             )
 

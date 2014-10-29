@@ -19,7 +19,7 @@ Feature: package add subcommand
 
     Scenario: add a package to an application that doesn't exist
         When I run "package add myapp job 123"
-        Then the output is "Couldn't find app: "myapp""
+        Then the output is "Application does not exist: myapp"
 
     Scenario: add a package with force flag should not succeed
         Given there is an application with name="myapp"
