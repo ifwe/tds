@@ -286,9 +286,7 @@ def then_there_is_a_project(context, properties):
     assert proj is not None
 
 
-def add_target_to_project(project, target):
-    application = tds.model.Application.get(name=project.name + '-name')
-
+def add_target_to_project_and_app(project, target, application):
     tagopsdb.Session.add(tagopsdb.ProjectPackage(
         project_id=project.id,
         pkg_def_id=application.id,
@@ -308,7 +306,14 @@ def add_target_to_proj_app(project, application, target):
 
 @given(u'the deploy target is a part of the project')
 def given_the_deploy_target_is_a_part_of_the_project(context):
-    add_target_to_project(context.tds_projects[-1], context.tds_targets[-1])
+    assert len(context.tds_projects) > 0
+    assert len(context.tds_targets) > 0
+    assert len(context.tds_applications) > 0
+    add_target_to_project_and_app(
+        context.tds_projects[-1],
+        context.tds_targets[-1],
+        context.tds_applications[-1],
+    )
 
 
 @given(u'the deploy target is a part of the project-application pair')
@@ -322,8 +327,15 @@ def given_the_deploy_target_is_a_part_of_the_proj_app_pair(context):
 
 @given(u'the deploy targets are a part of the project')
 def given_the_deploy_targets_are_a_part_of_the_project(context):
+    assert len(context.tds_projects) > 0
+    assert len(context.tds_applications) > 0
+    assert len(context.tds_targets) > 0
     for target in context.tds_targets:
-        add_target_to_project(context.tds_projects[-1], target)
+        add_target_to_project(
+            context.tds_projects[-1],
+            target,
+            context.tds_applications[-1]
+        )
 
 
 @given(u'the deploy targets are a part of the project-application pair')

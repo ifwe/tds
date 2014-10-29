@@ -6,29 +6,25 @@ Feature: Debug switches
     Scenario Outline: debug package list
         Given I have "dev" permissions
         And I am in the "dev" environment
-        And there are projects:
+        And there are applications:
             | name |
             | bar  |
             | foo  |
-        And there are packages:
-            | version   |
-            | 1         |
-            | 2         |
-            | 3         |
-        When I run "<switch> <command>"
+        When I run "<switch> package list"
         Then the output has "DEBUG"
 
     Examples:
-        | switch | command       |
-        | -v     | package list  |
-        | -vv    | package list  |
-        | -vvv   | package list  |
+        | switch |
+        | -v     |
+        | -vv    |
+        | -vvv   |
 
     Scenario Outline: debug deploy promote
         Given I have "stage" permissions
         And I am in the "stage" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
+        And there is an application with name="app1"
         And there is a package with version="123"
         And the package version is deployed on the deploy targets in the "dev" env
         And the package version has been validated in the "development" environment
@@ -40,26 +36,27 @@ Feature: Debug switches
             | sprojhost02   | stage |
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
-        When I run "<switch> <command> proj 123 <targets>"
+        When I run "<switch> deploy promote proj 123 <targets>"
         Then the output has "DEBUG"
 
         Examples:
-            | switch | command          | targets                           |
-            | -v     | deploy promote   | --hosts sprojhost01 sprojhost02   |
-            | -vv    | deploy promote   | --hosts sprojhost01 sprojhost02   |
-            | -vvv   | deploy promote   | --hosts sprojhost01 sprojhost02   |
-            | -v     | deploy promote   | --all-apptypes                    |
-            | -vv    | deploy promote   | --all-apptypes                    |
-            | -vvv   | deploy promote   | --all-apptypes                    |
-            | -v     | deploy promote   | --apptypes the-apptype            |
-            | -vv    | deploy promote   | --apptypes the-apptype            |
-            | -vvv   | deploy promote   | --apptypes the-apptype            |
+            | switch | targets                           |
+            | -v     | --hosts sprojhost01 sprojhost02   |
+            | -vv    | --hosts sprojhost01 sprojhost02   |
+            | -vvv   | --hosts sprojhost01 sprojhost02   |
+            | -v     | --all-apptypes                    |
+            | -vv    | --all-apptypes                    |
+            | -vvv   | --all-apptypes                    |
+            | -v     | --apptypes the-apptype            |
+            | -vv    | --apptypes the-apptype            |
+            | -vvv   | --apptypes the-apptype            |
 
     Scenario Outline: debug deploy validate
         Given I have "dev" permissions
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is a deploy target with name="foo"
+        And there is an application with name="app1"
         And there is a package with version="123"
         And there are hosts:
             | name          |
@@ -68,29 +65,30 @@ Feature: Debug switches
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
         And the package version is deployed on the deploy target
-        When I run "<switch> <command> proj 123 --apptype foo"
+        When I run "<switch> deploy validate proj 123 --apptype foo"
         Then the output has "DEBUG"
 
         Examples:
-            | switch | command          |
-            | -v     | deploy validate  |
-            | -vv    | deploy validate  |
-            | -vvv   | deploy validate  |
+            | switch |
+            | -v     |
+            | -vv    |
+            | -vvv   |
 
     Scenario Outline: debug deploy invalidate
         Given I have "dev" permissions
         And I am in the "dev" environment
         Given there is a project with name="proj"
+        And there is an application with name="app1"
         And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
         And the package version is deployed on the deploy targets
         And the package version has been validated
-        When I run "<switch> <command> proj 123 --apptype foo"
+        When I run "<switch> deploy invalidate proj 123 --apptype foo"
         Then the output has "DEBUG"
 
         Examples:
-            | switch | command           |
-            | -v     | deploy invalidate |
-            | -vv    | deploy invalidate |
-            | -vvv   | deploy invalidate |
+            | switch |
+            | -v     |
+            | -vv    |
+            | -vvv   |
