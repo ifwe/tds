@@ -681,8 +681,11 @@ def then_the_output_describes_a_missing_application_with_properties(
     stdout = context.process.stdout
     stderr = context.process.stderr
     names = attrs['name'] if isinstance(attrs['name'], list) else [attrs['name']]
-    assert 'Application(s) do not exist: %s' % ', '.join(names) \
-        in stdout.splitlines(), (stdout, stderr)
+    assert 'Application%s do%s not exist: %s' % (
+        '' if len(names) == 1 else 's',
+        'es' if len(names) == 1 else '',
+        ', '.join(names)
+    ) in stdout.splitlines(), (stdout, stderr)
 
 
 @then(u'the output describes an application in {output_format} with name="{name}"')
