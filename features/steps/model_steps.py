@@ -81,7 +81,7 @@ def package_version_factory(context, **kwargs):
 
     if 'name' in kwargs:
         application = tds.model.Application.get(name=kwargs['name'])
-    elif context.tds_applications:
+    elif hasattr(context, 'tds_applications'):
         application = context.tds_applications[-1]
     else:
         if 'project' in kwargs:
@@ -89,7 +89,13 @@ def package_version_factory(context, **kwargs):
         else:
             project = context.tds_projects[-1]
 
-        application = project.applications[0]
+        if len(project.applications) > 0:
+            application = project.applications[0]
+        else:
+            # TODO: Make this work, the application_factory will barf a
+            # "Column 'pkg_name' cannot be null" error when trying to insert
+            # into table package_definitions.
+            application = application_factory(context)
 
     package = tagopsdb.Package(
         pkg_def_id=application.id,
@@ -108,6 +114,8 @@ def package_version_factory(context, **kwargs):
 
 
 def application_factory(context, **kwargs):
+    # TODO: This will fail if there is no pkg_name entry in kwargs,
+    # since package_definitions requires it to be non-Null.
     fields = dict(
         deploy_type='rpm',
         validation_type='matching',
