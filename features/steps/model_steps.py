@@ -109,9 +109,9 @@ def package_version_factory(context, **kwargs):
 
 def application_factory(context, **kwargs):
     fields = dict(
-        deploy_type='deploy',
+        deploy_type='rpm',
         validation_type='matching',
-        path='/some-path',
+        path='some-job',
         arch='noarch',
         build_type='jenkins',
         build_host='fakeci.example.org',
@@ -597,6 +597,78 @@ def then_the_output_describes_a_project_with_name_in_rst(context, name):
     output_lines = context.process.stdout.splitlines()
     for line in expected:
         assert line in output_lines
+
+
+@then(u'the output describes the applications')
+def then_the_output_describes_the_applications(context):
+    for application in context.tds_applications:
+        context.execute_steps('''
+            Then the output describes an application with name="%s",deploy_type="%s",arch="%s",build_type="%s",build_host="%s",path="%s"
+        ''' % (application.name, application.deploy_type, application.arch,
+               application.build_type, application.build_host,
+               application.path))
+
+
+@then(u'the output describes an application with {properties}')
+def then_the_output_describes_an_application_with_properties(context, properties):
+    attrs = parse_properties(properties)
+    stdout = context.process.stdout
+    stderr = context.process.stderr
+
+    lines = stdout.splitlines()
+    processed_attrs = set()
+    try:
+        if 'name' in attrs:
+            assert ('Application: %(name)s' % attrs) in lines
+            processed_attrs.add('name')
+
+        if 'deploy_type' in attrs:
+            assert ('Deploy type: %(deploy_type)s' % attrs) in lines
+            processed_attrs.add('deploy_type')
+
+        if 'arch' in attrs:
+            assert ('Architecture: %(arch)s' % attrs) in lines
+            processed_attrs.add('arch')
+
+        if 'build_type' in attrs:
+            assert ('Build system type: %(build_type)s' % attrs) in lines
+            processed_attrs.add('build_type')
+
+        if 'build_host' in attrs:
+            assert ('Build host: %(build_host)s' % attrs) in lines
+            processed_attrs.add('build_host')
+
+        if 'path' in attrs:
+            assert ('Path: %(path)s' % attrs) in lines
+            processed_attrs.add('path')
+
+        unprocessed_attrs = set(attrs) - processed_attrs
+        if unprocessed_attrs:
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
+
+    except AssertionError as exc:
+        exc.args += (stdout, stderr),
+        raise exc
+
+
+@then(u'the output describes a missing application with {properties}')
+def then_the_output_describes_a_missing_application_with_properties(
+        context, properties
+):
+    attrs = parse_properties(properties)
+
+    stdout = context.process.stdout
+    stderr = context.process.stderr
+    names = attrs['name'] if isinstance(attrs['name'], list) else [attrs['name']]
+    assert 'Application(s) do not exist: %s' % ', '.join(names) \
+        in stdout.splitlines(), (stdout, stderr)
+
+
+@then(u'the output describes an application with name="{name}" in format="{format}"')
+def then_the_output_describes_an_application_with_name_in_format(
+        context, name, format
+):
+    pass
 
 
 @then(u'the output describes the packages')
