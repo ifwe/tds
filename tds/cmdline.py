@@ -72,11 +72,43 @@ PROJECT_DATA = odict([
         ])),
     ])),
     ('list', odict([
-        ('help', 'List some/all current projects in repository'),
+        ('help', 'List some/all current projects in deployment system'),
         ('subargs', odict([
             (('--projects',), odict([
                 ('help', 'Specific projects to list'),
                 ('metavar', 'PROJECT'),
+                ('nargs', '*'),
+            ])),
+        ])),
+    ])),
+])
+
+APPLICATION_DATA = odict([
+    ('add', odict([
+        ('help', 'Add new application to deployment system'),
+        ('subargs', odict([
+            (('application',), odict([
+                ('help', 'Name of application'),
+            ])),
+            (('job_name',), odict([
+                ('help', 'Jenkins job name'),
+            ])),
+        ])),
+    ])),
+    ('delete', odict([
+        ('help', 'Remove given application from deployment system'),
+        ('subargs', odict([
+            (('application',), odict([
+                ('help', 'Name of application'),
+            ])),
+        ])),
+    ])),
+    ('list', odict([
+        ('help', 'List some/all current applications in deployment system'),
+        ('subargs', odict([
+            (('applications',), odict([
+                ('help', 'Specific applications to list'),
+                ('metavar', 'APPLICATION'),
                 ('nargs', '*'),
             ])),
         ])),
@@ -553,6 +585,7 @@ DEPLOY_DATA = odict([
 PARSER_DATA = odict([
     ('repository', REPOSITORY_DATA),
     ('project', PROJECT_DATA),
+    ('application', APPLICATION_DATA),
     ('package', PACKAGE_DATA),
     ('config', CONFIG_DATA),
     ('deploy', DEPLOY_DATA),

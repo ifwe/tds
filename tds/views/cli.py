@@ -45,6 +45,14 @@ APP_TEMPLATE = (
     'Build host: {self.build_host}\n'
 )
 TARGET_TEMPLATE = ('App types: {s}\n')
+APPLICATION_TEMPLATE = (
+    'Application: {self.pkg_name}\n'
+    'Deploy type: {self.deploy_type}\n'
+    'Architecture: {self.arch}\n'
+    'Build system type: {self.build_type}\n'
+    'Build host: {self.build_host}\n'
+    'Path: {self.path}\n'
+)
 PKG_DEPLOY_HEADER_TEMPLATE = (
     'Deployments of package {pkg_dep[pkg_def].name} '
     'to the following tiers:\n'
@@ -196,6 +204,37 @@ def format_project(proj_result, output_format="blocks"):
                             tablefmt=TABULATE_FORMAT[output_format])
 
 
+def format_application(app_result, output_format="blocks"):
+    """Format an application object or iterable of applications in
+       given output format
+    """
+    if output_format == "json":
+        return json.dumps(app_result, cls=TDSEncoder)
+    try:
+        iterable = iter(app_result)
+    except TypeError:
+        iterable = False
+    if not iterable and isinstance(app_result, Exception):
+        return format_exception(app_result)
+    if output_format == "blocks":
+        if iterable:
+            return reduce(lambda x, y: x + '\n\n' + y,
+                          (format_application(p, "blocks")
+                           if not isinstance(p, Exception)
+                           else format_exception(p) for p in app_result), "")
+        else:
+            return APPLICATION_TEMPLATE.format(self=app_result)
+    else:
+        if iterable:
+            return tabulate(tuple((p.name,) for p in app_result
+                                  if not isinstance(p, Exception)),
+                            headers=("Application",),
+                            tablefmt=TABULATE_FORMAT[output_format])
+        else:
+            return tabulate(((app_result.name,),), headers=("Application",),
+                            tablefmt=TABULATE_FORMAT[output_format])
+
+
 def format_package(pkg_result, output_format="blocks"):
     """Format a package object or iterable of packages in output_format."""
     if output_format == "json":
@@ -334,6 +373,15 @@ class CLI(Base):
             print format_project(result, self.output_format)
         elif error:
             print format_exception(error)
+
+    def generate_application_list_result(
+            self, result=None, error=None, **_kwds
+    ):
+        """Render view for a list of applications."""
+        if result is None and error is not None:
+            result = [error]
+
+        print format_application(result, self.output_format)
 
     @staticmethod
     def generate_deploy_show_result(result=None, error=None, **_kwds):

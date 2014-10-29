@@ -182,14 +182,21 @@ class BaseController(object):
 
         application = None
         application_objects = []
+        missing_applications = []
 
         for app in applications:
             application = tds.model.Application.get(name=app)
 
             if application is None:
-                raise Exception('Couldn\'t find app: "%s"', app)
+                missing_applications.append(app)
+            else:
+                application_objects.append(application)
 
-            application_objects.append(application)
+        if len(missing_applications):
+            raise tds.exceptions.NotFoundError(
+                'Application(s) do not exist: %s',
+                ', '.join(missing_applications)
+            )
 
         return dict(
             application=application,
