@@ -60,7 +60,7 @@ class InvalidOperationError(TDSException):
 class NotFoundError(TDSException):
     """Exception for when an item is not found or does not exist."""
 
-    def __init__(self, object_type, objects):
+    def __init__(self, object_type, objects, sing_end='', plu_end='s'):
         """Create message given object_type and objects."""
         try:
             objects = list(objects)
@@ -68,7 +68,7 @@ class NotFoundError(TDSException):
             objects = [objects]
         message = "{object_type}{p1} do{p2} not exist: {objects}".format(
             object_type=object_type,
-            p1='' if len(objects) == 1 else 's',
+            p1=sing_end if len(objects) == 1 else plu_end,
             p2='es' if len(objects) == 1 else '',
             objects=', '.join(objects)
         )
