@@ -37,7 +37,7 @@ Feature: deploy/config validate subcommand
 
     Scenario Outline: validate a package from a project that doesn't exist
         When I run "<command> validate doesnt-exist 123"
-        Then the output is "Project "doesnt-exist" does not exist"
+        Then the output is "Project does not exist: doesnt-exist"
 
         Examples:
             | command |

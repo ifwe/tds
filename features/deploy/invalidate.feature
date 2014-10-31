@@ -29,7 +29,7 @@ Feature: deploy/config invalidate subcommand
 
     Scenario Outline: invalidate a package from a project that does not exist
         When I run "<command> invalidate proj 567 --all-apptypes"
-        Then the output is "Project "proj" does not exist"
+        Then the output is "Project does not exist: proj"
 
         Examples:
             | command |

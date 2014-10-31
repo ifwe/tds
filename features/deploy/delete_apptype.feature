@@ -30,7 +30,7 @@ Feature: deploy/config delete-apptype subcommand
 
     Scenario Outline: delete a target that doesn't exist from a project that doesn't exist
         When I run "<command> delete-apptype targ proj"
-        Then the output is "Project "proj" does not exist"
+        Then the output is "Project does not exist: proj"
 
         Examples:
             | command |
@@ -40,7 +40,7 @@ Feature: deploy/config delete-apptype subcommand
     Scenario Outline: delete a target from a project that doesn't exist
         Given there is a deploy target with name="targ"
         When I run "<command> delete-apptype targ proj"
-        Then the output is "Project "proj" does not exist"
+        Then the output is "Project does not exist: proj"
 
         Examples:
             | command |
