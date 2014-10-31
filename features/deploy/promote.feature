@@ -22,7 +22,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
 
     Scenario Outline: promote project that doesn't exist
         When I run "<command> doesnt-exist 456"
-        Then the output is "Project "doesnt-exist" does not exist"
+        Then the output is "Project does not exist: doesnt-exist"
 
         Examples:
             | command           |
@@ -40,7 +40,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
 
     Scenario Outline: promote version to host that doesn't exist
         When I run "<command> proj 123 --hosts badhost01"
-        Then the output has "These hosts do not exist: badhost01"
+        Then the output has "Host does not exist: badhost01"
         Examples:
             | command           |
             | config push       |

@@ -28,7 +28,7 @@ Feature: deploy restart subcommand
 
     Scenario: restart a project that doesn't exist
         When I run "deploy restart badproj"
-        Then the output is "Project "badproj" does not exist"
+        Then the output is "Project does not exist: badproj"
 
     Scenario: restart a project for an apptype that doesn't exist
         When I run "deploy restart proj --apptypes badapp"

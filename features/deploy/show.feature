@@ -36,7 +36,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: with a project that doesn't exist
         When I run "<command> show badproj"
-        Then the output is "Project "badproj" does not exist"
+        Then the output is "Project does not exist: badproj"
 
         Examples:
             | command |
