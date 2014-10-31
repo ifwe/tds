@@ -22,10 +22,14 @@ def given_i_am_in_environment(context, env):
     context.tds_environment = environment.decode('utf8')
 
     if 'no_db' not in context.tags:
+        domain = env + 'example.com'
+        tagopsdb.Session.add(tagopsdb.Zone(zone_name=domain))
+        tagopsdb.Session.flush()
         tagopsdb.Session.add(tagopsdb.Environment(
             env=env,
             environment=tds.commands.DeployController.envs.get(env, env),
-            domain=env + 'example.com',
-            prefix=env[0]
+            domain=domain,
+            prefix=env[0],
+            zone_id=tagopsdb.Zone.get(zone_name=domain).id
         ))
         tagopsdb.Session.commit()
