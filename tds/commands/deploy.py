@@ -1333,7 +1333,7 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
-            raise tds.exceptions.NotFoundError(
+            raise tds.exceptions.InvalidOperationError(
                 'No deployments to invalidate for application %r '
                 'with version %r in %s environment',
                 project.name, params['version'],
@@ -1432,7 +1432,7 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
-            raise tds.exceptions.NotFoundError(
+            raise tds.exceptions.InvalidOperationError(
                 'Nothing to roll back for application %r in %s '
                 'environment', project.name,
                 self.envs[params['env']]
@@ -1534,7 +1534,7 @@ class DeployController(BaseController):
                 restart_targets.append((host, pkg))
 
         if not restart_targets:
-            raise tds.exceptions.NotFoundError(
+            raise tds.exceptions.InvalidOperationError(
                 'Nothing to restart for project "%s" in %s environment',
                 project.name, environment.environment
             )
@@ -1570,7 +1570,7 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
-            raise tds.exceptions.NotFoundError(
+            raise tds.exceptions.InvalidOperationError(
                 'Nothing to redeploy for application %r in %s '
                 'environment', project.name,
                 self.envs[params['env']]
@@ -1610,7 +1610,7 @@ class DeployController(BaseController):
         app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
-            raise tds.exceptions.NotFoundError(
+            raise tds.exceptions.InvalidOperationError(
                 'No deployments to validate for application "%s" '
                 'in %s environment', project.name,
                 self.envs[params['env']]
