@@ -75,6 +75,19 @@ class NotFoundError(TDSException):
         super(NotFoundError, self).__init__(message)
 
 
+class JenkinsJobNotFoundError(TDSException):
+    """Exception for when a Jenkins jobs is not found."""
+
+    def __init__(self, object_type, job, version, jenkins_url):
+        message = "{object_type} does not exist on {url}: {job}@{version}"\
+            .format(
+                object_type=object_type,
+                url=jenkins_url,
+                job=job,
+                version=version,
+            )
+
+
 class WrongEnvironmentError(TDSException):
     """Exception for command attempts in incorrect environment"""
 
