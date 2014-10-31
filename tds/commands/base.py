@@ -291,27 +291,32 @@ class BaseController(object):
         applications = params.pop('applications', [])
 
         if len(applications) > 1:
-            raise Exception(
+            raise tds.exceptions.TDSException(
                 'Project "%s" has too many applications associated with it:'
                 ' %s', getattr(project, 'name', None),
                 sorted(x.name for x in applications)
+            )
+        elif len(applications) == 0:
+            raise tds.exceptions.TDSException(
+                'Project %s has no applications associated with it.',
+                getattr(project, 'name', None)
             )
 
         if version is None:
             package = self.get_latest_app_version(None, application, **params)
             if package is None:
                 raise Exception("couldnt determine latest version")
-        else:
+        elif application is not None and len(application.packages) > 0:
             for package in application.packages:
                 if version == package.version:
                     break
-            else:
-                package = None
+        else:
+            package = None
 
         if package is None:
-            raise Exception(
-                'Package "%s@%s" does not exist',
-                application.name, version
+            raise tds.exceptions.NotFoundError(
+                'Package', '{name}@{vers}'.format(name=application.name,
+                                                  vers=version)
             )
 
         return dict(package=package)
