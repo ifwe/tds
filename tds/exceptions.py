@@ -60,7 +60,19 @@ class InvalidOperationError(TDSException):
 class NotFoundError(TDSException):
     """Exception for when an item is not found or does not exist."""
 
-    pass
+    def __init__(self, object_type, objects):
+        """Create message given object_type and objects."""
+        try:
+            objects = list(objects)
+        except:
+            objects = [objects]
+        message = "{object_type}{p1} do{p2} not exist: {objects}".format(
+            object_type=object_type,
+            p1='' if len(objects) == 1 else 's',
+            p2='es' if len(objects) == 1 else '',
+            objects=', '.join(objects)
+        )
+        super(NotFoundError, self).__init__(message)
 
 
 class WrongEnvironmentError(TDSException):

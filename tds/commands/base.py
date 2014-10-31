@@ -95,7 +95,7 @@ class BaseController(object):
 
         try:
             if handler is None:
-                raise tds.exceptions.NotFoundError(
+                raise tds.exceptions.InvalidInputError(
                     "Unknown action for %s: %s", type(self).__name__, action
                 )
 
@@ -162,10 +162,7 @@ class BaseController(object):
                 project_objects.append(project)
 
         if len(missing_projects):
-            raise tds.exceptions.NotFoundError(
-                'Project(s) do not exist: %s',
-                ', '.join(missing_projects)
-            )
+            raise tds.exceptions.NotFoundError('Project',missing_projects)
 
         return dict(
             projects=project_objects,
@@ -193,12 +190,8 @@ class BaseController(object):
                 application_objects.append(application)
 
         if len(missing_applications):
-            raise tds.exceptions.NotFoundError(
-                'Application%s do%s not exist: %s',
-                '' if len(missing_applications) == 1 else 's',
-                'es' if len(missing_applications) == 1 else '',
-                ', '.join(missing_applications)
-            )
+            raise tds.exceptions.NotFoundError('Application',
+                                               missing_applications)
 
         return dict(
             application=application,
@@ -270,10 +263,8 @@ class BaseController(object):
                     targets.append(host)
 
             if no_exist_hosts:
-                raise tds.exceptions.NotFoundError(
-                    "These hosts do not exist: %s",
-                    ', '.join(sorted(no_exist_hosts))
-                )
+                raise tds.exceptions.NotFoundError("Host",
+                                                   sorted(no_exist_hosts))
 
             if bad_hosts:
                 raise tds.exceptions.WrongEnvironmentError(
@@ -284,7 +275,7 @@ class BaseController(object):
             for project in projects:
                 for target in targets:
                     if project not in target.application.projects:
-                        raise tds.exceptions.NotFoundError(
+                        raise tds.exceptions.InvalidInputError(
                             "Host %r not a part of project %r",
                             target, project
                         )

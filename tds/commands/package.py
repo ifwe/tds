@@ -88,7 +88,7 @@ class PackageController(BaseController):
         try:
             job = jenkins[job_name]
         except KeyError:
-            raise tds.exceptions.NotFoundError('Job "%s" not found', job_name)
+            raise tds.exceptions.NotFoundError('Job', [job_name])
 
         try:
             int(package.version)
