@@ -51,6 +51,12 @@ class InvalidInputError(TDSException):
     pass
 
 
+class InvalidOperationError(TDSException):
+    """Exception for when a user tries to perform an invalid operation."""
+
+    pass
+
+
 class NotFoundError(TDSException):
     """Exception for when an item is not found or does not exist."""
 
