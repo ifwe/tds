@@ -67,7 +67,7 @@ Feature: deploy/config add-apptype subcommand
         And there is a deploy target with name="targ"
         And the deploy target is a part of the project-application pair
         When I run "<command> add-apptype proj myapp targ"
-        Then the output is ""targ" is already a part of "proj""
+        Then the output is "targ is already a part of proj"
 
         Examples:
             | command |

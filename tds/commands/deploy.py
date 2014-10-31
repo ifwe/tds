@@ -1239,6 +1239,14 @@ class DeployController(BaseController):
                 raise tds.exceptions.NotFoundError(
                     'Deploy target does not exist: "%s"', apptype
                 )
+            elif tagopsdb.model.ProjectPackage.get(
+                project_id=project.id,
+                app_id=target.id,
+                pkg_def_id=application.id
+            ) is not None:
+                raise tds.exceptions.InvalidOperationError(
+                    "%s is already a part of %s", apptype, project.name
+                )
             else:
                 targets.append(target)
 
