@@ -107,11 +107,11 @@ class PackageController(BaseController):
             NotFound
         ) as exc:
             log.error(exc)
-            raise tds.exceptions.NotFoundError(
-                'Build "%s@%s" does not exist on %s',
+            raise tds.exceptions.JenkinsJobNotFoundError(
+                'Build',
                 job_name,
                 package.version,
-                self.jenkins_url
+                self.jenkins_url,
             )
 
         try:
@@ -122,11 +122,11 @@ class PackageController(BaseController):
             JenkinsAPIException,
             NotFound
         ):
-            raise tds.exceptions.NotFoundError(
-                'Artifact not found for "%s@%s" on %s',
+            raise tds.exceptions.JenkinsJobNotFoundError(
+                'Artifact',
                 job_name,
                 package.version,
-                self.jenkins_url
+                self.jenkins_url,
             )
 
         tmpname = os.path.join(
