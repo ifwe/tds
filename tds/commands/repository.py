@@ -83,9 +83,7 @@ class RepositoryController(BaseController):
         for apptype in params['apptypes']:
             target = tds.model.AppTarget.get(name=apptype)
             if target is None:
-                raise tds.exceptions.NotFoundError(
-                    "Apptype '%s' does not exist", apptype
-                )
+                raise tds.exceptions.NotFoundError("Apptype", apptype)
 
             targets.append(target)
 

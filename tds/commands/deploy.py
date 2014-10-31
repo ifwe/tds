@@ -1236,9 +1236,7 @@ class DeployController(BaseController):
         for apptype in apptypes:
             target = tds.model.AppTarget.get(name=apptype)
             if target is None:
-                raise tds.exceptions.NotFoundError(
-                    'Deploy target does not exist: "%s"', apptype
-                )
+                raise tds.exceptions.NotFoundError('Deploy target', [apptype])
             elif tagopsdb.model.ProjectPackage.get(
                 project_id=project.id,
                 app_id=target.id,
