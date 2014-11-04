@@ -18,8 +18,10 @@ class ApplicationController(BaseController):
     )
 
     @staticmethod
-    def add(application, **_kwds):
+    def add(application, job_name, deploy_type, arch, build_type, build_host,
+            **_kwds):
         """Add an application."""
+
         app_name = application
         application = Application.get(name=app_name)
         if application is not None:
@@ -27,12 +29,27 @@ class ApplicationController(BaseController):
                 "Application already exists: %s", application.name
             )
 
+        Application.verify_package_arch(arch)
+        Application.verify_build_type(build_type)
+
         log.debug('Creating application %r', app_name)
-        return dict(result=Application.create(name=app_name))
+
+        # NOTE: create() does not give a proper exception/traceback
+        # if there's missing keyword information
+        return dict(result=Application.create(
+            name=app_name,
+            deploy_type=deploy_type,
+            validation_type='matching',
+            path=job_name,
+            arch=arch,
+            build_type=build_type,
+            build_host=build_host
+        ))
 
     @validate('application')
     def delete(self, application, **_kwds):
-        """Remove a given project."""
+        """Remove a given application."""
+
         log.debug('Removing application %r', application.name)
         application.delete()
         return dict(result=application)
