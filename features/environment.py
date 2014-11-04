@@ -426,7 +426,7 @@ def seed_db():
 
     pkg_name = tagopsdb.PackageDefinition.dummy
     tagopsdb.PackageDefinition.update_or_create(dict(
-        deploy_type='deploy',
+        deploy_type='rpm',
         validation_type='matching',
         pkg_name=pkg_name,
         path='/some-path',
