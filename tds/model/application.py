@@ -2,6 +2,7 @@
 
 from .base import Base
 import tagopsdb
+import tds.exceptions
 
 
 class Application(Base):
@@ -24,6 +25,33 @@ class Application(Base):
             if x.name != x.dummy
         ]
 
+    @staticmethod
+    def verify_package_arch(arch):
+        """Ensure architecture for package is supported."""
+
+        table = tagopsdb.model.PackageDefinition.__table__
+        arches = table.columns['arch'].type.enums
+
+        if arch not in arches:
+            raise tds.exceptions.InvalidInputError(
+                "Invalid architecture: %s. Should be one of: %s",
+                arch,
+                u', '.join(sorted(arches))
+            )
+
+    @staticmethod
+    def verify_build_type(build_type):
+        """Ensure architecture for package is supported."""
+
+        table = tagopsdb.model.PackageDefinition.__table__
+        build_types = table.columns['build_type'].type.enums
+
+        if build_type not in build_types:
+            raise tds.exceptions.InvalidInputError(
+                "Invalid build type: %s. Should be one of: %s",
+                build_type,
+                u', '.join(sorted(build_types))
+            )
 
     def get_version(self, version, revision='1'):
         from . import Package
