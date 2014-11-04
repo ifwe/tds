@@ -15,7 +15,7 @@ Feature: deploy/config validate subcommand
             | projhost02    |
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
+        And the package is deployed on the deploy target
 
     Scenario Outline: too few arguments
         When I run "<command> validate proj"
@@ -115,7 +115,7 @@ Feature: deploy/config validate subcommand
             | anotherhost02  | dev  |
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
+        And the package is deployed on the deploy target
         When I run "<command> validate proj 123"
         Then the output is "Specify a target constraint (too many targets found: bar, foo)"
 
@@ -132,7 +132,7 @@ Feature: deploy/config validate subcommand
             | anotherhost02  | dev  |
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
+        And the package is deployed on the deploy target
         When I run "<command> validate proj 123 --apptype foo"
         Then the package is validated for deploy target with name="foo"
 
@@ -149,7 +149,7 @@ Feature: deploy/config validate subcommand
             | anotherhost02  | dev  |
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
+        And the package is deployed on the deploy target
         When I run "<command> validate proj 123 --all-apptypes"
         Then the package is validated for the deploy targets
 
