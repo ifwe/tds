@@ -103,8 +103,8 @@ Feature: deploy/config invalidate subcommand
         And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
-        And the package version is deployed on the deploy targets
-        And the package version has been validated
+        And the package is deployed on the deploy targets
+        And the package has been validated
         When I run "<command> invalidate proj 123"
         Then the output is empty
         Then the package is invalidated
@@ -119,8 +119,8 @@ Feature: deploy/config invalidate subcommand
         And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
-        And the package version is deployed on the deploy targets
-        And the package version has been validated
+        And the package is deployed on the deploy targets
+        And the package has been validated
         When I run "<command> invalidate proj 123 --apptype foo"
         Then the package is invalidated
 
@@ -137,8 +137,8 @@ Feature: deploy/config invalidate subcommand
             | foo   |
             | bar   |
         And the deploy targets are a part of the project
-        And the package version is deployed on the deploy targets
-        And the package version has been validated
+        And the package is deployed on the deploy targets
+        And the package has been validated
         When I run "<command> invalidate proj 123"
         Then the output is "Specify a target constraint (too many targets found: bar, foo)"
 
@@ -155,8 +155,8 @@ Feature: deploy/config invalidate subcommand
             | foo   |
             | bar   |
         And the deploy targets are a part of the project
-        And the package version is deployed on the deploy targets
-        And the package version has been validated
+        And the package is deployed on the deploy targets
+        And the package has been validated
         When I run "<command> invalidate proj 123 --apptype foo"
         Then the package is invalidated for deploy target with name="foo"
 
@@ -173,8 +173,8 @@ Feature: deploy/config invalidate subcommand
             | foo   |
             | bar   |
         And the deploy targets are a part of the project
-        And the package version is deployed on the deploy targets
-        And the package version has been validated
+        And the package is deployed on the deploy targets
+        And the package has been validated
         When I run "<command> invalidate proj 123 --all-apptypes"
         Then the package is invalidated for deploy targets:
             | name  |

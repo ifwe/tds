@@ -26,8 +26,8 @@ Feature: Debug switches
         And there is a deploy target with name="the-apptype"
         And there is an application with name="app1"
         And there is a package with version="123"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         And there are hosts:
             | name          | env   |
             | dprojhost01   | dev   |
@@ -64,7 +64,7 @@ Feature: Debug switches
             | projhost02    |
         And the deploy target is a part of the project
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
+        And the package is deployed on the deploy target
         When I run "<switch> deploy validate proj 123 --apptype foo"
         Then the output has "DEBUG"
 
@@ -82,8 +82,8 @@ Feature: Debug switches
         And there is a package with version="123"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project
-        And the package version is deployed on the deploy targets
-        And the package version has been validated
+        And the package is deployed on the deploy targets
+        And the package has been validated
         When I run "<switch> deploy invalidate proj 123 --apptype foo"
         Then the output has "DEBUG"
 

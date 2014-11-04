@@ -78,13 +78,13 @@ Feature: Ongoing deployments blocking attempted new ones
         And the hosts are associated with the deploy target
 
         And there is a package with version="122"
-        And the package version is deployed on the deploy targets in the "stage" env
-        And the package version has been validated in the "staging" environment
+        And the package is deployed on the deploy targets in the "stage" env
+        And the package has been validated in the "staging" environment
 
         And there is a package with version="123"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
-        And the package version is deployed on the deploy targets in the "stage" env
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "stage" env
         And there is an ongoing deployment on the deploy target
         When I run "deploy redeploy proj <targets>"
         Then the output has "User "test-user" is currently running a deployment for the the-apptype app tier in the staging environment, skipping..."

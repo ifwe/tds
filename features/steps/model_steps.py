@@ -18,8 +18,8 @@ def get_model_factory(name):
         return project_factory
     if name == 'deploy target':
         return lambda _ctxt, **kwargs: tds.model.AppTarget.create(**kwargs)
-    if name == 'package version':
-        return package_version_factory
+    if name == 'package':
+        return package_factory
     if name == 'host':
         return host_factory
     if name == 'RPM package':
@@ -77,7 +77,7 @@ def host_factory(context, name, env=None, **_kwargs):
     return host
 
 
-def package_version_factory(context, **kwargs):
+def package_factory(context, **kwargs):
     pkg_def = None
 
     if 'name' in kwargs:
@@ -259,8 +259,8 @@ model_builder(
 model_builder(
     'there is a package with %s',
     'there are packages',
-    'tds_package_versions',
-    'package version'
+    'tds_packages',
+    'package'
 )
 
 model_builder(
@@ -400,20 +400,20 @@ def deploy_to_hosts(hosts, deployment, status='ok'):
             tagopsdb.Session.commit()
 
 
-@given(u'the package version is deployed on the deploy target')
-def given_the_package_version_is_deployed_on_the_deploy_target(context):
+@given(u'the package is deployed on the deploy target')
+def given_the_package_is_deployed_on_the_deploy_target(context):
     deploy_package_to_target(
-        context.tds_package_versions[-1],
+        context.tds_packages[-1],
         context.tds_targets[-1],
         context.tds_env,
     )
 
 
-@given(u'the package version "{version}" is deployed on the deploy target')
-def given_the_package_version_specific_is_deployed_on_the_deploy_target(
+@given(u'the package "{version}" is deployed on the deploy target')
+def given_the_package_specific_is_deployed_on_the_deploy_target(
         context, version
 ):
-    for pkg in context.tds_package_versions:
+    for pkg in context.tds_packages:
         if pkg.version == version:
             break
     else:
@@ -427,34 +427,34 @@ def given_the_package_version_specific_is_deployed_on_the_deploy_target(
     )
 
 
-@given(u'the package version is deployed on the deploy targets')
-def given_the_package_version_is_deployed_on_the_deploy_targets(context):
+@given(u'the package is deployed on the deploy targets')
+def given_the_package_is_deployed_on_the_deploy_targets(context):
     for target in context.tds_targets:
         deploy_package_to_target(
-            context.tds_package_versions[-1],
+            context.tds_packages[-1],
             target,
             context.tds_env,
         )
 
 
-@given(u'the package version is deployed on the deploy targets in the "{env}" env')
-def given_the_package_version_is_deployed_on_the_deploy_targets_in_env(
+@given(u'the package is deployed on the deploy targets in the "{env}" env')
+def given_the_package_is_deployed_on_the_deploy_targets_in_env(
         context, env
 ):
     env_obj = get_environment(env)
 
     for target in context.tds_targets:
         deploy_package_to_target(
-            context.tds_package_versions[-1],
+            context.tds_packages[-1],
             target,
             env_obj.env,
         )
 
 
 @given(u'the package is deployed on the host with {properties}')
-def given_the_package_version_is_deployed_on_host(context, properties):
+def given_the_package_is_deployed_on_host(context, properties):
     attrs = parse_properties(properties)
-    package = context.tds_package_versions[-1]
+    package = context.tds_packages[-1]
 
     host = tagopsdb.Host.get(**attrs)
     assert host
@@ -491,18 +491,18 @@ def given_the_package_version_is_deployed_on_host(context, properties):
     tagopsdb.Session.commit()
 
 
-@given(u'the package version is deployed on the hosts')
-def given_the_package_version_is_deployed_on_hosts(context):
+@given(u'the package is deployed on the hosts')
+def given_the_package_is_deployed_on_hosts(context):
     for host in context.tds_hosts:
         context.execute_steps('''
             Given the package is deployed on the host with name="%s"
         ''' % host.name)
 
 
-@given(u'the package version failed to deploy on the host with {properties}')
-def given_the_package_version_failed_to_deploy_on_host(context, properties):
+@given(u'the package failed to deploy on the host with {properties}')
+def given_the_package_failed_to_deploy_on_host(context, properties):
     attrs = parse_properties(properties)
-    package = context.tds_package_versions[-1]
+    package = context.tds_packages[-1]
 
     host = tagopsdb.Host.get(**attrs)
 
@@ -516,7 +516,7 @@ def given_the_package_version_failed_to_deploy_on_host(context, properties):
     tagopsdb.Session.commit()
 
 
-def set_status_for_package_version(package, status):
+def set_status_for_package(package, status):
     for deployment in package.deployments:
         for app_dep in deployment.app_deployments:
             app_dep.status = status
@@ -525,21 +525,21 @@ def set_status_for_package_version(package, status):
     tagopsdb.Session.commit()
 
 
-@given(u'the package version is {status}')
-def given_the_package_version_is_status(context, status):
-    set_status_for_package_version(context.tds_package_versions[-1], status)
+@given(u'the package is {status}')
+def given_the_package_is_status(context, status):
+    set_status_for_package(context.tds_packages[-1], status)
 
 
-@given(u'the package version "{version}" is {status}')
-def given_the_package_version_is_validated(context, version, status):
-    for package in context.tds_package_versions:
+@given(u'the package "{version}" is {status}')
+def given_the_package_is_validated(context, version, status):
+    for package in context.tds_packages:
         if package.version == version:
             break
     else:
         package = None
 
     assert package
-    set_status_for_package_version(package, status)
+    set_status_for_package(package, status)
 
 
 def target_in_project(context):
@@ -732,7 +732,7 @@ def then_the_output_describes_an_application_with_name_in_format(
 
 @then(u'the output describes the packages')
 def then_the_output_describes_the_packages(context):
-    for package in context.tds_package_versions:
+    for package in context.tds_packages:
         context.execute_steps('''
             Then the output describes a package with version="%s"
         ''' % package.version)
@@ -773,7 +773,7 @@ def then_the_output_describes_the_packages_in_a_table(context):
         context.execute_steps(u'''
             Then the output is a table with a column containing "{header}"
         '''.format(header=header))
-    for package in context.tds_package_versions:
+    for package in context.tds_packages:
         for pkg_attr in (package.version, package.name, package.revision):
             context.execute_steps(u'''
                 Then the output is a table with a column containing "{attr}"
@@ -797,7 +797,7 @@ def then_the_output_describes_the_packages_in_json(context):
         exc.args += (context.process.stdout, context.process.stderr)
         raise exc
 
-    for package in context.tds_package_versions:
+    for package in context.tds_packages:
         expected = dict(id=package.id,
                         pkg_name=package.name,
                         version=package.version)
@@ -808,7 +808,7 @@ def then_the_output_describes_the_packages_in_json(context):
 @then(u'the output describes the packages in latex')
 def then_the_output_describes_the_packages_in_latex(context):
     output_lines = context.process.stdout.splitlines()
-    for package in context.tds_package_versions:
+    for package in context.tds_packages:
         expected = (
             '\\begin{tabular}{lrr}',
             '\hline',
@@ -829,7 +829,7 @@ def then_the_output_describes_the_packages_in_latex(context):
 @then(u'the output describes the packages in rst')
 def then_the_output_describes_the_packages_in_rst(context):
     output_lines = context.process.stdout.splitlines()
-    for package in context.tds_package_versions:
+    for package in context.tds_packages:
         expected = (
             "=========  =========  ==========",
             "Project      Version    Revision",
@@ -888,7 +888,7 @@ def then_the_output_describes_a_project_with_properties(context, properties):
 
 @then(u'the output describes the host deployments')
 def then_the_output_describes_the_host_deployments(context):
-    package = context.tds_package_versions[-1]
+    package = context.tds_packages[-1]
 
     for host in context.tds_hosts:
         context.execute_steps('''
@@ -986,7 +986,7 @@ def find_substring_or_regex_in_lines(substr, lines):
 
 @then(u'the output describes the app deployments')
 def then_the_output_describes_the_app_deployments(context):
-    package = context.tds_package_versions[-1]
+    package = context.tds_packages[-1]
 
     context.execute_steps('''
         Then the output describes an app deployment with name="%s",version="%s",declaring_user="%s"
@@ -1096,9 +1096,9 @@ def then_the_output_does_not_describe_an_app_deployment_with_properties(
         raise exc
 
 
-@then(u'the package version is validated')
+@then(u'the package is validated')
 def then_the_package_is_validated(context):
-    package = context.tds_package_versions[-1]
+    package = context.tds_packages[-1]
     assert check_package_validation(
         context,
         package,
@@ -1107,9 +1107,9 @@ def then_the_package_is_validated(context):
     ), (package.deployments[-1].app_deployments, package.deployments[-1])
 
 
-@then(u'the package version is invalidated')
+@then(u'the package is invalidated')
 def then_the_package_is_invalidated(context):
-    package = context.tds_package_versions[-1]
+    package = context.tds_packages[-1]
     assert check_package_validation(
         context,
         package,
@@ -1118,7 +1118,7 @@ def then_the_package_is_invalidated(context):
     )
 
 
-@then(u'the package version is validated for deploy target with {properties}')
+@then(u'the package is validated for deploy target with {properties}')
 def then_the_package_is_validated_for_deploy_target(context, properties):
     attrs = parse_properties(properties)
     target = tds.model.AppTarget.get(**attrs)
@@ -1126,13 +1126,13 @@ def then_the_package_is_validated_for_deploy_target(context, properties):
     # TODO: get only target.app_deployments where package matches.
     assert check_package_validation(
         context,
-        context.tds_package_versions[-1],
+        context.tds_packages[-1],
         [target.app_deployments[-1]],
         'validated'
     )
 
 
-@then(u'the package version is validated for the deploy targets')
+@then(u'the package is validated for the deploy targets')
 def then_the_package_is_validated_for_the_deploy_targets(context):
     for target in context.tds_targets:
         context.execute_steps('''
@@ -1157,7 +1157,7 @@ def then_the_package_is_invalidated_for_deploy_target(context, properties):
     # TODO: get only target.app_deployments where package matches.
     assert check_package_validation(
         context,
-        context.tds_package_versions[-1],
+        context.tds_packages[-1],
         [target.app_deployments[-1]],
         'invalidated'
     )
@@ -1172,7 +1172,7 @@ def then_there_is_no_project_with_properties(context, properties):
         assert tagopsdb.PackageDefinition.get(name='%s-name' % attrs['name']) is None
 
 
-@then(u'the package version is invalidated for deploy targets')
+@then(u'the package is invalidated for deploy targets')
 def then_the_package_is_invalidated_for_deploy_targets(context):
     attr_sets = [
         dict(zip(context.table.headings, row))
@@ -1198,7 +1198,7 @@ def then_the_output_describes_no_deployments(context):
 
 
 @when('the status is changed to "{status}" for package with {properties}')
-def when_package_version_state_is_changed(context, status, properties):
+def when_package_state_is_changed(context, status, properties):
     tagopsdb.Session.close()
     attrs = parse_properties(properties)
     pkg = tds.model.Package.get(**attrs)
@@ -1207,9 +1207,9 @@ def when_package_version_state_is_changed(context, status, properties):
     tagopsdb.Session.commit()
 
 
-def given_the_package_version_has_status_set_with_properties(context, environment, status):
+def given_the_package_has_status_set_with_properties(context, environment, status):
     targets = context.tds_targets
-    package = context.tds_package_versions[-1]
+    package = context.tds_packages[-1]
     deployments = tagopsdb.Deployment.find(package_id=package.id)
     dep_ids = [d.id for d in deployments]
     target_ids = [t.id for t in targets]
@@ -1239,33 +1239,33 @@ def given_the_package_version_has_status_set_with_properties(context, environmen
     tagopsdb.Session.commit()
 
 
-@given(u'the package version has been validated in the "{environment}" environment')
-def given_the_package_version_has_been_validated_with_properties(context,
+@given(u'the package has been validated in the "{environment}" environment')
+def given_the_package_has_been_validated_with_properties(context,
                                                                  environment):
-    given_the_package_version_has_status_set_with_properties(
+    given_the_package_has_status_set_with_properties(
         context, environment, 'validated'
     )
 
 
-@given(u'the package version has been invalidated in the "{environment}" environment')
-def given_the_package_version_has_been_invalidated_with_properties(context,
+@given(u'the package has been invalidated in the "{environment}" environment')
+def given_the_package_has_been_invalidated_with_properties(context,
                                                                    environment):
-    given_the_package_version_has_status_set_with_properties(
+    given_the_package_has_status_set_with_properties(
         context, environment, 'invalidated'
     )
 
 
-@given(u'the package version has been validated')
-def given_the_package_version_has_been_validated(context):
+@given(u'the package has been validated')
+def given_the_package_has_been_validated(context):
     context.execute_steps('''
-        Given the package version has been validated in the "%s" environment
+        Given the package has been validated in the "%s" environment
     ''' % context.tds_environment)
 
 
-@given(u'the package version has been invalidated')
-def given_the_package_version_has_been_invalidated(context):
+@given(u'the package has been invalidated')
+def given_the_package_has_been_invalidated(context):
     context.execute_steps('''
-        Given the package version has been invalidated in the "%s" environment
+        Given the package has been invalidated in the "%s" environment
     ''' % context.tds_environment)
 
 
@@ -1326,7 +1326,7 @@ def given_the_package_is_deployed_on_the_target(context, package_props, target_p
 def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
     host_names = hosts.split(',')
 
-    package_id = context.tds_package_versions[-1].id
+    package_id = context.tds_packages[-1].id
 
     dep_props = dict(
         package_id=package_id,
@@ -1349,7 +1349,7 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
 @given(u'there is an ongoing deployment on the deploy target')
 def given_there_is_an_ongoing_deployment_on_the_deploy_target(context):
     deploy_package_to_target(
-        context.tds_package_versions[-1],
+        context.tds_packages[-1],
         context.tds_targets[-1],
         context.tds_env,
         'inprogress',

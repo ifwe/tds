@@ -9,8 +9,8 @@ Feature: HipChat notifications
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
         And there is a package with version="123"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         And there are hosts:
             | name          | env   |
             | dprojhost01   | dev   |
@@ -32,8 +32,8 @@ Feature: HipChat notifications
         And the hosts are associated with the deploy target
         And the deploy target is a part of the project
         And there is a package with version="124"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         And hipchat notifications are enabled
         When I run "deploy promote proj 124 --hosts sprojhost01"
         And I run "deploy promote proj 124 --hosts sprojhost02"
@@ -45,8 +45,8 @@ Feature: HipChat notifications
     @hipchat_server
     Scenario: deploying to all apptypes
         Given there is a package with version="124"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         And hipchat notifications are enabled
         When I run "deploy promote proj 124 --all-apptypes"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
@@ -56,8 +56,8 @@ Feature: HipChat notifications
     @hipchat_server
     Scenario: deploying to specific apptypes
         Given there is a package with version="124"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         And hipchat notifications are enabled
         When I run "deploy promote proj 124 --apptypes the-apptype"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
@@ -70,8 +70,8 @@ Feature: HipChat notifications
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
         And the deploy target is a part of the project
-        And the package version is deployed on the deploy target
-        And the package version failed to deploy on the host with name="anotherhost01"
+        And the package is deployed on the deploy target
+        And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
         When I run "deploy redeploy proj --all-apptypes"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
@@ -84,8 +84,8 @@ Feature: HipChat notifications
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
         And the deploy target is a part of the project
-        And the package version is deployed on the deploy target
-        And the package version failed to deploy on the host with name="anotherhost01"
+        And the package is deployed on the deploy target
+        And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
         When I run "deploy redeploy proj --apptypes another-apptype"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
@@ -98,8 +98,8 @@ Feature: HipChat notifications
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
         And the deploy target is a part of the project
-        And the package version is deployed on the deploy target
-        And the package version failed to deploy on the host with name="anotherhost01"
+        And the package is deployed on the deploy target
+        And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
         When I run "deploy redeploy proj --hosts anotherhost01"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
@@ -108,16 +108,16 @@ Feature: HipChat notifications
 
     @hipchat_server
     Scenario: rollback version to apptype
-        Given the package version is deployed on the deploy target
-        And the package version has been validated
+        Given the package is deployed on the deploy target
+        And the package has been validated
 
         And there is a package with version="121"
-        And the package version is deployed on the deploy target
-        And the package version has been validated
+        And the package is deployed on the deploy target
+        And the package has been validated
 
         And there is a package with version="122"
-        And the package version is deployed on the deploy target
-        And the package version has been invalidated
+        And the package is deployed on the deploy target
+        And the package has been invalidated
 
         And hipchat notifications are enabled
 
@@ -128,16 +128,16 @@ Feature: HipChat notifications
 
     @hipchat_server
     Scenario: rollback version to all apptypes
-        Given the package version is deployed on the deploy target
-        And the package version has been validated
+        Given the package is deployed on the deploy target
+        And the package has been validated
 
         And there is a package with version="121"
-        And the package version is deployed on the deploy target
-        And the package version has been validated
+        And the package is deployed on the deploy target
+        And the package has been validated
 
         And there is a package with version="122"
-        And the package version is deployed on the deploy target
-        And the package version has been invalidated
+        And the package is deployed on the deploy target
+        And the package has been invalidated
 
         And hipchat notifications are enabled
 
@@ -148,16 +148,16 @@ Feature: HipChat notifications
 
     @hipchat_server
     Scenario: rollback version to specific host
-        Given the package version is deployed on the deploy target
-        And the package version has been validated
+        Given the package is deployed on the deploy target
+        And the package has been validated
 
         And there is a package with version="121"
-        And the package version is deployed on the deploy target
-        And the package version has been validated
+        And the package is deployed on the deploy target
+        And the package has been validated
 
         And there is a package with version="122"
-        And the package version is deployed on the deploy target
-        And the package version has been invalidated
+        And the package is deployed on the deploy target
+        And the package has been invalidated
 
         And hipchat notifications are enabled
 
@@ -168,16 +168,16 @@ Feature: HipChat notifications
 
     @hipchat_server
     Scenario: hipchat server failure
-        Given the package version is deployed on the deploy target
-        And the package version has been validated
+        Given the package is deployed on the deploy target
+        And the package has been validated
 
         And there is a package with version="200"
-        And the package version is deployed on the deploy target
-        And the package version has been validated
+        And the package is deployed on the deploy target
+        And the package has been validated
 
         And there is a package with version="201"
-        And the package version is deployed on the deploy target
-        And the package version has been invalidated
+        And the package is deployed on the deploy target
+        And the package has been invalidated
 
         And hipchat notifications are enabled
 

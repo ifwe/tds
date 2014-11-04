@@ -21,11 +21,11 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         And the package is deployed on the deploy targets in the "stage" env
         And the package has been validated in the "staging" environment
 
-        And there is a package version with version="123"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
-        And the package version is deployed on the deploy targets in the "stage" env
-        And the package version failed to deploy on the host with name="sprojhost02"
+        And there is a package with version="123"
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "stage" env
+        And the package failed to deploy on the host with name="sprojhost02"
 
     Scenario Outline: redeploy project that doesn't exist
         When I run "<command> doesnt-exist"

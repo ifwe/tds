@@ -167,7 +167,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | --force   |
 
     Scenario Outline: promote a version that has already been deployed
-        Given the package version is deployed on the deploy targets in the "stage" env
+        Given the package is deployed on the deploy targets in the "stage" env
         When I run "<command> proj 123"
         Then the output has "Application "proj" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
 
@@ -177,8 +177,8 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | deploy promote    |
 
     Scenario Outline: promote a version that has already been validated
-        Given the package version is deployed on the deploy targets in the "stage" env
-        And the package version has been validated in the "staging" environment
+        Given the package is deployed on the deploy targets in the "stage" env
+        And the package has been validated in the "staging" environment
         When I run "<command> proj 123"
         Then the output has "Application "proj" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
 
@@ -198,8 +198,8 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         And the hosts are associated with the deploy target
         And the deploy target is a part of the project
         And there is a package with version="124"
-        And the package version is deployed on the deploy targets in the "dev" env
-        And the package version has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
         When I run "<command> proj 124 --hosts sprojhost01 sprojhost02 sother01"
         Then the output has "Completed: 3 out of 3 hosts"
         And package "proj-name" version "124" was deployed to these hosts:

@@ -49,7 +49,7 @@ Feature: package add subcommand
         And the status is changed to "completed" for package with name="myapp",version="123"
         And I wait 5 seconds
         And the command finishes
-        Then the output has "Added package version: "myapp@123""
+        Then the output has "Added package: "myapp@123""
 
     @jenkins_server
     Scenario: add a package to an application again

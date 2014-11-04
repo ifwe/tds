@@ -15,17 +15,17 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
             | projhost02    | stage |
         And the hosts are associated with the deploy target
 
-        And there is a package version with version="121"
-        And the package version is deployed on the deploy target
-        And the package version has been validated
+        And there is a package with version="121"
+        And the package is deployed on the deploy target
+        And the package has been validated
 
-        And there is a package version with version="122"
-        And the package version is deployed on the deploy target
-        And the package version has been invalidated
+        And there is a package with version="122"
+        And the package is deployed on the deploy target
+        And the package has been invalidated
 
-        And there is a package version with version="123"
-        And the package version is deployed on the deploy target
-        And the package version has been validated
+        And there is a package with version="123"
+        And the package is deployed on the deploy target
+        And the package has been validated
 
     Scenario Outline: rollback project that doesn't exist
         When I run "<command> doesnt-exist"
@@ -138,14 +138,14 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
 
-        And the package version "121" is deployed on the deploy target
-        And the package version has been validated
+        And the package "121" is deployed on the deploy target
+        And the package has been validated
 
-        And the package version "122" is deployed on the deploy target
-        And the package version has been invalidated
+        And the package "122" is deployed on the deploy target
+        And the package has been invalidated
 
-        And the package version "123" is deployed on the deploy target
-        And the package version has been validated
+        And the package "123" is deployed on the deploy target
+        And the package has been validated
 
         And the host "projhost01" will fail to deploy
         When I run "<command> proj --all-apptypes"
