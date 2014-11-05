@@ -1,4 +1,4 @@
-Feature: repository delete project
+Feature: project delete project
     As an administrator
     I want to delete a project
     To clean up things that don't exist anymore
@@ -23,5 +23,5 @@ Feature: repository delete project
     Scenario: for admin with non-existing project
         Given I have "admin" permissions
         When I run "project delete proj"
-        Then the output has "Project(s) do not exist: proj"
+        Then the output has "Project does not exist: proj"
         And there is no project with name="proj"
