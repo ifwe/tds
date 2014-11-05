@@ -30,14 +30,15 @@ Feature: package add subcommand
     Scenario: add a package to an application with a job name that doesn't exist
         Given there is an application with name="myapp"
         When I run "package add myapp job 123"
-        Then the output has "Job "job" not found"
+        Then the output has "Job does not exist: job"
 
     @jenkins_server
     Scenario: add a package to an application with a version that doesn't exist
         Given there is an application with name="myapp"
         And there is a jenkins job with name="job"
         When I run "package add myapp job 123"
-        Then the output has "Build "job@123" does not exist on"
+        Then the output has "Build does not exist on http://localhost"
+        And the output has "job@123"
 
     @jenkins_server
     Scenario: add a package to an application
@@ -58,7 +59,7 @@ Feature: package add subcommand
         And there is a jenkins job with name="job"
         And the job has a build with number="123"
         When I run "package add myapp job 123"
-        Then the output has "Package version "myapp@123-1" already exists"
+        Then the output has "Package "myapp@123-1" already exists"
 
     @jenkins_server
     Scenario: add a package to an application where actual package isn't available
@@ -67,7 +68,8 @@ Feature: package add subcommand
         And the job has a build with number="123"
         And jenkins does not have the job's artifact
         When I run "package add myapp job 123"
-        Then the output has "Artifact not found for "job@123" on"
+        Then the output has "Artifact does not exist on http://localhost"
+        And the output has "job@123"
 
     @jenkins_server
     Scenario: add a package to an application where repo update daemon fails to return in time
