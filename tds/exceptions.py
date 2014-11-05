@@ -27,6 +27,15 @@ class AlreadyExistsError(TDSException):
     pass
 
 
+class AssociatedTargetsError(TDSException):
+    """
+    Exception for when an attempt occurs to delete an application
+    with associated targets
+    """
+
+    pass
+
+
 class ConfigurationError(TDSException):
     """Exception for invalid or incomplete configuration files"""
 

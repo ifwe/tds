@@ -18,10 +18,11 @@ class Application(Base):
     @property
     def targets(self):
         """Return deploy targets, but ignore the "dummy" target."""
+
         from .deploy_target import AppTarget
         return [
             AppTarget(delegate=x)
-            for x in self.delegate.targets
+            for x in self.delegate.applications
             if x.name != x.dummy
         ]
 
