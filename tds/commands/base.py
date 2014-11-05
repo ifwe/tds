@@ -315,8 +315,8 @@ class BaseController(object):
 
         if package is None:
             raise tds.exceptions.NotFoundError(
-                'Package', '{name}@{vers}'.format(name=application.name,
-                                                  vers=version)
+                'Package', ['{name}@{vers}'.format(name=application.name,
+                                                   vers=version)]
             )
 
         return dict(package=package)

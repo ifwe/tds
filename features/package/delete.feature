@@ -24,7 +24,7 @@ Feature: package delete subcommand
     Scenario: delete a package from an application with a version that doesn't exist
         Given there is an application with name="myapp"
         When I run "package delete myapp 123"
-        Then the output is "Package "myapp@123" does not exist"
+        Then the output is "Package does not exist: myapp@123"
 
     Scenario: delete a package from an application
         Given there is an application with name="myapp"
