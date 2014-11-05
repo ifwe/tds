@@ -222,11 +222,15 @@ def model_builder(single_string, multiple_string, dest, model_name):
 def get_environment(env):
     env_obj = tagopsdb.Environment.get(env=env)
     if env_obj is None:
+        domain = env + 'example.com'
+        tagopsdb.Session.add(tagopsdb.Zone(zone_name=domain))
+        tagopsdb.Session.flush()
         env_obj = tagopsdb.Environment(
             env=env,
             environment=tds.commands.DeployController.envs.get(env, env),
-            domain=env + 'example.com',
-            prefix=env[0]
+            domain=domain,
+            prefix=env[0],
+            zone_id=tagopsdb.Zone.get(zone_name=domain).id
         )
         tagopsdb.Session.add(env_obj)
         tagopsdb.Session.commit()
