@@ -967,7 +967,13 @@ def then_the_output_describes_a_missing_project_with_properties(context,
     stdout = context.process.stdout
     stderr = context.process.stderr
     names = attrs['name'] if isinstance(attrs['name'], list) else [attrs['name']]
-    assert 'Project(s) do not exist: %s' % ', '.join(names) \
+
+    if len(names) == 1:
+        message = 'Project does not exist: %s'
+    else:
+        message = 'Projects do not exist: %s'
+
+    assert message % ', '.join(names) \
         in stdout.splitlines(), (stdout, stderr)
 
 
