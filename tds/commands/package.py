@@ -166,7 +166,7 @@ class PackageController(BaseController):
 
         if package is not None:
             raise tds.exceptions.AlreadyExistsError(
-                'Package version "%s@%s-%s" already exists',
+                'Package "%s@%s-%s" already exists',
                 package.name, package.version, revision
             )
 

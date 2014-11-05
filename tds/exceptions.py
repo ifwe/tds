@@ -96,6 +96,8 @@ class JenkinsJobNotFoundError(TDSException):
                 version=version,
             )
 
+        super(JenkinsJobNotFoundError, self).__init__(message)
+
 
 class WrongEnvironmentError(TDSException):
     """Exception for command attempts in incorrect environment"""

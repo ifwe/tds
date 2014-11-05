@@ -453,7 +453,7 @@ class CLI(Base):
 
         package = result['package']
         print (
-            'Added package version: "%s@%s"' % (package.name, package.version)
+            'Added package: "%s@%s"' % (package.name, package.version)
         )
 
     def generate_package_list_result(self, result=None, error=None, **kwds):
