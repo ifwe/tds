@@ -50,8 +50,16 @@ class ApplicationController(BaseController):
     def delete(self, application, **_kwds):
         """Remove a given application."""
 
+        if len(application.targets):
+            raise tds.exceptions.AssociatedTargetsError(
+                'Application "%s" has associated targets: %s',
+                application.name,
+                ', '.join(x.name for x in application.targets)
+            )
+
         log.debug('Removing application %r', application.name)
         application.delete()
+
         return dict(result=application)
 
     @validate('application')

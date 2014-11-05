@@ -384,6 +384,27 @@ class CLI(Base):
         print format_application(result, self.output_format)
 
     @staticmethod
+    def generate_application_delete_result(result=None, error=None, **_kwds):
+        """Render view for a deleted application."""
+        if result:
+            print (
+                'Application "%(name)s" was successfully deleted.'
+                % dict(name=result.name)
+            )
+        elif error is not None:
+            print format_exception(error)
+
+    def generate_application_add_result(self, result=None, error=None,
+                                        **_kwds):
+        """Render view for a created application."""
+        if result:
+            if self.output_format == "blocks":
+                print 'Created %(name)s:' % dict(name=result.name)
+            print format_application(result, self.output_format)
+        elif error:
+            print format_exception(error)
+
+    @staticmethod
     def generate_deploy_show_result(result=None, error=None, **_kwds):
         """Render view for a list of deployments."""
         if result is not None:
