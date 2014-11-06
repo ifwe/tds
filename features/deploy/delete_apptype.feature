@@ -60,7 +60,7 @@ Feature: deploy/config delete-apptype subcommand
     Scenario Outline: delete a target from a project
         Given there is a project with name="proj"
         And there is a deploy target with name="targ"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         When I run "<command> delete-apptype targ proj"
         Then the output is "Future deployments of "proj" will no longer affect "targ""
         And the deploy target is not a part of the project
@@ -73,7 +73,7 @@ Feature: deploy/config delete-apptype subcommand
     Scenario Outline: Delete a target from a project again
         Given there is a project with name="proj"
         And there is a deploy target with name="targ"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         When I run "<command> delete-apptype targ proj"
         Then the output is "Future deployments of "proj" will no longer affect "targ""
 
