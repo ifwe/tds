@@ -71,10 +71,11 @@ class NotFoundError(TDSException):
 
     def __init__(self, object_type, objects, sing_end='', plu_end='s'):
         """Create message given object_type and objects."""
-        try:
-            objects = list(objects)
-        except:
-            objects = [objects]
+        if not isinstance(objects, str):
+            try:
+                objects = list(objects)
+            except TypeError:
+                objects = [objects]
         message = "{object_type}{p1} do{p2} not exist: {objects}".format(
             object_type=object_type,
             p1=sing_end if len(objects) == 1 else plu_end,
