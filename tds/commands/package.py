@@ -144,7 +144,6 @@ class PackageController(BaseController):
         os.link(tmpname, queued_rpm)
         os.unlink(tmpname)
 
-
     @validate('application')
     def add(self, application, version, **params):
         """Add a given version of a package for a given project"""

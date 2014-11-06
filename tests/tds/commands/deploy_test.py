@@ -161,4 +161,3 @@ class TestPromoteAndPush(DeploySetUp):
         Notifications.assert_called_with(DeployConfigFactory())
 
         notify.assert_called_with(deployment)
-
