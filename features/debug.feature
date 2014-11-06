@@ -77,7 +77,7 @@ Feature: Debug switches
     Scenario Outline: debug deploy invalidate
         Given I have "dev" permissions
         And I am in the "dev" environment
-        Given there is a project with name="proj"
+        And there is a project with name="proj"
         And there is an application with name="app1"
         And there is a package with version="123"
         And there is a deploy target with name="foo"
