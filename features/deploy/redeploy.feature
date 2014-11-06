@@ -8,7 +8,7 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         And I am in the "stage" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And there are hosts:
             | name          | env     |
             | dprojhost01   | dev     |
@@ -79,7 +79,7 @@ Feature: (config repush|deploy redeploy) project [--delay] [--hosts|--apptypes|-
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         When I run "<command> proj --all-apptypes"

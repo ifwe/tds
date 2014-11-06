@@ -61,7 +61,7 @@ Feature: deploy/config invalidate subcommand
         Given there is a project with name="proj"
         And there is a package with version="123"
         And there is a deploy target with name="foo"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         When I run "<command> invalidate proj 123 --apptype foo bar"
         Then the output is "Valid apptypes for project "proj" are: ['foo']"
 
@@ -74,7 +74,7 @@ Feature: deploy/config invalidate subcommand
         Given there is a project with name="proj"
         And there is a package with version="123"
         And there is a deploy target with name="foo"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy targets
         When I run "<command> invalidate proj 123 --apptype foo"
         Then the output is "Package "proj-name@123" currently deployed on target "foo""
@@ -88,7 +88,7 @@ Feature: deploy/config invalidate subcommand
         Given there is a project with name="proj"
         And there is a package with version="123"
         And there is a deploy target with name="foo"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         When I run "<command> invalidate proj 123 --apptype foo"
         Then the output is "Package "proj-name@123" currently deployed on target "foo""
@@ -102,7 +102,7 @@ Feature: deploy/config invalidate subcommand
         Given there is a project with name="proj"
         And there is a package with version="123"
         And there is a deploy target with name="foo"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy targets
         And the package has been validated
         When I run "<command> invalidate proj 123"
@@ -118,7 +118,7 @@ Feature: deploy/config invalidate subcommand
         Given there is a project with name="proj"
         And there is a package with version="123"
         And there is a deploy target with name="foo"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy targets
         And the package has been validated
         When I run "<command> invalidate proj 123 --apptype foo"

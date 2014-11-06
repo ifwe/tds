@@ -34,7 +34,7 @@ Feature: Debug switches
             | dprojhost02   | dev   |
             | sprojhost01   | stage |
             | sprojhost02   | stage |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         When I run "<switch> deploy promote proj 123 <targets>"
         Then the output has "DEBUG"
@@ -62,7 +62,7 @@ Feature: Debug switches
             | name          |
             | projhost01    |
             | projhost02    |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         And the package is deployed on the deploy target
         When I run "<switch> deploy validate proj 123 --apptype foo"
@@ -81,7 +81,7 @@ Feature: Debug switches
         And there is an application with name="app1"
         And there is a package with version="123"
         And there is a deploy target with name="foo"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy targets
         And the package has been validated
         When I run "<switch> deploy invalidate proj 123 --apptype foo"

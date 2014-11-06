@@ -13,7 +13,7 @@ Feature: deploy/config validate subcommand
             | name          |
             | projhost01    |
             | projhost02    |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         And the package is deployed on the deploy target
 
@@ -78,7 +78,7 @@ Feature: deploy/config validate subcommand
             | name           |
             | anotherhost01  |
             | anotherhost02  |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         When I run "<command> validate proj 123 --apptype bar"
         Then the output is "No deployments to validate for application "proj" in development environment"
@@ -113,7 +113,7 @@ Feature: deploy/config validate subcommand
             | name           | env  |
             | anotherhost01  | dev  |
             | anotherhost02  | dev  |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         And the package is deployed on the deploy target
         When I run "<command> validate proj 123"
@@ -130,7 +130,7 @@ Feature: deploy/config validate subcommand
             | name           | env  |
             | anotherhost01  | dev  |
             | anotherhost02  | dev  |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         And the package is deployed on the deploy target
         When I run "<command> validate proj 123 --apptype foo"
@@ -147,7 +147,7 @@ Feature: deploy/config validate subcommand
             | name           | env  |
             | anotherhost01  | dev  |
             | anotherhost02  | dev  |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         And the package is deployed on the deploy target
         When I run "<command> validate proj 123 --all-apptypes"

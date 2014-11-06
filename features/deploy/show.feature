@@ -8,7 +8,7 @@ Feature: deploy/config show subcommand
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is a deploy target with name="foo"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And there are hosts:
             | name          | env   |
             | projhost01    | dev   |

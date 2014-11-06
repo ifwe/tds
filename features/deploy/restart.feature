@@ -8,7 +8,7 @@ Feature: deploy restart subcommand
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is a deploy target with name="appfoo"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And there are hosts:
             | name          | env   |
             | appfoo01      | dev   |
@@ -57,13 +57,13 @@ Feature: deploy restart subcommand
 
     Scenario: restart a project with a multiple apptypes with no option
         Given there is a deploy target with name="appbar"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         When I run "deploy restart proj"
         Then the output has "Specify a target constraint (too many targets found: appbar, appfoo)"
 
     Scenario: restart a project with a multiple apptypes with apptypes option
         Given there is a deploy target with name="appbar"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And there is a host with name="appbar01"
         And the host is associated with the deploy target
         When I run "deploy restart proj --apptypes appfoo"
@@ -76,7 +76,7 @@ Feature: deploy restart subcommand
             | appbar01      |
             | appbar02      |
         And the hosts are associated with the deploy target
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         When I run "deploy restart proj --all-apptypes"

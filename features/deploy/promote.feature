@@ -17,7 +17,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | dprojhost02   | dev   |
             | sprojhost01   | stage |
             | sprojhost02   | stage |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
 
     Scenario Outline: promote project that doesn't exist
@@ -97,7 +97,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         When I run "<command> proj 123 --all-apptypes"
@@ -196,7 +196,7 @@ Feature: (config push|deploy promote) project version [-f|--force] [--delay] [--
             | sother01   | stage  |
             | sother02   | stage  |
         And the hosts are associated with the deploy target
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And there is a package with version="124"
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment

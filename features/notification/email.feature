@@ -14,14 +14,14 @@ Feature: email notifications
             | name          | env   |
             | dprojhost01   | dev   |
             | dprojhost02   | dev   |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         And there is a deploy target with name="another-apptype"
         And there are hosts:
             | name            | env   |
             | danotherhost01  | dev   |
             | danotherhost02  | dev   |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
 
     @email_server

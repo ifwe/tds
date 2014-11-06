@@ -8,7 +8,7 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
         And I am in the "stage" environment
         And there is a project with name="proj"
         And there is a deploy target with name="the-apptype"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And there are hosts:
             | name          | env   |
             | projhost01    | stage |
@@ -87,7 +87,7 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
 
     Scenario Outline: rollback version to all apptypes
         Given there is a deploy target with name="another-apptype"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
 
@@ -134,7 +134,7 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
 
     Scenario Outline: rollback version to all apptypes with a failure
         Given there is a deploy target with name="another-apptype"
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
 
