@@ -162,7 +162,7 @@ class BaseController(object):
                 project_objects.append(project)
 
         if len(missing_projects):
-            raise tds.exceptions.NotFoundError('Project',missing_projects)
+            raise tds.exceptions.NotFoundError('Project', missing_projects)
 
         return dict(
             projects=project_objects,
