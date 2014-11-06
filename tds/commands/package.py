@@ -236,7 +236,7 @@ class PackageController(BaseController):
         log.debug('Committed database changes')
 
     @validate('application')
-    def list(self, applications=None, **params):
+    def list(self, applications=None, **_params):
         """Show information for all existing packages in the software
            repository for requested projects (or all projects)
         """
