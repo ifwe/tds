@@ -116,7 +116,7 @@ PACKAGE_TEMPLATE = (
 )
 
 
-def format_access_error(exc):
+def format_access_error(_exc):
     """Format an access error."""
     return (
         'You do not have the appropriate permissions to run this command. '

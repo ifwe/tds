@@ -236,7 +236,7 @@ class Logger(logging.Logger, object):
 
         self._update_formatters()
 
-    def pop(self, *args, **kwargs):
+    def pop(self, *_args, **_kwargs):
         """Retrieve the previous values for user and code and set them"""
 
         self.user, self.code = self.saved_state.pop()

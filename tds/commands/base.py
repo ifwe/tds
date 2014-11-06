@@ -136,7 +136,7 @@ class BaseController(object):
 
         return result
 
-    def validate_project(self, project=None, projects=None, **params):
+    def validate_project(self, project=None, projects=None, **_params):
         """
         Converts 'project' and 'projects' parameters from string names that
         identify the projects into Project instances.
@@ -170,7 +170,7 @@ class BaseController(object):
         )
 
     def validate_application(self, application=None, applications=None,
-                             **params):
+                             **_params):
         if applications is None:
             applications = []
 
