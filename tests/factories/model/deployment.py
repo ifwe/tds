@@ -32,6 +32,7 @@ class DeploymentFactory(factory.Factory):
     target = dict(
         environment='dev',
         apptypes=['fake_apptype'],
+        hosts=None,
     )
 
 
