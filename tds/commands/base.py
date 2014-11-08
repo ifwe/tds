@@ -8,6 +8,9 @@ import tds.exceptions
 
 
 def latest_deployed_package_for_app_target(environment, app, app_target):
+    if isinstance(app, tds.model.Application):
+        app = app.delegate
+
     for app_dep in reversed(app_target.app_deployments):
         if app_dep.environment != environment.environment:
             print "environment didn't match", environment, app_dep
@@ -29,6 +32,9 @@ def latest_deployed_package_for_app_target(environment, app, app_target):
 
 
 def latest_deployed_version_for_host_target(environment, app, host_target):
+    if isinstance(app, tds.model.Application):
+        app = app.delegate
+
     for host_dep in reversed(host_target.host_deployments):
         if host_dep.deployment.package.application == app:
             return host_dep.deployment.package
@@ -180,7 +186,11 @@ class BaseController(object):
         missing_applications = []
 
         for app in applications:
-            application = tds.model.Application.get(name=app)
+            if not isinstance(app, tds.model.Application):
+                app_name = app
+            else:
+                app_name = app.name
+            application = tds.model.Application.get(name=app_name)
 
             if application is None:
                 missing_applications.append(app)
@@ -216,14 +226,14 @@ class BaseController(object):
         if apptype is not None:
             apptypes = [apptype]
 
-        params.update(self.validate_project(**params))
-        projects = params['projects']
+        params.update(self.validate_application(**params))
+        applications = params['applications']
 
         environment = tds.model.Environment.get(env=env)
 
         targets = []
         if not (hosts or apptypes):
-            targets.extend(sum((p.targets for p in projects), []))
+            targets.extend(sum((app.targets for app in applications), []))
             if not all_apptypes and len(targets) > 1:
                 raise tds.exceptions.TDSException(
                     "Specify a target constraint (too many targets found:"
@@ -231,9 +241,9 @@ class BaseController(object):
                 )
             return dict(apptypes=targets, hosts=None)
         elif apptypes:
-            for proj in projects:
+            for app in applications:
                 discovered_apptypes = set()
-                for targ in proj.targets:
+                for targ in app.targets:
                     if targ.name in apptypes:
                         targets.append(targ)
                         discovered_apptypes.add(targ.name)
@@ -242,8 +252,8 @@ class BaseController(object):
                     # "Apptypes dont all match. found=%r, wanted=%r",
                     # sorted(discovered_apptypes), sorted(set(apptypes))
                     raise tds.exceptions.InvalidInputError(
-                        'Valid apptypes for project "%s" are: %r',
-                        proj.name, sorted(str(x.name) for x in proj.targets)
+                        'Valid apptypes for application "%s" are: %r',
+                        app.name, sorted(str(x.name) for x in app.targets)
                     )
             return dict(apptypes=targets, hosts=None)
         elif hosts:
@@ -271,12 +281,12 @@ class BaseController(object):
                     environment.environment, ', '.join(sorted(bad_hosts))
                 )
 
-            for project in projects:
+            for app in applications:
                 for target in targets:
-                    if project not in target.application.projects:
+                    if app not in target.application.projects:
                         raise tds.exceptions.InvalidInputError(
-                            "Host %r not a part of project %r",
-                            target, project
+                            "Host %r not a part of application %r",
+                            target, app
                         )
 
             return dict(hosts=targets, apptypes=None)
@@ -285,30 +295,18 @@ class BaseController(object):
 
     def validate_package(self, version=None, **params):
         params.update(self.validate_application(**params))
-        project = params.pop('project', None)
         application = params.pop('application')
-        applications = params.pop('applications', [])
-
-        if len(applications) > 1:
-            raise tds.exceptions.TDSException(
-                'Project "%s" has too many applications associated with it:'
-                ' %s', getattr(project, 'name', None),
-                sorted(x.name for x in applications)
-            )
-        elif len(applications) == 0:
-            raise tds.exceptions.TDSException(
-                'Project %s has no applications associated with it.',
-                getattr(project, 'name', None)
-            )
 
         if version is None:
-            package = self.get_latest_app_version(None, application, **params)
+            package = self.get_latest_app_version(application, **params)
             if package is None:
-                raise Exception("couldnt determine latest version")
+                raise Exception("Couldn't determine latest version")
         elif application is not None and len(application.packages) > 0:
             for package in application.packages:
                 if version == package.version:
                     break
+            else:
+                package = None
         else:
             package = None
 
@@ -320,9 +318,8 @@ class BaseController(object):
 
         return dict(package=package)
 
-    def get_latest_app_version(self, project, app, env, **params):
+    def get_latest_app_version(self, app, env, **params):
         targets = self.validate_targets(
-            project=project.name,
             env=env,
             **params
         )
