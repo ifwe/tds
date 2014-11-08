@@ -875,7 +875,7 @@ def then_the_output_describes_the_host_deployments(context):
 
     for host in context.tds_hosts:
         context.execute_steps('''
-            Then the output describes a host deployment with host_name="%s",pkg_name="%s"
+            Then the output describes a host deployment with host_name="%s",name="%s"
         ''' % (host.name, package.name))
 
 
@@ -889,12 +889,12 @@ def then_the_output_describes_a_host_deployment_with_properties(context,
     lines = stdout.splitlines()
     processed_attrs = set()
     try:
-        if 'pkg_name' in attrs:
+        if 'name' in attrs:
             assert find_substring_or_regex_in_lines(
-                'Deployments? of %(pkg_name)s to hosts in .* environment'
+                'Deployments? of %(name)s to hosts in .* environment'
                 % attrs, lines
             )
-            processed_attrs.add('pkg_name')
+            processed_attrs.add('name')
 
         if 'host_name' in attrs:
             assert find_substring_or_regex_in_lines(
@@ -912,7 +912,8 @@ def then_the_output_describes_a_host_deployment_with_properties(context,
 
 
 @then(u'the output does not describe a host deployment with {properties}')
-def then_the_output_describes_a_host_with_properties(context, properties):
+def then_the_output_does_not_describe_a_host_with_properties(context,
+                                                             properties):
     attrs = parse_properties(properties)
     stdout = context.process.stdout
     stderr = context.process.stderr
@@ -920,12 +921,12 @@ def then_the_output_describes_a_host_with_properties(context, properties):
     lines = stdout.splitlines()
     processed_attrs = set()
     try:
-        if 'pkg_name' in attrs:
+        if 'name' in attrs:
             assert not find_substring_or_regex_in_lines(
-                'Deployments? of %(pkg_name)s to hosts in .* environment'
+                'Deployments? of %(name)s to hosts in .* environment'
                 % attrs, lines
             )
-            processed_attrs.add('pkg_name')
+            processed_attrs.add('name')
 
         if 'host_name' in attrs:
             assert not find_substring_or_regex_in_lines(

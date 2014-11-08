@@ -1,12 +1,13 @@
-Feature: deploy/config show subcommand
+Feature: deploy/config show application version [--apptypes] [--all-apptypes]
     As a user
-    I want to show deployed targets to projects
-    So I can determine the state of the deployments to the projects
+    I want to show deployed targets to applications
+    So I can determine the state of the deployments to the applications
 
     Background:
         Given I have "dev" permissions
         And I am in the "dev" environment
         And there is a project with name="proj"
+        And there is an application with name="myapp"
         And there is a deploy target with name="foo"
         And the deploy target is a part of the project-application pair
         And there are hosts:
@@ -26,7 +27,7 @@ Feature: deploy/config show subcommand
             | config  |
 
     Scenario Outline: too many arguments
-        When I run "<command> show proj 123 foo"
+        When I run "<command> show myapp 123 foo"
         Then the output has "usage:"
 
         Examples:
@@ -35,16 +36,16 @@ Feature: deploy/config show subcommand
             | config  |
 
     Scenario Outline: with a project that doesn't exist
-        When I run "<command> show badproj"
-        Then the output is "Project does not exist: badproj"
+        When I run "<command> show badapp"
+        Then the output is "Application does not exist: badapp"
 
         Examples:
             | command |
             | deploy  |
             | config  |
 
-    Scenario Outline: with a project and a version that doesn't exist
-        When I run "<command> show proj 123"
+    Scenario Outline: with a application and a version that doesn't exist
+        When I run "<command> show myapp 123"
         Then the output describes no deployments
 
         Examples:
@@ -52,18 +53,18 @@ Feature: deploy/config show subcommand
             | deploy  |
             | config  |
 
-    Scenario Outline: with a project and an apptype that doesn't exist
-        When I run "<command> show proj --apptypes bar"
-        Then the output is "Valid apptypes for project "proj" are: ['foo']"
+    Scenario Outline: with a application and an apptype that doesn't exist
+        When I run "<command> show myapp --apptypes bar"
+        Then the output is "Valid apptypes for application "myapp" are: ['foo']"
 
         Examples:
             | command |
             | deploy  |
             | config  |
 
-    Scenario Outline: with a project and an apptype and a version that doesn't exist
-        When I run "<command> show proj 124 --apptypes foo"
-        Then the output is "Package "proj-name@124" does not exist"
+    Scenario Outline: with a application and an apptype and a version that doesn't exist
+        When I run "<command> show myapp 124 --apptypes foo"
+        Then the output is "Package does not exist: myapp@124"
 
         Examples:
             | command |
@@ -71,18 +72,18 @@ Feature: deploy/config show subcommand
             | config  |
 
     Scenario Outline: with --apptypes and --all-apptypes
-        When I run "<command> show proj 123 --all-apptypes --apptypes foo"
-        Then the output is "Only one of the "--hosts", "--apptypes" or "--all-apptypes" options may be used at a given time"
+        When I run "<command> show myapp 123 --all-apptypes --apptypes foo"
+        Then the output is "These options are exclusive: hosts, apptypes, all-apptypes"
 
         Examples:
             | command |
             | deploy  |
             | config  |
 
-    Scenario Outline: with a project and a version for a tier
+    Scenario Outline: with a application and a version for a tier
         Given the package is deployed on the deploy target
         And the package has been validated
-        When I run "<command> show proj 123"
+        When I run "<command> show myapp 123"
         Then the output describes the app deployments
 
         Examples:
@@ -90,10 +91,10 @@ Feature: deploy/config show subcommand
             | deploy  |
             | config  |
 
-    Scenario Outline: with a project and an apptype
+    Scenario Outline: with a application and an apptype
         Given the package is deployed on the deploy target
         And the package has been validated
-        When I run "<command> show proj --apptypes foo"
+        When I run "<command> show myapp --apptypes foo"
         Then the output describes the app deployments
 
         Examples:
@@ -101,10 +102,10 @@ Feature: deploy/config show subcommand
             | deploy  |
             | config  |
 
-    Scenario Outline: with a project and a version and an apptype
+    Scenario Outline: with a application and a version and an apptype
         Given the package is deployed on the deploy target
         And the package has been validated
-        When I run "<command> show proj 123 --apptypes foo"
+        When I run "<command> show myapp 123 --apptypes foo"
         Then the output describes the app deployments
 
         Examples:
@@ -114,7 +115,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: without package validation
         Given the package is deployed on the deploy target
-        When I run "<command> show proj 123 --apptypes foo"
+        When I run "<command> show myapp 123 --apptypes foo"
         Then the output describes the app deployments
         And the output describes the host deployments
 
@@ -125,7 +126,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: host-only deployments with all-apptypes
         Given the package is deployed on the hosts
-        When I run "<command> show proj 123 --all-apptypes"
+        When I run "<command> show myapp 123 --all-apptypes"
         Then the output describes the host deployments
 
         Examples:
@@ -135,7 +136,7 @@ Feature: deploy/config show subcommand
 
     Scenario Outline: host-only deployments with specific apptype
         Given the package is deployed on the hosts
-        When I run "<command> show proj 123 --apptypes foo"
+        When I run "<command> show myapp 123 --apptypes foo"
         Then the output describes the host deployments
 
         Examples:
@@ -147,7 +148,7 @@ Feature: deploy/config show subcommand
         Given the package is deployed on the deploy target
         And there is a package with version="200"
         And the package is deployed on the hosts
-        When I run "<command> show proj --apptypes foo"
+        When I run "<command> show myapp --apptypes foo"
         Then the output describes the host deployments
         And the output describes an app deployment with version="123"
 
@@ -160,9 +161,9 @@ Feature: deploy/config show subcommand
         Given the package is deployed on the deploy target
         And there is a package with version="200"
         And the package is deployed on the hosts
-        When I run "<command> show proj 200 --apptypes foo"
+        When I run "<command> show myapp 200 --apptypes foo"
         Then the output describes the host deployments
-        And the output does not describe an app deployment with name="proj-name"
+        And the output does not describe an app deployment with name="myapp"
 
         Examples:
             | command |
@@ -173,9 +174,9 @@ Feature: deploy/config show subcommand
         Given the package is deployed on the deploy target
         And there is a package with version="200"
         And the package is deployed on the hosts
-        When I run "<command> show proj 123 --apptypes foo"
+        When I run "<command> show myapp 123 --apptypes foo"
         Then the output describes an app deployment with version="123"
-        And the output does not describe a host deployment with pkg_name="proj-name"
+        And the output does not describe a host deployment with name="myapp"
 
         Examples:
             | command |
@@ -186,10 +187,10 @@ Feature: deploy/config show subcommand
         Given the package is deployed on the deploy target
         And there is a package with version="200"
         And the package is deployed on the host with name="projhost01"
-        When I run "<command> show proj 200 --apptypes foo"
-        Then the output describes a host deployment with pkg_name="proj-name",host_name="projhost01"
+        When I run "<command> show myapp 200 --apptypes foo"
+        Then the output describes a host deployment with name="myapp",host_name="projhost01"
         And the output does not describe a host deployment with host_name="projhost02"
-        And the output does not describe an app deployment with name="proj-name"
+        And the output does not describe an app deployment with name="myapp"
 
         Examples:
             | command |
@@ -200,9 +201,9 @@ Feature: deploy/config show subcommand
         Given the package is deployed on the deploy target
         And there is a package with version="200"
         And the package is deployed on the host with name="projhost01"
-        When I run "<command> show proj 123 --apptypes foo"
-        Then the output describes a host deployment with pkg_name="proj-name",host_name="projhost02"
-        And the output describes an app deployment with name="proj-name"
+        When I run "<command> show myapp 123 --apptypes foo"
+        Then the output describes a host deployment with name="myapp",host_name="projhost02"
+        And the output describes an app deployment with name="myapp"
         And the output does not describe a host deployment with host_name="projhost01"
 
         Examples:
@@ -215,9 +216,9 @@ Feature: deploy/config show subcommand
         And the package has been validated
         And there is a package with version="200"
         And the package is deployed on the host with name="projhost01"
-        When I run "<command> show proj 123 --apptypes foo"
-        Then the output describes an app deployment with name="proj-name",version="123"
-        And the output does not describe a host deployment with pkg_name="proj-name"
+        When I run "<command> show myapp 123 --apptypes foo"
+        Then the output describes an app deployment with name="myapp",version="123"
+        And the output does not describe a host deployment with name="myapp"
 
         Examples:
             | command |
@@ -229,10 +230,10 @@ Feature: deploy/config show subcommand
         And the package has been validated
         And there is a package with version="200"
         And the package is deployed on the host with name="projhost01"
-        When I run "<command> show proj 200 --apptypes foo"
-        Then the output describes a host deployment with pkg_name="proj-name",host_name="projhost01"
+        When I run "<command> show myapp 200 --apptypes foo"
+        Then the output describes a host deployment with name="myapp",host_name="projhost01"
         And the output does not describe a host deployment with host_name="projhost02"
-        And the output does not describe an app deployment with name="proj-name"
+        And the output does not describe an app deployment with name="myapp"
 
         Examples:
             | command |
