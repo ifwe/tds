@@ -1348,35 +1348,37 @@ class DeployController(BaseController):
 
     @input_validate('package')
     @input_validate('targets')
-    @input_validate('project')
-    def show(self, application, project, package, version, apptypes=None,
-             **params):
-        """Show deployment information for a given project"""
+    @input_validate('application')
+    def show(self, application, package, apptypes=None, **params):
+        """Show deployment information for a given application"""
 
-        log.debug('Showing deployment information for given project')
+        # TODO: showing project information (collection of applications)
+        log.debug('Showing deployment information for given application')
 
         version = params.get('version', None)
-        pkg_def_app_map = collections.defaultdict(list)
+        app_target_map = collections.defaultdict(list)
+
+        if not apptypes:
+            apptypes = application.targets
 
         for target in apptypes:
-            for proj_pkg in tagopsdb.ProjectPackage.find(
-                project_id=project.id, app_id=target.id
-            ):
-                pkg_def_app_map[proj_pkg.package_definition].append(target)
+            # Note: eventually there may be multiple package definitions
+            # for an given application name, which will need to be handled
+            app_target_map[application].append(target)
 
         # Find deployments
         deploy_info = []
 
-        for pkg_def in pkg_def_app_map.keys():
+        for app in app_target_map.keys():
             pkg_dep_info = dict(
                 environment=params['env'],
-                package=pkg_def,
+                package=app,
                 by_apptype=[],
             )
 
-            for target in pkg_def_app_map[pkg_def]:
+            for target in app_target_map[app]:
                 func_args = [
-                    pkg_def.name,
+                    app.name,
                     self.envs[params['env']],
                     target
                 ]

@@ -339,13 +339,13 @@ CONFIG_DATA = odict([
         ])),
     ])),
     ('show', odict([
-        ('help', 'Show information for a given project release'),
+        ('help', 'Show information for a given application release'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application'),
             ])),
             (('version',), odict([
-                ('help', 'Release version number for project'),
+                ('help', 'Release version number for application'),
                 ('type', str),
                 ('nargs', '?'),
             ])),
@@ -551,13 +551,13 @@ DEPLOY_DATA = odict([
         ])),
     ])),
     ('show', odict([
-        ('help', 'Show information for a given project release'),
+        ('help', 'Show information for a given application release'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application'),
             ])),
             (('version',), odict([
-                ('help', 'Release version number for project'),
+                ('help', 'Release version number for application'),
                 ('type', str),
                 ('nargs', '?'),
             ])),
