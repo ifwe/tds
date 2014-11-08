@@ -42,6 +42,13 @@ class ConfigurationError(TDSException):
     pass
 
 
+# NOTE: This will no longer be needed once argparse is properly configured
+class ExclusiveOptionError(TDSException):
+    """Exception for when exclusive options are used together"""
+
+    pass
+
+
 class ExtCommandError(TDSException):
     """Custom exception for external command errors."""
 
