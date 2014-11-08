@@ -94,7 +94,6 @@ def _main(sysargs):
     prog = tds_main.TDS(tds_params)
 
     try:
-        prog.check_exclusive_options()
         prog.update_program_parameters()
         prog.initialize_db()
         prog.execute_command()

@@ -106,32 +106,6 @@ class TDS(object):
         return authconfig
 
     @tds.utils.debug
-    def check_exclusive_options(self):
-        """Ensure certain options are exclusive and set parameter
-           to check for explicit hosts or application types
-        """
-
-        log.debug('Checking certain options are exclusive')
-
-        # Slight hack: ensure only one of '--hosts', '--apptypes'
-        # or '--all-apptypes' is used at a given time
-        excl = filter(None, (self.params.get('hosts', None),
-                             self.params.get('apptypes', None),
-                             self.params.get('all_apptypes', None)))
-
-        if len(excl) > 1:
-            raise ConfigurationError('Only one of the "--hosts", '
-                                     '"--apptypes" or "--all-apptypes" '
-                                     'options may be used at a given time')
-
-        if not excl:
-            self.params['explicit'] = False
-        else:
-            self.params['explicit'] = True
-
-        log.log(5, '"explicit" parameter is: %(explicit)s', self.params)
-
-    @tds.utils.debug
     def update_program_parameters(self):
         """Set some additional program parameters"""
 

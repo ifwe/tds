@@ -2,8 +2,6 @@
 Base class for controllers.
 """
 
-import argparse
-
 import tds.model
 import tds.authorize
 import tds.exceptions
@@ -211,8 +209,9 @@ class BaseController(object):
         """
 
         if len(filter(None, [hosts, apptype, apptypes, all_apptypes])) > 1:
-            raise argparse.ArgumentError('These options are exclusive: %s'
-                                         ['hosts', 'apptypes', 'all_apptyes'])
+            raise tds.exceptions.ExclusiveOptionError(
+                'These options are exclusive: %s',
+                ', '.join(['hosts', 'apptypes', 'all-apptypes']))
 
         if apptype is not None:
             apptypes = [apptype]
