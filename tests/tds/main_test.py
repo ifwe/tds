@@ -33,35 +33,6 @@ class TestTDS(unittest2.TestCase):
     def tearDown(self):
         mock.patch.stopall()
 
-    exclusive_options_fail_provider = lambda: [
-        (dict(hosts=True, apptypes=True),),
-        (dict(hosts=True, all_apptypes=True),),
-        (dict(apptypes=True, all_apptypes=True),)
-    ]
-
-    @data_provider(exclusive_options_fail_provider)
-    def test_check_exclusive_options_fail(self, params):
-        t = tds.main.TDS(dict())
-        t.params = dict(params)
-        self.assertRaises(
-            tds.main.ConfigurationError,
-            t.check_exclusive_options
-        )
-
-    exclusive_options_success_provider = lambda: [
-        (dict(hosts=True),),
-        (dict(apptypes=True),),
-        (dict(all_apptypes=True),),
-        (dict(),),
-    ]
-
-    @data_provider(exclusive_options_success_provider)
-    def test_check_exclusive_options_success(self, params):
-        t = tds.main.TDS(dict())
-        t.params = dict(params)
-        t.check_exclusive_options()
-        assert t.params['explicit'] == bool(len(params))
-
     def test_update_program_parameters(self):
         t = tds.main.TDS(dict())
 
