@@ -88,7 +88,6 @@ class TestPromoteAndPush(DeploySetUp):
 
         target = AppTargetFactory(id=1)
         return_val = self.deploy.check_previous_environment(
-            ProjectFactory(),
             params={'force': force_option_used,
                     'env': 'prod',
                     'version': 'deadbeef'},
