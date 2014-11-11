@@ -744,8 +744,7 @@ class DeployController(BaseController):
         return (app_pkg_map, app_host_map, app_dep_map)
 
     @tds.utils.debug
-    def determine_validations(self, project, params, apptypes,
-                              app_dep_map):
+    def determine_validations(self, params, apptypes, app_dep_map):
         """Determine which application tiers need validation performed"""
 
         for apptype in apptypes:
@@ -768,8 +767,7 @@ class DeployController(BaseController):
                 log.info(
                     'Deployment for application %r for apptype %r '
                     'already validated in %s environment',
-                    project.name, app_type,
-                    self.envs[params['env']]
+                    pkg.name, app_type, self.envs[params['env']]
                 )
                 valid = False
 
@@ -782,7 +780,7 @@ class DeployController(BaseController):
                     log.info(
                         'Encountered issues while validating '
                         'version %r of application %r:',
-                        params['version'], project.name
+                        params['version'], pkg.name
                     )
 
                     if missing:
@@ -1144,7 +1142,7 @@ class DeployController(BaseController):
             )
 
     @tds.utils.debug
-    def perform_validations(self, project, params, app_dep_map):
+    def perform_validations(self, params, app_dep_map):
         """Perform all validations to the requested application tiers"""
 
         log.debug('Performing validations to application tiers')
@@ -1163,7 +1161,7 @@ class DeployController(BaseController):
             log.log(5, 'Committed database (nested) change')
             log.log(5, 'Clearing host deployments for application tier')
             tagopsdb.deploy.deploy.delete_host_deployments(
-                project.name,
+                pkg.name,
                 app_dep.app_id,
                 self.envs[params['env']]
             )
@@ -1271,7 +1269,7 @@ class DeployController(BaseController):
     @input_validate('application')
     def promote(self, application, package, hosts=None, apptypes=None,
                 **params):
-        """Deploy given version of given project to requested application
+        """Deploy given version of given application to requested application
            tiers or hosts
         """
         log.debug('Deploying application')
@@ -1576,33 +1574,30 @@ class DeployController(BaseController):
 
     @input_validate('package')
     @input_validate('targets')
-    @input_validate('project')
-    def validate(self, application, project, package, hosts=None,
-                 apptypes=None, **params):
-        """Validate a given version of a given project"""
+    @input_validate('application')
+    def validate(self, application, package, hosts=None, apptypes=None,
+                 **params):
+        """Validate a given version of a given application"""
 
         log.debug('Validating for given project')
 
         # Not a deployment
         params['deployment'] = False
 
-        _pkg, apptypes, app_host_map = self.get_app_info(
-            project, package, hosts, apptypes, params
-        )
-
+        apptypes = self.get_app_info(package, hosts, apptypes, params)
         app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
             raise tds.exceptions.InvalidOperationError(
                 'No deployments to validate for application "%s" '
-                'in %s environment', project.name,
+                'in %s environment', application.name,
                 self.envs[params['env']]
             )
 
         app_dep_map = self.determine_validations(
-            project, params, apptypes, app_dep_map
+            params, apptypes, app_dep_map
         )
-        self.perform_validations(project, params, app_dep_map)
+        self.perform_validations(params, app_dep_map)
 
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
