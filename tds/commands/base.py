@@ -231,22 +231,23 @@ class BaseController(object):
 
         environment = tds.model.Environment.get(env=env)
 
-        targets = []
+        app_targets = []
+        host_targets = []
         if not (hosts or apptypes):
-            targets.extend(sum((app.targets for app in applications), []))
-            if not all_apptypes and len(targets) > 1:
+            app_targets.extend(sum((app.targets for app in applications), []))
+            if not all_apptypes and len(app_targets) > 1:
                 raise tds.exceptions.TDSException(
                     "Specify a target constraint (too many targets found:"
-                    " %s)", ', '.join(sorted([x.name for x in targets]))
+                    " %s)", ', '.join(sorted([x.name for x in app_targets]))
                 )
-            return dict(apptypes=targets, hosts=None)
+            return dict(apptypes=app_targets, hosts=None)
         elif apptypes:
             for app in applications:
                 discovered_apptypes = set()
-                for targ in app.targets:
-                    if targ.name in apptypes:
-                        targets.append(targ)
-                        discovered_apptypes.add(targ.name)
+                for app_target in app.targets:
+                    if app_target.name in apptypes:
+                        app_targets.append(app_target)
+                        discovered_apptypes.add(app_target.name)
 
                 if discovered_apptypes != set(apptypes):
                     # "Apptypes dont all match. found=%r, wanted=%r",
@@ -255,7 +256,7 @@ class BaseController(object):
                         'Valid apptypes for application "%s" are: %r',
                         app.name, sorted(str(x.name) for x in app.targets)
                     )
-            return dict(apptypes=targets, hosts=None)
+            return dict(apptypes=app_targets, hosts=None)
         elif hosts:
             bad_hosts = []
             no_exist_hosts = []
@@ -269,7 +270,7 @@ class BaseController(object):
                 if host.environment != environment.environment:
                     bad_hosts.append(host.name)
                 else:
-                    targets.append(host)
+                    host_targets.append(host)
 
             if no_exist_hosts:
                 raise tds.exceptions.NotFoundError("Host",
@@ -282,14 +283,16 @@ class BaseController(object):
                 )
 
             for app in applications:
-                for target in targets:
-                    if app not in target.application.projects:
+                for host_target in host_targets:
+                    if app not in sum((target.package_definitions
+                                       for target in host_target.targets),
+                                      []):
                         raise tds.exceptions.InvalidInputError(
-                            "Host %r not a part of application %r",
-                            target, app
+                            'Application %s does not belong on host %s',
+                            app.name, host_target.name
                         )
 
-            return dict(hosts=targets, apptypes=None)
+            return dict(hosts=host_targets, apptypes=None)
 
         raise NotImplementedError
 

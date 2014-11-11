@@ -25,7 +25,7 @@ from .base import BaseController, validate as input_validate
 log = logging.getLogger('tds')
 
 
-def create_deployment(project, hosts, apptypes, **params):
+def create_deployment(hosts, apptypes, **params):
     """Translate the common "params" argument into a Deployment instance."""
     return tds.model.Deployment(
         actor=tds.model.Actor(
@@ -36,7 +36,6 @@ def create_deployment(project, hosts, apptypes, **params):
             command=params.get('command_name'),
             subcommand=params.get('subcommand_name'),
         ),
-        project=project,
         package=tds.model.Package(
             name=params.get('package_name'),
             version=params.get('version'),
@@ -93,7 +92,7 @@ class DeployController(BaseController):
         return self._deploy_strategy
 
     @tds.utils.debug
-    def check_previous_environment(self, project, params, package, apptype):
+    def check_previous_environment(self, params, package, apptype):
         """Ensure deployment for previous environment for given package
            and apptier was validated; this is only relevant for staging
            and production environments.
@@ -106,7 +105,7 @@ class DeployController(BaseController):
             log.debug(
                 'Previous environment not required for %r or "--force" '
                 'option in use',
-                project.name
+                package.name
             )
             return True
 
@@ -127,7 +126,7 @@ class DeployController(BaseController):
                 raise tds.exceptions.TDSException(
                     'Package "%s@%s" never validated in "%s" environment for '
                     'target "%s"',
-                    project.name, params['version'],
+                    package.name, params['version'],
                     prev_env, apptype.name
                 )
 
@@ -146,7 +145,7 @@ class DeployController(BaseController):
                 log.info(
                     'Application %r with version %r not fully '
                     'deployed or validated to previous environment '
-                    '(%s) for apptype %r', project.name,
+                    '(%s) for apptype %r', package.name,
                     params['version'], prev_env, prev_app_type
                 )
                 return False
@@ -300,8 +299,7 @@ class DeployController(BaseController):
         return self.deploy_strategy.restart_host(dep_host, app, retry)
 
     @tds.utils.debug
-    def deploy_to_hosts(self, project, params, dep_hosts, dep,
-                        redeploy=False):
+    def deploy_to_hosts(self, params, dep_hosts, dep, redeploy=False):
         """Perform deployment on given set of hosts (only doing those
            that previously failed with a redeploy).
         """
@@ -323,8 +321,8 @@ class DeployController(BaseController):
 
         for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
             pkg = dep.package
-            app, version = pkg.pkg_name, pkg.version
-            log.log(5, 'Project name and version: %s %s', app, version)
+            app, version = pkg.name, pkg.version
+            log.log(5, 'Application name and version: %s %s', app, version)
 
             host_dep = tagopsdb.deploy.deploy.find_host_deployment_by_depid(
                 dep.id,
@@ -370,7 +368,7 @@ class DeployController(BaseController):
                 )
                 tagopsdb.deploy.deploy.delete_host_deployment(
                     dep_host.hostname,
-                    project.name
+                    pkg.name
                 )
                 host_dep = tagopsdb.deploy.deploy.add_host_deployment(
                     dep.id,
@@ -430,9 +428,8 @@ class DeployController(BaseController):
             return True
 
     @tds.utils.debug
-    def deploy_to_hosts_or_tiers(self, project, hosts, apptypes, params, dep,
-                                 app_dep_map, app_host_map, redeploy=False,
-                                 rollback=False):
+    def deploy_to_hosts_or_tiers(self, hosts, apptypes, params, dep,
+                                 app_dep_map, redeploy=False, rollback=False):
         """Do the deployment to the requested hosts or application tiers"""
 
         log.debug('Deploying to requested hosts or application tiers')
@@ -440,8 +437,10 @@ class DeployController(BaseController):
         if hosts:
             log.log(5, 'Deployment is for hosts...')
             for apptype in list(apptypes):
-                apphosts = app_host_map.get(apptype.id, None)
-                if apphosts is None:
+                apphosts = [host for host in hosts
+                            if any(target.id == apptype.id
+                                   for target in host.targets)]
+                if not apphosts:
                     continue
 
                 if self.check_for_current_deployment(params, apptype,
@@ -451,13 +450,15 @@ class DeployController(BaseController):
                         apptype
                     )
                     apptypes.remove(apptype)
-                    app_host_map.pop(apptype.id)
+                    [hosts.remove(host) for host in hosts
+                     if any(target.id == apptype.id
+                            for target in host.targets)]
                     continue
 
                 log.log(5, 'Hosts being deployed to are: %r', apphosts)
 
                 deploy_result = self.deploy_to_hosts(
-                    project, params, apphosts, dep, redeploy=redeploy
+                    params, apphosts, dep, redeploy=redeploy
                 )
 
                 # We want the tier status updated only if doing
@@ -489,8 +490,7 @@ class DeployController(BaseController):
                         log.info(
                             'Application "%s" with version "%s" '
                             'already validated on app type %s"',
-                            project.name, pkg.version,
-                            app_type
+                            pkg.name, pkg.version, app_type
                         )
                         continue
                 else:
@@ -522,7 +522,7 @@ class DeployController(BaseController):
                     )
                     continue
 
-                if self.deploy_to_hosts(project, params, dep_hosts, dep,
+                if self.deploy_to_hosts(params, dep_hosts, dep,
                                         redeploy=redeploy):
                     app_dep.status = 'complete'
                 else:
@@ -609,8 +609,8 @@ class DeployController(BaseController):
         return app_dep_map
 
     @tds.utils.debug
-    def determine_new_deployments(self, project, hosts, apptypes, params,
-                                  package, app_host_map, app_dep_map):
+    def determine_new_deployments(self, hosts, apptypes, params, package,
+                                  app_dep_map):
         """Determine which application tiers or hosts need new deployments"""
 
         log.debug(
@@ -629,7 +629,7 @@ class DeployController(BaseController):
         #      relevant mapping to be used for deployments
         for apptype in apptypes:
             valid = self.check_previous_environment(
-                project, params, package, apptype
+                params, package, apptype
             )
 
             if valid:
@@ -653,18 +653,20 @@ class DeployController(BaseController):
                         'Application "%s" with version "%s" '
                         'already deployed to this environment (%s) '
                         'for apptype "%s"',
-                        project.name, params['version'],
+                        package.name, params['version'],
                         self.envs[params['env']], app_type
                     )
                     valid = False
 
             if not valid:
-                if app_host_map:
+                if hosts:
                     log.log(
-                        5, 'Deleting application %r from '
-                        'host/application map', apptype
+                        5, 'Deleting hosts that belong to application %r',
+                        apptype
                     )
-                    del app_host_map[apptype.id]
+                    [hosts.remove(host) for host in hosts
+                     if any(target.id == apptype.id
+                            for target in host.targets)]
                 else:
                     log.log(
                         5, 'Deleting application %r from '
@@ -672,10 +674,9 @@ class DeployController(BaseController):
                     )
                     del app_dep_map[apptype.id]
 
-        log.log(5, 'Host/application map is: %r', app_host_map)
         log.log(5, 'Deployment/application map is: %r', app_dep_map)
 
-        return (app_host_map, app_dep_map)
+        return app_dep_map
 
     @tds.utils.debug
     def determine_rollbacks(self, hosts, apptypes, params, app_host_map,
@@ -858,11 +859,9 @@ class DeployController(BaseController):
         return app_deployments
 
     @tds.utils.debug
-    def get_app_info(self, project, package, hosts, apptypes, params,
-                     hostonly=False):
+    def get_app_info(self, package, hosts, apptypes, params, hostonly=False):
         """Verify requested package and which hosts or app tiers
-        to install the package; for hosts a mapping is kept between
-        them and their related app types
+        to install the package
         """
 
         log.debug(
@@ -870,16 +869,13 @@ class DeployController(BaseController):
             'application tiers or hosts'
         )
 
+
         if hosts:
             log.log(5, 'Verification is for hosts...')
 
-            pkg, app_host_map = self.verify_package(
-                project, hosts, apptypes, params, hostonly=hostonly
-            )
-
             host_deps = \
                 tagopsdb.deploy.deploy.find_host_deployments_by_package_name(
-                    project.name,
+                    package.name,
                     [x.name for x in hosts]
                 )
 
@@ -896,37 +892,27 @@ class DeployController(BaseController):
                     and dep_version == curr_version
                         and host_dep.status == 'ok' and params['deployment']):
                     log.info(
-                        'Project %r with version %r already '
-                        'deployed to host %r', project.name,
+                        'Application %r with version %r already '
+                        'deployed to host %r', package.name,
                         curr_version, hostname
                     )
-                    app_host_map[app_id].remove(hostname)
+                    hosts.remove(hostname)
 
-                    if not app_host_map[app_id]:
-                        log.log(
-                            5, 'Application ID %r is not in '
-                            'host/application map', app_id
-                        )
-                        del app_host_map[app_id]
+            apptypes = []
+            for host in hosts:
+                apptypes.extend(host.targets)
 
-            apptypes = [app_host_map[k][0].application for k in app_host_map]
+            apptypes = list(set(apptypes))
         else:
             log.log(5, 'Verification is for application tiers...')
 
-            pkg, apptypes = self.verify_package(
-                project, hosts, apptypes, params
-            )
-
-            app_host_map = None   # No need for this for tiers
-
-        log.log(5, 'Package ID is: %s', pkg.id)
+        log.log(5, 'Package ID is: %s', package.id)
         log.log(
             5, 'Application IDs are: %s',
             ', '.join([str(x.id) for x in apptypes])
         )
-        log.log(5, 'Host/application map is: %r', app_host_map)
 
-        return (pkg, apptypes, app_host_map)
+        return apptypes
 
     @tds.utils.debug
     def get_package(self, project, params, hostonly=False):
@@ -1029,8 +1015,8 @@ class DeployController(BaseController):
             )
 
     @tds.utils.debug
-    def perform_deployments(self, project, hosts, apptypes, package, params,
-                            app_dep_map, app_host_map):
+    def perform_deployments(self, hosts, apptypes, package, params,
+                            app_dep_map):
         """Perform all deployments to the requested application tiers or
            hosts
         """
@@ -1068,7 +1054,7 @@ class DeployController(BaseController):
             log.log(5, 'Deployment is: %s', dep)
 
         self.deploy_to_hosts_or_tiers(
-            project, hosts, apptypes, params, dep, app_dep_map, app_host_map
+            hosts, apptypes, params, dep, app_dep_map
         )
 
     @staticmethod
@@ -1282,30 +1268,26 @@ class DeployController(BaseController):
 
     @input_validate('package')
     @input_validate('targets')
-    @input_validate('project')
+    @input_validate('application')
     def promote(self, application, package, hosts=None, apptypes=None,
                 **params):
         """Deploy given version of given project to requested application
            tiers or hosts
         """
-        log.debug('Deploying project')
+        log.debug('Deploying application')
 
-        _package, apptypes, app_host_map = self.get_app_info(
-            None, package, hosts, apptypes, params
-        )
+        apptypes = self.get_app_info(package, hosts, apptypes, params)
 
         params['package_name'] = package.name
 
         app_dep_map = self.find_app_deployments(package, apptypes, params)
-        app_host_map, app_dep_map = self.determine_new_deployments(
-            None, hosts, apptypes, params, package, app_host_map,
-            app_dep_map
+        app_dep_map = self.determine_new_deployments(
+            hosts, apptypes, params, package, app_dep_map
         )
 
         self.send_notifications(hosts=hosts, apptypes=apptypes, **params)
         self.perform_deployments(
-            None, hosts, apptypes, package, params, app_dep_map,
-            app_host_map
+            hosts, apptypes, package, params, app_dep_map
         )
 
         tagopsdb.Session.commit()
@@ -1525,13 +1507,14 @@ class DeployController(BaseController):
 
         elif hosts:
             for host in hosts:
-                pkg = self.get_package_for_target(
-                    host.application, environment
-                )
-                if pkg is None:
-                    continue
+                for target in host.targets:
+                    pkg = self.get_package_for_target(
+                        target, environment
+                    )
+                    if pkg is None:
+                        continue
 
-                restart_targets.append((host, pkg))
+                    restart_targets.append((host, pkg))
 
         if not restart_targets:
             raise tds.exceptions.InvalidOperationError(
