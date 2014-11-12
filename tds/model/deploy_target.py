@@ -54,5 +54,5 @@ class HostTarget(DeployTarget):
         return [self]
 
     @property
-    def application(self):
-        return AppTarget(delegate=self.delegate.application)
+    def applications(self):
+        return [AppTarget(delegate=x) for x in self.delegate.applications]

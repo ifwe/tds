@@ -296,12 +296,14 @@ class BaseController(object):
 
         raise NotImplementedError
 
-    def validate_package(self, version=None, **params):
+    def validate_package(self, version=None, hostonly=False, **params):
         params.update(self.validate_application(**params))
         application = params.pop('application')
 
         if version is None:
-            package = self.get_latest_app_version(application, **params)
+            package = self.get_latest_app_version(
+                application, hostonly, **params
+            )
             if package is None:
                 raise Exception("Couldn't determine latest version")
         elif application is not None and len(application.packages) > 0:
@@ -321,7 +323,7 @@ class BaseController(object):
 
         return dict(package=package)
 
-    def get_latest_app_version(self, app, env, **params):
+    def get_latest_app_version(self, app, hostonly, env, **params):
         targets = self.validate_targets(
             env=env,
             **params
@@ -333,13 +335,35 @@ class BaseController(object):
 
         host_deployments = {}
         app_deployments = {}
-        if host_targets:
+        if hostonly:
             for host_target in host_targets:
                 host_deployments[host_target.id] = \
                     latest_deployed_version_for_host_target(
                         environment, app, host_target
                     )
         else:
+            if app_targets is None:
+                all_targets = app.targets
+                app_target_ids = set()
+
+                for host_target in host_targets:
+                    common_targets = (
+                        set([x.id for x in host_target.targets]) &
+                        set([x.id for x in all_targets])
+                    )
+
+                    if not common_targets:
+                        raise tds.exceptions.InvalidOperationError(
+                            'Host "%s" is not associated with '
+                            'application "%s"',
+                            host_target.name, app.name
+                        )
+
+                    app_target_ids = app_target_ids.union(common_targets)
+
+                app_targets = [tds.model.AppTarget.get(id=id)
+                               for id in app_target_ids]
+
             for app_target in app_targets:
                 app_deployments[app_target.id] = \
                     latest_deployed_package_for_app_target(
