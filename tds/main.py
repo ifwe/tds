@@ -150,6 +150,7 @@ class TDS(object):
                 username=db_user,
                 password=db_password,
                 host=self.dbconfig['db.hostname'],
+                port=self.dbconfig.get('db.port', 3306),
                 database=self.dbconfig['db.db_name'],
             ),
             pool_recycle=3600

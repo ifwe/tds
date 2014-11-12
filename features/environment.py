@@ -1,10 +1,12 @@
 #  pylint: disable=C0111
 import socket
+import operator
 import pprint
 import time
 import yaml
 import sys
 import shutil
+import urlparse
 import random
 import contextlib
 
@@ -24,10 +26,179 @@ sys.path.insert(
 
 from hipchat_server import HipChatServer
 
-DB_HOSTS = (
-    'dopsdbtds01.tag-dev.com',
-    'dopsdbtds02.tag-dev.com',
-)
+def get_fresh_port():
+    with contextlib.closing(socket.socket()) as sck:
+        sck.bind(('', 0))
+        return sck.getsockname()[-1]
+
+
+class DBDescriptor(dict):
+    hostname = property(operator.itemgetter('hostname'))
+    port = property(operator.itemgetter('port'))
+    user = property(operator.itemgetter('user'))
+    password = property(operator.itemgetter('password'))
+    db_name = property(operator.itemgetter('db_name'))
+
+
+class DBProvider(object):
+    def create_db(self, db):
+        self.mysql_run(db,
+            '--execute', "CREATE DATABASE IF NOT EXISTS %s;" % db.db_name
+        )
+
+        return db
+
+    def destroy_db(self, db):
+        import tagopsdb
+        tagopsdb.destroy()
+        sys.modules.pop('tagopsdb', None)
+
+    def mysql_run(self, db, *cmd, **kwds):
+        cmd = list(cmd)
+
+        return processes.run([
+            'mysql',
+            '--host=' + db.hostname,
+            '--port=' + str(db.port),
+            '--user=' + db.user,
+            '--password=' + db.password,
+        ] + cmd, **kwds)
+
+    def setup(self):
+        pass
+
+    def teardown(self):
+        pass
+
+
+class SharedDBProvider(DBProvider):
+    user = 'jenkins'
+    password = 'hawaiirobots'
+    port = 3306
+
+    DB_HOSTS = (
+        'dopsdbtds01.tag-dev.com',
+        'dopsdbtds02.tag-dev.com',
+    )
+
+    def create_db(self, unique_id):
+        db_hosts = list(self.DB_HOSTS)
+        random.shuffle(db_hosts)
+
+        while self.db_hosts:
+            db = DBDescriptor(
+                hostname=db_hosts.pop(0),
+                port=self.port,
+                user=self.user,
+                password=self.password,
+                db_name='test_' + unique_id,
+            )
+
+            try:
+                return super(SharedDBProvider, self).create_db(db)
+            except CalledProcessError:
+                # assume it's a host problem
+                if not db_hosts:
+                    raise
+
+        return db
+
+
+class DockerProvider(DBProvider):
+    docker_cmd = ['echo']
+    user = 'root'
+    password = 'journalistsocks'
+
+    def __init__(self, *args):
+        super(DockerProvider, self).__init__(*args)
+        self._port = None
+
+    def docker(self, *args, **kwargs):
+        return processes.run(self.docker_cmd + list(args), **kwargs)
+
+    @property
+    def container_id(self):
+        return 'behave-%s' % os.getpid()
+
+    def setup(self):
+        self.docker(
+            'run',
+            '-d',
+            '-p', '%s:3306' % self.port,
+            '--name', self.container_id,
+            '--env', "MYSQL_ROOT_PASSWORD=%s" % self.password,
+            'mysql',
+        )
+
+        proc = None
+        print 'Setting up DB container',
+        db = self.get_descriptor('test')
+        for _ in range(20):
+            print '.',
+            proc = self.mysql_run(
+                db, '--execute', 'SELECT 1;',
+                expect_return_code=None
+            )
+
+            if proc.returncode == 0:
+                break
+
+            time.sleep(2)
+        else:
+            if not proc or proc.returncode != 0:
+                print proc
+                raise Exception("Couldn't get database set up")
+
+        print 'done'
+
+        super(DockerProvider, self).setup()
+
+    def get_descriptor(self, unique_id):
+        return DBDescriptor(
+            hostname=self.hostname,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            db_name='test_' + unique_id,
+        )
+
+    def create_db(self, unique_id):
+        return super(DockerProvider, self).create_db(self.get_descriptor(unique_id))
+
+    def teardown(self):
+        self.docker('stop', self.container_id)
+        self.docker('rm', self.container_id)
+        super(DockerProvider, self).teardown()
+
+    @property
+    def hostname(self):
+        return urlparse.urlparse(
+            os.environ.get('DOCKER_HOST', '') or 'tcp://127.0.0.1'
+        ).netloc.split(':')[0]
+
+    @property
+    def port(self):
+        if self._port is None:
+            self._port = get_fresh_port()
+
+        return self._port
+
+
+class MacDockerProvider(DockerProvider):
+    docker_cmd = ['docker']
+
+class LinuxDockerProvider(DockerProvider):
+    docker_cmd = ['sudo'] + MacDockerProvider.docker_cmd
+
+def db_provider_type():
+    if processes.run('boot2docker', expect_return_code=None).returncode == 0:
+        return MacDockerProvider()
+
+    if processes.run('docker', expect_return_code=None).returncode == 0:
+        return LinuxDockerProvider()
+
+    return SharedDBProvider()
+
 
 COVERAGE_REPORT_FILENAME = 'coverage.xml'
 COVERAGE_DATA_FILENAME = '.coverage'
@@ -36,6 +207,8 @@ SMTP_SERVER_PROGRAM = 'smtpd_custom.py'
 
 
 def before_all(context):
+    setup_db_provider(context)
+
     context.coverage_enabled = True
     context.PROJECT_ROOT = os.path.normpath(opj(dirname(__file__), '..'))
 
@@ -52,6 +225,8 @@ def after_all(context):
 
     processes.run('coverage combine', expect_return_code=None)
     processes.run('coverage xml', expect_return_code=None)
+
+    teardown_db_provider(context)
 
 
 def setup_workspace(context):
@@ -111,9 +286,7 @@ def setup_jenkins_server(context):
     if not os.path.isdir(context.JENKINS_SERVER_DIR):
         os.makedirs(context.JENKINS_SERVER_DIR)
 
-    with contextlib.closing(socket.socket()) as sck:
-        sck.bind(('', 0))
-        port = sck.getsockname()[-1]
+    port = get_fresh_port()
 
     context.tds_jenkins_server_proc = processes.start_process([
         sys.executable,
@@ -283,7 +456,6 @@ def before_scenario(context, scenario):
 
 
 def after_scenario(context, scenario):
-    import tagopsdb
     verbose = scenario.status != 'passed' and 'wip' in context.tags
 
     if verbose and getattr(context, 'process', None):
@@ -322,6 +494,15 @@ def after_scenario(context, scenario):
     teardown_workspace(context)
 
 
+def setup_db_provider(context):
+    context.db_provider = db_provider_type()
+    context.db_provider.setup()
+
+
+def teardown_db_provider(context):
+    context.db_provider.teardown()
+
+
 def setup_temp_db(context):
     """
     Set up a temporary database for use in the test if 'no_db' is not
@@ -333,49 +514,31 @@ def setup_temp_db(context):
     with open(context.DB_CONFIG_FILE) as f_tmpl:
         db_info.update(yaml.load(f_tmpl.read()))
 
-    db_name = 'test_' + context.unique_id
-
-    db_hosts = list(DB_HOSTS)
-    random.shuffle(db_hosts)
-
     if not dry_run:
-        exc = None
-        while db_hosts:
-            db_info['db'].update(
-                hostname=db_hosts.pop(0),
-                db_name=db_name,
-                user='jenkins',
-                password='hawaiirobots'
-            )
-
-            base_mysql_args = [
-                'mysql',
-                '--host', db_info['db']['hostname'],
-                '--user', db_info['db']['user'],
-                '--password=' + db_info['db']['password'],
-            ]
-
-            try:
-                processes.run(
-                    base_mysql_args +
-                    [
-                        '--execute',
-                        'CREATE DATABASE IF NOT EXISTS %s;' % db_name
-                    ]
-                )
-            # Expecting CalledProcessError from tds.process.wait_for_process
-            except CalledProcessError as exc:
-                # assume it's a host problem
-                if db_hosts:
-                    exc = None
-                    continue
-                else:
-                    break
-            else:
-                break
-
-        if exc:
+        try:
+            context.db = context.db_provider.create_db(context.unique_id)
+        except CalledProcessError as exc:
+            print >>sys.stderr, exc
+            print exc.stdout
+            print exc.stderr
             raise
+
+        db_info['db'].update(context.db)
+
+        import tagopsdb
+        tagopsdb.init(
+            url=dict(
+                username=context.db.user,
+                password=context.db.password,
+                host=context.db.hostname,
+                port=context.db.port,
+                database=context.db.db_name,
+            ),
+            pool_recycle=3600,
+            create=True,
+        )
+
+        seed_db()
 
     auth_levels = tds.authorize.ACCESS_LEVELS
 
@@ -387,25 +550,6 @@ def setup_temp_db(context):
     for fname in [filename] + auth_fnames:
         with open(opj(conf_dir, fname), 'wb') as db_file:
             db_file.write(yaml.dump(db_info))
-
-    if dry_run:
-        return
-
-    import tagopsdb
-    tagopsdb.init(
-        url=dict(
-            username=db_info['db']['user'],
-            password=db_info['db']['password'],
-            host=db_info['db']['hostname'],
-            database=db_info['db']['db_name'],
-        ),
-        pool_recycle=3600,
-        create=True,
-    )
-
-    seed_db()
-
-    # tagopsdb.Base.metadata.bind.echo = True
 
 
 def seed_db():
@@ -461,10 +605,7 @@ def teardown_temp_db(context):
     if dry_run:
         return
 
-    import tagopsdb
-    tagopsdb.destroy()
-    sys.modules.pop('tagopsdb', None)
-
+    context.db_provider.destroy_db(context.db)
 
 def get_hex_ip():
     ip = socket.gethostbyname_ex(socket.gethostname())[2][0]

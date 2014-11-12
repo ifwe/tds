@@ -53,6 +53,7 @@ class TagopsdbDeploymentProvider(object):
                 password=dbconf['password'],
                 host=dbconf['hostname'],
                 database=dbconf['db_name'],
+                port=dbconf.get('port', 3306),
             ),
             pool_recycle=3600
         )

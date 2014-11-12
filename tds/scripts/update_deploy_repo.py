@@ -285,6 +285,7 @@ class UpdateDeployRepoDaemon(Daemon):
                 password=dbconfig['password'],
                 host=dbconfig['hostname'],
                 database=dbconfig['db_name'],
+                port=dbconfig.get('port', 3306)
             ),
             pool_recycle=3600)
         )

@@ -4,3 +4,4 @@ db:
     db_name: aint-here
     password: superpassword
     user: fakityfake
+    port: 3306
