@@ -418,8 +418,8 @@ DEPLOY_DATA = odict([
     ('invalidate', odict([
         ('help', 'Mark a given deployment as not working'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application'),
             ])),
             (('version',), odict([
                 ('help', 'Release version number for project'),
