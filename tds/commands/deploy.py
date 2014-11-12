@@ -542,7 +542,8 @@ class DeployController(BaseController):
                     'status.cgi?style=detail&hostgroup=app.%s', apptype.name
                 )
 
-    def determine_invalidations(self, project, params, apptypes, app_dep_map):
+    def determine_invalidations(self, application, params, apptypes,
+                                app_dep_map):
         """Determine which application tiers need invalidations performed"""
 
         log.debug(
@@ -550,7 +551,7 @@ class DeployController(BaseController):
         )
 
         curr_deps = tagopsdb.deploy.deploy.find_latest_deployed_version(
-            project.name,
+            application.name,
             self.envs[params['env']],
             apptier=True
         )
@@ -586,7 +587,7 @@ class DeployController(BaseController):
                     'Unable to invalidate application "%s" with '
                     'version "%s" for apptype "%s" as that version '
                     'is currently deployed for the apptype',
-                    project.name, params['version'], app_type
+                    application.name, params['version'], app_type
                 )
                 valid = False
 
@@ -1293,19 +1294,17 @@ class DeployController(BaseController):
 
     @input_validate('package')
     @input_validate('targets')
-    @input_validate('project')
-    def invalidate(self, application, project, package, hosts=None,
+    @input_validate('application')
+    def invalidate(self, application, package, hosts=None,
                    apptypes=None, **params):
-        """Invalidate a given version of a given project"""
+        """Invalidate a given version of a given application"""
 
-        log.debug('Invalidating for given project')
+        log.debug('Invalidating for given application')
 
         # Not a deployment
         params['deployment'] = False
 
-        _pkg, apptypes, _app_host_map = self.get_app_info(
-            project, package, hosts, apptypes, params
-        )
+        apptypes = self.get_app_info(package, hosts, apptypes, params)
 
         app_dep_map = self.find_app_deployments(package, apptypes, params)
 
@@ -1313,12 +1312,12 @@ class DeployController(BaseController):
             raise tds.exceptions.InvalidOperationError(
                 'No deployments to invalidate for application %r '
                 'with version %r in %s environment',
-                project.name, params['version'],
+                package.name, params['version'],
                 self.envs[params['env']]
             )
 
-        app_dep_map = self.determine_invalidations(project, params, apptypes,
-                                                   app_dep_map)
+        app_dep_map = self.determine_invalidations(application, params,
+                                                   apptypes, app_dep_map)
         self.perform_invalidations(app_dep_map)
 
         tagopsdb.Session.commit()
