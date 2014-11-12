@@ -679,8 +679,7 @@ class DeployController(BaseController):
         return app_dep_map
 
     @tds.utils.debug
-    def determine_rollbacks(self, hosts, apptypes, params, app_host_map,
-                            app_dep_map):
+    def determine_rollbacks(self, hosts, apptypes, params, app_dep_map):
         """Determine which application tiers or hosts need rollbacks"""
 
         log.debug('Determining rollbacks for requested application types')
@@ -738,10 +737,9 @@ class DeployController(BaseController):
                 del app_dep_map[apptype.id]
 
         log.log(5, 'Package/application map is: %r', app_pkg_map)
-        log.log(5, 'Host/application map is: %r', app_host_map)
         log.log(5, 'Deployment/application map is: %r', app_dep_map)
 
-        return (app_pkg_map, app_host_map, app_dep_map)
+        return (app_pkg_map, app_dep_map)
 
     @tds.utils.debug
     def determine_validations(self, params, apptypes, app_dep_map):
@@ -1085,8 +1083,8 @@ class DeployController(BaseController):
         )
 
     @tds.utils.debug
-    def perform_rollbacks(self, project, hosts, apptypes, params, app_pkg_map,
-                          app_host_map, app_dep_map):
+    def perform_rollbacks(self, hosts, apptypes, params, app_pkg_map,
+                          app_dep_map):
         """Perform all rollbacks to the requested application tiers
            or hosts
         """
@@ -1106,7 +1104,14 @@ class DeployController(BaseController):
             app_id = app_dep.app_id
             log.log(5, 'Application ID is: %s', app_id)
 
-            if app_host_map is None or not app_host_map.get(app_id, None):
+            if hosts:
+                apphosts = [host for host in hosts
+                            if any(target.id == app_id
+                                   for target in host.targets)]
+            else:
+                apphosts = []
+
+            if not apphosts:
                 log.log(5, 'Creating new deployment')
 
                 pkg_dep = tagopsdb.deploy.deploy.add_deployment(
@@ -1129,16 +1134,10 @@ class DeployController(BaseController):
 
                 dep = app_dep.deployment
 
-            if app_host_map is None:
-                single_app_host_map = None
-            else:
-                single_app_host_map = {app_id: app_host_map[app_id]}
-
             single_app_dep_map = {app_id: app_dep_map[app_id]}
 
             self.deploy_to_hosts_or_tiers(
-                project, hosts, apptypes, params, dep, single_app_dep_map,
-                single_app_host_map
+                apphosts, apptypes, params, dep, single_app_dep_map
             )
 
     @tds.utils.debug
@@ -1397,24 +1396,22 @@ class DeployController(BaseController):
 
     @input_validate('package')
     @input_validate('targets')
-    @input_validate('project')
-    def rollback(self, application, project, package, hosts=None,
-                 apptypes=None, **params):
+    @input_validate('application')
+    def rollback(self, application, package, hosts=None, apptypes=None,
+                 **params):
         """Rollback to the previous validated deployed version of given
-           project on requested application tiers or hosts
+           application on requested application tiers or hosts
         """
 
-        log.debug('Rolling back project')
+        log.debug('Rolling back application')
 
-        package, apptypes, app_host_map = self.get_app_info(
-            project, None, hosts, apptypes, params
-        )
+        apptypes = self.get_app_info(package, hosts, apptypes, params)
         app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(filter(None, app_dep_map.itervalues())):
             raise tds.exceptions.InvalidOperationError(
                 'Nothing to roll back for application %r in %s '
-                'environment', project.name,
+                'environment', package.name,
                 self.envs[params['env']]
             )
 
@@ -1423,19 +1420,19 @@ class DeployController(BaseController):
         log.log(5, 'Saving current application/deployment map')
         orig_app_dep_map = app_dep_map
 
-        app_pkg_map, app_host_map, app_dep_map = \
-            self.determine_rollbacks(hosts, apptypes, params, app_host_map,
-                                     app_dep_map)
+        app_pkg_map, app_dep_map = \
+            self.determine_rollbacks(hosts, apptypes, params, app_dep_map)
 
         # May need to change when 'package' has name removed (found
         # via 'package_definition')
-        params['package_name'] = pkg.name
-        params['version'] = pkg.version
+        params['package_name'] = package.name
+        params['version'] = package.version
 
-        self.send_notifications(hosts, apptypes, project=project, **params)
+        self.send_notifications(
+            hosts, apptypes, application=application, **params
+        )
         self.perform_rollbacks(
-            project, hosts, apptypes, params, app_pkg_map, app_host_map,
-            app_dep_map
+            hosts, apptypes, params, app_pkg_map, app_dep_map
         )
 
         if not hosts:
@@ -1579,7 +1576,7 @@ class DeployController(BaseController):
                  **params):
         """Validate a given version of a given application"""
 
-        log.debug('Validating for given project')
+        log.debug('Validating for given application')
 
         # Not a deployment
         params['deployment'] = False
