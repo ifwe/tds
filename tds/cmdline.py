@@ -527,8 +527,8 @@ DEPLOY_DATA = odict([
     ('rollback', odict([
         ('help', 'Revert deployment'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application'),
             ])),
             (('--delay',), odict([
                 ('help', 'Time delay (in seconds) between each rollback'),
