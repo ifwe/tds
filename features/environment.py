@@ -20,6 +20,10 @@ import tds.authorize
 import tds.utils.processes as processes
 import tds.utils.merge as merge
 
+
+# Whether or not to try using docker for mysql database
+USE_DOCKER = False
+
 sys.path.insert(
     0, opj(os.path.dirname(os.path.realpath(__file__)), 'helpers', 'bin')
 )
@@ -191,11 +195,13 @@ class LinuxDockerProvider(DockerProvider):
     docker_cmd = ['sudo'] + MacDockerProvider.docker_cmd
 
 def db_provider_type():
-    if processes.run('boot2docker', expect_return_code=None).returncode == 0:
-        return MacDockerProvider()
 
-    if processes.run('docker', expect_return_code=None).returncode == 0:
-        return LinuxDockerProvider()
+    if USE_DOCKER:
+        if processes.run('boot2docker', expect_return_code=None).returncode == 0:
+            return MacDockerProvider()
+
+        if processes.run('docker', expect_return_code=None).returncode == 0:
+            return LinuxDockerProvider()
 
     return SharedDBProvider()
 
