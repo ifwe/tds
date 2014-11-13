@@ -30,15 +30,6 @@ class TDS(object):
 
     views = {
         ('deploy', 'redeploy'): 'deploy_promote',
-        ('config', 'add_apptype'): 'deploy_add_apptype',
-        ('config', 'create'): 'project_create',
-        ('config', 'delete_apptype'): 'deploy_delete_apptype',
-        ('config', 'invalidate'): 'deploy_invalidate',
-        ('config', 'push'): 'deploy_promote',
-        ('config', 'show'): 'deploy_show',
-        ('config', 'validate'): 'deploy_validate',
-        ('config', 'repush'): 'deploy_promote',
-        ('config', 'revert'): 'deploy_rollback',
     }
 
     def __init__(self, params):

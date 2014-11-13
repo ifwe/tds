@@ -5,7 +5,6 @@ from .project import ProjectController
 from .application import ApplicationController
 from .package import PackageController
 from .deploy import DeployController
-from .config import ConfigController
 
 __all__ = [
     'BaseController',
@@ -13,5 +12,4 @@ __all__ = [
     'ApplicationController',
     'PackageController',
     'DeployController',
-    'ConfigController',
 ]

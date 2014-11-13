@@ -16,8 +16,6 @@ documentation</a> for Behave.
 ## Navigation
 * [./authorizations/](./authorizations/) -
 Authorization and permissions tests.
-* [./config/](./config/) -
-Tests for the `config` command.
 * [./deploy/](./deploy/) -
 Tests for the `deploy` command.
 * [./helpers/](./helpers/)
