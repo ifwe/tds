@@ -11,8 +11,10 @@ Feature: Authorization roles
         Then the output is "You do not have the appropriate permissions to run this command. Contact your manager."
 
         Examples:
-            | command                                       |
-            | deploy delete-apptype foo bar                 |
-            | deploy add-apptype foo bar baz                |
-            # | project delete                                |
-            # | project create                                |
+            | command                                      |
+            | application add myapp                        |
+            | application delete myapp                     |
+            | application add-apptype myapp proj targ      |
+            | application delete-apptype myapp proj targ   |
+            | project add proj                             |
+            | project delete proj                          |
