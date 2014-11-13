@@ -18,5 +18,3 @@ Feature: Authorization roles
             | config delete foo                             |
             # | project delete                                |
             # | project create                                |
-            | repository delete foo                         |
-            | repository add foo bar baz noarch ci rpm what |

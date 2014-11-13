@@ -13,5 +13,4 @@ Commands to manage deployments.
 Commands to manage packages.
 * [./project.py](./project.py) -
 Commands to manage projects.
-* [./repository.py](./repository.py) -
-Commands to manage repositories.
+

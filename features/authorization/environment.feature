@@ -28,4 +28,3 @@ Feature: Authorization roles - environment
             | package list              |
             | package add foo bar 123   |
             | package delete foo 123    |
-            | repository list           |

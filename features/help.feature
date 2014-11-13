@@ -11,10 +11,6 @@ Feature: Help switches
         Examples:
             | command               | switch    |
             |                       | -h        |
-            | repository            | -h        |
-            | repository list       | -h        |
-            | repository add        | -h        |
-            | repository delete     | -h        |
             | project               | -h        |
             | project add           | -h        |
             | project delete        | -h        |
@@ -44,10 +40,6 @@ Feature: Help switches
             | deploy show           | -h        |
             | deploy validate       | -h        |
             |                       | --help    |
-            | repository            | --help    |
-            | repository list       | --help    |
-            | repository add        | --help    |
-            | repository delete     | --help    |
             | project               | --help    |
             | project add           | --help    |
             | project delete        | --help    |

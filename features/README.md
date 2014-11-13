@@ -26,8 +26,6 @@ Helper applications for deployment tests.
 Tests for supported notifications.
 * [./package/](./package/) -
 Tests for the `package` command.
-* [./repository/](./repository/) -
-Tests for the `repository` command.
 * [./steps/](./steps/) -
 Behave <a href="http://pythonhosted.org/behave/api.html#step-functions"
 target="_blank">steps</a>.
