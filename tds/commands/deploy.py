@@ -893,7 +893,8 @@ class DeployController(BaseController):
                         'deployed to host %r', package.name,
                         curr_version, hostname
                     )
-                    hosts.remove(hostname)
+                    if hostname in hosts:
+                        hosts.remove(hostname)
 
             apptypes = []
             for host in hosts:
