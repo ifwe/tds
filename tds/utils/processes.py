@@ -9,12 +9,21 @@ import collections
 def run(cmd, expect_return_code=0, shell=False, **kwds):
     """Wrapper to run external command"""
 
-    proc = start_process(cmd, shell=shell, **kwds)
-    return wait_for_process(proc, expect_return_code=expect_return_code,
-                            **kwds)
+    proc = start_process(
+        cmd,
+        shell=shell,
+        expect_return_code=expect_return_code,
+        **kwds
+    )
+
+    return wait_for_process(
+        proc,
+        expect_return_code=expect_return_code,
+        **kwds
+    )
 
 
-def start_process(cmd, shell=False, **kwds):
+def start_process(cmd, shell=False, expect_return_code=0, **kwds):
     """
     Start a subprocess.
 
@@ -38,6 +47,9 @@ def start_process(cmd, shell=False, **kwds):
         exc = subprocess.CalledProcessError(1, args)
         exc.stderr = 'Error using Popen: %s' % e
         exc.stdout = None
+        exc.duration = -1
+        if expect_return_code is None:
+            return exc
         raise exc
 
     return proc
@@ -52,6 +64,10 @@ def wait_for_process(proc, expect_return_code=0, **_kwds):
     process.duration is not strictly correct -- if the process ended
     before the call to this function, the duration will be inflated.
     """
+
+    if isinstance(proc, subprocess.CalledProcessError):
+        return proc
+
     stdout, stderr = proc.communicate()
     end = time.time()
     duration = end - proc.start_time
