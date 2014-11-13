@@ -1474,12 +1474,12 @@ class DeployController(BaseController):
 
     @input_validate('package')
     @input_validate('targets')
-    @input_validate('project')
-    def restart(self, application, project, package, hosts=None,
-                apptypes=None, **params):
-        """Restart given project on requested application tiers or hosts"""
+    @input_validate('application')
+    def restart(self, application, package, hosts=None, apptypes=None,
+                **params):
+        """Restart given application on requested tiers or hosts"""
 
-        log.debug('Restarting application for project')
+        log.debug('Restarting application')
 
         # Not a deployment
         params['deployment'] = False
@@ -1512,7 +1512,7 @@ class DeployController(BaseController):
         if not restart_targets:
             raise tds.exceptions.InvalidOperationError(
                 'Nothing to restart for project "%s" in %s environment',
-                project.name, environment.environment
+                package.name, environment.environment
             )
 
         restart_targets.sort(key=lambda x: (x[0].name, x[1].name))

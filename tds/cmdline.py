@@ -501,8 +501,8 @@ DEPLOY_DATA = odict([
     ('restart', odict([
         ('help', 'Restart deployed application'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application'),
             ])),
             (('--delay',), odict([
                 ('help', 'Time delay (in seconds) between each restart'),
