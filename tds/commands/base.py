@@ -323,6 +323,10 @@ class BaseController(object):
 
         return dict(package=package)
 
+    def validate_package_hostonly(self, version=None, hostonly=True,
+                                  **params):
+        return self.validate_package(version, hostonly, **params)
+
     def get_latest_app_version(self, app, hostonly, env, **params):
         targets = self.validate_targets(
             env=env,
@@ -336,6 +340,18 @@ class BaseController(object):
         host_deployments = {}
         app_deployments = {}
         if hostonly:
+            if host_targets is None:
+                all_host_targets = []
+
+                for app_target in app.targets:
+                    all_host_targets.extend(app_target.hosts)
+
+                host_targets = []
+
+                for host_target in all_host_targets:
+                    if host_target.host_deployments:
+                        host_targets.append(host_target)
+
             for host_target in host_targets:
                 host_deployments[host_target.id] = \
                     latest_deployed_version_for_host_target(
