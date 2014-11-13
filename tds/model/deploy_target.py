@@ -43,6 +43,10 @@ class AppTarget(DeployTarget):
         """Return list of projects for this AppTarget."""
         return [Project(delegate=p) for p in self.delegate.projects]
 
+    @property
+    def hosts(self):
+        return [HostTarget(delegate=x) for x in self.delegate.hosts]
+
 
 class HostTarget(DeployTarget):
     """A host target."""
