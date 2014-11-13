@@ -5,8 +5,6 @@ Controllers for models in TDS.
 ## Navigation
 * [./base.py](./base.py) -
 Abstract base controller
-* [./config.py](./deploy.py) -
-Commands to manage config-type projects.
 * [./deploy.py](./deploy.py) -
 Commands to manage deployments.
 * [./package.py](./package.py) -

@@ -19,16 +19,6 @@ Feature: Help switches
             | package add           | -h        |
             | package delete        | -h        |
             | package list          | -h        |
-            | config                | -h        |
-            | config add-apptype    | -h        |
-            | config create         | -h        |
-            | config delete-apptype | -h        |
-            | config invalidate     | -h        |
-            | config push           | -h        |
-            | config repush         | -h        |
-            | config revert         | -h        |
-            | config show           | -h        |
-            | config validate       | -h        |
             | deploy                | -h        |
             | deploy add-apptype    | -h        |
             | deploy delete-apptype | -h        |
@@ -48,16 +38,6 @@ Feature: Help switches
             | package add           | --help    |
             | package delete        | --help    |
             | package list          | --help    |
-            | config                | --help    |
-            | config add-apptype    | --help    |
-            | config create         | --help    |
-            | config delete-apptype | --help    |
-            | config invalidate     | --help    |
-            | config push           | --help    |
-            | config repush         | --help    |
-            | config revert         | --help    |
-            | config show           | --help    |
-            | config validate       | --help    |
             | deploy                | --help    |
             | deploy add-apptype    | --help    |
             | deploy delete-apptype | --help    |

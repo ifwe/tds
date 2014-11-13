@@ -14,7 +14,5 @@ Feature: Authorization roles
             | command                                       |
             | deploy delete-apptype foo bar                 |
             | deploy add-apptype foo bar baz                |
-            | config create foo bar baz noarch ci rpm       |
-            | config delete foo                             |
             # | project delete                                |
             # | project create                                |
