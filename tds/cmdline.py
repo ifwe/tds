@@ -475,8 +475,8 @@ DEPLOY_DATA = odict([
     ('redeploy', odict([
         ('help', 'Redeploy project to current environment'),
         ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in repository'),
+            (('application',), odict([
+                ('help', 'Name of application'),
             ])),
             (('--delay',), odict([
                 ('help', 'Time delay (in seconds) between each redeploy'),

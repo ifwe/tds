@@ -1070,8 +1070,8 @@ class DeployController(BaseController):
             app_dep.status = 'invalidated'
 
     @tds.utils.debug
-    def perform_redeployments(self, project, hosts, apptypes, params,
-                              deployment, app_host_map, app_dep_map):
+    def perform_redeployments(self, hosts, apptypes, params, deployment,
+                              app_dep_map):
         """Perform all redeployments to the requested application tiers or
            hosts
         """
@@ -1079,8 +1079,7 @@ class DeployController(BaseController):
         log.debug('Performing redeployments to application tiers or hosts')
 
         self.deploy_to_hosts_or_tiers(
-            project, hosts, apptypes, params, deployment, app_dep_map,
-            app_host_map, redeploy=True
+            hosts, apptypes, params, deployment, app_dep_map, redeploy=True
         )
 
     @tds.utils.debug
@@ -1532,24 +1531,24 @@ class DeployController(BaseController):
 
         return dict(result=restart_results)
 
-    @input_validate('package')
+    @input_validate('package_hostonly')
     @input_validate('targets')
-    @input_validate('project')
-    def redeploy(self, application, project, package, hosts=None,
-                 apptypes=None, **params):
-        """Redeploy given project to requested application tiers or hosts"""
+    @input_validate('application')
+    def redeploy(self, application, package, hosts=None, apptypes=None,
+                 **params):
+        """Redeploy given application to requested tiers or hosts"""
 
-        log.debug('Redeploying project')
+        log.debug('Redeploying application')
 
-        _package, apptypes, app_host_map = self.get_app_info(
-            project, None, hosts, apptypes, params, hostonly=True
+        apptypes = self.get_app_info(
+            package, hosts, apptypes, params, hostonly=True
         )
         app_dep_map = self.find_app_deployments(package, apptypes, params)
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
             raise tds.exceptions.InvalidOperationError(
                 'Nothing to redeploy for application %r in %s '
-                'environment', project.name,
+                'environment', application.name,
                 self.envs[params['env']]
             )
 
@@ -1557,10 +1556,11 @@ class DeployController(BaseController):
         params['package_name'] = deployment.package.name
         params['version'] = deployment.package.version
 
-        self.send_notifications(hosts, apptypes, project=project, **params)
+        self.send_notifications(
+            hosts, apptypes, application=application, **params
+        )
         self.perform_redeployments(
-            project, hosts, apptypes, params, deployment, app_host_map,
-            app_dep_map
+            hosts, apptypes, params, deployment, app_dep_map
         )
 
         tagopsdb.Session.commit()
