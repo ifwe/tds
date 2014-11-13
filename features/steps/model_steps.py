@@ -331,6 +331,18 @@ def given_the_deploy_targets_are_a_part_of_the_proj_app_pair(context):
         )
 
 
+@given(u'the deploy targets are a part of the project-application pairs')
+def given_the_deploy_targets_are_a_part_of_the_proj_app_pairs(context):
+    for project in context.tds_projects:
+        for application in context.tds_applications:
+            for target in context.tds_targets:
+                add_target_to_proj_app(
+                    project,
+                    application,
+                    target
+                )
+
+
 def deploy_package_to_target(package, target, env, status='complete'):
     env_id = tagopsdb.Environment.get(env=env).id
 
