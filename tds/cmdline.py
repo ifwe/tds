@@ -2,58 +2,6 @@
 
 from collections import OrderedDict as odict
 
-REPOSITORY_DATA = odict([
-    ('add', odict([
-        ('help', 'Add new project to the repository information'),
-        ('subargs', odict([
-            (('-c', '--config'), odict([
-                ('help', 'Config project associated with project'),
-            ])),
-            (('project',), odict([
-                ('help', 'Name of project in system'),
-            ])),
-            (('pkgname',), odict([
-                ('help', 'Name of package (RPM)'),
-            ])),
-            (('pkgpath',), odict([
-                ('help', 'Path to built packages on build system'),
-            ])),
-            (('arch',), odict([
-                ('help', 'Architecture of package (x86_64 or noarch)'),
-            ])),
-            (('buildhost',), odict([
-                ('help', 'System that packages are built on'),
-            ])),
-            (('buildtype',), odict([
-                ('help', 'Type of build (hudson, jenkins, etc.)'),
-            ])),
-            (('apptypes',), odict([
-                ('help', 'Specific apptype(s) associated with project'),
-                ('metavar', 'apptype'),
-                ('nargs', '+'),
-            ])),
-        ])),
-    ])),
-    ('delete', odict([
-        ('help', 'Remove given project from repository information'),
-        ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in system'),
-            ])),
-        ])),
-    ])),
-    ('list', odict([
-        ('help', 'List all current projects in repository'),
-        ('subargs', odict([
-            (('--projects',), odict([
-                ('help', 'Specific projects to list'),
-                ('metavar', 'PROJECT'),
-                ('nargs', '*'),
-            ])),
-        ])),
-    ])),
-])
-
 PROJECT_DATA = odict([
     ('add', odict([
         ('help', 'Add new project to deployment system'),
@@ -137,7 +85,7 @@ PACKAGE_DATA = odict([
         ('help', 'Add new package to deployment system'),
         ('subargs', odict([
             (('application',), odict([
-                ('help', 'Name of application in repository'),
+                ('help', 'Name of application'),
             ])),
             (('job_name',), odict([
                 ('help', 'Jenkins job name'),
@@ -156,7 +104,7 @@ PACKAGE_DATA = odict([
         ('help', 'Remove given package from deployment system'),
         ('subargs', odict([
             (('application',), odict([
-                ('help', 'Name of application in repository'),
+                ('help', 'Name of application'),
             ])),
             (('version',), odict([
                 ('help', 'Release version number for application'),
@@ -440,7 +388,7 @@ DEPLOY_DATA = odict([
         ('help', 'Promote project to next environment'),
         ('subargs', odict([
             (('application',), odict([
-                ('help', 'Name of application in repository'),
+                ('help', 'Name of application'),
             ])),
             (('version',), odict([
                 ('help', 'Release version number for application'),
@@ -600,7 +548,6 @@ DEPLOY_DATA = odict([
 ])
 
 PARSER_DATA = odict([
-    ('repository', REPOSITORY_DATA),
     ('project', PROJECT_DATA),
     ('application', APPLICATION_DATA),
     ('package', PACKAGE_DATA),
