@@ -415,7 +415,7 @@ class CLI(Base):
 
         print (
             ('Future deployments of "%(application)s" in "%(project)s" '
-            'will affect %(names)s')
+             'will affect %(names)s')
             % dict(
                 project=result['project'],
                 application=result['application'],

@@ -1,7 +1,6 @@
 import contextlib
 import mock
 import unittest2
-from unittest_data_provider import data_provider
 
 from tests.factories.utils.config import (
     DeployConfigFactory,
