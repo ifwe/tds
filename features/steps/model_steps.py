@@ -544,6 +544,31 @@ def target_in_project(context):
     return target in project.targets
 
 
+def target_in_project_application(context, target):
+    project = context.tds_projects[-1]
+    application = context.tds_applications[-1]
+
+    return target in project.targets and target in application.targets
+
+
+@then(u'the deploy target is a part of the project-application pair')
+def then_the_deploy_target_is_a_part_of_the_proj_app_pair(context):
+    target = context.tds_targets[-1]
+    assert target_in_project_application(context, target)
+
+
+@then(u'the deploy targets are a part of the project-application pair')
+def then_the_deploy_targets_are_a_part_of_the_proj_app_pair(context):
+    for target in context.tds_targets:
+        assert target_in_project_application(context, target)
+
+
+@then(u'the deploy target is not a part of the project-application pair')
+def then_the_deploy_target_is_not_a_part_of_the_proj_app_pair(context):
+    target = context.tds_targets[-1]
+    assert not target_in_project_application(context, target)
+
+
 @then(u'the deploy target is a part of the project')
 def then_the_deploy_target_is_a_part_of_the_project(context):
     assert target_in_project(context)
