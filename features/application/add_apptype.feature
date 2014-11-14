@@ -1,75 +1,48 @@
-Feature: deploy/config add-apptype subcommand
+Feature: application add-apptype application project target(s)
     As an administrator
-    I want to add deploy targets to projects
+    I want to add deploy targets to project/application pairs
     So I can deploy packages to the targets
 
     Background:
         Given I have "admin" permissions
+        And there is a project with name="proj"
+        And there is an application with name="myapp"
+        And there is a deploy target with name="targ1"
 
     # TODO: should these arg checks be in another file that checks overall
     #       cli behavior?
-    @no_db
-    Scenario Outline: too few arguments
-        When I run "<command> add-apptype proj myapp"
+    Scenario: too few arguments
+        When I run "application add-apptype myapp proj"
         Then the output has "usage:"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
+    Scenario: add a target to a project/application pair with an application that doesn't exist
+        When I run "application add-apptype badapp proj targ"
+        Then the output is "Application does not exist: badapp"
 
-    Scenario Outline: add a target and application to a project that doesn't exist
-        When I run "<command> add-apptype proj myapp targ"
-        Then the output is "Project does not exist: proj"
+    Scenario: add a target to a project/application pair with a project that doesn't exist
+        When I run "application add-apptype myapp badproj targ"
+        Then the output is "Project does not exist: badproj"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
+    Scenario: add a target that doesn't exist to a project/application pair
+        When I run "application add-apptype myapp proj badtarg"
+        Then the output is "Deploy target does not exist: badtarg"
 
-    Scenario Outline: add a target to a application that doesn't exist
-        Given there is a project with name="proj"
-        When I run "<command> add-apptype proj myapp targ"
-        Then the output is "Application does not exist: myapp"
-
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: add a target that doesn't exist to an application and a project
-        Given there is a project with name="proj"
-        And there is an application with name="myapp"
-        When I run "<command> add-apptype proj myapp targ"
-        Then the output is "Deploy target does not exist: targ"
-
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: add a target to an application and a project
-        Given there is a project with name="proj"
-        And there is an application with name="myapp"
-        And there is a deploy target with name="targ"
-        When I run "<command> add-apptype proj myapp targ"
-        Then the output is "Future deployments of "proj" will affect "targ""
-        And the deploy target is a part of the project
-
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: add a target to an application and a project again
-        Given there is a project with name="proj"
-        And there is an application with name="myapp"
-        And there is a deploy target with name="targ"
+    Scenario: add a target to a project/application pair
+        When I run "application add-apptype myapp proj targ1"
+        Then the output is "Future deployments of "myapp" in "proj" will affect "targ1""
         And the deploy target is a part of the project-application pair
-        When I run "<command> add-apptype proj myapp targ"
-        Then the output is "targ is already a part of proj"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
+    Scenario: add a target to a project/application pair again
+        Given the deploy target is a part of the project-application pair
+        When I run "application add-apptype myapp proj targ1"
+        Then the output is "Apptype "targ1" is already a part of the project "proj" and application "myapp" pair"
+
+    Scenario: add multiple targets to a project/application pair where one target doesn't exist
+        When I run "application add-apptype myapp proj targ1 badtarg"
+        Then the output is "Deploy target does not exist: badtarg"
+
+    Scenario: add multiple targets to a project/application pair
+        Given there is a deploy target with name="targ2"
+        When I run "application add-apptype myapp proj targ1 targ2"
+        Then the output is "Future deployments of "myapp" in "proj" will affect "targ1", "targ2""
+        Then the deploy targets are a part of the project-application pair
