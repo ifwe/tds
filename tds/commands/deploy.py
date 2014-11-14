@@ -863,7 +863,6 @@ class DeployController(BaseController):
             'application tiers or hosts'
         )
 
-
         if hosts:
             log.log(5, 'Verification is for hosts...')
 

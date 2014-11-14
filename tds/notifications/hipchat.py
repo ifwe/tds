@@ -6,7 +6,6 @@ import requests
 import logging
 log = logging.getLogger('tds')
 
-import tds.model
 from .base import Notifications, Notifier
 
 
