@@ -26,10 +26,12 @@ Feature: application delete-apptype application project target(s)
 
     Scenario: delete a target that doesn't exist from a project/application pair
         When I run "application add-apptype myapp proj badtarg"
-        Then the output is "Valid apptypes for application "myapp" are: ["targ1"]"
+        Then the output is "Deploy target does not exist: badtarg"
 
-    # TODO: Lots of tests to write below this!
+    @wip
     Scenario: delete a target from a project/application pair
-        When I run "application delete-apptype targ proj"
+        When I run "application delete-apptype myapp proj targ1"
         Then the output is "Future deployments of "myapp" in "proj" will no longer affect "targ1""
         And the deploy target is not a part of the project-application pair
+
+    # TODO: Lots of tests to write below this!
