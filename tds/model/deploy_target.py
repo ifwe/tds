@@ -47,6 +47,26 @@ class AppTarget(DeployTarget):
     def hosts(self):
         return [HostTarget(delegate=x) for x in self.delegate.hosts]
 
+    def remove_application(self, application, project=None):
+        if project is not None:
+            projects = [project]
+        else:
+            projects = self.projects
+
+        for project in projects:
+            proj_pkg = tagopsdb.ProjectPackage.get(
+                project_id=project.id,
+                pkg_def_id=application.id,
+                app_id=self.id
+            )
+
+            if proj_pkg is None:
+                continue
+
+            proj_pkg.delete()
+
+        tagopsdb.Session.commit()
+
 
 class HostTarget(DeployTarget):
     """A host target."""
