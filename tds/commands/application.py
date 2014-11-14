@@ -1,7 +1,10 @@
 """Commands to manage the TDS applications."""
 import logging
 
+import tagopsdb
+import tagopsdb.deploy.repo
 import tds.exceptions
+
 from tds.model import Application
 from .base import BaseController, validate
 
@@ -12,9 +15,11 @@ class ApplicationController(BaseController):
     """Commands to manage TDS applications."""
 
     access_levels = dict(
-        list='environment',
         add='admin',
+        add_apptype='admin',
         delete='admin',
+        delete_apptype='admin',
+        list='environment',
     )
 
     @staticmethod
@@ -47,6 +52,51 @@ class ApplicationController(BaseController):
         ))
 
     @validate('application')
+    @validate('project')
+    def add_apptype(self, project, application, apptypes, **_params):
+        """Add a specific application type (or types) to the given project
+           and application pair
+        """
+
+        log.debug('Adding application type(s) for a given '
+                  'project/application pair')
+
+        # Validate apptypes (targets) first and get target objects
+        targets = []
+
+        for apptype in apptypes:
+            target = tds.model.AppTarget.get(name=apptype)
+
+            if target is None:
+                raise tds.exceptions.NotFoundError('Deploy target', [apptype])
+            elif tagopsdb.model.ProjectPackage.get(
+                project_id=project.id,
+                app_id=target.id,
+                pkg_def_id=application.id
+            ) is not None:
+                raise tds.exceptions.InvalidOperationError(
+                    'Apptype "%s" is already a part of the project "%s" and '
+                    'application "%s" pair',
+                    apptype, project.name, application.name
+                )
+            else:
+                targets.append(target)
+
+        tagopsdb.deploy.repo.add_project_package_mapping(
+            project, application, targets
+        )
+        tagopsdb.Session.commit()
+        log.debug('Committed database changes')
+
+        return dict(
+            result=dict(
+                application=application.name,
+                project=project.name,
+                targets=apptypes,
+            )
+        )
+
+    @validate('application')
     def delete(self, application, **_kwds):
         """Remove a given application."""
 
@@ -61,6 +111,32 @@ class ApplicationController(BaseController):
         application.delete()
 
         return dict(result=application)
+
+    @validate('targets')
+    @validate('application')
+    @validate('project')
+    def delete_apptype(self, project, application, apptypes, **_params):
+        """Delete a specific application type (or types) from the given
+           project and application pair
+        """
+
+        # TODO: This needs to be properly written to avoid removing
+        #       apptypes that still have active deployments
+        pass
+
+        tagopsdb.deploy.repo.delete_project_packages_mapping(
+            project, application, apptypes
+        )
+
+        tagopsdb.Session.commit()
+
+        return dict(
+            result=dict(
+                application=application.name,
+                project=project.name,
+                targets=apptypes,
+            )
+        )
 
     @validate('application')
     def list(self, applications=(), **_kwds):

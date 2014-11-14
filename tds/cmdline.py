@@ -60,11 +60,43 @@ APPLICATION_DATA = odict([
             ])),
         ])),
     ])),
+    ('add-apptype', odict([
+        ('help', 'Add apptype(s) to a project/application pair'),
+        ('subargs', odict([
+            (('application',), odict([
+                ('help', 'Name of application'),
+            ])),
+            (('project',), odict([
+                ('help', 'Name of project'),
+            ])),
+            (('apptypes',), odict([
+                ('help', 'Apptype(s) to add'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '+'),
+            ])),
+        ])),
+    ])),
     ('delete', odict([
         ('help', 'Remove given application from deployment system'),
         ('subargs', odict([
             (('application',), odict([
                 ('help', 'Name of application'),
+            ])),
+        ])),
+    ])),
+    ('delete-apptype', odict([
+        ('help', 'Remove apptype(s) from a project/application pair'),
+        ('subargs', odict([
+            (('application',), odict([
+                ('help', 'Name of application'),
+            ])),
+            (('project',), odict([
+                ('help', 'Name of project'),
+            ])),
+            (('apptypes',), odict([
+                ('help', 'Apptype(s) to remove'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '+'),
             ])),
         ])),
     ])),
@@ -125,33 +157,6 @@ PACKAGE_DATA = odict([
 ])
 
 DEPLOY_DATA = odict([
-    ('add-apptype', odict([
-        ('help', 'Add app type to a project'),
-        ('subargs', odict([
-            (('project',), odict([
-                ('help', 'Name of project in system'),
-            ])),
-            (('application',), odict([
-                ('help', 'Name of application'),
-            ])),
-            (('apptypes',), odict([
-                ('help', 'App type to add to project'),
-                ('metavar', 'APPTYPE'),
-                ('nargs', '+'),
-            ])),
-        ])),
-    ])),
-    ('delete-apptype', odict([
-        ('help', 'Remove app type from a project'),
-        ('subargs', odict([
-            (('apptype',), odict([
-                ('help', 'App type to remove from project'),
-            ])),
-            (('project',), odict([
-                ('help', 'Name of project in system'),
-            ])),
-        ])),
-    ])),
     ('invalidate', odict([
         ('help', 'Mark a given deployment as not working'),
         ('subargs', odict([

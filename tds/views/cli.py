@@ -404,6 +404,43 @@ class CLI(Base):
         elif error:
             print format_exception(error)
 
+    def generate_application_add_apptype_result(
+        self, result=None, error=None, **kwds
+    ):
+        """Format the result of an "application add-apptype" action."""
+        if error is not None:
+            return self.generate_default_result(
+                result=result, error=error, **kwds
+            )
+
+        print (
+            ('Future deployments of "%(application)s" in "%(project)s" '
+            'will affect %(names)s')
+            % dict(
+                project=result['project'],
+                application=result['application'],
+                names=', '.join('"%s"' % x for x in result['targets'])
+            )
+        )
+
+    def generate_application_delete_apptype_result(
+        self, result=None, error=None, **kwds
+    ):
+        """Format the result of an "application delete-apptype" action."""
+        if error is not None:
+            return self.generate_default_result(
+                result=result, error=error, **kwds
+            )
+
+        print (
+            ('Future deployments of "%(application)s" in "%(project)s" '
+             'will no longer affect %(names)s')
+            % dict(
+                project=result['project'],
+                names=', '.join('"%s"' % x.name for x in result['targets'])
+            )
+        )
+
     @staticmethod
     def generate_deploy_show_result(result=None, error=None, **_kwds):
         """Render view for a list of deployments."""
@@ -411,38 +448,6 @@ class CLI(Base):
             print format_deployments(result)
         elif error:
             print format_exception(error)
-
-    def generate_deploy_add_apptype_result(
-        self, result=None, error=None, **kwds
-    ):
-        """Format the result of a "deploy add-apptype" action."""
-        if error is not None:
-            return self.generate_default_result(
-                result=result, error=error, **kwds
-            )
-
-        print (
-            'Future deployments of "%(project)s" will affect "%(target)s"'
-            % result
-        )
-
-    def generate_deploy_delete_apptype_result(
-        self, result=None, error=None, **kwds
-    ):
-        """Format the result of a "deploy delete-apptype" action."""
-        if error is not None:
-            return self.generate_default_result(
-                result=result, error=error, **kwds
-            )
-
-        print (
-            ('Future deployments of "%(project)s" will no longer '
-                'affect %(names)s')
-            % dict(
-                project=result['project'],
-                names=', '.join('"%s"' % x.name for x in result['targets'])
-            )
-        )
 
     def generate_package_add_result(self, result=None, error=None, **kwds):
         """Format the result of a "package add" action."""
