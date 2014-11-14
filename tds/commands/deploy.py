@@ -1179,29 +1179,6 @@ class DeployController(BaseController):
         notification = tds.notifications.Notifications(self.app_config)
         notification.notify(deployment)
 
-    @tds.utils.debug
-    def verify_package(self, project, hosts, apptypes, params,
-                       hostonly=False):
-        """Ensure requested package is valid (exists in the software
-           repository)
-        """
-
-        log.debug('Verifying requested package')
-
-        pkg = self.get_package(project, params, hostonly)
-
-        app_id_key = lambda x: x.application.id
-        if hosts:
-            app_host_map = dict(
-                (k, list(v))
-                for k, v in itertools.groupby(
-                    sorted(hosts, key=app_id_key), app_id_key
-                )
-            )
-            return (pkg, app_host_map)
-        else:
-            return (pkg, apptypes)
-
     @input_validate('package')
     @input_validate('targets')
     @input_validate('application')
