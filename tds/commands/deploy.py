@@ -3,7 +3,6 @@ Controller for 'deploy' commands.
 """
 import collections
 import progressbar
-import itertools
 import time
 from datetime import datetime, timedelta
 
