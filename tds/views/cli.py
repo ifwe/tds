@@ -434,10 +434,11 @@ class CLI(Base):
 
         print (
             ('Future deployments of "%(application)s" in "%(project)s" '
-             'will no longer affect %(names)s')
+             'will no longer affect "%(name)s"')
             % dict(
-                project=result['project'],
-                names=', '.join('"%s"' % x.name for x in result['targets'])
+                application=result['application'].name,
+                project=result['project'].name,
+                name=result['target'].name
             )
         )
 

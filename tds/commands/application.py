@@ -115,26 +115,24 @@ class ApplicationController(BaseController):
     @validate('targets')
     @validate('application')
     @validate('project')
-    def delete_apptype(self, project, application, apptypes, **_params):
+    def delete_apptype(self, application, project, apptypes, **_params):
         """Delete a specific application type (or types) from the given
            project and application pair
         """
 
+        assert len(apptypes) == 1, "too many apptypes: %r" % apptypes
+        apptype = apptypes[0]
+
         # TODO: This needs to be properly written to avoid removing
         #       apptypes that still have active deployments
-        pass
 
-        tagopsdb.deploy.repo.delete_project_packages_mapping(
-            project, application, apptypes
-        )
-
-        tagopsdb.Session.commit()
+        apptype.remove_application(application, project=project)
 
         return dict(
             result=dict(
-                application=application.name,
-                project=project.name,
-                targets=apptypes,
+                application=application,
+                project=project,
+                target=apptype,
             )
         )
 
