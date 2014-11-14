@@ -12,7 +12,7 @@ Feature: Authorization roles
 
         Examples:
             | command                                      |
-            | application add myapp                        |
+            | application add myapp myjob                  |
             | application delete myapp                     |
             | application add-apptype myapp proj targ      |
             | application delete-apptype myapp proj targ   |
