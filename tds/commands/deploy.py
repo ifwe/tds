@@ -66,8 +66,6 @@ class DeployController(BaseController):
     requires_tier_progression = True
 
     access_levels = {
-        'add_apptype': 'admin',
-        'delete_apptype': 'admin',
         'invalidate': 'environment',
         'show': 'environment',
         'validate': 'environment',
@@ -1203,66 +1201,6 @@ class DeployController(BaseController):
             return (pkg, app_host_map)
         else:
             return (pkg, apptypes)
-
-    @input_validate('application')
-    @input_validate('project')
-    def add_apptype(self, project, application, apptypes, **_params):
-        """Add a specific application type (or types) to the given project
-           and application pair
-        """
-
-        log.debug('Adding application type for a given project/application '
-                  'pair')
-
-        # Validate apptypes (targets) first and get target objects
-        targets = []
-
-        for apptype in apptypes:
-            target = tds.model.AppTarget.get(name=apptype)
-            if target is None:
-                raise tds.exceptions.NotFoundError('Deploy target', [apptype])
-            elif tagopsdb.model.ProjectPackage.get(
-                project_id=project.id,
-                app_id=target.id,
-                pkg_def_id=application.id
-            ) is not None:
-                raise tds.exceptions.InvalidOperationError(
-                    "%s is already a part of %s", apptype, project.name
-                )
-            else:
-                targets.append(target)
-
-        tagopsdb.deploy.repo.add_project_package_mapping(
-            project, application, targets
-        )
-        tagopsdb.Session.commit()
-        log.debug('Committed database changes')
-
-        return dict(
-            result=dict(
-                target=apptype,
-                project=project.name
-            )
-        )
-
-    @input_validate('targets')
-    @input_validate('application')
-    @input_validate('project')
-    def delete_apptype(self, application, project, apptypes, **_params):
-        """Delete a specific application type from the given project"""
-
-        tagopsdb.deploy.repo.delete_project_packages_mapping(
-            project, application, apptypes
-        )
-
-        tagopsdb.Session.commit()
-
-        return dict(
-            result=dict(
-                targets=apptypes,
-                project=project.name
-            )
-        )
 
     @input_validate('package')
     @input_validate('targets')
