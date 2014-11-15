@@ -1050,6 +1050,7 @@ class DeployController(BaseController):
             log.error(e)
             raise SystemExit(1)
 
+        app_ids = []
         if params.get('apptypes', None):
             try:
                 app_defs = [
@@ -1075,7 +1076,19 @@ class DeployController(BaseController):
                     project.name, [str(x.name) for x in app_packages]
                 )
 
-        app_ids = [x.id for x in app_packages]
+            app_ids = [x.id for x in app_packages]
+        elif params.get('hosts', None):
+            new_ids = set(
+                tagopsdb.Host.get(name=host_name).app_id for host_name in
+                params['hosts']
+            )
+            all_ids = set(x.id for x in app_packages)
+
+            if new_ids.issubset(all_ids) and None not in new_ids:
+                app_ids = list(new_ids)
+        else:
+            app_ids = [x.id for x in app_packages]
+
         log.log(
             5, 'Final application IDs are: %s',
             ', '.join([str(x) for x in app_ids])
