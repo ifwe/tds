@@ -109,6 +109,30 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         Then the output has "Some hosts had failures"
         And the output has "Hostname: projhost01"
 
+    Scenario: rollback a single host out of multiple apptypes
+        Given there is a deploy target with name="another-apptype"
+        And the deploy target is a part of the project-application pair
+        And there is a host with name="anotherhost01"
+        And the host is associated with the deploy target
+        And there is a host with name="anotherhost02"
+        And the host is associated with the deploy target
+
+        And the package "121" is deployed on the deploy target
+        And the package has been validated
+
+        And the package "122" is deployed on the deploy target
+        And the package has been validated
+
+        And the package "123" is deployed on the deploy target
+        And the package has been validated
+
+        And there is a package with version="124"
+        And the package "124" is deployed on the deploy target
+        And the package has been validated
+
+        When I run "deploy rollback myapp --hosts anotherhost01"
+        Then the output has "Completed: 1 out of 1 hosts"
+
     @delay
     Scenario: rollback version with delay option
         When I run "deploy rollback myapp --delay 10"
