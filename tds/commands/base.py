@@ -7,6 +7,7 @@ import tds.authorize
 import tds.exceptions
 
 
+# TODO: these two functions should be methods on tds.model.*Target classes
 def latest_deployed_package_for_app_target(environment, app, app_target):
     if isinstance(app, tds.model.Application):
         app = app.delegate
@@ -328,6 +329,7 @@ class BaseController(object):
         return self.validate_package(version, hostonly, **params)
 
     def get_latest_app_version(self, app, hostonly, env, **params):
+        # TODO: possibly move this to tds.model.Application ?
         targets = self.validate_targets(
             env=env,
             **params
