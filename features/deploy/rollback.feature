@@ -157,6 +157,36 @@ Feature: (config revert|deploy rollback) project [--delay] [--hosts|--apptypes|-
             | config revert     |
             | deploy rollback   |
 
+    Scenario Outline: rollback a single host out of multiple apptypes
+        Given there is a deploy target with name="another-apptype"
+        And the deploy target is a part of the project
+        And there is a host with name="anotherhost01"
+        And the host is associated with the deploy target
+        And there is a host with name="anotherhost02"
+        And the host is associated with the deploy target
+
+        And the package version "121" is deployed on the deploy target
+        And the package version has been validated
+
+        And the package version "122" is deployed on the deploy target
+        And the package version has been validated
+
+        And the package version "123" is deployed on the deploy target
+        And the package version has been validated
+
+        And there is a package version with version="124"
+        And the package version "124" is deployed on the deploy target
+        And the package version has been validated
+
+        When I run "<command> proj --hosts anotherhost01"
+        Then the output has "Completed: 1 out of 1 hosts"
+
+        Examples:
+            | command           |
+            | config revert     |
+            | deploy rollback   |
+
+    @delay
     Scenario Outline: rollback version with delay option
         When I run "<command> proj --delay 10"
         Then the output has "Completed: 2 out of 2 hosts"
