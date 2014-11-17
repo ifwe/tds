@@ -18,7 +18,14 @@ Feature: application add application job_name [--deploy_type] [--arch] [--build_
 
     Scenario: adding application
         When I run "application add myapp myjob"
-        Then there is an application with name="myapp",deploy_type="rpm",arch="noarch",build_type="jenkins",build_host="ci.tagged.com",path="myjob"
+        Then there is an application
+            | key         | value         |
+            | name        | myapp         |
+            | deploy_type | rpm           |
+            | arch        | noarch        |
+            | build_type  | jenkins       |
+            | build_host  | ci.tagged.com |
+            | path        | myjob         |
 
     Scenario: adding application with invalid architecture
         When I run "application add myapp myjob --arch no-exist-arch"
