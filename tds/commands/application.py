@@ -4,8 +4,8 @@ import logging
 import tagopsdb
 import tagopsdb.deploy.repo
 import tds.exceptions
+import tds.model
 
-from tds.model import Application
 from .base import BaseController, validate
 
 log = logging.getLogger('tds')
@@ -28,20 +28,20 @@ class ApplicationController(BaseController):
         """Add an application."""
 
         app_name = application
-        application = Application.get(name=app_name)
+        application = tds.model.Application.get(name=app_name)
         if application is not None:
             raise tds.exceptions.AlreadyExistsError(
                 "Application already exists: %s", application.name
             )
 
-        Application.verify_package_arch(arch)
-        Application.verify_build_type(build_type)
+        tds.model.Application.verify_package_arch(arch)
+        tds.model.Application.verify_build_type(build_type)
 
         log.debug('Creating application %r', app_name)
 
         # NOTE: create() does not give a proper exception/traceback
         # if there's missing keyword information
-        return dict(result=Application.create(
+        return dict(result=tds.model.Application.create(
             name=app_name,
             deploy_type=deploy_type,
             validation_type='matching',
@@ -143,6 +143,6 @@ class ApplicationController(BaseController):
         """
 
         if len(applications) == 0:
-            applications = Application.all()
+            applications = tds.model.Application.all()
 
         return dict(result=applications)
