@@ -11,5 +11,5 @@ pytz>=2012j
 requests==1.2.3
 socketcache==0.1.0
 tabulate==0.7.2
-git+ssh://git@github.tagged.com/siteops/tagopsdb.git@for-split-project-and-package#egg=tagopsdb-0.9.2
+git+ssh://git@github.tagged.com/siteops/tagopsdb.git@master#egg=0.9.2
 git+ssh://git@github.tagged.com/siteops/python-simpledaemon.git@master#egg=simpledaemon-1.0
