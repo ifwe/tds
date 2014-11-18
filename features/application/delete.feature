@@ -5,6 +5,7 @@ Feature: application delete application
 
     Background:
         Given I have "admin" permissions
+        And there is an environment with name="dev"
 
     @no_db
     Scenario: too few arguments

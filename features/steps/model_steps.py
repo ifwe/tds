@@ -51,7 +51,9 @@ def rpm_factory(context, **kwargs):
 
 def host_factory(context, name, env=None, **_kwargs):
     env = env or context.tds_env
-    env_id = get_environment(env).id
+    env_obj = tagopsdb.Environment.get(env=env)
+    assert env_obj is not None
+    env_id = env_obj.id
 
     host = tagopsdb.Host(
         state='operational',
@@ -217,25 +219,6 @@ def model_builder(single_string, multiple_string, dest, model_name):
     @given(single_string % '{properties}')
     def _handle_single(context, properties):
         create_model(context, dest, model_name, properties)
-
-
-def get_environment(env):
-    env_obj = tagopsdb.Environment.get(env=env)
-    if env_obj is None:
-        domain = env + 'example.com'
-        tagopsdb.Session.add(tagopsdb.Zone(zone_name=domain))
-        tagopsdb.Session.flush()
-        env_obj = tagopsdb.Environment(
-            env=env,
-            environment=tds.commands.DeployController.envs.get(env, env),
-            domain=domain,
-            prefix=env[0],
-            zone_id=tagopsdb.Zone.get(zone_name=domain).id
-        )
-        tagopsdb.Session.add(env_obj)
-        tagopsdb.Session.commit()
-
-    return env_obj
 
 
 model_builder(
@@ -436,7 +419,8 @@ def given_the_package_is_deployed_on_the_deploy_targets(context):
 def given_the_package_is_deployed_on_the_deploy_targets_in_env(
         context, env
 ):
-    env_obj = get_environment(env)
+    env_obj = tagopsdb.Environment.get(env=env)
+    assert env_obj is not None
 
     for target in context.tds_targets:
         deploy_package_to_target(

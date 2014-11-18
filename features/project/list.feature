@@ -5,6 +5,7 @@ Feature: project list [--projects]
 
     Background: User setup
         Given I have "dev" permissions
+        And there is an environment with name="dev"
         And I am in the "dev" environment
 
     Scenario: with no projects

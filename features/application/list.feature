@@ -5,6 +5,7 @@ Feature: application list [app [app [...]]]
 
     Background: User setup
         Given I have "dev" permissions
+        And there is an environment with name="dev"
         And I am in the "dev" environment
         And there is an application with name="app1"
         And there is an application with name="app2",arch="x86_64",path="app2"

@@ -5,6 +5,7 @@ Feature: deploy validate application version [-f|--force] [--apptypes|--all-appt
 
     Background:
         Given I have "dev" permissions
+        And there is an environment with name="dev"
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is an application with name="myapp"

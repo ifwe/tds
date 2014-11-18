@@ -5,6 +5,10 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
 
     Background:
         Given I have "stage" permissions
+        And there are environments
+            | name   |
+            | dev    |
+            | stage  |
         And I am in the "stage" environment
         And there is a project with name="proj"
         And there is an application with name="myapp"
