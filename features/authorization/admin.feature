@@ -5,8 +5,7 @@ Feature: Authorization roles
     So that I can't break things I'm not supposed to
 
     Scenario Outline:
-        Given there is an environment with name="dev"
-        And I am in the "dev" environment
+        Given I am in the "dev" environment
         And I have "dev" permissions
         When I run "<command>"
         Then the output is "You do not have the appropriate permissions to run this command. Contact your manager."
