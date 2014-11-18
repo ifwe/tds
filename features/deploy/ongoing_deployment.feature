@@ -4,7 +4,10 @@ Feature: Ongoing deployments blocking attempted new ones
     So that there's less violence in the world
 
     Background:
-        Given there is an environment with name="dev"
+        Given there are environments
+            | name   |
+            | dev    |
+            | stage  |
 
     Scenario Outline: promote with ongoing apptype deployment
         Given I have "dev" permissions
