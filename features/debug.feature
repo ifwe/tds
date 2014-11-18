@@ -3,6 +3,12 @@ Feature: Debug switches
     I want debug information
     So that I can find out what's going on deeper in the program
 
+    Background:
+        Given there are environments
+            | name   |
+            | dev    |
+            | stage  |
+
     Scenario Outline: debug package list
         Given I have "dev" permissions
         And I am in the "dev" environment

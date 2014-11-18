@@ -3,6 +3,9 @@ Feature: Ongoing deployments blocking attempted new ones
     I don't want to clobber ongoing deployments
     So that there's less violence in the world
 
+    Background:
+        Given there is an environment with name="dev"
+
     Scenario Outline: promote with ongoing apptype deployment
         Given I have "dev" permissions
         And I am in the "dev" environment

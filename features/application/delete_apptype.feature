@@ -5,6 +5,7 @@ Feature: application delete-apptype application project target(s)
 
     Background:
         Given I have "admin" permissions
+        And there is an environment with name="dev"
         And I am in the "dev" environment
         And there is a project with name="proj"
         And there is an application with name="myapp"

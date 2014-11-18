@@ -5,6 +5,7 @@ Feature: Real-life application usage
 
     Background:
         Given I have "dev" permissions
+        And there is an environment with name="dev"
         And I am in the "dev" environment
 
         And there is a project with name="solr"

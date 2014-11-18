@@ -5,6 +5,7 @@ Feature: package add subcommand
 
     Background:
         Given I have "dev" permissions
+        And there is an environment with name="dev"
         And I am in the "dev" environment
 
     @no_db
