@@ -7,12 +7,10 @@ Feature: application delete application
         Given I have "admin" permissions
         And there is an environment with name="dev"
 
-    @no_db
     Scenario: too few arguments
         When I run "application delete"
         Then the output has "usage:"
 
-    @no_db
     Scenario: invalid arguments
         When I run "application delete myapp --foo"
         Then the output has "usage:"
