@@ -123,8 +123,42 @@ class ApplicationController(BaseController):
         assert len(apptypes) == 1, "too many apptypes: %r" % apptypes
         apptype = apptypes[0]
 
-        # TODO: This needs to be properly written to avoid removing
-        #       apptypes that still have active deployments
+        # Check for active host deployments
+        host_deps = tds.model.HostDeployment.all()
+
+        for host_dep in host_deps:
+            if host_dep.application != application:
+                continue
+
+            if host_dep.app_target != apptype:
+                continue
+
+            if host_dep.status == 'failed':
+                continue
+
+            if host_dep.host_state == 'operational':
+                raise tds.exceptions.InvalidOperationError(
+                    'Apptype "%s" still has active deployments',
+                    apptype.name
+                )
+
+        # Check for active tier deployments
+        app_deps = tds.model.AppDeployment.find(target=apptype)
+        app_target = tds.model.AppTarget.get(name=apptype.name)
+
+        for app_dep in app_deps:
+            if app_dep.application != application:
+                continue
+
+            if app_dep.status == 'invalidated':
+                continue
+
+            for app_host in app_target.hosts:
+                if app_host.state == 'operational':
+                    raise tds.exceptions.InvalidOperationError(
+                        'Apptype "%s" still has active deployments',
+                        apptype.name
+                    )
 
         apptype.remove_application(application, project=project)
 
