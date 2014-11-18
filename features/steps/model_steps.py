@@ -1326,25 +1326,6 @@ def given_the_hosts_are_associated_with_the_deploy_target(context):
         associate_host_with_target(host, target)
 
 
-@given(u'the applications can be deployed to the deploy targets')
-def given_the_applications_can_be_deployed_to_the_deploy_targets(context):
-    assert False
-    for application in context.tds_applications:
-        for target in context.tds_targets:
-            if target in application.targets:
-                continue
-
-            project = target.projects[0]
-
-            tagopsdb.Session.add(tagopsdb.ProjectPackage(
-                project_id=project.id,
-                pkg_def_id=application.id,
-                app_id=target.id
-            ))
-
-    tagopsdb.Session.commit()
-
-
 @given(u'the package with {package_props} is deployed on the deploy target with {target_props}')
 def given_the_package_is_deployed_on_the_target(context, package_props, target_props):
     package_attrs = parse_properties(package_props)
