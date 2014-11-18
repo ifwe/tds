@@ -636,6 +636,14 @@ def then_there_is_an_application(context):
     assert app is not None
 
 
+@then(u'there is an application with {properties}')
+def then_there_is_an_application_with_properties(context, properties):
+    attrs = parse_properties(properties)
+    app = tds.model.Application.get(**attrs)
+
+    assert app is not None
+
+
 @then(u'the output describes the applications')
 def then_the_output_describes_the_applications(context):
     for application in context.tds_applications:
