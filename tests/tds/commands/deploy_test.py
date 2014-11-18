@@ -34,14 +34,9 @@ class DeploySetUp(unittest2.TestCase):
 
         app_config = DeployConfigFactory()
         self.deploy = tds.commands.DeployController(app_config)
-        self.config = tds.commands.ConfigController(app_config)
 
         deploy_methods = [
-            ('get_app_info', (
-                PackageFactory(name='fake_package', version='123', id='1'),
-                [AppTargetFactory(name='fake_apptype')],
-                {}
-            )),
+            ('get_app_info', [AppTargetFactory(name='fake_apptype')]),
             ('perform_deployments', None),
             ('find_app_deployments', {}),
             ('determine_new_deployments', ({}, {})),
@@ -53,7 +48,7 @@ class DeploySetUp(unittest2.TestCase):
         ]
 
         for (key, return_value) in deploy_methods:
-            for obj in [self.deploy, self.config]:
+            for obj in [self.deploy]:
                 self.patch_method(obj, key, return_value)
 
     def tearDown(self):
@@ -123,17 +118,6 @@ class TestPromoteAndPush(DeploySetUp):
         )
 
         assert self.deploy.perform_deployments.called
-
-    def test_push_old_version(self):
-        self.patch_method(self.config, 'send_notifications', None)
-
-        self.config.push(
-            project=ProjectFactory(name='fake_app'),
-            application=ApplicationFactory(),
-            package=PackageFactory(version='whatever')
-        )
-
-        assert self.config.perform_deployments.called
 
     @patch('tds.notifications.Notifications', autospec=True)
     def test_notifications_sent(self, Notifications):
