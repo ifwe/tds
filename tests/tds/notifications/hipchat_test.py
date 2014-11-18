@@ -13,10 +13,10 @@ class TestHipchatNotifier(unittest2.TestCase):
     def setUp(self):
         self.project_rooms = ['fakeroom1', 'fakeroom2']
 
-        project_class_mock = patch('tds.model.Project').start()
+        application_class_mock = patch('tds.model.Application').start()
         hipchats = [Mock(room_name=r) for r in self.project_rooms]
         target = Mock(hipchats=hipchats)
-        project_class_mock.get.return_value.targets = [target]
+        application_class_mock.get.return_value.targets = [target]
 
     def tearDown(self):
         patch.stopall()
