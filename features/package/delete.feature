@@ -8,12 +8,10 @@ Feature: package delete subcommand
         And there is an environment with name="dev"
         And I am in the "dev" environment
 
-    @no_db
     Scenario: too few arguments
         When I run "package delete myapp"
         Then the output has "usage:"
 
-    @no_db
     Scenario: too many arguments
         When I run "package delete myapp vers foo"
         Then the output has "usage:"

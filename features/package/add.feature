@@ -8,12 +8,10 @@ Feature: package add subcommand
         And there is an environment with name="dev"
         And I am in the "dev" environment
 
-    @no_db
     Scenario: too few arguments
         When I run "package add myapp job"
         Then the output has "usage:"
 
-    @no_db
     Scenario: too many arguments
         When I run "package add myapp job vers foo"
         Then the output has "usage:"
