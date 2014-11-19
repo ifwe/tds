@@ -82,14 +82,17 @@ class Notifier(object):
         '''
 
         method_name = 'message_for_%s' % deployment.action['command']
-        return getattr(self, method_name, self.message_for_default)(deployment)
+        return getattr(self, method_name, self.message_for_default)(
+            deployment
+        )
 
     def message_for_default(self, deployment):
         '''Return message object for the deployment. Dispatches
             on the deployment's action's "subcommand" property, or uses
             the default method, "message_for_default_default".
         '''
-        method_name = 'message_for_default_%s' % deployment.action['subcommand']
+        method_name = 'message_for_default_%s' \
+            % deployment.action['subcommand']
         return getattr(
             self, method_name, self.message_for_default_default
         )(deployment)
@@ -99,7 +102,7 @@ class Notifier(object):
         'Returns the message for an unvalidated deployment'
         subject = (
             'ATTENTION: %s in %s for %s app tier needs validation!' % (
-                deployment.project.name,
+                deployment.package.name,
                 deployment.target['env'],
                 ','.join(x.name for x in deployment.target['apptypes'])
             )
@@ -137,12 +140,12 @@ class Notifier(object):
             destinations = ', '.join(
                 x.name for x in deployment.target['apptypes']
             )
+            print 'destinations', destinations, deployment.target
         else:
             dest_type = 'app tier(s)'
 
-            project = tds.model.Project.get(name=deployment.project.name)
-            targets = getattr(project, 'targets', None)
-            destinations = ', '.join(x.app_type for x in targets)
+            targets = deployment.target.get('apptypes', [])
+            destinations = ', '.join(x.name for x in targets)
 
         log.log(5, 'Destination type is: %s', dest_type)
         log.log(5, 'Destinations are: %s', destinations)

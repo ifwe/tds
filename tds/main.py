@@ -30,18 +30,6 @@ class TDS(object):
 
     views = {
         ('deploy', 'redeploy'): 'deploy_promote',
-        ('config', 'add_apptype'): 'deploy_add_apptype',
-        ('config', 'create'): 'project_create',
-        ('config', 'delete_apptype'): 'deploy_delete_apptype',
-        ('config', 'invalidate'): 'deploy_invalidate',
-        ('config', 'push'): 'deploy_promote',
-        ('config', 'show'): 'deploy_show',
-        ('config', 'validate'): 'deploy_validate',
-        ('config', 'repush'): 'deploy_promote',
-        ('config', 'revert'): 'deploy_rollback',
-        ('repository', 'add'): 'project_create',
-        ('repository', 'delete'): 'project_delete',
-        ('repository', 'list'): 'project_list',
     }
 
     def __init__(self, params):
@@ -107,32 +95,6 @@ class TDS(object):
         )
         authconfig.load()
         return authconfig
-
-    @tds.utils.debug
-    def check_exclusive_options(self):
-        """Ensure certain options are exclusive and set parameter
-           to check for explicit hosts or application types
-        """
-
-        log.debug('Checking certain options are exclusive')
-
-        # Slight hack: ensure only one of '--hosts', '--apptypes'
-        # or '--all-apptypes' is used at a given time
-        excl = filter(None, (self.params.get('hosts', None),
-                             self.params.get('apptypes', None),
-                             self.params.get('all_apptypes', None)))
-
-        if len(excl) > 1:
-            raise ConfigurationError('Only one of the "--hosts", '
-                                     '"--apptypes" or "--all-apptypes" '
-                                     'options may be used at a given time')
-
-        if not excl:
-            self.params['explicit'] = False
-        else:
-            self.params['explicit'] = True
-
-        log.log(5, '"explicit" parameter is: %(explicit)s', self.params)
 
     @tds.utils.debug
     def update_program_parameters(self):

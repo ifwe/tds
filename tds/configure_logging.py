@@ -64,7 +64,9 @@ def configure_logging(config_dir, verbosity, use_color, daemon=False):
         level = 1
         sqla_level = 1   # Ensure SQLAlchemy gives full log info
 
-    syslog_facility, syslog_priority = verify_logging_conf_file_info(config_dir)
+    syslog_facility, syslog_priority = verify_logging_conf_file_info(
+        config_dir
+    )
 
     logging.setLoggerClass(log_wrap.Logger)
 

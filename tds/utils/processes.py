@@ -10,7 +10,8 @@ def run(cmd, expect_return_code=0, shell=False, **kwds):
     """Wrapper to run external command"""
 
     proc = start_process(cmd, shell=shell, **kwds)
-    return wait_for_process(proc, expect_return_code=expect_return_code, **kwds)
+    return wait_for_process(proc, expect_return_code=expect_return_code,
+                            **kwds)
 
 
 def start_process(cmd, shell=False, **kwds):

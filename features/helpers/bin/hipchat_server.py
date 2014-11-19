@@ -23,7 +23,8 @@ class HipChatHandler(BaseHTTPRequestHandler):
         Determine what response to send for a given POST request, with
         the fields and values stored in form.
         """
-        if form and 'version+200+of+proj-name+on' in form['message']:
+        # TODO: url unquoting
+        if form and 'version+200+of+myapp+on' in form['message']:
             return 403
         return 200
 

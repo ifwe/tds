@@ -12,9 +12,6 @@ class GraphiteNotifier(Notifier):
     Send graphite notification
     '''
     active_events = (
-        ('config', 'push'),
-        ('config', 'repush'),
-        ('config', 'revert'),
         ('deploy', 'promote'),
         ('deploy', 'redeploy'),
         ('deploy', 'rollback')

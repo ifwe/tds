@@ -1,158 +1,102 @@
-Feature: deploy/config validate subcommand
+Feature: deploy validate application version [-f|--force] [--apptypes|--all-apptypes]
     As a user
     I want to validate a package on deploy targets
     So I can allow the package to be deployed to the next environment and be redeployed
 
     Background:
         Given I have "dev" permissions
+        And there is an environment with name="dev"
         And I am in the "dev" environment
         And there is a project with name="proj"
+        And there is an application with name="myapp"
         And there is a deploy target with name="foo"
-        And there is a package version with version="123"
+        And there is a package with version="123"
         And there are hosts:
             | name          |
             | projhost01    |
             | projhost02    |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
+        And the package is deployed on the deploy target
 
-    Scenario Outline: too few arguments
-        When I run "<command> validate proj"
+    Scenario: too few arguments
+        When I run "deploy validate myapp"
         Then the output has "usage:"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: too many arguments
-        When I run "<command> validate proj vers foo"
+    Scenario: too many arguments
+        When I run "deploy validate myapp vers foo"
         Then the output has "usage:"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
+    Scenario: validate a package from an application that doesn't exist
+        When I run "deploy validate badapp 123"
+        Then the output is "Application does not exist: badapp"
 
-    Scenario Outline: validate a package from a project that doesn't exist
-        When I run "<command> validate doesnt-exist 123"
-        Then the output is "Project "doesnt-exist" does not exist"
+    Scenario: validate a package from an application with a version that doesn't exist
+        When I run "deploy validate myapp 124"
+        Then the output is "Package does not exist: myapp@124"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
+    Scenario: validate a package from an application for an apptype that doesn't exist
+        When I run "deploy validate myapp 123 --apptype bar"
+        Then the output is "Valid apptypes for application "myapp" are: ['foo']"
 
-    Scenario Outline: validate a package from a project with a version that doesn't exist
-        When I run "<command> validate proj 124"
-        Then the output is "Package "proj@124" does not exist"
+    Scenario: validate a package from an application with one of several apptypes that doesn't exist
+        When I run "deploy validate myapp 123 --apptype foo bar"
+        Then the output is "Valid apptypes for application "myapp" are: ['foo']"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: validate a package from a project for an apptype that doesn't exist
-        When I run "<command> validate proj 123 --apptype bar"
-        Then the output is "Valid apptypes for project "proj" are: ['foo']"
-
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: validate a package from a project with one of several apptypes that doesn't exist
-        When I run "<command> validate proj 123 --apptype foo bar"
-        Then the output is "Valid apptypes for project "proj" are: ['foo']"
-
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: validate a package from a project for an apptype with it not currently deployed
+    Scenario: validate a package from an application for an apptype with it not currently deployed
         Given there is a deploy target with name="bar"
         And there are hosts:
             | name           |
             | anotherhost01  |
             | anotherhost02  |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
-        When I run "<command> validate proj 123 --apptype bar"
-        Then the output is "No deployments to validate for application "proj" in development environment"
+        When I run "deploy validate myapp 123 --apptype bar"
+        Then the output is "No deployments to validate for application "myapp" in development environment"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: validate a package from a project with single apptype
-        When I run "<command> validate proj 123"
+    Scenario: validate a package from an application with single apptype
+        When I run "deploy validate myapp 123"
         Then the output is empty
-        And the package version is validated
+        And the package is validated
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
+    Scenario: validate a package from an application with single apptype with apptype option
+        When I run "deploy validate myapp 123 --apptype foo"
+        Then the package is validated
 
-    Scenario Outline: validate a package from a project with single apptype with apptype option
-        When I run "<command> validate proj 123 --apptype foo"
-        Then the package version is validated
-
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: validate a package from a project with multiple apptypes with no options
+    Scenario: validate a package from an application with multiple apptypes with no options
         Given there is a deploy target with name="bar"
         And there are hosts:
             | name           | env  |
             | anotherhost01  | dev  |
             | anotherhost02  | dev  |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
-        When I run "<command> validate proj 123"
+        And the package is deployed on the deploy target
+        When I run "deploy validate myapp 123"
         Then the output is "Specify a target constraint (too many targets found: bar, foo)"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: validate a package from a project with multiple apptypes with apptype option
+    Scenario: validate a package from an application with multiple apptypes with apptype option
         Given there is a deploy target with name="bar"
         And there are hosts:
             | name           | env  |
             | anotherhost01  | dev  |
             | anotherhost02  | dev  |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
-        When I run "<command> validate proj 123 --apptype foo"
-        Then the package version is validated for deploy target with name="foo"
+        And the package is deployed on the deploy target
+        When I run "deploy validate myapp 123 --apptype foo"
+        Then the package is validated for deploy target with name="foo"
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
-
-    Scenario Outline: validate a package from a project with multiple apptypes with all-apptypes option
+    Scenario: validate a package from an application with multiple apptypes with all-apptypes option
         Given there is a deploy target with name="bar"
         And there are hosts:
             | name           | env  |
             | anotherhost01  | dev  |
             | anotherhost02  | dev  |
-        And the deploy target is a part of the project
+        And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
-        And the package version is deployed on the deploy target
-        When I run "<command> validate proj 123 --all-apptypes"
-        Then the package version is validated for the deploy targets
+        And the package is deployed on the deploy target
+        When I run "deploy validate myapp 123 --all-apptypes"
+        Then the package is validated for the deploy targets
 
-        Examples:
-            | command |
-            | deploy  |
-            | config  |
+    # TODO: Need tests for '--force'!

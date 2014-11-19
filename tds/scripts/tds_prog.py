@@ -59,7 +59,8 @@ def parse_command_line(sysargs):
                         default='/etc/tagops/')
     parser.add_argument('--output-format',
                         help='Display output in specified format'
-                             ' [blocks|table|json|latex|rst]. Default: blocks.',
+                             ' [blocks|table|json|latex|rst].'
+                             ' Default: blocks.',
                         choices=('blocks', 'table', 'json', 'latex', 'rst'),
                         default='blocks')
 
@@ -93,7 +94,6 @@ def _main(sysargs):
     prog = tds_main.TDS(tds_params)
 
     try:
-        prog.check_exclusive_options()
         prog.update_program_parameters()
         prog.initialize_db()
         prog.execute_command()

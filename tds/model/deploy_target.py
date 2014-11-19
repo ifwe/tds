@@ -1,8 +1,10 @@
 """Model module for deployment target object."""
 
-from .base import Base
-from .project import Project
 import tagopsdb
+
+from .base import Base
+from .application import Application
+from .project import Project
 
 
 class DeployTarget(Base):
@@ -43,6 +45,30 @@ class AppTarget(DeployTarget):
         """Return list of projects for this AppTarget."""
         return [Project(delegate=p) for p in self.delegate.projects]
 
+    @property
+    def hosts(self):
+        return [HostTarget(delegate=x) for x in self.delegate.hosts]
+
+    def remove_application(self, application, project=None):
+        if project is not None:
+            projects = [project]
+        else:
+            projects = self.projects
+
+        for project in projects:
+            proj_pkg = tagopsdb.ProjectPackage.get(
+                project_id=project.id,
+                pkg_def_id=application.id,
+                app_id=self.id
+            )
+
+            if proj_pkg is None:
+                continue
+
+            proj_pkg.delete()
+
+        tagopsdb.Session.commit()
+
 
 class HostTarget(DeployTarget):
     """A host target."""
@@ -56,3 +82,8 @@ class HostTarget(DeployTarget):
     @property
     def application(self):
         return AppTarget(delegate=self.delegate.application)
+
+    @property
+    def package_definitions(self):
+        return [Application(delegate=x)
+                for x in self.target.package_definitions]

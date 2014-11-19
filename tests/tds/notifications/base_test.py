@@ -79,10 +79,10 @@ class TestNotifierClass(AppConfigProvider):
         (
             AllApptypesDeploymentFactory,
             'Promote of version badf00d of fake_package on app tier(s)'
-            ' fake_apptype1, fake_apptype2 in fakedev',
+            ' fake_apptype, fake_apptype in fakedev',
             'fake_user performed a "tds deploy promote" for the following app'
             ' tier(s) in fakedev:\n'
-            '    fake_apptype1, fake_apptype2'
+            '    fake_apptype, fake_apptype'
         ),
     ]
 
@@ -90,23 +90,20 @@ class TestNotifierClass(AppConfigProvider):
     def test_message_for_deploy_promote(
         self, deployment_factory, subject, body
     ):
-        with patch('tds.model.Project') as Project:
-            Project.get.return_value.targets = [
-                Mock(app_type=x) for x in ('fake_apptype1', 'fake_apptype2')
-            ]
 
-            n = base.Notifier(
-                self.app_config,
-                self.config
-            )
-            message = n.message_for_deployment(deployment_factory())
+        nots = base.Notifier(
+            self.app_config,
+            self.config
+        )
+        deployment = deployment_factory()
+        message = nots.message_for_deployment(deployment)
 
-            assert isinstance(message['subject'], basestring)
-            assert isinstance(message['body'], basestring)
+        assert isinstance(message['subject'], basestring)
+        assert isinstance(message['body'], basestring)
 
-            # are these assertions really necessary?
-            assert message['subject'] == subject
-            assert message['body'] == body
+        # are these assertions really necessary?
+        assert message['subject'] == subject
+        assert message['body'] == body
 
     def test_message_for_unvalidated(self):
         n = base.Notifier(

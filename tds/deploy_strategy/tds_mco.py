@@ -17,7 +17,7 @@ log = logging.getLogger('tds')
 class TDSMCODeployStrategy(DeployStrategy):
     """MCO deploy strategy class."""
 
-    def __init__(self, mco_bin, **kwargs):
+    def __init__(self, mco_bin, **_kwargs):
         """Initialize object."""
         self.mco_bin = mco_bin
 
@@ -57,19 +57,19 @@ class TDSMCODeployStrategy(DeployStrategy):
                            'from mco process')
 
         log.debug(summary)
-        m = re.search(r'processing (\d+) / (\d+) ', summary)
+        match = re.search(r'processing (\d+) / (\d+) ', summary)
 
-        if m is None:
+        if match is None:
             return (False, 'Error parsing summary line.')
 
         # Virtual hosts in dev tend to time out unpredictably, probably
         # because vmware is slow to respond when the hosts are not
         # active. Subsequent retries after a timeout work better.
-        if m.group(2) == '0' and retry > 0:
+        if match.group(2) == '0' and retry > 0:
             log.debug('Discovery failure, trying again.')
             return self._process_mco_command(mco_cmd, retry-1)
 
-        for host, hostinfo in mc_output.iteritems():
+        for _host, hostinfo in mc_output.iteritems():
             if hostinfo['exitcode'] != 0:
                 return (False, hostinfo['stderr'].strip())
             else:

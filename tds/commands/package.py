@@ -45,79 +45,73 @@ class PackageController(BaseController):
         'delete': 'environment',
     }
 
-    @staticmethod
-    def check_package_state(pkg_info):
-        """Check state of package in database."""
-
-        return tagopsdb.deploy.package.find_package(
-            pkg_info['project'],
-            pkg_info['version'],
-            pkg_info['revision']
-        )
-
-    def wait_for_state_change(self, pkg_info):
+    def wait_for_state_change(self, package):
         """Check for state change for package in database"""
 
-        # This call is just to seed previous_status
-        # for the first run of the loop
-        pkg = self.check_package_state(pkg_info)
-
         while True:
-            previous_status = pkg.status
-            pkg = self.check_package_state(pkg_info)
+            previous_status = package.status
+            tagopsdb.Session.commit()  # WTF
+            package.refresh()
 
-            if pkg.status == 'completed':
-                return pkg
-            elif pkg.status == 'failed':
+            if package.status == 'completed':
+                break
+
+            if package.status == 'failed':
+                # TODO: why did it fail? user needs to know
                 log.info(
                     'Failed to update repository with package '
-                    'for project "%s", version %s',
-                    pkg_info['project'], pkg_info['version']
+                    'for application "%s", version %s',
+                    package.name, package.version
                 )
                 log.info('Please try again')
-                return pkg
-            else:
-                if pkg.status != previous_status:
-                    log.log(5, 'State of package is now: %s',
-                            pkg.status)
+                break
 
-                # The following line should reset the transaction
-                # so the next query is re-read from the database
-                tagopsdb.Session.remove()
-                time.sleep(0.5)
+            if package.status != previous_status:
+                log.log(5, 'State of package is now: %s', package.status)
 
-    def _queue_rpm(self, params, queued_rpm, rpm_name, app):
+            time.sleep(0.5)
+
+    @property
+    def jenkins_url(self):
+        return self.app_config['jenkins.url']
+
+    def _queue_rpm(self, queued_rpm, rpm_name, package, job_name):
         """Move requested RPM into queue for processing"""
 
-        buildnum = int(params['version'])
-        job_name = params['job_name']
-
         try:
-            jenkins = jenkinsapi.jenkins.Jenkins(params['jenkins_url'])
+            jenkins = jenkinsapi.jenkins.Jenkins(self.jenkins_url)
         except Exception:
             raise tds.exceptions.FailedConnectionError(
-                'Unable to contact Jenkins server "%s"',
-                params['jenkins_url']
+                'Unable to contact Jenkins server "%s"', self.jenkins_url
             )
 
         try:
             job = jenkins[job_name]
         except KeyError:
-            raise tds.exceptions.NotFoundError('Job "%s" not found', job_name)
+            raise tds.exceptions.NotFoundError('Job', [job_name])
 
         try:
-            build = job.get_build(buildnum)
+            int(package.version)
+        except ValueError:
+            raise Exception(
+                ('Package "%s@%s" does not have an integer version'
+                 ' for fetching from Jenkins'),
+                package.name, package.version
+            )
+
+        try:
+            build = job.get_build(int(package.version))
         except (
             KeyError,
             JenkinsAPIException,
             NotFound
         ) as exc:
             log.error(exc)
-            raise tds.exceptions.NotFoundError(
-                'Build "%s@%s" does not exist on %s',
-                params['job_name'],
-                params['version'],
-                params['jenkins_url']
+            raise tds.exceptions.JenkinsJobNotFoundError(
+                'Build',
+                job_name,
+                package.version,
+                self.jenkins_url,
             )
 
         try:
@@ -128,15 +122,16 @@ class PackageController(BaseController):
             JenkinsAPIException,
             NotFound
         ):
-            raise tds.exceptions.NotFoundError(
-                'Artifact not found for "%s@%s" on %s',
-                params['job_name'],
-                params['version'],
-                params['jenkins_url']
+            raise tds.exceptions.JenkinsJobNotFoundError(
+                'Artifact',
+                job_name,
+                package.version,
+                self.jenkins_url,
             )
 
-        tmpname = os.path.join(os.path.dirname(os.path.dirname(queued_rpm)),
-                               'tmp', rpm_name)
+        tmpname = os.path.join(
+            os.path.dirname(os.path.dirname(queued_rpm)), 'tmp', rpm_name
+        )
 
         for tmpfile in (tmpname, queued_rpm):
             tmpdir = os.path.dirname(tmpfile)
@@ -149,67 +144,54 @@ class PackageController(BaseController):
         os.link(tmpname, queued_rpm)
         os.unlink(tmpname)
 
-        return True
+    @validate('application')
+    def add(self, application, version, **params):
+        """Add a given version of a package for a given project"""
 
-    @validate('project')
-    def add(self, project, **params):
-        """Add a given version of a package for a given project."""
+        if params.get('force', None):
+            raise Exception('Force not implemented yet')
 
         log.debug(
             'Adding version %s of the package for project "%s" '
-            'to software repository', params['version'],
-            project.name
+            'to software repository', version,
+            application.name
         )
 
         # The real 'revision' is hardcoded to 1 for now
         # This needs to be changed at some point
-        pkg_info = {'project': project.name,
-                    'version': params['version'],
-                    'revision': '1', }
+        revision = '1'
 
-        pkg_loc = tagopsdb.PackageLocation.get(app_name=project.name)
-        pkg = tagopsdb.Package.get(
-            name=pkg_loc.name, version=params['version']
-        )
+        package = application.get_version(version=version, revision=revision)
 
-        if pkg is not None:
+        if package is not None:
             raise tds.exceptions.AlreadyExistsError(
-                'Package version "%s@%s" already exists',
-                pkg.name, pkg.version
+                'Package "%s@%s-%s" already exists',
+                package.name, package.version, revision
             )
 
-        if self.check_package_state(pkg_info) is None:
-            try:
-                tagopsdb.deploy.package.add_package(
-                    project.name,
-                    params['version'],
-                    '1',
-                    params['user']
-                )
-            except tagopsdb.exceptions.PackageException as e:
-                log.error(e)
-                return
+        try:
+            package = application.create_version(
+                version=version,
+                revision=revision,
+                creator=params['user']
+            )
+        except tagopsdb.exceptions.PackageException as e:
+            log.error(e)
+            raise Exception(
+                'Failed to add package "%s@%s"', package.name, package.version
+            )
 
-            tagopsdb.Session.commit()
-            log.debug('Committed database changes')
+        # TODO: add property to Package to generate this
+        rpm_name = '%s-%s-%s.%s.rpm' % (
+            application.pkg_name, version, revision, application.arch
+        )
 
-            # Get repo information for package
-            app = tagopsdb.deploy.repo.find_app_location(project.name)
+        incoming_dir = params['repo']['incoming']
 
-            # Revision hardcoded for now
-            rpm_name = '%s-%s-1.%s.rpm' % (app.pkg_name, params['version'],
-                                           app.arch)
-            incoming_dir = params['repo']['incoming']
+        pending_rpm = os.path.join(incoming_dir, rpm_name)
+        log.log(5, 'Pending RPM is: %s', pending_rpm)
 
-            pending_rpm = os.path.join(incoming_dir, rpm_name)
-            log.log(5, 'Pending RPM is: %s', pending_rpm)
-
-            if not self._queue_rpm(params, pending_rpm, rpm_name, app):
-                log.info('Failed to copy RPM into incoming directory')
-                raise tds.exceptions.NotFoundError(
-                    'Package "%s@%s" does not exist',
-                    app.pkg_name, params['version']
-                )
+        self._queue_rpm(pending_rpm, rpm_name, package, params.get('job_name'))
 
         # Wait until status has been updated to 'failed' or 'completed',
         # or timeout occurs (meaning repository side failed, check logs there)
@@ -222,41 +204,27 @@ class PackageController(BaseController):
         signal.alarm(params['package_add_timeout'])
 
         log.log(5, 'Waiting for status update in database for package')
-        package = self.wait_for_state_change(pkg_info)
+        self.wait_for_state_change(package)
 
         signal.alarm(0)
 
-        return dict(result=dict(
-            project_name=project.name, package=package
-        ))
+        return dict(result=dict(package=package))
 
-    @validate('project')
-    def delete(self, project, **params):
-        """Delete a given version of a package for a given project."""
+    @validate('package')
+    def delete(self, package, **params):
+        """Delete a given version of a package for a given project"""
 
         log.debug(
-            'Deleting version %s of the package for project "%s" '
+            'Deleting version %s of the package for application "%s" '
             'from software repository', params['version'],
-            project.name
+            package.application.name
         )
-
-        pkg_info = dict(
-            project=project.name,
-            version=params['version'],
-            revision='1'
-        )
-
-        if self.check_package_state(pkg_info) is None:
-            raise tds.exceptions.NotFoundError(
-                'Package "%s@%s" does not exist',
-                project.name, params['version']
-            )
 
         try:
             # The real 'revision' is hardcoded to 1 for now
             # This needs to be changed at some point
             tagopsdb.deploy.package.delete_package(
-                project.name,
+                package.application.name,
                 params['version'],
                 '1'
             )
@@ -267,19 +235,20 @@ class PackageController(BaseController):
         tagopsdb.Session.commit()
         log.debug('Committed database changes')
 
-    @validate('project')
-    def list(self, projects, **params):
+    @validate('application')
+    def list(self, applications=None, **_params):
+        """Show information for all existing packages in the software
+           repository for requested projects (or all projects)
         """
-        Show information for all existing packages in the software
-        repository for requested projects (or all projects).
-        """
+
+        if not applications:
+            applications = tds.model.Application.all()
 
         packages_sorted = sorted(
             tagopsdb.deploy.package.list_packages(
-                [x.name for x in projects] or None
+                [x.name for x in applications] or None
             ),
-            key=lambda package: (package.created, package.version,
-                                 package.revision)
+            key=lambda pkg: (pkg.name, pkg.created, pkg.version, pkg.revision)
         )
 
         return dict(result=packages_sorted)

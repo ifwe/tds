@@ -288,28 +288,25 @@ def after_scenario(context, scenario):
 
     if verbose and getattr(context, 'process', None):
         print "subprocess result:"
+
+        if getattr(context.process, 'duration', None) is None:
+            print "\twaiting to finish..."
+            # process was never finished
+            context.process = processes.wait_for_process(
+                context.process,
+                expect_return_code=None
+            )
+
         print "\tcmd: %r" % context.process.cmd
         print "\tduration: %0.2fs" % context.process.duration
         print "\treturncode: %r" % context.process.returncode
         print "\tstdout: '''%s'''" % context.process.stdout
         print "\tstderr: '''%s'''" % context.process.stderr
 
+
     if 'no_db' not in context.tags:
         if verbose:
-            for table_name, table in sorted(
-                    tagopsdb.Base.metadata.tables.items()
-            ):
-                result = tagopsdb.Session.query(table).all()
-                if len(result) == 0:
-                    continue
-
-                print table_name.ljust(80, '-')
-                for row in result:
-                    pprint.pprint(zip(
-                        (x.name for x in table.columns),
-                        row
-                    ))
-                print
+            print dump_temp_db()
 
     teardown_temp_db(context)
 
@@ -427,7 +424,36 @@ def seed_db():
         ganglia=ganglia,
     ))
 
+    pkg_name = tagopsdb.PackageDefinition.dummy
+    tagopsdb.PackageDefinition.update_or_create(dict(
+        deploy_type='rpm',
+        validation_type='matching',
+        pkg_name=pkg_name,
+        path='/some-path',
+        build_host='fakeci.example.org',
+    ))
+
     tagopsdb.Session.commit()
+
+def dump_temp_db():
+    import tagopsdb
+    res = []
+    for table_name, table in sorted(
+        tagopsdb.Base.metadata.tables.items()
+    ):
+        result = tagopsdb.Session.query(table).all()
+        if len(result) == 0:
+            continue
+
+        res.append(table_name.ljust(80, '-'))
+        for row in result:
+            res.append(pprint.pformat(zip(
+                (x.name for x in table.columns),
+                row
+            )))
+        res.append('')
+
+    return '\n'.join(res)
 
 
 def teardown_temp_db(context):

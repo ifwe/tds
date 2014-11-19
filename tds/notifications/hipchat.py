@@ -6,7 +6,6 @@ import requests
 import logging
 log = logging.getLogger('tds')
 
-import tds.model
 from .base import Notifications, Notifier
 
 
@@ -41,11 +40,11 @@ class HipchatNotifier(Notifier):
 
         # Query DB for any additional HipChat rooms
         log.debug('Looking for additional HipChat rooms to be notified')
-        project = tds.model.Project.get(name=deployment.project.name)
+
         extra_rooms = [
             hipchat.room_name
-            for target in project.targets
-            for hipchat in target.hipchats
+            for apptype in deployment.target['apptypes']
+            for hipchat in apptype.hipchats
         ]
 
         log.log(5, 'HipChat rooms to notify: %s',
