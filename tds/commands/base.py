@@ -285,9 +285,7 @@ class BaseController(object):
 
             for app in applications:
                 for host_target in host_targets:
-                    if app not in sum((target.package_definitions
-                                       for target in host_target.targets),
-                                      []):
+                    if app not in host_target.target.package_definitions:
                         raise tds.exceptions.InvalidInputError(
                             'Application %s does not belong on host %s',
                             app.name, host_target.name
@@ -366,7 +364,7 @@ class BaseController(object):
 
                 for host_target in host_targets:
                     common_targets = (
-                        set([x.id for x in host_target.targets]) &
+                        set([host_target.target.id]) &
                         set([x.id for x in all_targets])
                     )
 
