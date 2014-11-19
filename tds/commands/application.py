@@ -124,7 +124,9 @@ class ApplicationController(BaseController):
         apptype = apptypes[0]
 
         # Check for active host deployments
-        host_deps = tds.model.HostDeployment.all()
+        host_deps = tds.model.HostDeployment.all(
+            order_by='realized', desc=True
+        )
 
         for host_dep in host_deps:
             if host_dep.application != application:
@@ -143,7 +145,9 @@ class ApplicationController(BaseController):
                 )
 
         # Check for active tier deployments
-        app_deps = tds.model.AppDeployment.find(target=apptype)
+        app_deps = tds.model.AppDeployment.find(
+            target=apptype, order_by='realized', desc=True
+        )
         app_target = tds.model.AppTarget.get(name=apptype.name)
 
         for app_dep in app_deps:
