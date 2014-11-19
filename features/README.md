@@ -14,10 +14,10 @@ tests, please see the
 documentation</a> for Behave.
 
 ## Navigation
-* [./authorizations/](./authorizations/) -
+* [./application/](./application/) -
+Test for the `application` command.
+* [./authorization/](./authorization/) -
 Authorization and permissions tests.
-* [./config/](./config/) -
-Tests for the `config` command.
 * [./deploy/](./deploy/) -
 Tests for the `deploy` command.
 * [./helpers/](./helpers/)
@@ -26,8 +26,8 @@ Helper applications for deployment tests.
 Tests for supported notifications.
 * [./package/](./package/) -
 Tests for the `package` command.
-* [./repository/](./repository/) -
-Tests for the `repository` command.
+* [./project/](./project/) -
+Tests for the `project` command.
 * [./steps/](./steps/) -
 Behave <a href="http://pythonhosted.org/behave/api.html#step-functions"
 target="_blank">steps</a>.

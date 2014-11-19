@@ -28,8 +28,6 @@ class DeploymentFactory(factory.Factory):
         subcommand='promote',
     )
 
-    project = factory.SubFactory(ProjectFactory)
-
     target = dict(
         env='dev',
         apptypes=[AppTargetFactory(name='fake_apptype')],
@@ -61,6 +59,10 @@ class AllApptypesDeploymentFactory(DeploymentFactory):
 
     target = dict(
         env='test',
+        apptypes=[
+            AppTargetFactory(name='fake_apptype1'),
+            AppTargetFactory(name='fake_apptype2')
+        ]
     )
 
 

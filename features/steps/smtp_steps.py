@@ -74,8 +74,8 @@ def verify_email_contents(context, attrs):
 def email_is_sent_with_relevant_information(context, properties):
     attrs = parse_properties(properties)
     attrs.update({
-        'version': context.tds_package_versions[-1].version,
-        'name': context.tds_package_versions[-1].pkg_name,
+        'version': context.tds_packages[-1].version,
+        'name': context.tds_packages[-1].pkg_name,
         'env': context.tds_env,
     })
 

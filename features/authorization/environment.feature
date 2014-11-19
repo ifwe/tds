@@ -12,12 +12,7 @@ Feature: Authorization roles - environment
 
         Examples:
             | command                   |
-            | config invalidate foo 123 |
-            | config show foo           |
-            | config validate foo 123   |
-            | config repush foo         |
-            | config revert foo         |
-            | config push foo 123       |
+            | application list          |
             | deploy invalidate foo 123 |
             | deploy show foo           |
             | deploy validate foo 123   |
@@ -28,4 +23,4 @@ Feature: Authorization roles - environment
             | package list              |
             | package add foo bar 123   |
             | package delete foo 123    |
-            | repository list           |
+            | project list              |

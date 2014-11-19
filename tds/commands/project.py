@@ -9,11 +9,16 @@ log = logging.getLogger('tds')
 
 
 class ProjectController(BaseController):
-
     """Commands to manage TDS projects."""
 
+    access_levels = dict(
+        list='environment',
+        add='admin',
+        delete='admin',
+    )
+
     @staticmethod
-    def create(project, **_kwds):
+    def add(project, **_kwds):
         """Add a project."""
         project_name = project
         project = Project.get(name=project_name)
@@ -33,7 +38,7 @@ class ProjectController(BaseController):
         return dict(result=project)
 
     @validate('project')
-    def list(self, projects=(), **_kwds):
+    def list(self, applications=(), projects=(), **_kwds):
         """Show information for requested projects (or all projects)."""
         if len(projects) == 0:
             projects = Project.all()

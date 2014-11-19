@@ -27,8 +27,24 @@ class AlreadyExistsError(TDSException):
     pass
 
 
+class AssociatedTargetsError(TDSException):
+    """
+    Exception for when an attempt occurs to delete an application
+    with associated targets
+    """
+
+    pass
+
+
 class ConfigurationError(TDSException):
     """Exception for invalid or incomplete configuration files"""
+
+    pass
+
+
+# NOTE: This will no longer be needed once argparse is properly configured
+class ExclusiveOptionError(TDSException):
+    """Exception for when exclusive options are used together"""
 
     pass
 
@@ -51,10 +67,44 @@ class InvalidInputError(TDSException):
     pass
 
 
+class InvalidOperationError(TDSException):
+    """Exception for when a user tries to perform an invalid operation."""
+
+    pass
+
+
 class NotFoundError(TDSException):
     """Exception for when an item is not found or does not exist."""
 
-    pass
+    def __init__(self, object_type, objects, sing_end='', plu_end='s'):
+        """Create message given object_type and objects."""
+        if not isinstance(objects, str):
+            try:
+                objects = list(objects)
+            except TypeError:
+                objects = [objects]
+        message = "{object_type}{p1} do{p2} not exist: {objects}".format(
+            object_type=object_type,
+            p1=sing_end if len(objects) == 1 else plu_end,
+            p2='es' if len(objects) == 1 else '',
+            objects=', '.join(objects)
+        )
+        super(NotFoundError, self).__init__(message)
+
+
+class JenkinsJobNotFoundError(TDSException):
+    """Exception for when a Jenkins jobs is not found."""
+
+    def __init__(self, object_type, job, version, jenkins_url):
+        message = "{object_type} does not exist on {url}: {job}@{version}"\
+            .format(
+                object_type=object_type,
+                url=jenkins_url,
+                job=job,
+                version=version,
+            )
+
+        super(JenkinsJobNotFoundError, self).__init__(message)
 
 
 class WrongEnvironmentError(TDSException):

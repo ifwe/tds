@@ -11,12 +11,10 @@ Feature: Authorization roles
         Then the output is "You do not have the appropriate permissions to run this command. Contact your manager."
 
         Examples:
-            | command                                       |
-            | deploy delete-apptype foo bar                 |
-            | deploy add-apptype foo bar                    |
-            | config create foo bar baz noarch ci rpm       |
-            | config delete foo                             |
-            # | project delete                                |
-            # | project create                                |
-            | repository delete foo                         |
-            | repository add foo bar baz noarch ci rpm what |
+            | command                                      |
+            | application add myapp myjob                  |
+            | application delete myapp                     |
+            | application add-apptype myapp proj targ      |
+            | application delete-apptype myapp proj targ   |
+            | project add proj                             |
+            | project delete proj                          |

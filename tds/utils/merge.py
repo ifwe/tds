@@ -40,7 +40,8 @@ def merge(*mappings, **opts):
 
             items = elem
         else:
-            raise TypeError('all arguments to merge must be mappings: %r', elem)
+            raise TypeError('all arguments to merge must be mappings: %r',
+                            elem)
 
         for key, value in items:
             merge_values(mapping, keytransform(key), value, keytransform)

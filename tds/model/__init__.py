@@ -5,6 +5,7 @@ __all__ = [
     'Actor',
     'Deployment',
     'AppDeployment',
+    'HostDeployment',
     'LocalActor',
     'Package',
     'Project',
@@ -17,7 +18,7 @@ __all__ = [
 
 from .base import Base
 from .actor import Actor, LocalActor
-from .deployment import Deployment, AppDeployment
+from .deployment import Deployment, AppDeployment, HostDeployment
 from .application import Application
 from .project import Project
 from .package import Package

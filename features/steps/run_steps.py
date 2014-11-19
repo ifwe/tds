@@ -78,7 +78,8 @@ def when_the_command_finishes(context):
         expect_return_code=None
     )
 
-    context.execute_steps(u'Then the output has no errors')
+    if 'wip' not in context.tags:
+        context.execute_steps(u'Then the output has no errors')
 
 
 def output_checker(context, check):

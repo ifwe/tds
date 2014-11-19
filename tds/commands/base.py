@@ -2,11 +2,53 @@
 Base class for controllers.
 """
 
-import argparse
-
 import tds.model
 import tds.authorize
 import tds.exceptions
+
+
+# TODO: these two functions should be methods on tds.model.*Target classes
+def latest_deployed_package_for_app_target(environment, app, app_target):
+    if isinstance(app, tds.model.Application):
+        app = app.delegate
+
+    for app_dep in reversed(app_target.app_deployments):
+        if app_dep.environment != environment.environment:
+            print "environment didn't match", environment, app_dep
+            continue
+        if app_dep.status == 'invalidated':
+            print "bad status", app_dep.status
+            continue
+        if app_dep.deployment.package.application != app:
+            print "wrong app somehow", \
+                app_dep.deployment.package.application, app
+            continue
+
+        return app_dep.deployment.package
+
+    raise Exception(
+        "no deployed version found for target \"%s\"",
+        app_target.name
+    )
+
+
+def latest_deployed_version_for_host_target(environment, app, host_target):
+    if isinstance(app, tds.model.Application):
+        app = app.delegate
+
+    for host_dep in reversed(host_target.host_deployments):
+        if host_dep.deployment.package.application == app:
+            return host_dep.deployment.package
+
+    try:
+        return latest_deployed_package_for_app_target(
+            environment, app, host_target.application
+        )
+    except Exception:
+        raise Exception(
+            "no deployed version found for host \"%s\"",
+            host_target.name
+        )
 
 
 def validate(attr):
@@ -58,7 +100,7 @@ class BaseController(object):
 
         try:
             if handler is None:
-                raise tds.exceptions.NotFoundError(
+                raise tds.exceptions.InvalidInputError(
                     "Unknown action for %s: %s", type(self).__name__, action
                 )
 
@@ -99,7 +141,7 @@ class BaseController(object):
 
         return result
 
-    def validate_project(self, project=None, projects=None, **params):
+    def validate_project(self, project=None, projects=None, **_params):
         """
         Converts 'project' and 'projects' parameters from string names that
         identify the projects into Project instances.
@@ -114,25 +156,59 @@ class BaseController(object):
 
         project = None
         project_objects = []
+        missing_projects = []
 
         for project_name in projects:
             project = tds.model.Project.get(name=project_name)
 
             if project is None:
-                raise tds.exceptions.NotFoundError(
-                    'Project "%s" does not exist', project_name
-                )
+                missing_projects.append(project_name)
+            else:
+                project_objects.append(project)
 
-            project_objects.append(project)
+        if len(missing_projects):
+            raise tds.exceptions.NotFoundError('Project', missing_projects)
 
         return dict(
             projects=project_objects,
             project=project,
         )
 
-    def validate_targets(
-        self, env, hosts=None, apptypes=None, all_apptypes=None, **params
-    ):
+    def validate_application(self, application=None, applications=None,
+                             **_params):
+        if applications is None:
+            applications = []
+
+        if application is not None:
+            applications.append(application)
+
+        application = None
+        application_objects = []
+        missing_applications = []
+
+        for app in applications:
+            if not isinstance(app, tds.model.Application):
+                app_name = app
+            else:
+                app_name = app.name
+            application = tds.model.Application.get(name=app_name)
+
+            if application is None:
+                missing_applications.append(app)
+            else:
+                application_objects.append(application)
+
+        if len(missing_applications):
+            raise tds.exceptions.NotFoundError('Application',
+                                               missing_applications)
+
+        return dict(
+            application=application,
+            applications=application_objects
+        )
+
+    def validate_targets(self, env, hosts=None, apptype=None, apptypes=None,
+                         all_apptypes=None, **params):
         """
         Converts 'env', 'hosts', 'apptypes', and 'all_apptypes' parameters
         into just 'hosts' and 'apptypes' parameters.
@@ -143,40 +219,45 @@ class BaseController(object):
         Can raise an Exception from various different failure modes.
         """
 
-        if len(filter(None, [hosts, apptypes, all_apptypes])) > 1:
-            raise argparse.ArgumentError('These options are exclusive: %s'
-                                         ['hosts', 'apptypes', 'all_apptyes'])
+        if len(filter(None, [hosts, apptype, apptypes, all_apptypes])) > 1:
+            raise tds.exceptions.ExclusiveOptionError(
+                'These options are exclusive: %s',
+                ', '.join(['hosts', 'apptypes', 'all-apptypes']))
 
-        params = self.validate_project(**params)
-        projects = params['projects']
+        if apptype is not None:
+            apptypes = [apptype]
+
+        params.update(self.validate_application(**params))
+        applications = params['applications']
 
         environment = tds.model.Environment.get(env=env)
 
-        targets = []
+        app_targets = []
+        host_targets = []
         if not (hosts or apptypes):
-            targets.extend(sum((p.targets for p in projects), []))
-            if not all_apptypes and len(targets) > 1:
+            app_targets.extend(sum((app.targets for app in applications), []))
+            if not all_apptypes and len(app_targets) > 1:
                 raise tds.exceptions.TDSException(
-                    "Specify a target constraint (too many targets found: %s)",
-                    ', '.join(sorted([x.name for x in targets]))
+                    "Specify a target constraint (too many targets found:"
+                    " %s)", ', '.join(sorted([x.name for x in app_targets]))
                 )
-            return dict(apptypes=targets, hosts=None)
+            return dict(apptypes=app_targets, hosts=None)
         elif apptypes:
-            for proj in projects:
+            for app in applications:
                 discovered_apptypes = set()
-                for targ in proj.targets:
-                    if targ.name in apptypes:
-                        targets.append(targ)
-                        discovered_apptypes.add(targ.name)
+                for app_target in app.targets:
+                    if app_target.name in apptypes:
+                        app_targets.append(app_target)
+                        discovered_apptypes.add(app_target.name)
 
                 if discovered_apptypes != set(apptypes):
                     # "Apptypes dont all match. found=%r, wanted=%r",
                     # sorted(discovered_apptypes), sorted(set(apptypes))
                     raise tds.exceptions.InvalidInputError(
-                        'Valid apptypes for project "%s" are: %r',
-                        proj.name, sorted(str(x.name) for x in proj.targets)
+                        'Valid apptypes for application "%s" are: %r',
+                        app.name, sorted(str(x.name) for x in app.targets)
                     )
-            return dict(apptypes=targets, hosts=None)
+            return dict(apptypes=app_targets, hosts=None)
         elif hosts:
             bad_hosts = []
             no_exist_hosts = []
@@ -190,13 +271,11 @@ class BaseController(object):
                 if host.environment != environment.environment:
                     bad_hosts.append(host.name)
                 else:
-                    targets.append(host)
+                    host_targets.append(host)
 
             if no_exist_hosts:
-                raise tds.exceptions.NotFoundError(
-                    "These hosts do not exist: %s",
-                    ', '.join(sorted(no_exist_hosts))
-                )
+                raise tds.exceptions.NotFoundError("Host",
+                                                   sorted(no_exist_hosts))
 
             if bad_hosts:
                 raise tds.exceptions.WrongEnvironmentError(
@@ -204,14 +283,125 @@ class BaseController(object):
                     environment.environment, ', '.join(sorted(bad_hosts))
                 )
 
-            for project in projects:
-                for target in targets:
-                    if project not in target.application.projects:
-                        raise tds.exceptions.NotFoundError(
-                            "Host %r not a part of project %r",
-                            target, project
+            for app in applications:
+                for host_target in host_targets:
+                    if app not in host_target.target.package_definitions:
+                        raise tds.exceptions.InvalidInputError(
+                            'Application %s does not belong on host %s',
+                            app.name, host_target.name
                         )
 
-            return dict(hosts=targets, apptypes=None)
+            return dict(hosts=host_targets, apptypes=None)
 
         raise NotImplementedError
+
+    def validate_package(self, version=None, hostonly=False, **params):
+        params.update(self.validate_application(**params))
+        application = params.pop('application')
+
+        if version is None:
+            package = self.get_latest_app_version(
+                application, hostonly, **params
+            )
+            if package is None:
+                raise Exception("Couldn't determine latest version")
+        elif application is not None and len(application.packages) > 0:
+            for package in application.packages:
+                if version == package.version:
+                    break
+            else:
+                package = None
+        else:
+            package = None
+
+        if package is None:
+            raise tds.exceptions.NotFoundError(
+                'Package', ['{name}@{vers}'.format(name=application.name,
+                                                   vers=version)]
+            )
+
+        return dict(package=package)
+
+    def validate_package_hostonly(self, version=None, hostonly=True,
+                                  **params):
+        return self.validate_package(version, hostonly, **params)
+
+    def get_latest_app_version(self, app, hostonly, env, **params):
+        # TODO: possibly move this to tds.model.Application ?
+        targets = self.validate_targets(
+            env=env,
+            **params
+        )
+
+        host_targets = targets.get('hosts', None)
+        app_targets = targets.get('apptypes', None)
+        environment = tds.model.Environment.get(env=env)
+
+        host_deployments = {}
+        app_deployments = {}
+        if hostonly:
+            if host_targets is None:
+                all_host_targets = []
+
+                for app_target in app.targets:
+                    all_host_targets.extend(app_target.hosts)
+
+                host_targets = []
+
+                for host_target in all_host_targets:
+                    if host_target.host_deployments:
+                        host_targets.append(host_target)
+
+            for host_target in host_targets:
+                host_deployments[host_target.id] = \
+                    latest_deployed_version_for_host_target(
+                        environment, app, host_target
+                    )
+        else:
+            if app_targets is None:
+                all_targets = app.targets
+                app_target_ids = set()
+
+                for host_target in host_targets:
+                    common_targets = (
+                        set([host_target.target.id]) &
+                        set([x.id for x in all_targets])
+                    )
+
+                    if not common_targets:
+                        raise tds.exceptions.InvalidOperationError(
+                            'Host "%s" is not associated with '
+                            'application "%s"',
+                            host_target.name, app.name
+                        )
+
+                    app_target_ids = app_target_ids.union(common_targets)
+
+                app_targets = [tds.model.AppTarget.get(id=id)
+                               for id in app_target_ids]
+
+            for app_target in app_targets:
+                app_deployments[app_target.id] = \
+                    latest_deployed_package_for_app_target(
+                        environment, app, app_target
+                    )
+
+        if not (host_deployments or app_deployments):
+            raise Exception(
+                'Application "%s" has no current tier/host '
+                'deployments to verify for the given apptypes/'
+                'hosts', app.name
+            )
+
+        versions = dict(
+            ((x.version, x.revision), x)
+            for x in (host_deployments.values() + app_deployments.values())
+        )
+
+        if len(versions) > 1:
+            raise ValueError(
+                'Multiple versions not allowed, found: %r',
+                list(sorted(versions.items()))
+            )
+
+        return versions.values()[0]
