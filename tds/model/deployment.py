@@ -1,7 +1,10 @@
 """Model module for deployment object."""
 
-from .base import Base
 import tagopsdb
+
+from .base import Base
+from .application import Application
+from .deploy_target import AppTarget
 
 
 class Deployment(Base):
@@ -9,7 +12,9 @@ class Deployment(Base):
 
     @property
     def application(self):
-        return self.delegate.deployment.package.application
+        return Application(
+            delegate=self.delegate.deployment.package.application
+        )
 
 
 class AppDeployment(Deployment):
@@ -25,7 +30,7 @@ class HostDeployment(Deployment):
 
     @property
     def app_target(self):
-        return self.delegate.host.target
+        return AppTarget(delegate=self.delegate.host.target)
 
     @property
     def host_state(self):
