@@ -1,8 +1,10 @@
 """Model module for deployment target object."""
 
-from .base import Base
-from .project import Project
 import tagopsdb
+
+from .base import Base
+from .application import Application
+from .project import Project
 
 
 class DeployTarget(Base):
@@ -80,3 +82,8 @@ class HostTarget(DeployTarget):
     @property
     def application(self):
         return AppTarget(delegate=self.delegate.application)
+
+    @property
+    def package_definitions(self):
+        return [Application(delegate=x)
+                for x in self.target.package_definitions]

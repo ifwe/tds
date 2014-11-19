@@ -435,8 +435,7 @@ class DeployController(BaseController):
             log.log(5, 'Deployment is for hosts...')
             for apptype in list(apptypes):
                 apphosts = [host for host in hosts
-                            if any(target.id == apptype.id
-                                   for target in host.targets)]
+                            if host.target.id == apptype.id]
                 if not apphosts:
                     continue
 
@@ -448,8 +447,7 @@ class DeployController(BaseController):
                     )
                     apptypes.remove(apptype)
                     [hosts.remove(host) for host in hosts
-                     if any(target.id == apptype.id
-                            for target in host.targets)]
+                     if host.target.id == apptype.id]
                     continue
 
                 log.log(5, 'Hosts being deployed to are: %r', apphosts)
@@ -663,8 +661,7 @@ class DeployController(BaseController):
                         apptype
                     )
                     [hosts.remove(host) for host in hosts
-                     if any(target.id == apptype.id
-                            for target in host.targets)]
+                     if host.target.id == apptype.id]
                 else:
                     log.log(
                         5, 'Deleting application %r from '
@@ -894,7 +891,7 @@ class DeployController(BaseController):
 
             apptypes = []
             for host in hosts:
-                apptypes.extend(host.targets)
+                apptypes.append(host.target)
 
             apptypes = list(set(apptypes))
         else:
@@ -1023,8 +1020,7 @@ class DeployController(BaseController):
 
             if hosts:
                 apphosts = [host for host in hosts
-                            if any(target.id == app_id
-                                   for target in host.targets)]
+                            if host.target.id == app_id]
             else:
                 apphosts = []
 
@@ -1334,14 +1330,13 @@ class DeployController(BaseController):
 
         elif hosts:
             for host in hosts:
-                for target in host.targets:
-                    pkg = self.get_package_for_target(
-                        target, environment
-                    )
-                    if pkg is None:
-                        continue
+                pkg = self.get_package_for_target(
+                    host.target, environment
+                )
+                if pkg is None:
+                    continue
 
-                    restart_targets.append((host, pkg))
+                restart_targets.append((host, pkg))
 
         if not restart_targets:
             raise tds.exceptions.InvalidOperationError(
