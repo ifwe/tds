@@ -39,7 +39,13 @@ def before_all(context):
     context.coverage_enabled = True
     context.PROJECT_ROOT = os.path.normpath(opj(dirname(__file__), '..'))
 
-    processes.run('coverage erase', expect_return_code=None)
+    context.coverage_cmd = lambda c: [
+        "coverage",
+        c,
+        '--rcfile="%s"' % os.path.join(context.PROJECT_ROOT, 'coverage.rc'),
+    ]
+
+    processes.run(context.coverage_cmd('erase'), expect_return_code=None)
     for fname in (COVERAGE_REPORT_FILENAME, COVERAGE_DATA_FILENAME):
         fpath = os.path.join(context.PROJECT_ROOT, fname)
         if os.path.isfile(fpath):
@@ -50,8 +56,8 @@ def after_all(context):
     if not getattr(context, 'coverage_enabled', None):
         return
 
-    processes.run('coverage combine', expect_return_code=None)
-    processes.run('coverage xml', expect_return_code=None)
+    processes.run(context.coverage_cmd('combine'), expect_return_code=None)
+    processes.run(context.coverage_cmd('xml'), expect_return_code=None)
 
 
 def setup_workspace(context):
