@@ -731,10 +731,10 @@ def then_the_output_describes_an_application_with_name_in_format(
                 expected[k] = int(mktime(expected[k].timetuple()))
             assert expected[k] == actual[-1][k]
     elif output_format in ('table', 'a table'):
-        assert any('| Application' in line for line in lines)
-        assert any('|---' in line for line in lines)
-        assert any('---|' in line for line in lines)
-        assert any('| {name} '.format(name=name) in line for line in lines)
+        assert any(['| Application' in line for line in lines])
+        assert any(['|---' in line for line in lines])
+        assert any(['---|' in line for line in lines])
+        assert any(['| {name} '.format(name=name) in line for line in lines])
     elif output_format == 'rst':
         expected = "=============\nApplication\n=============\napp1\n=============\n"
         assert context.process.stdout == expected
@@ -1000,11 +1000,7 @@ def find_substring_or_regex_in_lines(substr, lines):
     import re
     prog = re.compile(substr)
 
-    for line in lines:
-        if prog.search(line):
-            return True
-    else:
-        return False
+    return any(prog.search(line) for line in lines)
 
 
 @then(u'the output describes the app deployments')
