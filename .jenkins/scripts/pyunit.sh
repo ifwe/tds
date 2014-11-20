@@ -1,7 +1,7 @@
 #!/bin/bash
 
-scripts=$( dirname "${BASH_SOURCE-$0}" )
-source "$scripts/python-setup.sh"
+mkdir -p reports
+rm reports/pyunit.xml
 
 "$WORKSPACE/run_tests.py" \
     -v \

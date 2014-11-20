@@ -24,7 +24,7 @@ def project = new PythonFPMMatrixProject(
 def pylint = project.downstreamJob {
     name 'pylint'
     label 'python27 && centos6'
-    steps { shell '.jenkins/scripts/pylint.sh' }
+    steps { shell 'source ".jenkins/scripts/python-setup.sh" && .jenkins/scripts/pylint.sh' }
 
     publishers {
         warnings([], ['Pyflakes': 'reports/pyflakes.log'])
@@ -38,7 +38,7 @@ def pylint = project.downstreamJob {
 def pyunit = project.downstreamJob {
     name 'pyunit'
     label 'python27 && centos6'
-    steps { shell '.jenkins/scripts/pyunit.sh' }
+    steps { shell 'source ".jenkins/scripts/python-setup.sh" && .jenkins/scripts/pyunit.sh' }
     publishers {
         archiveJunit "reports/pyunit.xml"
         cobertura('coverage.xml')
@@ -49,7 +49,7 @@ def pyunit = project.downstreamJob {
 def features = project.downstreamJob {
     name 'features'
     label 'python27 && centos6'
-    steps { shell '.jenkins/scripts/features.sh' }
+    steps { shell 'source ".jenkins/scripts/python-setup.sh" && .jenkins/scripts/features.sh' }
     publishers {
         archiveJunit "reports/*.xml"
         cobertura 'coverage.xml'
