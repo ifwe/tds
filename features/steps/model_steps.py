@@ -212,7 +212,7 @@ def model_builder(single_string, multiple_string, dest, model_name):
         for attr_set in attr_sets:
             context.execute_steps(
                 'Given ' + single_string % ','.join(
-                    '%s="%s"' % i for i in attr_set.items()
+                    ['%s="%s"' % i for i in attr_set.items()]
                 )
             )
 
