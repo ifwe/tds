@@ -346,11 +346,10 @@ class BaseController(object):
                 for app_target in app.targets:
                     all_host_targets.extend(app_target.hosts)
 
-                host_targets = []
-
-                for host_target in all_host_targets:
-                    if host_target.host_deployments:
-                        host_targets.append(host_target)
+                host_targets = [
+                    host_target for host_target in all_host_targets
+                    if host_target.host_deployments
+                ]
 
             for host_target in host_targets:
                 host_deployments[host_target.id] = \

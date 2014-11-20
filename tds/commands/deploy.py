@@ -889,9 +889,7 @@ class DeployController(BaseController):
                     if hostname in hosts:
                         hosts.remove(hostname)
 
-            apptypes = []
-            for host in hosts:
-                apptypes.append(host.target)
+            apptypes = [host.target for host in hosts]
 
             apptypes = list(set(apptypes))
         else:
@@ -1168,10 +1166,9 @@ class DeployController(BaseController):
         if not apptypes:
             apptypes = application.targets
 
-        for target in apptypes:
-            # Note: eventually there may be multiple package definitions
-            # for an given application name, which will need to be handled
-            app_target_map[application].append(target)
+        # Note: eventually there may be multiple package definitions
+        # for an given application name, which will need to be handled
+        app_target_map[application] = [target for target in apptypes]
 
         # Find deployments
         deploy_info = []
