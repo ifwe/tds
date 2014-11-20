@@ -104,7 +104,7 @@ class ApplicationController(BaseController):
             raise tds.exceptions.AssociatedTargetsError(
                 'Application "%s" has associated targets: %s',
                 application.name,
-                ', '.join(x.name for x in application.targets)
+                ', '.join([x.name for x in application.targets])
             )
 
         log.debug('Removing application %r', application.name)
