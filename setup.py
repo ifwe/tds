@@ -66,7 +66,7 @@ def load_requirements(fname):
 
 REQUIREMENTS = {}
 REQUIREMENTS['install'] = load_requirements('requirements.txt')
-REQUIREMENTS['install'].append('tagopsdb>0.7')
+REQUIREMENTS['install'].append('tagopsdb>0.9.0')
 REQUIREMENTS['tests'] = load_requirements('requirements-dev.txt')
 
 def load_github_dependency_links(fname):
