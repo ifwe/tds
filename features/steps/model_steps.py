@@ -387,10 +387,7 @@ def given_the_package_is_deployed_on_the_deploy_target(context):
     )
 
 
-@given(u'the package "{version}" is deployed on the deploy target')
-def given_the_package_specific_is_deployed_on_the_deploy_target(
-        context, version
-):
+def check_if_package_exists(context, version):
     for pkg in context.tds_packages:
         if pkg.version == version:
             break
@@ -398,6 +395,15 @@ def given_the_package_specific_is_deployed_on_the_deploy_target(
         pkg = None
 
     assert pkg is not None
+    return pkg
+
+
+@given(u'the package "{version}" is deployed on the deploy target')
+def given_the_package_specific_is_deployed_on_the_deploy_target(
+        context, version
+):
+    pkg = check_if_package_exists(context, version)
+
     deploy_package_to_target(
         pkg,
         context.tds_targets[-1],
@@ -425,6 +431,22 @@ def given_the_package_is_deployed_on_the_deploy_targets_in_env(
     for target in context.tds_targets:
         deploy_package_to_target(
             context.tds_packages[-1],
+            target,
+            env_obj.env,
+        )
+
+@given(u'the package "{version}" is deployed on the deploy targets in the "{env}" env')
+def given_the_package_specific_is_deployed_on_the_deploy_targets_in_env(
+        context, version, env
+):
+    pkg = check_if_package_exists(context, version)
+
+    env_obj = tagopsdb.Environment.get(env=env)
+    assert env_obj is not None
+
+    for target in context.tds_targets:
+        deploy_package_to_target(
+            pkg,
             target,
             env_obj.env,
         )
@@ -1236,9 +1258,12 @@ def when_package_state_is_changed(context, status, properties):
     tagopsdb.Session.commit()
 
 
-def given_the_package_has_status_set_with_properties(context, environment, status):
+def given_the_package_has_status_set_with_properties(
+        context, version, environment, status
+):
     targets = context.tds_targets
-    package = context.tds_packages[-1]
+    package = context.tds_packages[-1] if version is None \
+        else check_if_package_exists(context, version)
     deployments = tagopsdb.Deployment.find(package_id=package.id)
     dep_ids = [d.id for d in deployments]
     target_ids = [t.id for t in targets]
@@ -1270,17 +1295,35 @@ def given_the_package_has_status_set_with_properties(context, environment, statu
 
 @given(u'the package has been validated in the "{environment}" environment')
 def given_the_package_has_been_validated_with_properties(context,
-                                                                 environment):
+                                                         environment):
     given_the_package_has_status_set_with_properties(
-        context, environment, 'validated'
+        context, None, environment, 'validated'
+    )
+
+
+@given(u'the package "{version}" has been validated in the "{environment}" environment')
+def given_the_package_specific_has_been_validated_with_properties(
+        context, version, environment
+):
+    given_the_package_has_status_set_with_properties(
+        context, version, environment, 'validated'
     )
 
 
 @given(u'the package has been invalidated in the "{environment}" environment')
 def given_the_package_has_been_invalidated_with_properties(context,
-                                                                   environment):
+                                                           environment):
     given_the_package_has_status_set_with_properties(
-        context, environment, 'invalidated'
+        context, None, environment, 'invalidated'
+    )
+
+
+@given(u'the package "{version}" has been invalidated in the "{environment}" environment')
+def given_the_package_specific_has_been_invalidated_with_properties(
+        context, version, environment
+):
+    given_the_package_has_status_set_with_properties(
+        context, version, environment, 'invalidated'
     )
 
 
