@@ -19,6 +19,9 @@ def main():
     config = tds.utils.config.TDSDeployConfig()
     db_config = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
 
+    config.load()
+    db_config.load()
+
     dep_provider = TagopsdbDeploymentProvider(db_config)
     vmon = ValidationMonitor(config, dep_provider)
     notifier = UnvalidatedDeploymentNotifier(config)
