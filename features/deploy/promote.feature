@@ -13,6 +13,14 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And there is a project with name="proj"
         And there is an application with name="myapp"
         And there is a deploy target with name="the-apptype"
+        And there is a package with version="121"
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
+        And there is a package with version="122"
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
+        And the package is deployed on the deploy targets in the "stage" env
+        And the package has been validated in the "staging" environment
         And there is a package with version="123"
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
@@ -59,10 +67,23 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | sprojhost01   |
             | sprojhost02   |
 
+    Scenario: promote older version to hosts
+        When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02"
+        Then the output has "Completed: 2 out of 2 hosts"
+        And  package "myapp" version "121" was deployed to these hosts:
+            | name          |
+            | sprojhost01   |
+            | sprojhost02   |
+
     Scenario: promote version to apptype
         When I run "deploy promote myapp 123 --apptype the-apptype"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "123" was deployed to the deploy target
+
+    Scenario: promote olders version to apptype
+        When I run "deploy promote myapp 121 --apptype the-apptype"
+        Then the output has "Completed: 2 out of 2 hosts"
+        And package "myapp" version "121" was deployed to the deploy target
 
     Scenario: promote version to all apptypes
         Given there is a deploy target with name="another-apptype"
@@ -75,6 +96,18 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "123" was deployed to the deploy targets
+
+    Scenario: promote older version to all apptypes
+        Given there is a deploy target with name="another-apptype"
+        And there is a host with name="anotherhost01"
+        And the host is associated with the deploy target
+        And the deploy target is a part of the project-application pair
+        And the package "121" is deployed on the deploy targets in the "dev" env
+        And the package "121" has been validated in the "development" environment
+        When I run "deploy promote myapp 121 --all-apptypes"
+        Then the output has "Completed: 2 out of 2 hosts"
+        And the output has "Completed: 1 out of 1 hosts"
+        And package "myapp" version "121" was deployed to the deploy targets
 
     Scenario: promote version to hosts with a failure
         Given the host "sprojhost01" will fail to deploy
@@ -139,6 +172,26 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         When I run "deploy promote myapp 124 --hosts sprojhost01 sprojhost02 sother01"
         Then the output has "Completed: 3 out of 3 hosts"
         And package "myapp" version "124" was deployed to these hosts:
+            | name          |
+            | sprojhost01   |
+            | sprojhost02   |
+            | sother01      |
+
+    Scenario: deploying older version to multiple hosts of different apptypes
+        Given there is a deploy target with name="other-apptype"
+        And there are hosts:
+            | name       | env    |
+            | dother01   | dev    |
+            | dother02   | dev    |
+            | sother01   | stage  |
+            | sother02   | stage  |
+        And the hosts are associated with the deploy target
+        And the deploy target is a part of the project-application pair
+        And the package "121" is deployed on the deploy targets in the "dev" env
+        And the package "121" has been validated in the "development" environment
+        When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02 sother01"
+        Then the output has "Completed: 3 out of 3 hosts"
+        And package "myapp" version "121" was deployed to these hosts:
             | name          |
             | sprojhost01   |
             | sprojhost02   |
