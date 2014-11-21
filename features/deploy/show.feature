@@ -140,3 +140,33 @@ Feature: deploy show application version [--apptypes] [--all-apptypes]
         Then the output describes a host deployment with name="myapp",host_name="projhost01"
         And the output does not describe a host deployment with host_name="projhost02"
         And the output does not describe an app deployment with name="myapp"
+
+    Scenario: with multiple apptypes without all-apptypes used
+        Given there is a deploy target with name="bar"
+        And the deploy target is a part of the project-application pair
+        And there are hosts:
+            | name          | env   |
+            | otherhost01   | dev   |
+            | otherhost02   | dev   |
+        And the hosts are associated with the deploy target
+        And the package is deployed on the deploy target
+        And the package is validated
+        When I run "deploy show myapp"
+        Then the output is "Specify a target constraint (too many targets found: bar, foo)"
+
+    Scenario: with multiple apptypes with all-apptypes and different versions
+        Given the package is deployed on the deploy target
+        And the package has been validated
+        And there is a deploy target with name="bar"
+        And the deploy target is a part of the project-application pair
+        And there are hosts:
+            | name          | env   |
+            | otherhost01   | dev   |
+            | otherhost02   | dev   |
+        And the hosts are associated with the deploy target
+        And there is a package with version="200"
+        And the package is deployed on the deploy target
+        And the package is validated
+        When I run "deploy show myapp --all-apptypes"
+        Then the output describes an app deployment with version="123"
+        And the output describes an app deployment with version="200"
