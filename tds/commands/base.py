@@ -299,13 +299,14 @@ class BaseController(object):
 
         raise NotImplementedError
 
-    def validate_package(self, version=None, hostonly=False, **params):
+    def validate_package(self, version=None, hostonly=False, show_cmd=False,
+                         **params):
         params.update(self.validate_application(**params))
         application = params.pop('application')
 
         if version is None:
             package = self.get_latest_app_version(
-                application, hostonly, **params
+                application, hostonly, show_cmd, **params
             )
             if package is None:
                 raise Exception("Couldn't determine latest version")
@@ -330,7 +331,11 @@ class BaseController(object):
                                   **params):
         return self.validate_package(version, hostonly, **params)
 
-    def get_latest_app_version(self, app, hostonly, env, **params):
+    def validate_package_show(self, version=None, hostonly=False,
+                              show_cmd=True, **params):
+        return self.validate_package(version, hostonly, show_cmd, **params)
+
+    def get_latest_app_version(self, app, hostonly, show_cmd, env, **params):
         # TODO: possibly move this to tds.model.Application ?
         targets = self.validate_targets(
             env=env,
@@ -401,7 +406,7 @@ class BaseController(object):
             for x in (host_deployments.values() + app_deployments.values())
         )
 
-        if len(versions) > 1:
+        if len(versions) > 1 and not show_cmd:
             raise ValueError(
                 'Multiple versions not allowed, found: %r',
                 list(sorted(versions.items()))
