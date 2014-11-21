@@ -2,6 +2,7 @@
 Base class for controllers.
 """
 
+import tagopsdb.exceptions
 import tds.model
 import tds.authorize
 import tds.exceptions
@@ -191,7 +192,14 @@ class BaseController(object):
                 app_name = app
             else:
                 app_name = app.name
-            application = tds.model.Application.get(name=app_name)
+
+            try:
+                application = tds.model.Application.get(name=app_name)
+            except tagopsdb.exceptions.MultipleInstancesException as e:
+                raise tds.exceptions.MultipleResultsError(
+                    'Multiple definitions for application found, '
+                    'please file ticket in JIRA for TDS'
+                )
 
             if application is None:
                 missing_applications.append(app)
