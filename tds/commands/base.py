@@ -15,14 +15,10 @@ def latest_deployed_package_for_app_target(environment, app, app_target):
 
     for app_dep in reversed(app_target.app_deployments):
         if app_dep.environment != environment.environment:
-            print "environment didn't match", environment, app_dep
             continue
         if app_dep.status == 'invalidated':
-            print "bad status", app_dep.status
             continue
         if app_dep.deployment.package.application != app:
-            print "wrong app somehow", \
-                app_dep.deployment.package.application, app
             continue
 
         return app_dep.deployment.package
