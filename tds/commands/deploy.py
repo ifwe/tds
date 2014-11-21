@@ -1151,7 +1151,7 @@ class DeployController(BaseController):
         log.debug('Committed database changes')
         return dict()
 
-    @input_validate('package')
+    @input_validate('package_show')
     @input_validate('targets')
     @input_validate('application')
     def show(self, application, package, apptypes=None, **params):
