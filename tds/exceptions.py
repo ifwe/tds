@@ -107,6 +107,14 @@ class JenkinsJobNotFoundError(TDSException):
         super(JenkinsJobNotFoundError, self).__init__(message)
 
 
+class MultipleResultsError(TDSException):
+    """Exception for when multiple results are returned and a single
+       result is expected
+    """
+
+    pass
+
+
 class WrongEnvironmentError(TDSException):
     """Exception for command attempts in incorrect environment"""
 
