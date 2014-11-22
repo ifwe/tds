@@ -291,19 +291,6 @@ def given_the_deploy_target_is_a_part_of_the_proj_app_pair(context):
     )
 
 
-@given(u'the deploy targets are a part of the project')
-def given_the_deploy_targets_are_a_part_of_the_project(context):
-    assert len(context.tds_projects) > 0
-    assert len(context.tds_applications) > 0
-    assert len(context.tds_targets) > 0
-    for target in context.tds_targets:
-        add_target_to_project(
-            context.tds_projects[-1],
-            target,
-            context.tds_applications[-1]
-        )
-
-
 @given(u'the deploy targets are a part of the project-application pair')
 def given_the_deploy_targets_are_a_part_of_the_proj_app_pair(context):
     for target in context.tds_targets:
