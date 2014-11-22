@@ -52,8 +52,8 @@ Feature: package list [app [app [...]]]
             | bar   | 1       |
             | bar   | 2       |
         When I run "package list foo"
-        Then the output describes the packages with name="foo"
-        And the output does not describe the packages with name="bar"
+        Then the output describes a package with name="foo"
+        And the output does not describe packages with name="bar"
 
     Scenario: with a missing project and an existing project specified
         Given there is a package with name="foo",version="5"
