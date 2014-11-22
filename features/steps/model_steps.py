@@ -767,6 +767,32 @@ def then_the_output_describes_a_package_with_properties(context, properties):
         raise exc
 
 
+@then(u'the output does not describe packages with {properties}')
+def then_the_output_does_not_describe_packages_with_properties(context, properties):
+    attrs = parse_properties(properties)
+    stdout = context.process.stdout
+    stderr = context.process.stderr
+
+    lines = stdout.splitlines()
+    processed_attrs = set()
+
+    try:
+        if 'version' in attrs:
+            assert 'Version: %(version)s' % attrs not in lines
+            processed_attrs.add('version')
+        if 'name' in attrs:
+            assert 'Project: %(name)s' % attrs not in lines
+            processed_attrs.add('name')
+
+        unprocessed_attrs = set(attrs) - processed_attrs
+        if unprocessed_attrs:
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
+
+    except AssertionError as exc:
+        exc.args += (stdout, stderr),
+        raise exc
+
+
 @then(u'the output describes the packages in a table')
 def then_the_output_describes_the_packages_in_a_table(context):
     assert ("|-" in context.process.stdout
