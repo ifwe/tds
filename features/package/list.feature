@@ -1,4 +1,4 @@
-Feature: The package list subcommand
+Feature: package list [app [app [...]]]
     As a developer
     I want to view all packages and packages for certain projects
     To determine the state of the packages
@@ -17,10 +17,10 @@ Feature: The package list subcommand
         Then the output is empty
 
         Examples:
-            | args                      |
-            |                           |
-            | --application foo         |
-            | --applications foo bar    |
+            | args         |
+            |              |
+            |  foo         |
+            |  foo bar     |
 
     Scenario: with multiple packages
         Given there are packages:
@@ -33,7 +33,7 @@ Feature: The package list subcommand
 
     Scenario: with existing application specified
         Given there is a package with version="1"
-        When I run "package list --applications bar"
+        When I run "package list bar"
         Then the output describes the packages
 
     Scenario: with multiple existing application specified
@@ -41,22 +41,22 @@ Feature: The package list subcommand
             | name  | version |
             | foo   | 1       |
             | foo   | 2       |
-        When I run "package list --applications foo bar"
+        When I run "package list foo bar"
         Then the output describes the packages
 
     Scenario: with a missing project and an existing project specified
         Given there is a package with name="foo",version="5"
-        When I run "package list --applications foo bar"
+        When I run "package list foo bar"
         Then the output describes a package with name="foo",version="5"
 
     Scenario: with table output format
         Given there is a package with version="1"
-        When I run "--output-format table package list --applications bar"
+        When I run "--output-format table package list bar"
         Then the output describes the packages in a table
 
     Scenario: explicit blocks output format
         Given there is a package with version="1"
-        When I run "--output-format blocks package list --applications bar"
+        When I run "--output-format blocks package list bar"
         Then the output describes the packages
 
     Scenario: invalid output format
@@ -65,20 +65,20 @@ Feature: The package list subcommand
 
     Scenario: with json output format
         Given there is a package with version="1"
-        When I run "--output-format json package list --applications bar"
+        When I run "--output-format json package list bar"
         Then the output describes the packages in json
 
     Scenario: with latex output format
         Given there is a package with version="1"
-        When I run "--output-format latex package list --applications bar"
+        When I run "--output-format latex package list bar"
         Then the output describes the packages in latex
 
     Scenario: with rst output format
         Given there is a package with version="1"
-        When I run "--output-format rst package list --applications bar"
+        When I run "--output-format rst package list bar"
         Then the output describes the packages in rst
 
     Scenario: with a missing application and an existing application specified
         Given there is a package with name="foo",version="5"
-        When I run "package list --applications foo bar"
+        When I run "package list foo bar"
         Then the output describes a package with name="foo",version="5"
