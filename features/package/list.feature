@@ -44,6 +44,17 @@ Feature: package list [app [app [...]]]
         When I run "package list foo bar"
         Then the output describes the packages
 
+    Scenario: with multiple existing applications and some specified
+        Given there are packages:
+            | name  | version |
+            | foo   | 1       |
+            | foo   | 2       |
+            | bar   | 1       |
+            | bar   | 2       |
+        When I run "package list foo"
+        Then the output describes the packages with name="foo"
+        And the output does not describe the packages with name="bar"
+
     Scenario: with a missing project and an existing project specified
         Given there is a package with name="foo",version="5"
         When I run "package list foo bar"
