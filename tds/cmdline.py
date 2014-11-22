@@ -22,7 +22,7 @@ PROJECT_DATA = odict([
     ('list', odict([
         ('help', 'List some/all current projects in deployment system'),
         ('subargs', odict([
-            (('--projects',), odict([
+            (('projects',), odict([
                 ('help', 'Specific projects to list'),
                 ('metavar', 'PROJECT'),
                 ('nargs', '*'),
