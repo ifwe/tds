@@ -95,3 +95,16 @@ Feature: package list [app [app [...]]]
         Given there is a package with name="foo",version="5"
         When I run "package list foo bar"
         Then the output describes a package with name="foo",version="5"
+
+    Scenario: with non-'completed' packages being filtered out
+        Given there is a package with name="bar",version="1",status="removed"
+        And there is a package with name="bar",version="2",status="failed"
+        And there is a package with name="bar",version="3"
+        And there is a package with name="bar",version="4",status="pending"
+        And there is a package with name="bar",version="5",status="processing"
+        When I run "package list bar"
+        Then the output describes a package with name="bar",version="3"
+        And the output does not describe a package with name="bar",version="1"
+        And the output does not describe a package with name="bar",version="2"
+        And the output does not describe a package with name="bar",version="4"
+        And the output does not describe a package with name="bar",version="5"
