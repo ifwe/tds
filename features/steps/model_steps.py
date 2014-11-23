@@ -1,8 +1,9 @@
 """Model configuration/management for feature tests"""
 
+import itertools
 import os.path
-import yaml
 import json
+import yaml
 from time import mktime
 
 from behave import given, then, when
@@ -767,30 +768,48 @@ def then_the_output_describes_a_package_with_properties(context, properties):
         raise exc
 
 
+def isa_group_separator(line):
+    return line == '\n'
+
+
+def package_match(attrs, lines):
+    processed_attrs = set()
+
+    try:
+        if 'name' in attrs:
+            assert 'Project: %(name)s' % attrs in lines
+            processed_attrs.add('name')
+        if 'version' in attrs:
+            assert 'Version: %(version)s' % attrs in lines
+            processed_attrs.add('version')
+
+        unprocessed_attrs = set(attrs) - processed_attrs
+        if unprocessed_attrs:
+            assert len(unprocessed_attrs) == 0, unprocessed_attrs
+
+    except AssertionError:
+        return False
+    else:
+        return True
+
+
 @then(u'the output does not describe a package with {properties}')
 def then_the_output_does_not_describe_a_package_with_properties(context, properties):
     attrs = parse_properties(properties)
     stdout = context.process.stdout
     stderr = context.process.stderr
 
-    lines = stdout.splitlines()
-    processed_attrs = set()
+    matched = False
+    for sep, line_group in itertools.groupby(stdout, isa_group_separator):
+        if not sep:
+            lines = ''.join([x for x in line_group]).splitlines()
 
-    try:
-        if 'version' in attrs:
-            assert 'Version: %(version)s' % attrs not in lines
-            processed_attrs.add('version')
-        if 'name' in attrs:
-            assert 'Project: %(name)s' % attrs not in lines
-            processed_attrs.add('name')
+            if package_match(attrs, lines):
+                matched = True
+                break
 
-        unprocessed_attrs = set(attrs) - processed_attrs
-        if unprocessed_attrs:
-            assert len(unprocessed_attrs) == 0, unprocessed_attrs
-
-    except AssertionError as exc:
-        exc.args += (stdout, stderr),
-        raise exc
+    if matched:
+        raise AssertionError((stdout, stderr))
 
 
 @then(u'the output describes the packages in a table')
