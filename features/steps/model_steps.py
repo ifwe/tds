@@ -767,8 +767,8 @@ def then_the_output_describes_a_package_with_properties(context, properties):
         raise exc
 
 
-@then(u'the output does not describe packages with {properties}')
-def then_the_output_does_not_describe_packages_with_properties(context, properties):
+@then(u'the output does not describe a package with {properties}')
+def then_the_output_does_not_describe_a_package_with_properties(context, properties):
     attrs = parse_properties(properties)
     stdout = context.process.stdout
     stderr = context.process.stderr
