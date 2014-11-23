@@ -12,6 +12,10 @@ Feature: package list [app [app [...]]]
             | bar  |
             | foo  |
 
+    Scenario: invalid output format
+        When I run "--output-format foo package list"
+        Then the output has "usage:"
+
     Scenario Outline: missing packages
         When I run "package list <args>"
         Then the output is empty
@@ -24,15 +28,15 @@ Feature: package list [app [app [...]]]
 
     Scenario: with multiple packages
         Given there are packages:
-            | version   |
-            | 1         |
-            | 2         |
-            | 3         |
+            | name | version   |
+            | foo  | 1         |
+            | foo  | 2         |
+            | foo  | 3         |
         When I run "package list"
         Then the output describes the packages
 
     Scenario: with existing application specified
-        Given there is a package with version="1"
+        Given there is a package with name="bar",version="1"
         When I run "package list bar"
         Then the output describes the packages
 
@@ -41,6 +45,8 @@ Feature: package list [app [app [...]]]
             | name  | version |
             | foo   | 1       |
             | foo   | 2       |
+            | bar   | 1       |
+            | bar   | 2       |
         When I run "package list foo bar"
         Then the output describes the packages
 
@@ -53,7 +59,7 @@ Feature: package list [app [app [...]]]
             | bar   | 2       |
         When I run "package list foo"
         Then the output describes a package with name="foo"
-        And the output does not describe packages with name="bar"
+        And the output does not describe a package with name="bar"
 
     Scenario: with a missing project and an existing project specified
         Given there is a package with name="foo",version="5"
@@ -61,31 +67,27 @@ Feature: package list [app [app [...]]]
         Then the output describes a package with name="foo",version="5"
 
     Scenario: with table output format
-        Given there is a package with version="1"
+        Given there is a package with name="bar",version="1"
         When I run "--output-format table package list bar"
         Then the output describes the packages in a table
 
     Scenario: explicit blocks output format
-        Given there is a package with version="1"
+        Given there is a package with name="bar",version="1"
         When I run "--output-format blocks package list bar"
         Then the output describes the packages
 
-    Scenario: invalid output format
-        When I run "--output-format foo package list"
-        Then the output has "usage:"
-
     Scenario: with json output format
-        Given there is a package with version="1"
+        Given there is a package with name="bar",version="1"
         When I run "--output-format json package list bar"
         Then the output describes the packages in json
 
     Scenario: with latex output format
-        Given there is a package with version="1"
+        Given there is a package with name="bar",version="1"
         When I run "--output-format latex package list bar"
         Then the output describes the packages in latex
 
     Scenario: with rst output format
-        Given there is a package with version="1"
+        Given there is a package with name="bar",version="1"
         When I run "--output-format rst package list bar"
         Then the output describes the packages in rst
 
