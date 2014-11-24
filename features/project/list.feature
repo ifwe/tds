@@ -1,4 +1,4 @@
-Feature: project list [--projects]
+Feature: project list [proj [proj [...]]]
     As a developer
     I want to view all projects and certain projects
     To determine the state of the projects
@@ -23,12 +23,12 @@ Feature: project list [--projects]
         Then the output describes the projects
 
     Scenario: with missing project specified
-        When I run "project list --projects foo"
+        When I run "project list foo"
         Then the output describes a missing project with name="foo"
 
     Scenario Outline: with existing project specified
         Given there is a project with name="<name>"
-        When I run "project list --projects <name>"
+        When I run "project list <name>"
         Then the output describes a project with name="<name>"
 
         Examples:
@@ -42,21 +42,21 @@ Feature: project list [--projects]
             | foo   |
             | bar   |
 
-        When I run "project list --projects foo bar"
+        When I run "project list foo bar"
         Then the output describes the projects
 
     Scenario: with a missing project and an existing project specified
         Given there is a project with name="foo"
-        When I run "project list --projects foo bar"
+        When I run "project list foo bar"
         Then the output describes a missing project with name="bar"
 
     Scenario: with multiple missing projects specifed
-        When I run "project list --projects foo bar"
+        When I run "project list foo bar"
         Then the output describes a missing project with name="foo",name="bar"
 
     Scenario Outline: with explicit blocks output format
         Given there is a project with name="<name>"
-        When I run "--output-format blocks project list --projects <name>"
+        When I run "--output-format blocks project list <name>"
         Then the output describes a project with name="<name>"
 
         Examples:
@@ -66,7 +66,7 @@ Feature: project list [--projects]
 
     Scenario Outline: with table output format
         Given there is a project with name="<name>"
-        When I run "--output-format table project list --projects <name>"
+        When I run "--output-format table project list <name>"
         Then the output describes a project with name="<name>" in a table
 
         Examples:
@@ -80,7 +80,7 @@ Feature: project list [--projects]
 
     Scenario Outline: with json output format
         Given there is a project with name="<name>"
-        When I run "--output-format json project list --projects <name>"
+        When I run "--output-format json project list <name>"
         Then the output describes a project with name="<name>" in json
 
         Examples:
@@ -90,7 +90,7 @@ Feature: project list [--projects]
 
     Scenario Outline: with latex output format
         Given there is a project with name="<name>"
-        When I run "--output-format latex project list --projects <name>"
+        When I run "--output-format latex project list <name>"
         Then the output describes a project with name="<name>" in latex
 
         Examples:
@@ -100,7 +100,7 @@ Feature: project list [--projects]
 
     Scenario Outline: with rst output format
         Given there is a project with name="<name>"
-        When I run "--output-format rst project list --projects <name>"
+        When I run "--output-format rst project list <name>"
         Then the output describes a project with name="<name>" in rst
 
         Examples:
