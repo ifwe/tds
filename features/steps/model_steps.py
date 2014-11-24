@@ -799,17 +799,12 @@ def then_the_output_does_not_describe_a_package_with_properties(context, propert
     stdout = context.process.stdout
     stderr = context.process.stderr
 
-    matched = False
     for sep, line_group in itertools.groupby(stdout, isa_group_separator):
-        if not sep:
-            lines = ''.join([x for x in line_group]).splitlines()
+        if sep:
+            continue
 
-            if package_match(attrs, lines):
-                matched = True
-                break
-
-    if matched:
-        raise AssertionError((stdout, stderr))
+        lines = ''.join([x for x in line_group]).splitlines()
+        assert not package_match(attrs, lines), (stdout, stderr)
 
 
 @then(u'the output describes the packages in a table')
