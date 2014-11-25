@@ -119,9 +119,6 @@ PACKAGE_DATA = odict([
             (('application',), odict([
                 ('help', 'Name of application'),
             ])),
-            (('job_name',), odict([
-                ('help', 'Jenkins job name'),
-            ])),
             (('version',), odict([
                 ('help', 'Release version number for application'),
                 ('type', str),
