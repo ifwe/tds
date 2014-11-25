@@ -89,7 +89,7 @@ def _main(sysargs):
                             sorted(tds_params.iteritems()))
 
     # Must be done *after* logging is configured
-    import tds.main as tds_main
+    import tds.apps.main as tds_main
 
     prog = tds_main.TDS(tds_params)
 
