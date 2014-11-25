@@ -41,7 +41,7 @@ APPLICATION_DATA = odict([
             (('job_name',), odict([
                 ('help', 'Jenkins job name'),
             ])),
-            (('--deploy_type',), odict([
+            (('--deploy-type',), odict([
                 ('help', 'Format of application deployment (default: rpm)'),
                 ('default', 'rpm'),
             ])),
@@ -49,11 +49,11 @@ APPLICATION_DATA = odict([
                 ('help', 'Architecture of application (default: noarch)'),
                 ('default', 'noarch'),
             ])),
-            (('--build_type',), odict([
+            (('--build-type',), odict([
                 ('help', 'Build system for application (default: jenkins)'),
                 ('default', 'jenkins'),
             ])),
-            (('--build_host',), odict([
+            (('--build-host',), odict([
                 ('help', 'Build host for application (default: '
                          'ci.tagged.com)'),
                 ('default', 'ci.tagged.com'),
