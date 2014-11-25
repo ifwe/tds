@@ -279,14 +279,14 @@ class UpdateDeployRepoDaemon(Daemon):
 
         log.info('Initializing database session')
 
-        tagopsdb.init(dict(
+        tagopsdb.init(
             url=dict(
                 username=dbconfig['user'],
                 password=dbconfig['password'],
                 host=dbconfig['hostname'],
                 database=dbconfig['db_name'],
             ),
-            pool_recycle=3600)
+            pool_recycle=3600
         )
 
         log.info('Reading configuration (deploy.yml) file')

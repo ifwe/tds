@@ -140,7 +140,6 @@ class Notifier(object):
             destinations = ', '.join(
                 x.name for x in deployment.target['apptypes']
             )
-            print 'destinations', destinations, deployment.target
         else:
             dest_type = 'app tier(s)'
 
