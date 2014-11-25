@@ -21,6 +21,6 @@ Feature: Authorization roles - environment
             | deploy rollback foo       |
             | deploy restart foo        |
             | package list              |
-            | package add foo bar 123   |
+            | package add foo 123       |
             | package delete foo 123    |
             | project list              |
