@@ -2,6 +2,7 @@
 Base class for controllers.
 """
 
+import tagopsdb.exceptions
 import tds.model
 import tds.authorize
 import tds.exceptions
@@ -14,14 +15,10 @@ def latest_deployed_package_for_app_target(environment, app, app_target):
 
     for app_dep in reversed(app_target.app_deployments):
         if app_dep.environment != environment.environment:
-            print "environment didn't match", environment, app_dep
             continue
         if app_dep.status == 'invalidated':
-            print "bad status", app_dep.status
             continue
         if app_dep.deployment.package.application != app:
-            print "wrong app somehow", \
-                app_dep.deployment.package.application, app
             continue
 
         return app_dep.deployment.package
@@ -191,7 +188,14 @@ class BaseController(object):
                 app_name = app
             else:
                 app_name = app.name
-            application = tds.model.Application.get(name=app_name)
+
+            try:
+                application = tds.model.Application.get(name=app_name)
+            except tagopsdb.exceptions.MultipleInstancesException as e:
+                raise tds.exceptions.MultipleResultsError(
+                    'Multiple definitions for application found, '
+                    'please file ticket in JIRA for TDS'
+                )
 
             if application is None:
                 missing_applications.append(app)
@@ -295,13 +299,14 @@ class BaseController(object):
 
         raise NotImplementedError
 
-    def validate_package(self, version=None, hostonly=False, **params):
+    def validate_package(self, version=None, hostonly=False, show_cmd=False,
+                         **params):
         params.update(self.validate_application(**params))
         application = params.pop('application')
 
         if version is None:
             package = self.get_latest_app_version(
-                application, hostonly, **params
+                application, hostonly, show_cmd, **params
             )
             if package is None:
                 raise Exception("Couldn't determine latest version")
@@ -326,7 +331,11 @@ class BaseController(object):
                                   **params):
         return self.validate_package(version, hostonly, **params)
 
-    def get_latest_app_version(self, app, hostonly, env, **params):
+    def validate_package_show(self, version=None, hostonly=False,
+                              show_cmd=True, **params):
+        return self.validate_package(version, hostonly, show_cmd, **params)
+
+    def get_latest_app_version(self, app, hostonly, show_cmd, env, **params):
         # TODO: possibly move this to tds.model.Application ?
         targets = self.validate_targets(
             env=env,
@@ -397,7 +406,7 @@ class BaseController(object):
             for x in (host_deployments.values() + app_deployments.values())
         )
 
-        if len(versions) > 1:
+        if len(versions) > 1 and not show_cmd:
             raise ValueError(
                 'Multiple versions not allowed, found: %r',
                 list(sorted(versions.items()))
