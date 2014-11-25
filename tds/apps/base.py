@@ -1,42 +1,28 @@
-"""
-Command and view resolver for TDS.
-"""
+'''
+Base class for TDS applications. Mostly in charge of
+DB initialization and loading config
+'''
+
 import getpass
-import os
-import pwd
 import logging
 
-import tds.authorize
-import tds.commands
-import tds.views
-import tds.utils
-
 import tagopsdb
-from tds.exceptions import ConfigurationError
-from tds.model import LocalActor
 
+import tds.utils.config
 
-log = logging.getLogger('tds.main')
+log = logging.getLogger('tds.apps.base')
 
-
-class TDS(object):
-    """TDS main class"""
+class TDSProgramBase(object):
+    '''
+    Base class for a program in the TDS ecosystem. Loads configs and stuff
+    '''
 
     _config = None
     _dbconfig = None
     _authconfig = None
 
-    view = tds.views.CLI
-
-    views = {
-        ('deploy', 'redeploy'): 'deploy_promote',
-    }
-
     def __init__(self, params):
-        """Basic initialization"""
-
         self.params = params
-        self.params['deployment'] = True
 
     @property
     def config(self):
@@ -84,7 +70,6 @@ class TDS(object):
             )
         )
         dbconfig.load()
-
         return dbconfig
 
     @staticmethod
@@ -95,31 +80,6 @@ class TDS(object):
         )
         authconfig.load()
         return authconfig
-
-    @tds.utils.debug
-    def update_program_parameters(self):
-        """Set some additional program parameters"""
-
-        log.debug('Adding several additional parameters for program')
-
-        self.params['user'] = pwd.getpwuid(os.getuid()).pw_name
-        log.log(5, 'User is: %s', self.params['user'])
-
-        self.params['user_level'] = self.authconfig.get_access_level(
-            LocalActor()
-        )
-        log.log(5, 'User level is: %s', self.params['user_level'])
-
-        self.params['env'] = self.config['env.environment']
-        log.log(5, 'Environment is: %s', self.params['env'])
-
-        self.params['repo'] = self.config['repo']
-        self.params['jenkins_url'] = self.config['jenkins.url']
-
-        self.params['package_add_timeout'] = self.config['repo.update_timeout']
-        self.params['mco_bin'] = self.config['mco.bin']
-
-        log.log(5, '"repo" parameter values are: %r', self.params['repo'])
 
     @tds.utils.debug
     def initialize_db(self):
@@ -145,31 +105,3 @@ class TDS(object):
             ),
             pool_recycle=3600
         )
-
-    @tds.utils.debug
-    def execute_command(self):
-        """Run the requested command for TDS"""
-
-        log.debug('Running the requested command')
-        command = self.params['command_name'].replace('-', '_')
-        subcommand = self.params['subcommand_name'].replace('-', '_')
-        full_command = (command, subcommand)
-        controller_name = command.capitalize() + "Controller"
-        log.log(5, 'Instantiating class %r', controller_name)
-
-        view_name = self.views.get(
-            full_command,
-            '%s_%s' % full_command
-        )
-
-        ControllerClass = getattr(tds.commands, controller_name)
-        controller = ControllerClass(self.config)
-
-        result = controller.action(subcommand, **self.params)
-
-        return self.render(view_name, result)
-
-    def render(self, *args, **kwargs):
-        """Render view."""
-        return self.view(output_format=self.params['output_format']) \
-            .generate_result(*args, **kwargs)
