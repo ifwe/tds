@@ -12,14 +12,70 @@ import logging
 from email.mime.text import MIMEText
 
 import tagopsdb
-import tagopsdb.deploy.package as package
 import tagopsdb.exceptions
 
-from ..utils import run
 
+from .. import utils
+from .. import model
 from . import TDSProgramBase
 
 log = logging.getLogger('tds.apps.repo_updater')
+
+
+class RPMQueryProvider(object):
+    @classmethod
+    def query(cls, filename, fields):
+        rpm_format = '\n'.join(
+            '%%{field}' for field in fields
+        )
+
+        try:
+            rpm_query_result = utils.run([
+                'rpm', '-qp', '--queryformat',
+                rpm_format,
+                filename
+            ])
+        except subprocess.CalledProcessError as exc:
+            log.error('rpm command failed: %s', exc)
+
+            return None
+        else:
+            return zip(
+                fields,
+                rpm_query_result.stdout.splitlines()
+            )
+
+class RPMDescriptor(object):
+    query_fields = ('arch', 'name', 'version', 'release')
+    arch = None
+    name = None
+    version = None
+    release = None
+
+    def __init__(self, path, **attrs):
+        self.path = path
+
+        for key, val in attrs.items():
+            setattr(self, key, val)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.path)
+
+    @property
+    def package_info(self):
+        info = self.__dict__.copy()
+        info.pop('path', None)
+        info['revision'] = info.pop('release', None)
+
+        return info
+
+    @classmethod
+    def from_path(cls, path):
+        info = RPMQueryProvider.query(path, RPMDescriptor.query_fields)
+        if info is None:
+            return None
+        return cls(path, **info)
 
 
 class RepoUpdater(TDSProgramBase):
@@ -60,81 +116,77 @@ class RepoUpdater(TDSProgramBase):
         except OSError as exc:
             log.error('Unable to remove file %s: %s', rpm, exc)
 
-    def check_rpm_file(self, rpm_to_process):
-        """Ensure file is a valid RPM."""
-
-        rpm_info = None
-        cmd = ['rpm', '-qp', '--queryformat',
-               '%{arch}\n%{name}\n%{version}\n%{release}',
-               rpm_to_process]
-
+    def notify_bad_rpm(self, rpm_path):
         try:
-            rpm_info = run(cmd)
-        except subprocess.CalledProcessError as exc:
-            log.error('rpm command failed: %s', exc)
+            self.email_for_invalid_rpm(rpm_path)
+            # Email send failed?  Tough noogies.
+        except smtplib.SMTPException as exc:
+            log.error('Email send failed: %s', exc)
 
-            try:
-                self.email_for_invalid_rpm(rpm_to_process)
-                # Email send failed?  Tough noogies.
-            except smtplib.SMTPException as exc:
-                log.error('Email send failed: %s', exc)
+    def validate_rpms_in_dir(self, dir):
+        good = []
+        bad = []
 
-        if rpm_info is not None:
-            # Contains arch type, package name, version and release
-            rpm_info = rpm_info.stdout.split('\n')
+        for name in os.listdir(dir):
+            fullpath = os.path.join(dir, name)
+            if not os.path.isfile(fullpath):
+                continue
 
-        return rpm_info
+            rpm = RPMDescriptor.from_path(fullpath)
+            if rpm is None:
+                bad.append(name)
+            else:
+                good.append(rpm)
 
-    def prepare_rpms(self, files):
+        return dict(good=good, bad=bad)
+
+    def handle_unprocessable_rpms(self, bad_things):
+        for bad_thing in bad_things:
+            log.error('Unable to process RPM file')
+
+            self.notify_bad_rpm(bad_thing)
+            self.remove_file(bad_thing)
+
+
+    def prepare_rpms(self):
         """Move RPMs in incoming directory to the processing directory."""
 
         log.info('Moving files in incoming directory to processing '
                  'directory...')
 
-        self.valid_rpms = dict()
+        incoming_items = self.validate_rpms_in_dir(self.incoming_dir)
 
-        for rpm in files:
-            src_rpm = os.path.join(self.incoming_dir, rpm)
-            dst_rpm = os.path.join(self.processing_dir, rpm)
+        self.handle_unprocessable_rpms(incoming_items.get('bad', []))
 
-            if not os.path.isfile(src_rpm):
-                continue
+        good = incoming_items.get('good', [])
+        if not good:
+            return
 
-            rpm_info = self.check_rpm_file(src_rpm)
+        log.info('Files found, processing them...')
 
-            if rpm_info is None:
-                log.error('Unable to process RPM file')
+        for rpm in good:
+            package = model.Package.get(**rpm.info)
 
-                self.remove_file(src_rpm)
-
-                # XXX: Unsure what to do here for the database info,
-                # since acquiring the proper version and release
-                # isn't easily doable from the file name (though
-                # it is possible).
-                continue
-
-            pkg = package.find_package(*rpm_info[1:])
-
-            if pkg is None:
-                name, version, release = rpm_info[1:]
-                raise tagopsdb.exceptions.RepoException(
+            if package is None:
+                log.error(
                     'Missing entry for package "%s", '
-                    'version %s, revision %s in database'
-                    % (name, version, release)
+                    'version %s, revision %s in database',
+                    rpm.name, rpm.version, rpm.release
                 )
-
-            self.valid_rpms[rpm] = rpm_info
+                self.remove_file(rpm.path)
 
             try:
-                os.rename(src_rpm, dst_rpm)
-            except OSError as e:
+                os.rename(
+                    rpm.path,
+                    os.path.join(self.processing_dir, rpm.filename)
+                )
+            except OSError as exc:
                 log.error('Unable to move file "%s" to "%s": %s',
-                          src_rpm, self.processing_dir, e)
-                pkg.status = 'failed'
-                self.remove_file(src_rpm)
-                del self.valid_rpms[rpm]
+                          rpm.path, self.processing_dir, exc)
+                package.status = 'failed'
+                self.remove_file(rpm.path)
             else:
-                pkg.status = 'processing'
+                package.status = 'processing'
             finally:
                 tagopsdb.Session.commit()
 
@@ -156,59 +208,66 @@ class RepoUpdater(TDSProgramBase):
         smtp.sendmail(sender, receiver_emails, msg.as_string())
         smtp.quit()
 
-    def update_repo(self):
+    def process_rpms(self):
         """Copy RPMs in processing directory to the repository and run
            update the repo.
         """
+        ready_for_repo = []
+        processing_items = self.validate_rpms_in_dir(self.processing_dir)
 
-        for rpm in self.valid_rpms.keys():
-            rpm_to_process = os.path.join(self.processing_dir, rpm)
-            rpm_info = self.valid_rpms[rpm]
+        self.handle_unprocessable_rpms(processing_items.get('bad', []))
 
+        for rpm in processing_items.get('good', []):
             log.info('Verifying file %s and if valid moving to repository',
-                     rpm_to_process)
+                     rpm.path)
 
-            pkg = package.find_package(*rpm_info[1:])
+            package = model.Package.get(**rpm.info)
 
-            if pkg is None:
-                name, version, release = rpm_info[1:]
-                raise tagopsdb.exceptions.RepoException(
+            if package is None:
+                log.error(
                     'Missing entry for package "%s", '
-                    'version %s, revision %s in database'
-                    % (name, version, release)
+                    'version %s, revision %s in database',
+                    rpm.name, rpm.version, rpm.release
                 )
+                self.remove_file(rpm.path)
 
             # TODO: ensure package is valid (security purposes)
 
-            dest_dir = os.path.join(self.repo_dir, rpm_info[0])
+            dest_path = os.path.join(self.repo_dir, rpm.filename)
 
             try:
-                shutil.copy(rpm_to_process, dest_dir)
+                shutil.copy(rpm.path, dest_path)
             except IOError:
                 time.sleep(2)   # Short delay before re-attempting
 
                 try:
-                    shutil.copy(rpm_to_process, dest_dir)
+                    shutil.copy(rpm.path, dest_path)
                 except IOError:
-                    pkg.status = 'failed'
-                    self.remove_file(rpm_to_process)
-                    del self.valid_rpms[rpm]
+                    package.status = 'failed'
+                    self.remove_file(rpm.path)
                     continue
                 finally:
                     tagopsdb.Session.commit()
 
+            ready_for_repo.append((rpm, package))
+
+        if len(ready_for_repo) > 0:
+            self.update_repo(ready_for_repo)
+            log.info('Done processing.')
+
+    def update_repo(self, rpms_packages):
         log.info('Updating repo...')
         old_umask = os.umask(0002)
         final_status = 'completed'
 
         try:
-            run(['make', '-C', self.repo_dir])
+            utils.run(['make', '-C', self.repo_dir])
         except subprocess.CalledProcessError as exc:
             log.error('yum database update failed, retrying: %s', exc)
             time.sleep(5)   # Short delay before re-attempting
 
             try:
-                run(['make', '-C', self.repo_dir])
+                utils.run(['make', '-C', self.repo_dir])
             except subprocess.CalledProcessError as exc:
                 log.error('yum database update failed, aborting: %s', exc)
                 final_status = 'failed'
@@ -216,29 +275,23 @@ class RepoUpdater(TDSProgramBase):
         log.info('Updating status of packages to: %s', final_status)
         # Yes, making the assumption none of the package finds
         # will fail...
-        for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
-            pkg = package.find_package(*rpm_info[1:])
-            pkg.status = final_status
+        for rpm, package in rpms_packages:
+            package.status = final_status
             tagopsdb.Session.commit()
 
         os.umask(old_umask)
         log.info('Removing processed files...')
 
-        for rpm_to_process, rpm_info in self.valid_rpms.iteritems():
-            self.remove_file(os.path.join(self.processing_dir, rpm_to_process))
+        for rpm, package in rpms_packages:
+            self.remove_file(rpm.path)
 
     def run(self):
         '''
         Find files in incoming dir and add them to the yum repository
         '''
-        files = os.listdir(self.incoming_dir)
 
-        if files:
-            log.info('Files found, processing them...')
-            self.prepare_rpms(files)
-            self.update_repo()
-            log.info('Done processing, checking for incoming files...')
-
+        self.prepare_rpms()
+        self.process_rpms()
 
     @property
     def incoming_dir(self):
