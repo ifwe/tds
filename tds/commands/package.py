@@ -163,23 +163,36 @@ class PackageController(BaseController):
 
         package = application.get_version(version=version, revision=revision)
 
-        if package is not None:
-            raise tds.exceptions.AlreadyExistsError(
-                'Package "%s@%s-%s" already exists',
-                package.name, package.version, revision
-            )
-
-        try:
-            package = application.create_version(
-                version=version,
-                revision=revision,
-                creator=params['user']
-            )
-        except tagopsdb.exceptions.PackageException as e:
-            log.error(e)
-            raise Exception(
-                'Failed to add package "%s@%s"', package.name, package.version
-            )
+        if package is None:
+            try:
+                package = application.create_version(
+                    version=version,
+                    revision=revision,
+                    creator=params['user']
+                )
+            except tagopsdb.exceptions.PackageException as e:
+                log.error(e)
+                raise Exception(
+                    'Failed to add package "%s@%s"', package.name, package.version
+                )
+        else:
+            if package.status == 'processing':
+                # TODO: verify still processing -- check processing directory
+                # if in processing directory, stop and raise exception (in progress)
+                # else, fix it by moving the file from processing to incoming,
+                # and state to pending. then continue this function
+                raise NotImplementedError
+            elif package.status != 'failed':
+                # possible states: completed, processing, or removed
+                # TODO: separate messages for each state.
+                raise tds.exceptions.AlreadyExistsError(
+                    'Package "%s@%s-%s" already exists',
+                    package.name, package.version, revision
+                )
+            else:
+                # package is failed. set it back to pending and try again
+                package.status = 'pending'
+                tagopsdb.Session.commit()
 
         # TODO: add property to Package to generate this
         rpm_name = '%s-%s-%s.%s.rpm' % (
