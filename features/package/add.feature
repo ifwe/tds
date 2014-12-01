@@ -62,9 +62,22 @@ Feature: package add application version [-f|--force]
     @jenkins_server
     Scenario: with explicit --job flag
         Given there is an application with name="myapp"
-        And there is a jenkins job with name="job"
+        And there is a jenkins job with name="another_job"
         And the job has a build with number="123"
-        When I start to run "package add --job job myapp 123"
+        When I start to run "package add --job another_job myapp 123"
+        And I wait 5 seconds
+        And the status is changed to "completed" for package with name="myapp",version="123"
+        And I wait 5 seconds
+        And the command finishes
+        Then the output has "Added package: "myapp@123""
+
+    @jenkins_server
+    Scenario: override default job with explicit --job flag
+        Given there is an application with name="myapp"
+        And there is a jenkins job with name="job"
+        And there is a jenkins job with name="another_job"
+        And the job has a build with number="123"
+        When I start to run "package add --job another_job myapp 123"
         And I wait 5 seconds
         And the status is changed to "completed" for package with name="myapp",version="123"
         And I wait 5 seconds
