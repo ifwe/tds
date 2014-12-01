@@ -40,11 +40,31 @@ Feature: package add application version [-f|--force]
         And the output has "job@123"
 
     @jenkins_server
+    Scenario: with --job flag indicating a non-existent job
+        Given there is an application with name="myapp"
+        And there is a jenkins job with name="job"
+        And the job has a build with number="123"
+        When I run "package add --job another_job myapp 123"
+        Then the output has "Job does not exist: another_job"
+
+    @jenkins_server
     Scenario: add a package to an application
         Given there is an application with name="myapp"
         And there is a jenkins job with name="job"
         And the job has a build with number="123"
         When I start to run "package add myapp 123"
+        And I wait 5 seconds
+        And the status is changed to "completed" for package with name="myapp",version="123"
+        And I wait 5 seconds
+        And the command finishes
+        Then the output has "Added package: "myapp@123""
+
+    @jenkins_server
+    Scenario: with explicit --job flag
+        Given there is an application with name="myapp"
+        And there is a jenkins job with name="job"
+        And the job has a build with number="123"
+        When I start to run "package add --job job myapp 123"
         And I wait 5 seconds
         And the status is changed to "completed" for package with name="myapp",version="123"
         And I wait 5 seconds

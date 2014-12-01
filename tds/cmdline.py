@@ -123,6 +123,10 @@ PACKAGE_DATA = odict([
                 ('help', 'Release version number for application'),
                 ('type', str),
             ])),
+            (('--job',), odict([
+                ('help', 'Jenkins job name (default: application job name)'),
+                ('type', str),
+            ])),
             (('--force', '-f'), odict([
                 ('help', 'Allow an existing package to be re-added'),
                 ('action', 'store_true'),
