@@ -123,7 +123,7 @@ def application_factory(context, **kwargs):
     fields = dict(
         deploy_type='rpm',
         validation_type='matching',
-        path='some-job',
+        path='job',
         arch='noarch',
         build_type='jenkins',
         build_host='fakeci.example.org',
