@@ -1,6 +1,7 @@
 '''
 Updates the deploy yum repsitory with files in the configured directories
 '''
+import sys
 import os
 import os.path
 import time
@@ -307,3 +308,12 @@ class RepoUpdater(TDSProgramBase):
     def repo_dir(self):
         'Easy access property for yum.repo_location config key'
         return self.config['yum.repo_location']
+
+if __name__ == '__main__':
+    def parse_command_line(args):
+        # TODO implement parser thing?
+        return object()
+    args = vars(parse_command_line(sys.argv[1:]))
+
+    prog = RepoUpdater(args)
+    prog.run()
