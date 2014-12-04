@@ -1430,3 +1430,32 @@ def given_there_is_an_ongoing_deployment_on_the_deploy_target(context):
         context.tds_env,
         'inprogress',
     )
+
+
+@given(u'make will return {value}')
+def given_make_will_return(context, value):
+    json_file = os.path.join(os.environ.get('BEHAVE_WORK_DIR'),
+                             'make-behavior.json')
+    with open(json_file, 'w') as f:
+        json.dump({'exit_code': value}, f)
+
+
+@given(u'a package with name "{pkg_name}" is in the "{dir_name}" directory')
+def given_a_package_with_name_is_in_the_directoary(context, pkg_name, dir_name):
+    dir_name = os.path.join(os.environ.get('BEHAVE_WORK_DIR'),
+                            'incoming_dir')
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
+    file_name = os.path.join(dir_name, pkg_name)
+    with open(file_name, 'w+') as f:
+        f.write('')
+
+
+@then(u'the package with name "{pkg_name}" is removed from the "{dir_name}" directory')
+def the_package_with_name_is_removed_from_the_directory(context, pkg_name, dir_name):
+    dir_name = os.path.join(os.environ.get('BEHAVE_WORK_DIR'),
+                            'incoming_dir')
+    file_name = os.path.join(dir_name, pkg_name)
+    assert (os.path.isdir(dir_name)
+            and
+            not os.path.isfile(file_name))
