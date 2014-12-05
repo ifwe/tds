@@ -28,7 +28,9 @@ def when_i_run_command(context, command):
 
 @when(u'I start to run "{command}"')
 def when_i_start_to_run(context, command):
+    helpers_path = os.path.join(context.PROJECT_ROOT, 'features', 'helpers', 'bin')
     env = os.environ.copy()
+    env['PATH'] = os.pathsep.join(filter(None, [helpers_path, env.get('PATH', '')]))
     env['PYTHONPATH'] = context.PROJECT_ROOT
     env['BEHAVE_WORK_DIR'] = context.WORK_DIR
     proc = None
