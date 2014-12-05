@@ -36,11 +36,11 @@ def rpm_factory(context, **kwargs):
     version = kwargs.get('version')
     revision = kwargs.get('revision', 1)
     arch = kwargs.get('arch', 'noarch')
-    path = kwargs.get('path')  # see PackageLocation.path
+    # path = kwargs.get('path')  # see PackageLocation.path
 
     rpm_name = '%s-%s-%s.%s.rpm' % (name, version, revision, arch)
 
-    full_path = os.path.join(context.REPO_DIR, 'builds', path, rpm_name)
+    full_path = os.path.join(context.REPO_DIR, 'incoming', rpm_name)
     parent_dir = os.path.dirname(full_path)
 
     if not os.path.isdir(parent_dir):
@@ -1434,16 +1434,14 @@ def given_there_is_an_ongoing_deployment_on_the_deploy_target(context):
 
 @given(u'make will return {value}')
 def given_make_will_return(context, value):
-    json_file = os.path.join(os.environ.get('BEHAVE_WORK_DIR'),
-                             'make-behavior.json')
+    json_file = os.path.join(context.WORK_DIR, 'make-behavior.json')
     with open(json_file, 'w') as f:
-        json.dump({'exit_code': value}, f)
+        json.dump({'exit_code': int(value)}, f)
 
 
 @given(u'a package with name "{pkg_name}" is in the "{dir_name}" directory')
 def given_a_package_with_name_is_in_the_directoary(context, pkg_name, dir_name):
-    dir_name = os.path.join(os.environ.get('BEHAVE_WORK_DIR'),
-                            'incoming_dir')
+    dir_name = os.path.join(context.REPO_DIR, dir_name)
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     file_name = os.path.join(dir_name, pkg_name)
@@ -1451,11 +1449,22 @@ def given_a_package_with_name_is_in_the_directoary(context, pkg_name, dir_name):
         f.write('')
 
 
-@then(u'the package with name "{pkg_name}" is removed from the "{dir_name}" directory')
-def the_package_with_name_is_removed_from_the_directory(context, pkg_name, dir_name):
-    dir_name = os.path.join(os.environ.get('BEHAVE_WORK_DIR'),
-                            'incoming_dir')
-    file_name = os.path.join(dir_name, pkg_name)
-    assert (os.path.isdir(dir_name)
-            and
-            not os.path.isfile(file_name))
+@then(u'the "{dir_name}" directory is empty')
+def then_the_directory_is_empty(context, dir_name):
+    dir_name = os.path.join(context.REPO_DIR, dir_name)
+    assert os.path.isdir(dir_name)
+    assert not any(os.path.isfile(os.path.join(dir_name, name)) for name in
+                   os.listdir(dir_name))
+
+
+@then(u'the RPM with name {properties} is not in the "{dir_name}" directory')
+def the_package_with_name_is_removed_from_the_directory(context, properties, dir_name):
+    dir_name = os.path.join(context.REPO_DIR, dir_name)
+    rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
+        parse_properties(properties)
+    )
+    assert os.path.isdir(dir_name)
+    assert not any(name == rpm_name for name in os.listdir(dir_name))
+    assert not os.path.isfile(file_name) , "{file_name} should not exist".format(
+        file_name=file_name
+    )

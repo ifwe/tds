@@ -64,7 +64,7 @@ class UpdateDeployRepoDaemon(Daemon):
     def create_zoo(self, zoo_config):
         hostname = socket.gethostname()
 
-        zoo = KazooClient('hosts=%s' %','.join(zoo_config))
+        zoo = KazooClient('hosts=%s' % ','.join(zoo_config))
         zoo.start()
         return zoo.Election('/deployrepo', hostname)
 

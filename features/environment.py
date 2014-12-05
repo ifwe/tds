@@ -74,9 +74,10 @@ def setup_workspace(context):
     for d in (
         context.WORK_DIR,
         context.REPO_DIR,
-        opj(context.REPO_DIR, 'tmp'),
-        opj(context.REPO_DIR, 'incoming'),
         opj(context.REPO_DIR, 'builds'),
+        opj(context.REPO_DIR, 'incoming'),
+        opj(context.REPO_DIR, 'processing'),
+        opj(context.REPO_DIR, 'tmp'),
     ):
         if not os.path.isdir(d):
             os.makedirs(d)

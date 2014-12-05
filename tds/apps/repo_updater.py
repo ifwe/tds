@@ -15,6 +15,9 @@ from email.mime.text import MIMEText
 import tagopsdb
 import tagopsdb.exceptions
 
+if __package__ is None:
+    import tds.apps
+    __package__ = 'tds.apps'
 
 from .. import utils
 from .. import model
@@ -71,12 +74,16 @@ class RPMDescriptor(object):
 
         return info
 
+    @property
+    def info(self):
+        return self.package_info
+
     @classmethod
     def from_path(cls, path):
         info = RPMQueryProvider.query(path, RPMDescriptor.query_fields)
         if info is None:
             return None
-        return cls(path, **info)
+        return cls(path, **dict(info))
 
 
 class RepoUpdater(TDSProgramBase):
@@ -91,22 +98,22 @@ class RepoUpdater(TDSProgramBase):
 
         log.info('Initializing database session')
         self.initialize_db()
-        self.validate_yum_config()
+        self.validate_repo_config()
 
-    def validate_yum_config(self):
+    def validate_repo_config(self):
         "Make sure we've got all the values we need for the yum repository"
 
-        yum_config = self.config.get('yum', None)
+        repo_config = self.config.get('repo', None)
 
-        if yum_config is None:
-            raise RuntimeError('YAML configuration missing "yum" section')
+        if repo_config is None:
+            raise RuntimeError('YAML configuration missing "repo" section')
 
         required_keys = ('repo_location', 'incoming', 'processing')
         for key in required_keys:
-            if key not in yum_config:
+            if key not in repo_config:
                 raise RuntimeError(
                     'YAML configuration missing necessary '
-                    'parameter in "yum" section: %s' % key
+                    'parameter in "repo" section: %s' % key
                 )
 
     def remove_file(self, rpm):
@@ -148,7 +155,6 @@ class RepoUpdater(TDSProgramBase):
             self.notify_bad_rpm(bad_thing)
             self.remove_file(bad_thing)
 
-
     def prepare_rpms(self):
         """Move RPMs in incoming directory to the processing directory."""
 
@@ -166,7 +172,12 @@ class RepoUpdater(TDSProgramBase):
         log.info('Files found, processing them...')
 
         for rpm in good:
-            package = model.Package.get(**rpm.info)
+            #TODO We shouldn't be doing this dict pop trick.
+            # Mike recommended possibly adding a hybrid property to the
+            # tagopsdb.model.package.Package class.
+            rpm_info = rpm.info
+            rpm_info.pop('arch')
+            package = model.Package.get(**rpm_info)
 
             if package is None:
                 log.error(
@@ -296,24 +307,27 @@ class RepoUpdater(TDSProgramBase):
 
     @property
     def incoming_dir(self):
-        'Easy access property for yum.incoming config key'
-        return self.config['yum.incoming']
+        """Easy access property for repo.incoming config key."""
+        return self.config['repo.incoming']
 
     @property
     def processing_dir(self):
-        'Easy access property for yum.incoming config key'
-        return self.config['yum.processing']
+        """Easy access property for repo.incoming config key."""
+        return self.config['repo.processing']
 
     @property
     def repo_dir(self):
-        'Easy access property for yum.repo_location config key'
-        return self.config['yum.repo_location']
+        """Easy access property for repo.repo_location config key."""
+        return self.config['repo.repo_location']
 
 if __name__ == '__main__':
     def parse_command_line(args):
         # TODO implement parser thing?
-        return object()
-    args = vars(parse_command_line(sys.argv[1:]))
+        return {
+            'config_dir': args[1]
+        }
+    args = parse_command_line(sys.argv[1:])
 
     prog = RepoUpdater(args)
+    prog.initialize()
     prog.run()
