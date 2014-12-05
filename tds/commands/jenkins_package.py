@@ -25,6 +25,12 @@ class JenkinspackageController(PackageController):
         buildnum = int(params['version'])
         job_name = params['job_name']
 
+        matrix_name = None
+        #assume matrix build
+        if '/' in job_name:
+            job_name, matrix_name = job_name.split('/', 1)
+
+
         try:
             jenkins = jenkinsapi.jenkins.Jenkins(params['jenkins_url'])
         except Exception:
@@ -52,6 +58,15 @@ class JenkinspackageController(PackageController):
                 params['version'],
                 params['jenkins_url']
             )
+
+        if matrix_name is not None:
+            for run in build.get_matrix_runs():
+                if matrix_name in run.baseurl:
+                    build = run
+                    break
+            else:
+                self.log.error('could not find matrix run %s', matrix_name)
+                return False
 
         try:
             artifacts = build.get_artifact_dict()[rpm_name]
