@@ -12,6 +12,7 @@ import tds.utils.config
 
 log = logging.getLogger('tds.apps.base')
 
+
 class TDSProgramBase(object):
     '''
     Base class for a program in the TDS ecosystem. Loads configs and stuff
