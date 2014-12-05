@@ -27,47 +27,47 @@ Feature: YUM repo updater
     I want to have the YUM repo updated and handling files correctly
     So that I can be certain that the packages I add are actually added
 
-    @repo_updater_daemon @wip
+    @repo_updater_daemon
     Scenario: adding a package
-        Given a package with name "pkg.rpm" is in the "incoming" directory
+        Given there is an RPM package with name="pkg",version="1",revision="2",arch="noarch"
         And make will return 0
         When I run "daemon"
-        Then the package with name "pkg.rpm" is removed from the "incoming" directory
+        Then the "incoming" directory is empty
 
-    Scenario: adding an invalid package (broken rpm)
+    # Scenario: adding an invalid package (broken rpm)
 
-    Scenario: interrupt while adding a package
+    # Scenario: interrupt while adding a package
 
-    Scenario: file can't be removed
+    # Scenario: file can't be removed
 
-    Scenario: test config loading and failure modes
+    # Scenario: test config loading and failure modes
 
-    Scenario: emails for invalid RPMs
+    # Scenario: emails for invalid RPMs
 
-    Scenario: fail to send email for invalid RPMs
+    # Scenario: fail to send email for invalid RPMs
 
-    Scenario: package entry does not exist
+    # Scenario: package entry does not exist
 
-    Scenario: file is correctly moved
+    # Scenario: file is correctly moved
 
-    Scenario: failure to move file
+    # Scenario: failure to move file
 
-    Scenario: package is added correctly and is set to processing
+    # Scenario: package is added correctly and is set to processing
 
-    Scenario: race condition with package entry being invalidated in various ways
+    # Scenario: race condition with package entry being invalidated in various ways
 
-    Scenario: race condition with file being removed before repo update
+    # Scenario: race condition with file being removed before repo update
 
-    Scenario: multiple copies and failures -- status should be failed and file removed on final failure
+    # Scenario: multiple copies and failures -- status should be failed and file removed on final failure
 
-    Scenario: umask is set correctly when running make (for yum repo)
+    # Scenario: umask is set correctly when running make (for yum repo)
 
-    Scenario: make is run properly (package should be added successfully)
+    # Scenario: make is run properly (package should be added successfully)
 
-    Scenario: make fails once (package should be added successfully)
+    # Scenario: make fails once (package should be added successfully)
 
-    Scenario: make fails twice (package status should be set to failed, file removed)
+    # Scenario: make fails twice (package status should be set to failed, file removed)
 
-    Scenario: files are all removed from processing
+    # Scenario: files are all removed from processing
 
-    Scenario: after failure, make sure can still add
+    # Scenario: after failure, make sure can still add
