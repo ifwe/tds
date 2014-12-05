@@ -79,7 +79,12 @@ class RPMDescriptor(object):
 
     @property
     def info(self):
-        return self.package_info
+        #TODO We shouldn't be doing this dict pop trick.
+        # Mike recommended possibly adding a hybrid property to the
+        # tagopsdb.model.package.Package class.
+        self_info = self.package_info
+        self_info.pop('arch')
+        return self_info
 
     @classmethod
     def from_path(cls, path):
@@ -175,12 +180,7 @@ class RepoUpdater(TDSProgramBase):
         log.info('Files found, processing them...')
 
         for rpm in good:
-            #TODO We shouldn't be doing this dict pop trick.
-            # Mike recommended possibly adding a hybrid property to the
-            # tagopsdb.model.package.Package class.
-            rpm_info = rpm.info
-            rpm_info.pop('arch')
-            package = model.Package.get(**rpm_info)
+            package = model.Package.get(**rpm.info)
 
             if package is None:
                 log.error(
