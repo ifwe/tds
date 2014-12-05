@@ -12,6 +12,8 @@ import traceback
 from kazoo.client import KazooClient   # , KazooState
 from simpledaemon import Daemon
 
+import tds.apps.RepoUpdater
+
 log = logging.getLogger('update_deploy_repo')
 
 

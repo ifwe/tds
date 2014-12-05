@@ -16,6 +16,8 @@ import tagopsdb
 import tagopsdb.exceptions
 
 if __package__ is None:
+    # This unused import is necessary if the file is executed as a script,
+    # usually during testing
     import tds.apps
     __package__ = 'tds.apps'
 
@@ -48,6 +50,7 @@ class RPMQueryProvider(object):
                 fields,
                 rpm_query_result.stdout.splitlines()
             )
+
 
 class RPMDescriptor(object):
     query_fields = ('arch', 'name', 'version', 'release')

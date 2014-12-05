@@ -1,7 +1,6 @@
 """
 Command and view resolver for TDS.
 """
-import getpass
 import os
 import pwd
 import logging
@@ -11,13 +10,12 @@ import tds.commands
 import tds.views
 import tds.utils
 
-import tagopsdb
 from . import TDSProgramBase
-from ..exceptions import ConfigurationError
 from ..model import LocalActor
 
 
 log = logging.getLogger('tds.main')
+
 
 class TDS(TDSProgramBase):
     """TDS main class"""

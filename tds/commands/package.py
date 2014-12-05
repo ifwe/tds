@@ -173,7 +173,8 @@ class PackageController(BaseController):
             except tagopsdb.exceptions.PackageException as e:
                 log.error(e)
                 raise Exception(
-                    'Failed to add package "%s@%s"', package.name, package.version
+                    'Failed to add package "%s@%s"', package.name,
+                    package.version
                 )
         else:
             if package.status == 'processing':
