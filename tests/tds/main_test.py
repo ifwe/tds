@@ -7,7 +7,7 @@ from tests.factories.utils.config import (
     DatabaseTestConfigFactory
 )
 
-import tds.main
+import tds.apps.main
 
 
 class TestTDS(unittest2.TestCase):
@@ -16,7 +16,7 @@ class TestTDS(unittest2.TestCase):
         config = DeployConfigFactory()
 
         mock.patch.object(
-            tds.main.TDS,
+            tds.apps.main.TDS,
             '_load_config',
             return_value=config
         ).start()
@@ -24,7 +24,7 @@ class TestTDS(unittest2.TestCase):
         dbconfig = DatabaseTestConfigFactory()
 
         mock.patch.object(
-            tds.main.TDS,
+            tds.apps.main.TDS,
             '_load_dbconfig',
             return_value=dbconfig
         ).start()
@@ -33,7 +33,7 @@ class TestTDS(unittest2.TestCase):
         mock.patch.stopall()
 
     def test_update_program_parameters(self):
-        t = tds.main.TDS(dict())
+        t = tds.apps.main.TDS(dict())
 
         with contextlib.nested(
             mock.patch(
@@ -56,7 +56,7 @@ class TestTDS(unittest2.TestCase):
         getpass = mock.patch('getpass.getpass', return_value='password')
 
         with contextlib.nested(getpass, init_session):
-            t = tds.main.TDS(dict(dbuser='user'))
+            t = tds.apps.main.TDS(dict(dbuser='user'))
             t.initialize_db()
 
             # init_session.assert_called_once_with('user', 'password')
@@ -65,7 +65,7 @@ class TestTDS(unittest2.TestCase):
         init_session = mock.patch('tagopsdb.init', return_value=None)
 
         with contextlib.nested(init_session):
-            t = tds.main.TDS(dict(user_level='something'))
+            t = tds.apps.main.TDS(dict(user_level='something'))
             t.initialize_db()
 
             # init_session.assert_called_once_with(
