@@ -27,9 +27,13 @@ Feature: YUM repo updater
     I want to have the YUM repo updated and handling files correctly
     So that I can be certain that the packages I add are actually added
 
+    Background:
+        Given there is an application with name="myapp"
+        And there is a package with version="123"
+
     @repo_updater_daemon
     Scenario: adding a package
-        Given there is an RPM package with name="pkg",version="1",revision="2",arch="noarch"
+        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
         And make will return 0
         When I run "daemon"
         Then the "incoming" directory is empty
