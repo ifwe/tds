@@ -29,24 +29,32 @@ Feature: YUM repo updater
 
     Background:
         Given there is an application with name="myapp"
-        And there is a package with version="123"
+        And there is a package with version="123",status="pending"
 
-    @repo_updater_daemon
     Scenario: adding a package
         Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
         And make will return 0
         When I run "daemon"
         Then the "incoming" directory is empty
+        And the package status is "completed"
 
-    # Scenario: adding an invalid package (broken rpm)
+    @email_server
+    Scenario: adding an invalid package (broken rpm)
+        Given a file with name "pkg.rpm" is in the "incoming" directory
+        And email notification is enabled
+        And make will return 0
+        When I run "daemon"
+        Then an email is sent with repo update info with sender="siteops",receiver="eng+tds@tagged.com"
+        And an email is sent with repo update contents containing "[TDS] Invalid RPM file "pkg.rpm""
+        And an email is sent with repo update contents containing "The RPM file "pkg.rpm" is invalid, the builder of it should check the build process"
+        #TODO: TDS-45.  After that's done, test with this line:
+        # And the package status is "failed"
 
     # Scenario: interrupt while adding a package
 
     # Scenario: file can't be removed
 
     # Scenario: test config loading and failure modes
-
-    # Scenario: emails for invalid RPMs
 
     # Scenario: fail to send email for invalid RPMs
 
@@ -68,9 +76,19 @@ Feature: YUM repo updater
 
     # Scenario: make is run properly (package should be added successfully)
 
-    # Scenario: make fails once (package should be added successfully)
+    Scenario: make fails once (package should be added successfully)
+        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
+        And make will return 2,0
+        When I run "daemon"
+        Then the "incoming" directory is empty
+        And the package status is "completed"
 
-    # Scenario: make fails twice (package status should be set to failed, file removed)
+    Scenario: make fails twice (package status should be set to failed, file removed)
+        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
+        And make will return 2,2
+        When I run "daemon"
+        Then the "incoming" directory is empty
+        And the package status is "failed"
 
     # Scenario: files are all removed from processing
 

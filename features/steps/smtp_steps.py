@@ -100,3 +100,30 @@ def there_is_failure_message_for_email_send(context):
     stderr = context.process.stderr
 
     assert 'Mail server failure' in stderr, stderr
+
+
+@then(u'an email is sent with repo update info with {properties}')
+def then_an_email_is_sent_with_repo_update_info_with(context, properties):
+    attrs = parse_properties(properties)
+    with open(os.path.join(context.EMAIL_SERVER_DIR, 'message.json')) as fh:
+        email_data_list = json.loads(fh.read())
+
+    if attrs.get('sender', None) is not None:
+        sender = attrs.pop('sender')
+        assert any(email['sender'] == sender for email in email_data_list), (sender, email_data_list)
+    if attrs.get('receiver', None) is not None:
+        receiver = attrs.pop('receiver')
+        assert any(receiver in email['receiver'] for email in email_data_list), (receiver, email_data_list)
+    if attrs.keys():
+        assert False, "Unable to process attrs: {keys}".format(keys=attrs.keys())
+
+
+@then(u'an email is sent with repo update contents containing "{text}"')
+def then_an_email_is_sent_with_repo_update_contents_containing(context, text):
+    with open(os.path.join(context.EMAIL_SERVER_DIR, 'message.json')) as fh:
+        email_data_list = json.loads(fh.read())
+
+    try:
+        assert any(text in email['contents'] for email in email_data_list), (text, email_data_list)
+    except KeyError as err:
+        assert False, "Key error: {err}, {l}".format(err=err, l=email_data_list)

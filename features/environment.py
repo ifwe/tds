@@ -78,6 +78,7 @@ def setup_workspace(context):
         opj(context.REPO_DIR, 'incoming'),
         opj(context.REPO_DIR, 'processing'),
         opj(context.REPO_DIR, 'tmp'),
+        opj(context.REPO_DIR, 'deploy')
     ):
         if not os.path.isdir(d):
             os.makedirs(d)
@@ -234,7 +235,8 @@ def setup_conf_file(context):
         dict(
             build_base=opj(context.REPO_DIR, 'builds'),
             incoming=opj(context.REPO_DIR, 'incoming'),
-            processing=opj(context.REPO_DIR, 'processing')
+            processing=opj(context.REPO_DIR, 'processing'),
+            repo_location=opj(context.REPO_DIR, 'deploy')
         )
     )
 

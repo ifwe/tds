@@ -6,7 +6,17 @@ import json
 
 def main():
     data = json.load(open(os.path.join(os.environ.get('BEHAVE_WORK_DIR'), 'make-behavior.json')))
-    return data.get('exit_code', 0)
+    try:
+        code = data.pop('exit_code_1')
+        json.dump(data, open(os.path.join(os.environ.get('BEHAVE_WORK_DIR'), 'make-behavior.json'), 'w'))
+        return code
+    except KeyError:
+        try:
+            code = data.pop('exit_code_2')
+            json.dump(data, open(os.path.join(os.environ.get('BEHAVE_WORK_DIR'), 'make-behavior.json'), 'w'))
+            return code
+        except KeyError:
+            return 0
 
 
 if __name__ == '__main__':

@@ -1434,12 +1434,17 @@ def given_there_is_an_ongoing_deployment_on_the_deploy_target(context):
 
 @given(u'make will return {value}')
 def given_make_will_return(context, value):
+    value_list = value.split(',')
+    value_dict = dict()
+    for num, val in enumerate(value_list, 1):
+        value_dict['exit_code_{v}'.format(v=num)] = int(val)
+
     json_file = os.path.join(context.WORK_DIR, 'make-behavior.json')
     with open(json_file, 'w') as f:
-        json.dump({'exit_code': int(value)}, f)
+        json.dump(value_dict, f)
 
 
-@given(u'a package with name "{pkg_name}" is in the "{dir_name}" directory')
+@given(u'a file with name "{pkg_name}" is in the "{dir_name}" directory')
 def given_a_package_with_name_is_in_the_directoary(context, pkg_name, dir_name):
     dir_name = os.path.join(context.REPO_DIR, dir_name)
     if not os.path.isdir(dir_name):
@@ -1468,3 +1473,9 @@ def the_package_with_name_is_removed_from_the_directory(context, properties, dir
     assert not os.path.isfile(file_name) , "{file_name} should not exist".format(
         file_name=file_name
     )
+
+
+@then('the package status is "{status}"')
+def then_the_package_status_is(context, status):
+    assert context.tds_packages[-1].status == status, (context.tds_packages[-1].status,
+                                                       status)
