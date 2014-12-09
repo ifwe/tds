@@ -191,7 +191,10 @@ class PackageController(BaseController):
         pending_rpm = os.path.join(incoming_dir, rpm_name)
         log.log(5, 'Pending RPM is: %s', pending_rpm)
 
-        self._queue_rpm(pending_rpm, rpm_name, package, params.get('job_name'))
+        if 'job' not in params:
+            params['job'] = application.path
+
+        self._queue_rpm(pending_rpm, rpm_name, package, params['job'])
 
         # Wait until status has been updated to 'failed' or 'completed',
         # or timeout occurs (meaning repository side failed, check logs there)

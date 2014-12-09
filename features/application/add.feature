@@ -32,7 +32,7 @@ Feature: application add application job_name [--deploy_type] [--arch] [--build_
         Then the output has "Invalid architecture: no-exist-arch. Should be one of: i386, noarch, x86_64"
 
     Scenario: adding application with invalid build type
-        When I run "application add myapp myjob --build_type no-exist-build-type"
+        When I run "application add myapp myjob --build-type no-exist-build-type"
         Then the output has "Invalid build type: no-exist-build-type. Should be one of: developer, hudson, jenkins"
 
     Scenario: adding application that already exists
