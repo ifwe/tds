@@ -36,8 +36,10 @@ Feature: YUM repo updater
         And make will return 0
         When I run "daemon"
         Then the "incoming" directory is empty
+        And the "processing" directory is empty
         And the package status is "completed"
 
+    # TODO: TDS-45.  After that's done, remove this test; it will no longer be valid.
     @email_server
     Scenario: adding an invalid package (broken rpm)
         Given a file with name "pkg.rpm" is in the "incoming" directory
@@ -47,8 +49,23 @@ Feature: YUM repo updater
         Then an email is sent with repo update info with sender="siteops",receiver="eng+tds@tagged.com"
         And an email is sent with repo update contents containing "[TDS] Invalid RPM file "pkg.rpm""
         And an email is sent with repo update contents containing "The RPM file "pkg.rpm" is invalid, the builder of it should check the build process"
-        #TODO: TDS-45.  After that's done, test with this line:
         # And the package status is "failed"
+
+    Scenario: make fails once (package should be added successfully)
+        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
+        And make will return 2,0
+        When I run "daemon"
+        Then the "incoming" directory is empty
+        And the "processing" directory is empty
+        And the package status is "completed"
+
+    Scenario: make fails twice (package status should be set to failed, file removed)
+        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
+        And make will return 2,2
+        When I run "daemon"
+        Then the "incoming" directory is empty
+        And the "processing" directory is empty
+        And the package status is "failed"
 
     # Scenario: interrupt while adding a package
 
@@ -60,11 +77,7 @@ Feature: YUM repo updater
 
     # Scenario: package entry does not exist
 
-    # Scenario: file is correctly moved
-
     # Scenario: failure to move file
-
-    # Scenario: package is added correctly and is set to processing
 
     # Scenario: race condition with package entry being invalidated in various ways
 
@@ -73,23 +86,3 @@ Feature: YUM repo updater
     # Scenario: multiple copies and failures -- status should be failed and file removed on final failure
 
     # Scenario: umask is set correctly when running make (for yum repo)
-
-    # Scenario: make is run properly (package should be added successfully)
-
-    Scenario: make fails once (package should be added successfully)
-        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
-        And make will return 2,0
-        When I run "daemon"
-        Then the "incoming" directory is empty
-        And the package status is "completed"
-
-    Scenario: make fails twice (package status should be set to failed, file removed)
-        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
-        And make will return 2,2
-        When I run "daemon"
-        Then the "incoming" directory is empty
-        And the package status is "failed"
-
-    # Scenario: files are all removed from processing
-
-    # Scenario: after failure, make sure can still add
