@@ -1,27 +1,3 @@
-# TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-# adding a package
-# adding an invalid package (broken rpm) -- make sure it gets removed
-# interrupted while adding a package
-# file can't be removed
-# test config loading and failure modes
-# emails for invalid RPMs
-# fail to send email for invalid RPMs
-# package entry does not exist
-# file is correctly moved
-# failure to move file (file should be removed and package status failed)
-# package is added correctly and is set to processing
-# test race condition with package entry being invalidated in various ways
-# test race condition with file being removed before repo update
-# test multiple copies and failures -- status should be failed and file removed on final failure
-# umask is set correctly when running make (for yum repo)
-# make is run properly (package should be added successfully)
-# make fails once (package should be added successfully)
-# make fails twice (package status should be set to failed, file removed)
-# files are all removed from processing
-# after failure, make sure can still add
-
-# note: test with single and multiple packages
-
 Feature: YUM repo updater
     As a developer
     I want to have the YUM repo updated and handling files correctly
@@ -68,11 +44,23 @@ Feature: YUM repo updater
         And the package status is "failed"
         And the update repo log file has "ERROR yum database update failed, aborting:"
 
-    # Scenario: interrupt while adding a package
+    Scenario: adding a package with a missing database entry
+        Given there is an RPM package with name="myapp",version="500",revision="1",arch="noarch"
+        And make will return 0
+        When I run "daemon"
+        Then the "incoming" directory is empty
+        And the "processing" directory is empty
+        And the package status is "pending"
+        And the update repo log file has "ERROR Missing entry for package "myapp", version 500, revision 1 in database"
 
-    # Scenario: file can't be removed
-
-    # Scenario: test config loading and failure modes
+    Scenario: processing a package with a missing database entry
+        Given there is an RPM package with name="myapp",version="500",revision="1",arch="noarch",directory="processing"
+        And make will return 0
+        When I run "daemon"
+        Then the "incoming" directory is empty
+        And the "processing" directory is empty
+        And the package status is "pending"
+        And the update repo log file has "ERROR Missing entry for package "myapp", version 500, revision 1 in database"
 
     @email_server
     Scenario: fail to send email for invalid RPMs
@@ -81,6 +69,12 @@ Feature: YUM repo updater
         And the email server is broken
         When I run "daemon"
         Then the update repo log file has "ERROR Email send failed:"
+
+    # Scenario: interrupt while adding a package
+
+    # Scenario: file can't be removed
+
+    # Scenario: test config loading and failure modes
 
     # Scenario: package entry does not exist
 
@@ -93,3 +87,5 @@ Feature: YUM repo updater
     # Scenario: multiple copies and failures -- status should be failed and file removed on final failure
 
     # Scenario: umask is set correctly when running make (for yum repo)
+
+    # NOTE: test with single and multiple packages

@@ -36,11 +36,13 @@ def rpm_factory(context, **kwargs):
     version = kwargs.get('version')
     revision = kwargs.get('revision', 1)
     arch = kwargs.get('arch', 'noarch')
+
     # path = kwargs.get('path')  # see PackageLocation.path
 
     rpm_name = '%s-%s-%s.%s.rpm' % (name, version, revision, arch)
 
-    full_path = os.path.join(context.REPO_DIR, 'incoming', rpm_name)
+    dest_directory = kwargs.get('directory', 'incoming')
+    full_path = os.path.join(context.REPO_DIR, dest_directory, rpm_name)
     parent_dir = os.path.dirname(full_path)
 
     if not os.path.isdir(parent_dir):
