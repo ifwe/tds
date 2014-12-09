@@ -44,7 +44,6 @@ Feature: YUM repo updater
     Scenario: adding an invalid package (broken rpm)
         Given a file with name "pkg.rpm" is in the "incoming" directory
         And email notification is enabled
-        And make will return 0
         When I run "daemon"
         Then an email is sent with repo update info with sender="siteops",receiver="eng+tds@tagged.com"
         And an email is sent with repo update contents containing "[TDS] Invalid RPM file "pkg.rpm""
@@ -58,6 +57,7 @@ Feature: YUM repo updater
         Then the "incoming" directory is empty
         And the "processing" directory is empty
         And the package status is "completed"
+        And the update repo log file has "ERROR yum database update failed, retrying:"
 
     Scenario: make fails twice (package status should be set to failed, file removed)
         Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
@@ -66,6 +66,7 @@ Feature: YUM repo updater
         Then the "incoming" directory is empty
         And the "processing" directory is empty
         And the package status is "failed"
+        And the update repo log file has "ERROR yum database update failed, aborting:"
 
     # Scenario: interrupt while adding a package
 
@@ -73,7 +74,13 @@ Feature: YUM repo updater
 
     # Scenario: test config loading and failure modes
 
-    # Scenario: fail to send email for invalid RPMs
+    @email_server
+    Scenario: fail to send email for invalid RPMs
+        Given a file with name "pkg.rpm" is in the "incoming" directory
+        And email notification is enabled
+        And the email server is broken
+        When I run "daemon"
+        Then the update repo log file has "ERROR Email send failed:"
 
     # Scenario: package entry does not exist
 

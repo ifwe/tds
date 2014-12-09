@@ -108,11 +108,17 @@ class RepoUpdater(TDSProgramBase):
         self.initialize_db()
         self.validate_repo_config()
         try:
-            self.email_port = self.config.get('notifications').get('email').get(
-                'port', 25
-            )
+            self.email_port = self.config.get('notifications')\
+                                         .get('email')\
+                                         .get('port', 25)
         except KeyError:
             self.email_port = 25
+        try:
+            self.email_receiver = self.config.get('notifications')\
+                                             .get('email')\
+                                             .get('receiver')
+        except KeyError:
+            self.email_receiver = None
 
     def validate_repo_config(self):
         "Make sure we've got all the values we need for the yum repository"
@@ -217,6 +223,8 @@ class RepoUpdater(TDSProgramBase):
         sender = 'siteops'
         sender_email = '%s@tagged.com' % sender
         receiver_emails = ['eng+tds@tagged.com']
+        if self.email_receiver is not None:
+            receiver_emails.append(self.email_receiver)
 
         msg = MIMEText('The RPM file "%s" is invalid, the builder of it '
                        'should check the build process' % rpm_file)
