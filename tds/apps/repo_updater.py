@@ -210,10 +210,12 @@ class RepoUpdater(TDSProgramBase):
             except OSError as exc:
                 log.error('Unable to move file "%s" to "%s": %s',
                           rpm.path, self.processing_dir, exc)
-                package.status = 'failed'
+                if package is not None:
+                    package.status = 'failed'
                 self.remove_file(rpm.path)
             else:
-                package.status = 'processing'
+                if package is not None:
+                    package.status = 'processing'
             finally:
                 tagopsdb.Session.commit()
 
@@ -272,7 +274,8 @@ class RepoUpdater(TDSProgramBase):
                 try:
                     shutil.copy(rpm.path, dest_path)
                 except IOError:
-                    package.status = 'failed'
+                    if package is not None:
+                        package.status = 'failed'
                     self.remove_file(rpm.path)
                     continue
                 finally:
