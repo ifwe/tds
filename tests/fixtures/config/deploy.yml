@@ -6,8 +6,11 @@ jenkins:
 logging:
   syslog_facility: fakelocal3
   syslog_priority: fakedebug
+deploy_strategy: mco
 mco:
   bin: 'mco'
+salt:
+  c_path: /etc/salt/minion
 notifications:
   email:
     receiver: fake@example.com

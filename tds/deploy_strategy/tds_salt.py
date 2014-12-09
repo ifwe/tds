@@ -22,9 +22,9 @@ class TDSSaltDeployStrategy(DeployStrategy):
     def deploy_to_host(self, dep_host, app, version, retry=4):
         """Deploy an application to a given host"""
         log.debug('Deploying to host %r', dep_host)
-        return self._publish(dep_host, 'tds_cmd.install', app)
+        return self._publish(dep_host, 'tds.install', app)
 
     @tds.utils.debug
     def restart_host(self, dep_host, app, retry=4):
         """Restart application on a given host"""
-        return self._publish(dep_host, 'tds_cmd.restart', app)
+        return self._publish(dep_host, 'tds.restart', app)
