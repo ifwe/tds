@@ -85,6 +85,11 @@ class PackageController(BaseController):
                 'Unable to contact Jenkins server "%s"', self.jenkins_url
             )
 
+        matrix_name = None
+        #assume matrix build
+        if '/' in job_name:
+            job_name, matrix_name = job_name.split('/', 1)
+
         try:
             job = jenkins[job_name]
         except KeyError:
@@ -113,6 +118,18 @@ class PackageController(BaseController):
                 package.version,
                 self.jenkins_url,
             )
+
+        if matrix_name is not None:
+            for run in build.get_matrix_runs():
+                if matrix_name in run.baseurl:
+                    build = run
+                    break
+            else:
+                log.error('could not find matrix run %s', matrix_name)
+                raise Exception(
+                    'No matrix run matching "%s" for job "%s"',
+                    matrix_name, job_name
+                )
 
         try:
             artifacts = build.get_artifact_dict()[rpm_name]
