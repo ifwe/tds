@@ -1479,3 +1479,10 @@ def the_package_with_name_is_removed_from_the_directory(context, properties, dir
 def then_the_package_status_is(context, status):
     assert context.tds_packages[-1].status == status, (context.tds_packages[-1].status,
                                                        status)
+
+
+@then(u'the update repo log file has "{text}"')
+def then_update_repo_log_file_has(context, text):
+    with open(os.path.join(context.WORK_DIR, 'update_deploy_repo.log')) as fh:
+        actual = fh.read()
+        assert text in actual, (text, actual)
