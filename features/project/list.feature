@@ -107,3 +107,18 @@ Feature: project list [proj [proj [...]]]
             | name    |
             | foo     |
             | spammon |
+
+    Scenario Outline: with application and apptypes associated with the project
+        Given there is a project with name="<name>"
+        And there is an application with name="myapp"
+        And there is a deploy target with name="targ1"
+        And the deploy target is a part of the project-application pair
+        And there is a deploy target with name="targ2"
+        And the deploy target is a part of the project-application pair
+        When I run "project list <name>"
+        Then the output describes a project with name="<name>",package="myapp",apptype="targ1",apptype="targ2",arch="noarch",path="job",host="fakeci.example.org"
+
+        Examples:
+            | name      |
+            | foo       |
+            | spammon   |
