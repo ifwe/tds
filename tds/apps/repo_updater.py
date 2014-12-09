@@ -107,6 +107,12 @@ class RepoUpdater(TDSProgramBase):
         log.info('Initializing database session')
         self.initialize_db()
         self.validate_repo_config()
+        try:
+            self.email_port = self.config.get('notifications').get('email').get(
+                'port', 25
+            )
+        except KeyError:
+            self.email_port = 25
 
     def validate_repo_config(self):
         "Make sure we've got all the values we need for the yum repository"
@@ -219,7 +225,7 @@ class RepoUpdater(TDSProgramBase):
         msg['From'] = sender_email
         msg['To'] = ', '.join(receiver_emails)
 
-        smtp = smtplib.SMTP('localhost')
+        smtp = smtplib.SMTP('localhost', self.email_port)
         smtp.sendmail(sender, receiver_emails, msg.as_string())
         smtp.quit()
 
@@ -330,6 +336,16 @@ if __name__ == '__main__':
             'config_dir': args[1]
         }
     args = parse_command_line(sys.argv[1:])
+
+    log.setLevel(logging.DEBUG)
+    log.propagate = False
+    logfile = os.path.join(args['config_dir'], 'update_deploy_repo.log')
+    handler = logging.FileHandler(logfile, 'a')
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
+                                  "%b %e %H:%M:%S")
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
 
     prog = RepoUpdater(args)
     prog.initialize()
