@@ -1,3 +1,5 @@
+# Salt module for TDS
+
 import tds.scripts.tds_install as tds_install
 
 
@@ -6,7 +8,7 @@ def _error_except(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except SystemExit as e:
+        except SystemExit:
             return 'error'
     return wrapper
 
