@@ -15,6 +15,7 @@ import tagopsdb.deploy.package
 import tds.model
 import tds.utils
 import tds.notifications
+import tds.exceptions
 import tds.deploy_strategy
 
 import logging
@@ -77,9 +78,22 @@ class DeployController(BaseController):
     def __init__(self, config):
         """Basic initialization"""
         super(DeployController, self).__init__(config)
-        self._deploy_strategy = tds.deploy_strategy.TDSMCODeployStrategy(
-            mco_bin=self.app_config['mco']['bin']
+
+        self.create_deploy_strategy(
+            self.app_config.get('deploy_strategy', 'mco')
         )
+
+    def create_deploy_strategy(self, deploy_strat_name):
+        if deploy_strat_name == 'mco':
+            cls = tds.deploy_strategy.TDSMCODeployStrategy
+        elif deploy_strat_name == 'salt':
+            cls = tds.deploy_strategy.TDSSaltDeployStrategy
+        else:
+            raise tds.exceptions.ConfigurationError(
+                'Invalid deploy strategy: %r', deploy_strat_name
+            )
+
+        self._deploy_strategy = cls(**self.app_config.get(deploy_strat_name, {}))
 
     @property
     def deploy_strategy(self):
