@@ -201,6 +201,7 @@ class RepoUpdater(TDSProgramBase):
                     rpm.name, rpm.version, rpm.release
                 )
                 self.remove_file(rpm.path)
+                continue
 
             try:
                 os.rename(
@@ -210,12 +211,10 @@ class RepoUpdater(TDSProgramBase):
             except OSError as exc:
                 log.error('Unable to move file "%s" to "%s": %s',
                           rpm.path, self.processing_dir, exc)
-                if package is not None:
-                    package.status = 'failed'
+                package.status = 'failed'
                 self.remove_file(rpm.path)
             else:
-                if package is not None:
-                    package.status = 'processing'
+                package.status = 'processing'
             finally:
                 tagopsdb.Session.commit()
 
@@ -261,6 +260,7 @@ class RepoUpdater(TDSProgramBase):
                     rpm.name, rpm.version, rpm.release
                 )
                 self.remove_file(rpm.path)
+                continue
 
             # TODO: ensure package is valid (security purposes)
 
@@ -274,8 +274,7 @@ class RepoUpdater(TDSProgramBase):
                 try:
                     shutil.copy(rpm.path, dest_path)
                 except IOError:
-                    if package is not None:
-                        package.status = 'failed'
+                    package.status = 'failed'
                     self.remove_file(rpm.path)
                     continue
                 finally:
