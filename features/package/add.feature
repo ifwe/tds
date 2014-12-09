@@ -82,3 +82,5 @@ Feature: package add subcommand
 
     # TODO: There are probably more failure tests that can be written here!
     # e.g. test for already-exists package in various states: completed, pending, processing, removed, failed
+
+    # Scenario: after failure, make sure can still add
