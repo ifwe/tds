@@ -911,6 +911,30 @@ def then_the_output_describes_a_project_with_properties(context, properties):
 
             processed_attrs.add('apptype')
 
+        if 'arch' in attrs:
+            arch = attrs['arch']
+            assert find_substring_or_regex_in_lines(
+                'Architecture: {arch}'.format(arch=arch), lines
+            )
+
+            processed_attrs.add('arch')
+
+        if 'path' in attrs:
+            path = attrs['path']
+            assert find_substring_or_regex_in_lines(
+                'Path: {path}'.format(path=path), lines
+            )
+
+            processed_attrs.add('path')
+
+        if 'host' in attrs:
+            host = attrs['host']
+            assert find_substring_or_regex_in_lines(
+                'Build host: {host}'.format(host=host), lines
+            )
+
+            processed_attrs.add('host')
+
         if 'package' in attrs:
             packages = attrs['package']
             if not isinstance(packages, list):
