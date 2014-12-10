@@ -238,6 +238,11 @@ def setup_conf_file(context):
     )
 
     add_config_val(context, 'mco', dict(bin=opj(context.BIN_DIR, 'mco')))
+    add_config_val(context, 'salt', dict(
+        bin=opj(context.BIN_DIR, 'salt-call'),
+        user=None,
+        c_dir=opj(context.BIN_DIR, 'salt-conf')
+    ))
 
 
 def add_config_val(context, key, val):
@@ -250,7 +255,10 @@ def add_config_val(context, key, val):
         conf = conf.setdefault(part, {})
 
     old_data = conf.get(key_parts[-1], {})
-    conf[key_parts[-1]] = merge.merge(old_data, val)
+    if isinstance(val, dict):
+        conf[key_parts[-1]] = merge.merge(old_data, val)
+    else:
+        conf[key_parts[-1]] = val
 
     with open(context.TDS_CONFIG_FILE, 'wb') as conf_file:
         conf_file.write(yaml.dump(full_conf))

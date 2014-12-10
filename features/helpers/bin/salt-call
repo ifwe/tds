@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+
+import sys
+import os
+import os.path
+import json
+import optparse
+
+INPUT_FILE = 'salt-input.json'
+RESULTS_FILE = 'salt-results.json'
+
+def record_results(stuff):
+    work_dir = os.environ.get('BEHAVE_WORK_DIR', os.getcwd())
+    results_file = os.path.join(work_dir, RESULTS_FILE)
+
+    old_data = []
+
+    if os.path.isfile(results_file):
+        with open(results_file) as f:
+            old_data = json.loads(f.read())
+
+    old_data.extend(stuff)
+
+    with open(results_file, 'wb') as f:
+        f.write(json.dumps(old_data))
+
+def read_input():
+    work_dir = os.environ.get('BEHAVE_WORK_DIR', os.getcwd())
+    input_file = os.path.join(work_dir, INPUT_FILE)
+
+    input_data = {}
+    if os.path.isfile(input_file):
+        with open(input_file) as f:
+            input_data = json.loads(f.read())
+
+    return input_data
+
+def build_parser():
+    parser = optparse.OptionParser()
+
+    parser.add_option('--out', type=str)
+    parser.add_option('--timeout', type=int)
+    parser.add_option('-c', type=str)
+
+    return parser
+
+def deploy(hostname, app, version):
+    return dict(
+        hostname=hostname,
+        package=app,
+        version=version,
+        restart=False,
+        exitcode=0
+    )
+
+def restart(hostname, app):
+    return dict(
+        hostname=hostname,
+        package=app,
+        version=None,
+        restart=True,
+        exitcode=0
+    )
+
+def main(publish, *args):
+    assert publish == 'publish.publish', publish
+
+    parser = build_parser()
+    options, args = parser.parse_args(list(args))
+
+    assert options.out == 'json'
+
+    (hostname, command), args = args[:2], args[2:]
+
+    input = read_input()
+
+    if hostname in input:
+        result = input[hostname]
+    elif command == 'tds.restart':
+        result = restart(hostname, *args)
+    elif command == 'tds.deploy':
+        result = deploy(hostname, *args)
+    else:
+        raise Exception("Unknown command: %r", command)
+
+    record_results([result])
+
+    print json.dumps({'local': {hostname: result['exitcode'] == 0}})
+    return result['exitcode']
+
+
+if __name__ == '__main__':
+    try:
+        return_code = main(*sys.argv[1:])
+        if return_code is None:
+            return_code = 0
+    except Exception as exc:
+        return_code = 1
+        import traceback
+        traceback.print_exc()
+
+    sys.exit(return_code)
