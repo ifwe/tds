@@ -10,7 +10,9 @@ deploy_strategy: mco
 mco:
   bin: 'mco'
 salt:
-  c_path: /etc/salt/minion
+  user: root
+  bin: /usr/bin/salt-call
+  c_dir: /etc/salt
 notifications:
   email:
     receiver: fake@example.com
