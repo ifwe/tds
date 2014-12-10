@@ -1,6 +1,5 @@
-"""MCollective configuation/management for feature tests"""
+"""MCollective/salt configuration and management for feature tests"""
 
-import collections
 import os.path
 import json
 
@@ -9,57 +8,104 @@ import tds.model
 import tds.utils.merge as merge
 
 from .model_steps import parse_properties
+from .environment import add_config_val
 
 from behave import given, then
 
-INPUT_FILE = 'mco-input.json'
-RESULTS_FILE = 'mco-results.json'
+class DeployStrategyHelper(object):
+    INPUT_FILE = None
+    OUTPUT_FILE = None
+
+    def __init__(self, context):
+        self.context = context
+
+    def get_info_for_host(self, hostname, transform=None):
+        if transform is None:
+            transform = lambda x: x
+
+        return [
+            transform(package_info)
+            for package_info in self.load_results()
+            if package_info['hostname'] == hostname
+        ]
+
+    def get_deployments_for_host(self, hostname):
+        return self.get_info_for_host(
+            hostname,
+            lambda x: (x['package'], x['version'])
+        )
+
+    def get_restarts_for_host(self, hostname):
+        return self.get_info_for_host(
+            hostname,
+            lambda x: (x['package'], x['restart'])
+        )
+
+    def load_results(self):
+        raise NotImplementedError
+
+    def _load_json(self, fname, default=None):
+        if not os.path.isfile(fname):
+            return default
+
+        with open(fname) as fobj:
+            return json.load(fobj)
+
+    def load_results(self):
+        return self._load_json(
+            os.path.join(self.context.WORK_DIR, self.RESULTS_FILE),
+            []
+        )
+
+    def set_input(self, info):
+        input_file = os.path.join(self.context.WORK_DIR, self.INPUT_FILE)
+        old_data = self._load_json(input_file, {})
+
+        data = merge.merge(old_data, info)
+
+        with open(input_file, 'wb') as fobj:
+            json.dump(data, fobj)
 
 
-def load_mco_data(context):
-    results_file = os.path.join(context.WORK_DIR, RESULTS_FILE)
-
-    if not os.path.isfile(results_file):
-        return []
-
-    with open(results_file) as f:
-        data = f.read()
-        return json.loads(data)
+class MCOHelper(DeployStrategyHelper):
+    INPUT_FILE = 'mco-input.json'
+    RESULTS_FILE = 'mco-results.json'
 
 
-def set_mco_input(context, info):
-    input_file = os.path.join(context.WORK_DIR, INPUT_FILE)
+class SaltHelper(DeployStrategyHelper):
+    INPUT_FILE = 'salt-input.json'
+    RESULTS_FILE = 'salt-results.json'
 
-    old_data = {}
 
-    if os.path.isfile(input_file):
-        with open(input_file) as f:
-            old_data = json.loads(f.read())
+def set_strat_helper(context, strategy):
+    assert strategy in ('mco', 'salt'), "invalid helper: %s" % strategy
 
-    data = merge.merge(old_data, info)
+    context.strategy_helper_type = strategy
+    add_config_val(context, 'deploy_strategy', strategy)
 
-    with open(input_file, 'wb') as f:
-        f.write(json.dumps(data))
+def get_strat_helper(context):
+    helper = context.strategy_helper_type
+    assert helper in ('mco', 'salt'), "invalid helper: %s" % helper
 
+    if helper == 'mco':
+        return MCOHelper(context)
+    elif helper == 'salt':
+        return SaltHelper(context)
+
+
+given(u'the deploy strategy is "{strategy}"')(set_strat_helper)
 
 @then(u'package "{pkg}" version "{version}" was deployed to host "{hostname}"')
 def then_the_package_version_was_deployed_to_host(context, pkg, version,
                                                   hostname):
-    mco_data = load_mco_data(context)
 
     package = tagopsdb.Package.get(name=pkg, version=version)
     assert package is not None, (pkg, version)
 
-    hosts_to_packages = collections.defaultdict(list)
-    for info in mco_data:
-        hosts_to_packages[info['hostname']].append(info)
-
-    names_versions = [
-        (package_info['package'], package_info['version'])
-        for package_info in hosts_to_packages[hostname]
-    ]
-
-    assert (package.name, package.version) in names_versions, mco_data
+    assert (
+        (package.name, package.version) in
+        get_strat_helper(context).get_deployments_for_host(hostname)
+    )
 
 
 def check_restart_on_hosts(context, hosts, pkg):
@@ -165,21 +211,13 @@ def then_the_package_version_was_deployed_to_deploy_targets(context, pkg,
 
 @then(u'package "{pkg}" was restarted on host "{hostname}"')
 def then_package_was_restarted_on_host(context, pkg, hostname):
-    mco_data = load_mco_data(context)
-
     package = tagopsdb.Package.get(name=pkg)
     assert package is not None, pkg
 
-    hosts_to_packages = collections.defaultdict(list)
-    for info in mco_data:
-        hosts_to_packages[info['hostname']].append(info)
-
-    names_restarts = [
-        (package_info['package'], package_info['restart'])
-        for package_info in hosts_to_packages[hostname]
-    ]
-
-    assert (package.name, True) in names_restarts, mco_data
+    assert (
+        (package.name, True) in
+        get_strat_helper(context).get_restarts_for_host(hostname)
+    )
 
 
 def check_restart_on_targets(context, targets, pkg):
@@ -232,7 +270,8 @@ def then_package_was_restarted_on_host_with_properties(context, pkg, properties)
 
 @given(u'the host "{hostname}" will fail to {action}')
 def given_the_host_will_fail_to_deploy(context, hostname, action):
-    set_mco_input(context, {
+
+    get_strat_helper(context).set_input({
         hostname: {
             'hostname': hostname,
             'exitcode': 1,

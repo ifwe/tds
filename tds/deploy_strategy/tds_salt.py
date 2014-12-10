@@ -17,7 +17,7 @@ class TDSSaltDeployStrategy(DeployStrategy):
         self.user = user
         self.c_dir = c_dir
 
-    def _publish(self, host, action, app):
+    def _publish(self, host, action, *args):
         """Dispatch to salt master."""
 
         user_cmd = []
@@ -29,8 +29,8 @@ class TDSSaltDeployStrategy(DeployStrategy):
         if self.c_dir is not None:
             salt_opts += ['-c', self.c_dir]
 
-        salt_cmd = [self.bin, 'salt-call', 'publish.publish']
-        publish_args = [host, action, app]
+        salt_cmd = [self.bin, 'publish.publish']
+        publish_args = [host, action] + list(args)
         cmd = user_cmd + salt_cmd + salt_opts + publish_args
 
         proc = tds.utils.processes.run(cmd, expect_return_code=None)
@@ -51,7 +51,7 @@ class TDSSaltDeployStrategy(DeployStrategy):
     def deploy_to_host(self, dep_host, app, version, retry=4):
         """Deploy an application to a given host"""
         log.debug('Deploying to host %r', dep_host)
-        return self._publish(dep_host, 'tds.install', app)
+        return self._publish(dep_host, 'tds.install', app, version)
 
     @tds.utils.debug
     def restart_host(self, dep_host, app, retry=4):
