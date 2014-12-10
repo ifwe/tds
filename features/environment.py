@@ -67,7 +67,6 @@ def setup_workspace(context):
     context.TDS_CONFIG_FILE = opj(context.WORK_DIR, 'deploy.yml')
     context.EMAIL_SERVER_DIR = opj(context.WORK_DIR, 'email-server')
     context.JENKINS_SERVER_DIR = opj(context.WORK_DIR, 'jenkins-server')
-    context.HIPCHAT_SERVER_DIR = opj(context.WORK_DIR, 'hipchat-server')
     context.REPO_DIR = opj(context.WORK_DIR, 'package-repo')
     context.BIN_DIR = opj(context.PROJECT_ROOT, 'features', 'helpers', 'bin')
 
@@ -175,10 +174,7 @@ def setup_hipchat_server(context):
     server_name = ''
     server_port = 0
 
-    context.hipchat_server = HipChatServer(
-        (server_name, server_port),
-        opj(context.HIPCHAT_SERVER_DIR, 'notifications.txt'),
-    )
+    context.hipchat_server = HipChatServer((server_name, server_port))
     context.hipchat_server.start()
 
     add_config_val(
