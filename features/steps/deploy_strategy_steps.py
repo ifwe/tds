@@ -101,7 +101,6 @@ def then_the_package_version_was_deployed_to_host(context, pkg, version,
 
     package = tagopsdb.Package.get(name=pkg, version=version)
     assert package is not None, (pkg, version)
-
     assert (
         (package.name, package.version) in
         get_strat_helper(context).get_deployments_for_host(hostname)

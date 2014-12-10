@@ -44,7 +44,7 @@ def build_parser():
 
     return parser
 
-def deploy(hostname, app, version):
+def install(hostname, app, version):
     return dict(
         hostname=hostname,
         package=app,
@@ -78,8 +78,8 @@ def main(publish, *args):
         result = input[hostname]
     elif command == 'tds.restart':
         result = restart(hostname, *args)
-    elif command == 'tds.deploy':
-        result = deploy(hostname, *args)
+    elif command == 'tds.install':
+        result = install(hostname, *args)
     else:
         raise Exception("Unknown command: %r", command)
 
