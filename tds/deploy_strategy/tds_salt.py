@@ -8,6 +8,11 @@ from .base import DeployStrategy
 import logging
 log = logging.getLogger('tds')
 
+# Note: in order to do multi-host in one call, need to specify them as
+# comma-separated string in the first arguent to publish.publish, like:
+# 'x.tagged.com,y.tagged.com'
+# Then, after all the args to the function call being published, add
+# 'expr_form=list'
 
 class TDSSaltDeployStrategy(DeployStrategy):
     """Salt (master publish.publish) based DeployStrategy."""
