@@ -23,6 +23,7 @@ sys.path.insert(
 )
 
 from hipchat_server import HipChatServer
+from graphite_server import GraphiteServer
 
 DB_HOSTS = (
     'dopsdbtds01.tag-dev.com',
@@ -195,6 +196,38 @@ def teardown_hipchat_server(context):
         print 'hipchat notifications:', notifications
 
 
+def setup_graphite_server(context):
+    """
+    Set up the mock Graphite server.
+    """
+    server_name = ''
+    server_port = 0
+
+    context.graphite_server = GraphiteServer((server_name, server_port))
+    context.graphite_server.start()
+
+    add_config_val(
+        context,
+        'notifications.graphite',
+        dict(host=context.graphite_server.server_address[0],
+             port=context.graphite_server.server_address[1],
+             prefix=context.graphite_server.prefix),
+    )
+
+
+def teardown_graphite_server(context):
+    """
+    Tear down the mock Graphite server.
+    Print notifications if @wip tagged.
+    """
+    notifications = context.graphite_server.get_notifications()
+
+    context.graphite_server.halt()
+
+    if 'wip' in context.tags:
+        print 'graphite notifications:', notifications
+
+
 def setup_conf_file(context):
     shutil.copyfile(
         opj(context.PROJECT_ROOT, 'tests',
@@ -281,6 +314,9 @@ def before_scenario(context, scenario):
     if 'email_server' in context.tags:
         setup_email_server(context)
 
+    if 'graphite_server' in context.tags:
+        setup_graphite_server(context)
+
     setup_temp_db(context)
 
 
@@ -320,6 +356,9 @@ def after_scenario(context, scenario):
 
     if 'hipchat_server' in context.tags:
         teardown_hipchat_server(context)
+
+    if 'graphite_server' in context.tags:
+        teardown_graphite_server(context)
 
     teardown_workspace(context)
 
