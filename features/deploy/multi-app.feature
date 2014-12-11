@@ -43,14 +43,26 @@ Feature: Real-life application usage
         And the package with name="solr-app",version="123" is deployed on the deploy target with name="solrsearch"
         And the package with name="solr-app",version="124" is deployed on the deploy target with name="solrbrowse"
 
-    Scenario: other app to deploy target with tagconfig and another app
+    Scenario Outline: other app to deploy target with tagconfig and another app
+        Given the deploy strategy is "<strategy>"
         When I run "deploy promote solr-app 124 --apptypes solrsearch"
         Then the output has "Completed: 3 out of 3 hosts"
         And package "solr-app" version "124" was deployed to the deploy target with name="solrsearch"
 
-    Scenario: tagconfig to deploy target with tagconfig and another app
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: tagconfig to deploy target with tagconfig and another app
+        Given the deploy strategy is "<strategy>"
         When I run "deploy promote tagconfig 457 --apptypes solrsearch"
         Then the output has "Completed: 3 out of 3 hosts"
         And package "tagconfig" version "457" was deployed to the deploy target with name="solrsearch"
+
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
 
     # TODO: Definitely need more tests here!!!
