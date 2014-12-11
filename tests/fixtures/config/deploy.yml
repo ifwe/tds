@@ -28,4 +28,5 @@ repo:
   build_base: /fake/mnt/deploy/builds
   incoming: /fake/mnt/deploy/incoming
   processing: /fake/mnt/deploy/processing
+  repo_location: /fake/mnt/repos/deploy
   update_timeout: 15

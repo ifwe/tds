@@ -113,4 +113,7 @@ Feature: package add application version [-f|--force]
         And the command finishes
         Then the output has "Please open a JIRA issue in the TDS project."
 
-     # TODO: There are probably more failure tests that can be written here!
+    # TODO: There are probably more failure tests that can be written here!
+    # e.g. test for already-exists package in various states: completed, pending, processing, removed, failed
+
+    # Scenario: after failure, make sure can still add
