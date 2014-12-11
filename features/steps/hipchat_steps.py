@@ -1,6 +1,6 @@
 """HipChat steps for feature tests."""
 
-from behave import then
+from behave import given, then
 
 from .model_steps import parse_properties
 from ..environment import add_config_val
@@ -20,12 +20,11 @@ def then_there_is_a_hipchat_notification_with(context, properties):
 
     attrs = parse_properties(properties)
 
-    for attr in attrs:
-        try:
-            assert any(req[attr] == attrs[attr] for (req, _resp)
-                       in notifications)
-        except KeyError:
-            assert False
+    try:
+        assert any(all(req[attr] == attrs[attr] for attr in attrs)
+                   for (req, _resp) in notifications)
+    except KeyError as e:
+        assert False, e
 
 
 @then(u'a hipchat notification message contains {snippets}')
