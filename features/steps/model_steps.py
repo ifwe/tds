@@ -1460,8 +1460,7 @@ def given_a_package_with_name_is_in_the_directoary(context, pkg_name, dir_name):
 def then_the_directory_is_empty(context, dir_name):
     dir_name = os.path.join(context.REPO_DIR, dir_name)
     assert os.path.isdir(dir_name)
-    assert not any(os.path.isfile(os.path.join(dir_name, name)) for name in
-                   os.listdir(dir_name))
+    assert not os.listdir(dir_name), os.listdir(dir_name)
 
 
 @then(u'the RPM with name {properties} is not in the "{dir_name}" directory')
