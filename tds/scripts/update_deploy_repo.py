@@ -91,13 +91,15 @@ def daemon_main():
     logfile = '/var/log/update_deploy_repo.log'
 
     # 'logger' set at top of program
-    log.setLevel(logging.DEBUG)
+    rootlog = logging.getLogger('')
+    rootlog.setLevel(logging.DEBUG)
     handler = logging.FileHandler(logfile, 'a')
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
                                   "%b %e %H:%M:%S")
     handler.setFormatter(formatter)
-    log.addHandler(handler)
+    rootlog.addHandler(handler)
+    logging.getLogger('kazoo').propagate = False
 
     app = tds.apps.RepoUpdater(dict(
         user_level='admin',
