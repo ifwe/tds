@@ -14,7 +14,7 @@ __all__ = [
     'TDSDeployConfig'
 ]
 
-log = logging.getLogger('tds.util.config')
+log = logging.getLogger('tds.utils.config')
 
 
 def update_recurse(mapping, update):

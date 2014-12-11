@@ -19,6 +19,7 @@ import tagopsdb.deploy.package
 
 import tds.exceptions
 from .base import BaseController, validate
+from .. import utils
 
 log = logging.getLogger('tds')
 
@@ -206,6 +207,16 @@ class PackageController(BaseController):
         log.log(5, 'Pending RPM is: %s', pending_rpm)
 
         self._queue_rpm(pending_rpm, rpm_name, package, params.get('job_name'))
+
+        if utils.rpm.RPMDescriptor.from_path(pending_rpm) is None:
+            try:
+                os.unlink(pending_rpm)
+            except OSError as exc:
+                log.error('Unable to remove file %s: %s', pending_rpm, exc)
+
+            raise tds.exceptions.InvalidRPMError(
+                'Package %s is an invalid RPM', rpm_name
+            )
 
         # Wait until status has been updated to 'failed' or 'completed',
         # or timeout occurs (meaning repository side failed, check logs there)
