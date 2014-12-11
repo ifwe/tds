@@ -25,11 +25,18 @@ Feature: package add application version [-f|--force]
         When I run "package add --force myapp 123"
         Then the output has "Force not implemented yet"
 
+    Scenario: attempt to add package when jenkins is not accessible
+        Given there is an application with name="myapp"
+        When I run "package add myapp 123"
+        Then the output has "Unable to contact Jenkins server"
+        And there is a package with name="myapp",version="123",status="failed"
+
     @jenkins_server
     Scenario: add a package to an application with a job name that doesn't exist
         Given there is an application with name="myapp"
         When I run "package add myapp 123"
         Then the output has "Job does not exist: job"
+        And there is a package with name="myapp",version="123",status="failed"
 
     @jenkins_server
     Scenario: add a package to an application with a version that doesn't exist
@@ -38,6 +45,7 @@ Feature: package add application version [-f|--force]
         When I run "package add myapp 123"
         Then the output has "Build does not exist on http://localhost"
         And the output has "job@123"
+        And there is a package with name="myapp",version="123",status="failed"
 
     @jenkins_server
     Scenario: with --job flag indicating a non-existent job
@@ -46,6 +54,20 @@ Feature: package add application version [-f|--force]
         And the job has a build with number="123"
         When I run "package add --job another_job myapp 123"
         Then the output has "Job does not exist: another_job"
+        And there is a package with name="myapp",version=123,status="failed"
+
+    @jenkins_server
+    Scenario: add a package to an application
+        Given there is an application with name="myapp"
+        And there is a jenkins job with name="job"
+        And the job has a build with number="123"
+        And there is a package with name="myapp",version="123",status="failed"
+        When I start to run "package add myapp 123"
+        And I wait 5 seconds
+        And the status is changed to "completed" for package with name="myapp",version="123"
+        And I wait 5 seconds
+        And the command finishes
+        Then the output has "Added package: "myapp@123""
 
     @jenkins_server
     Scenario: add a package to an application
