@@ -44,25 +44,44 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         When I run "deploy rollback myapp --apptype bad-apptype"
         Then the output has "Valid apptypes for application "myapp" are: ['the-apptype']"
 
-    Scenario: rollback command with no specifier
+    Scenario Outline: rollback command with no specifier
+        Given the deploy strategy is "<strategy>"
         When I run "deploy rollback myapp"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "121" was deployed to the deploy target
 
-    Scenario: rollback version to hosts
-        Given there is a package with version="124"
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: rollback version to hosts
+        Given the deploy strategy is "<strategy>"
+        And there is a package with version="124"
         And the package is deployed on the hosts
         When I run "deploy rollback myapp --hosts projhost01 projhost02"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "123" was deployed to the hosts
 
-    Scenario: rollback version to apptype
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: rollback version to apptype
+        Given the deploy strategy is "<strategy>"
         When I run "deploy rollback myapp --apptype the-apptype"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "121" was deployed to the deploy target
 
-    Scenario: rollback version to all apptypes
-        Given there is a deploy target with name="another-apptype"
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: rollback version to all apptypes
+        Given the deploy strategy is "<strategy>"
+        And there is a deploy target with name="another-apptype"
         And the deploy target is a part of the project-application pair
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -81,20 +100,38 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "121" was deployed to the deploy targets
 
-    Scenario: rollback version to hosts with a failure
-        Given the host "projhost01" will fail to deploy
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: rollback version to hosts with a failure
+        Given the deploy strategy is "<strategy>"
+        And the host "projhost01" will fail to deploy
         When I run "deploy rollback myapp --hosts projhost01 projhost02"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: projhost01"
 
-    Scenario: rollback version to apptype with a failure
-        Given the host "projhost01" will fail to deploy
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: rollback version to apptype with a failure
+        Given the deploy strategy is "<strategy>"
+        And the host "projhost01" will fail to deploy
         When I run "deploy rollback myapp --apptype the-apptype"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: projhost01"
 
-    Scenario: rollback version to all apptypes with a failure
-        Given there is a deploy target with name="another-apptype"
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: rollback version to all apptypes with a failure
+        Given the deploy strategy is "<strategy>"
+        And there is a deploy target with name="another-apptype"
         And the deploy target is a part of the project-application pair
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -113,8 +150,14 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         Then the output has "Some hosts had failures"
         And the output has "Hostname: projhost01"
 
-    Scenario: rollback a single host out of multiple apptypes
-        Given there is a deploy target with name="another-apptype"
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: rollback a single host out of multiple apptypes
+        Given the deploy strategy is "<strategy>"
+        And there is a deploy target with name="another-apptype"
         And the deploy target is a part of the project-application pair
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -137,9 +180,20 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         When I run "deploy rollback myapp --hosts anotherhost01"
         Then the output has "Completed: 1 out of 1 hosts"
 
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
     @delay
-    Scenario: rollback version with delay option
+    Scenario Outline: rollback version with delay option
+        Given the deploy strategy is "<strategy>"
         When I run "deploy rollback myapp --delay 10"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "121" was deployed to the deploy target
         And it took at least 10 seconds
+
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |

@@ -100,7 +100,7 @@ setup_args = dict(
         ]
     },
     data_files=[
-        ('share/tds/salt', ['share/tds_cmd.py']),
+        ('share/tds/salt', ['share/salt/tds.py']),
     ],
     test_suite='tests',
     tests_require=REQUIREMENTS['install'] + REQUIREMENTS['tests'],
