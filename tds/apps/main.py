@@ -48,13 +48,9 @@ class TDS(TDSProgramBase):
         self.params['env'] = self.config['env.environment']
         log.log(5, 'Environment is: %s', self.params['env'])
 
-        self.params['repo'] = self.config['repo']
         self.params['jenkins_url'] = self.config['jenkins.url']
 
-        self.params['package_add_timeout'] = self.config['repo.update_timeout']
         self.params['mco_bin'] = self.config['mco.bin']
-
-        log.log(5, '"repo" parameter values are: %r', self.params['repo'])
 
     @tds.utils.debug
     def execute_command(self):

@@ -163,10 +163,10 @@ class PackageController(BaseController):
         os.unlink(tmpname)
 
     @validate('application')
-    def add(self, application, version, **params):
+    def add(self, application, version, user, job=None, force=False, **params):
         """Add a given version of a package for a given project"""
 
-        if params.get('force', None):
+        if force:
             raise Exception('Force not implemented yet')
 
         log.debug(
@@ -186,7 +186,7 @@ class PackageController(BaseController):
                 package = application.create_version(
                     version=version,
                     revision=revision,
-                    creator=params['user']
+                    creator=user
                 )
             except tagopsdb.exceptions.PackageException as e:
                 log.error(e)
@@ -218,13 +218,13 @@ class PackageController(BaseController):
             application.pkg_name, version, revision, application.arch
         )
 
-        incoming_dir = params['repo']['incoming']
+        incoming_dir = self.app_config['repo.incoming']
 
         pending_rpm = os.path.join(incoming_dir, rpm_name)
         log.log(5, 'Pending RPM is: %s', pending_rpm)
 
-        if 'job' not in params:
-            params['job'] = application.path
+        if job is None:
+            job = application.path
 
         self._queue_rpm(pending_rpm, rpm_name, package, params['job'])
 
@@ -249,7 +249,7 @@ class PackageController(BaseController):
 
         log.log(5, 'Setting up signal handler')
         signal.signal(signal.SIGALRM, processing_handler)
-        signal.alarm(params['package_add_timeout'])
+        signal.alarm(self.app_config.get('repo.update_timeout', 120))
 
         log.log(5, 'Waiting for status update in database for package')
         self.wait_for_state_change(package)
