@@ -34,12 +34,12 @@ def get_model_factory(name):
 def rpm_factory(context, **kwargs):
     name = kwargs.get('name')
     version = kwargs.get('version')
-    revision = kwargs.get('revision', 1)
+    release = kwargs.get('release', 1)
     arch = kwargs.get('arch', 'noarch')
 
     # path = kwargs.get('path')  # see PackageLocation.path
 
-    rpm_name = '%s-%s-%s.%s.rpm' % (name, version, revision, arch)
+    rpm_name = '%s-%s-%s.%s.rpm' % (name, version, release, arch)
 
     dest_directory = kwargs.get('directory', 'incoming')
     full_path = os.path.join(context.REPO_DIR, dest_directory, rpm_name)
