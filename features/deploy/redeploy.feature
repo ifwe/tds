@@ -44,19 +44,32 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
         When I run "deploy redeploy myapp --apptype bad-apptype"
         Then the output has "Valid apptypes for application "myapp" are: ['the-apptype']"
 
-    Scenario: redeploy to hosts
+    Scenario Outline: redeploy to hosts
+        Given the deploy strategy is "<strategy>"
         When I run "deploy redeploy myapp --hosts sprojhost02"
         Then the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "123" was deployed to host "sprojhost02"
 
-    Scenario: redeploy to apptype
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: redeploy to apptype
+        Given the deploy strategy is "<strategy>"
         When I run "deploy redeploy myapp --apptype the-apptype"
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Host "sprojhost01" already has "myapp@123" successfully deployed, skipping"
         And package "myapp" version "123" was deployed to host "sprojhost02"
 
-    Scenario: redeploy to all apptypes
-        Given there is a deploy target with name="another-apptype"
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: redeploy to all apptypes
+        Given the deploy strategy is "<strategy>"
+        And there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
         And the deploy target is a part of the project-application pair
@@ -68,28 +81,57 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
         And package "myapp" version "123" was deployed to host "sprojhost02"
         And package "myapp" version "123" was deployed to host "anotherhost01"
 
-    Scenario: redeploy to host with a failure
-        Given the host "sprojhost02" will fail to deploy
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: redeploy to host with a failure
+        Given the deploy strategy is "<strategy>"
+        And the host "sprojhost02" will fail to deploy
         When I run "deploy redeploy myapp --hosts sprojhost02"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost02"
 
-    Scenario: redeploy to apptype with a failure
-        Given the host "sprojhost02" will fail to deploy
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: redeploy to apptype with a failure
+        Given the deploy strategy is "<strategy>"
+        And the host "sprojhost02" will fail to deploy
         When I run "deploy redeploy myapp --apptype the-apptype"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost02"
 
-    Scenario: redeploy to all apptypes with a failure
-        Given the host "sprojhost02" will fail to deploy
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: redeploy to all apptypes with a failure
+        Given the deploy strategy is "<strategy>"
+        And the host "sprojhost02" will fail to deploy
         When I run "deploy redeploy myapp --all-apptypes"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost02"
 
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
     @delay
-    Scenario: redeploy with delay option
+    Scenario Outline: redeploy with delay option
+        Given the deploy strategy is "<strategy>"
         When I run "deploy redeploy myapp --delay 10"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "123" was deployed to host "sprojhost02"
         And the output has "Host "sprojhost01" already has "myapp@123" successfully deployed, skipping"
         And it took at least 10 seconds
+
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
