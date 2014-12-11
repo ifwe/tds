@@ -36,11 +36,13 @@ def rpm_factory(context, **kwargs):
     version = kwargs.get('version')
     revision = kwargs.get('revision', 1)
     arch = kwargs.get('arch', 'noarch')
-    path = kwargs.get('path')  # see PackageLocation.path
+
+    # path = kwargs.get('path')  # see PackageLocation.path
 
     rpm_name = '%s-%s-%s.%s.rpm' % (name, version, revision, arch)
 
-    full_path = os.path.join(context.REPO_DIR, 'builds', path, rpm_name)
+    dest_directory = kwargs.get('directory', 'incoming')
+    full_path = os.path.join(context.REPO_DIR, dest_directory, rpm_name)
     parent_dir = os.path.dirname(full_path)
 
     if not os.path.isdir(parent_dir):
@@ -1454,3 +1456,59 @@ def given_there_is_an_ongoing_deployment_on_the_deploy_target(context):
         context.tds_env,
         'inprogress',
     )
+
+
+@given(u'make will return {value}')
+def given_make_will_return(context, value):
+    value_list = value.split(',')
+    value_dict = dict()
+    for num, val in enumerate(value_list, 1):
+        value_dict['exit_code_{v}'.format(v=num)] = int(val)
+
+    json_file = os.path.join(context.WORK_DIR, 'make-behavior.json')
+    with open(json_file, 'w') as f:
+        json.dump(value_dict, f)
+
+
+@given(u'a file with name "{pkg_name}" is in the "{dir_name}" directory')
+def given_a_package_with_name_is_in_the_directoary(context, pkg_name, dir_name):
+    dir_name = os.path.join(context.REPO_DIR, dir_name)
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
+    file_name = os.path.join(dir_name, pkg_name)
+    with open(file_name, 'w+') as f:
+        f.write('')
+
+
+@then(u'the "{dir_name}" directory is empty')
+def then_the_directory_is_empty(context, dir_name):
+    dir_name = os.path.join(context.REPO_DIR, dir_name)
+    assert os.path.isdir(dir_name)
+    assert not any(os.path.isfile(os.path.join(dir_name, name)) for name in
+                   os.listdir(dir_name))
+
+
+@then(u'the RPM with name {properties} is not in the "{dir_name}" directory')
+def the_package_with_name_is_removed_from_the_directory(context, properties, dir_name):
+    dir_name = os.path.join(context.REPO_DIR, dir_name)
+    rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
+        parse_properties(properties)
+    )
+    assert os.path.isdir(dir_name)
+    assert not any(name == rpm_name for name in os.listdir(dir_name))
+    assert not os.path.isfile(file_name) , "{file_name} should not exist".format(
+        file_name=file_name
+    )
+
+
+@then('the package status is "{status}"')
+def then_the_package_status_is(context, status):
+    assert context.tds_packages[-1].status == status, (context.tds_packages[-1].status,
+                                                       status)
+
+
+@then(u'the update repo log file has "{text}"')
+def then_update_repo_log_file_has(context, text):
+    with open(os.path.join(context.WORK_DIR, 'update_deploy_repo.log')) as fh:
+        actual = fh.read()
+        assert text in actual, (text, actual)
