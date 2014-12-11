@@ -282,7 +282,6 @@ if __name__ == '__main__':
     args = parse_command_line(sys.argv[1:])
 
     log.setLevel(logging.DEBUG)
-    log.propagate = False
     logfile = os.path.join(args['config_dir'], 'update_deploy_repo.log')
     handler = logging.FileHandler(logfile, 'a')
     handler.setLevel(logging.DEBUG)

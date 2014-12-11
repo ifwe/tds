@@ -92,7 +92,6 @@ def daemon_main():
 
     # 'logger' set at top of program
     log.setLevel(logging.DEBUG)
-    log.propagate = False
     handler = logging.FileHandler(logfile, 'a')
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
