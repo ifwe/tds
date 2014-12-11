@@ -28,50 +28,43 @@ Feature: email notifications
 
     @email_server
     Scenario: deployment of single apptype occurs with working mail notification
-        Given email notification is enabled
         When I run "deploy promote myapp 123 --apptypes the-apptype"
         Then an email is sent with the relevant information for deptype="promote",apptypes="the-apptype"
 
     @email_server
     Scenario: deployment of all apptypes occurs with working mail notification
-        Given email notification is enabled
         When I run "deploy promote myapp 123 --all-apptypes"
         Then an email is sent with the relevant information for deptype="promote",apptypes="the-apptype:another-apptype"
 
     @email_server
     Scenario: deployment of a host(s) occurs with working mail notification
-        Given email notification is enabled
         When I run "deploy promote myapp 123 --hosts dprojhost01 danotherhost01"
         Then an email is sent with the relevant information for deptype="promote",hosts="dprojhost01:danotherhost01"
 
     @email_server
     Scenario: redeploy of single apptype occurs with working mail notification
-        Given email notification is enabled
-        And the package is deployed on the deploy targets in the "dev" env
+        Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
         When I run "deploy redeploy myapp --apptypes the-apptype"
         Then an email is sent with the relevant information for deptype="redeploy",apptypes="the-apptype"
 
     @email_server
     Scenario: redeploy of all apptypes occurs with working mail notification
-        Given email notification is enabled
-        And the package is deployed on the deploy targets in the "dev" env
+        Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
         When I run "deploy redeploy myapp --all-apptypes"
         Then an email is sent with the relevant information for deptype="redeploy",apptypes="the-apptype:another-apptype"
 
     @email_server
     Scenario: redeploy of a host(s) occurs with working mail notification
-        Given email notification is enabled
-        And the package is deployed on the deploy targets in the "dev" env
+        Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
         When I run "deploy redeploy myapp --hosts dprojhost02"
         Then an email is sent with the relevant information for deptype="redeploy",hosts="dprojhost02"
 
     @email_server
     Scenario: rollback of single apptype occurs with working mail notification
-        Given email notification is enabled
-        And the package is deployed on the deploy targets
+        Given the package is deployed on the deploy targets
         And the package has been validated
         And there is a package with version="124"
         And the package is deployed on the deploy targets
@@ -81,8 +74,7 @@ Feature: email notifications
 
     @email_server
     Scenario: rollback of all apptypes occurs with working mail notification
-        Given email notification is enabled
-        And the package is deployed on the deploy targets
+        Given the package is deployed on the deploy targets
         And the package has been validated
         And there is a package with version="124"
         And the package is deployed on the deploy targets
@@ -92,8 +84,7 @@ Feature: email notifications
 
     @email_server
     Scenario: rollback of a host(s) occurs with a working mail notification
-        Given email notification is enabled
-        And the package is deployed on the deploy targets
+        Given the package is deployed on the deploy targets
         And the package has been validated
         And there is a package with version="124"
         And the package is deployed on the deploy targets
@@ -102,7 +93,6 @@ Feature: email notifications
 
     @email_server
     Scenario: email server fails while notification attempted
-        Given email notification is enabled
-        And the email server is broken
+        Given the email server is broken
         When I run "deploy promote myapp 123 --apptypes the-apptype"
         Then there is a failure message for the email send
