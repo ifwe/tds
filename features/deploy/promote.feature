@@ -59,7 +59,8 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         When I run "deploy promote myapp 124"
         Then the output has "Package "myapp@124" never validated in "dev" environment for target "the-apptype""
 
-    Scenario: promote version to hosts
+    Scenario Outline: promote version to hosts
+        Given the deploy strategy is "<strategy>"
         When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "123" was deployed to these hosts:
@@ -67,7 +68,13 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | sprojhost01   |
             | sprojhost02   |
 
-    Scenario: promote older version to hosts
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: promote older version to hosts
+        Given the deploy strategy is "<strategy>"
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02"
         Then the output has "Completed: 2 out of 2 hosts"
         And  package "myapp" version "121" was deployed to these hosts:
@@ -75,18 +82,36 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | sprojhost01   |
             | sprojhost02   |
 
-    Scenario: promote version to apptype
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: promote version to apptype
+        Given the deploy strategy is "<strategy>"
         When I run "deploy promote myapp 123 --apptype the-apptype"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "123" was deployed to the deploy target
 
-    Scenario: promote olders version to apptype
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: promote olders version to apptype
+        Given the deploy strategy is "<strategy>"
         When I run "deploy promote myapp 121 --apptype the-apptype"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "121" was deployed to the deploy target
 
-    Scenario: promote version to all apptypes
-        Given there is a deploy target with name="another-apptype"
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: promote version to all apptypes
+        Given the deploy strategy is "<strategy>"
+        And there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
         And the deploy target is a part of the project-application pair
@@ -97,8 +122,9 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "123" was deployed to the deploy targets
 
-    Scenario: promote older version to all apptypes
-        Given there is a deploy target with name="another-apptype"
+    Scenario Outline: promote older version to all apptypes
+        Given the deploy strategy is "<strategy>"
+        And there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
         And the deploy target is a part of the project-application pair
@@ -109,55 +135,100 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "121" was deployed to the deploy targets
 
-    Scenario: promote version to hosts with a failure
-        Given the host "sprojhost01" will fail to deploy
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: promote version to hosts with a failure
+        Given the deploy strategy is "<strategy>"
+        And the host "sprojhost01" will fail to deploy
         When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost01"
 
-    Scenario: promote version to apptype with a failure
-        Given the host "sprojhost01" will fail to deploy
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: promote version to apptype with a failure
+        Given the deploy strategy is "<strategy>"
+        And the host "sprojhost01" will fail to deploy
         When I run "deploy promote myapp 123 --apptype the-apptype"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost01"
 
-    Scenario: promote version to all apptypes with a failure
-        Given the host "sprojhost01" will fail to deploy
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: promote version to all apptypes with a failure
+        Given the deploy strategy is "<strategy>"
+        And the host "sprojhost01" will fail to deploy
         When I run "deploy promote myapp 123 --all-apptypes"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost01"
 
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
     @delay
-    Scenario: promote version to with delay option
+    Scenario Outline: promote version to with delay option
+        Given the deploy strategy is "<strategy>"
         When I run "deploy promote myapp 123 --delay 10"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "123" was deployed to the deploy target
         And it took at least 10 seconds
 
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
     Scenario Outline: promote version that isn't validated in previous env with force option
-        Given there is a package with version="124"
+        Given the deploy strategy is "<strategy>"
+        And there is a package with version="124"
         When I run "deploy promote <switch> myapp 124"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "124" was deployed to the deploy target
 
         Examples:
-            | switch    |
-            | -f        |
-            | --force   |
+            | switch    | strategy  |
+            | -f        | mco       |
+            | -f        | salt      |
+            | --force   | mco       |
+            | --force   | salt      |
 
-    Scenario: promote a version that has already been deployed
-        Given the package is deployed on the deploy targets in the "stage" env
+    Scenario Outline: promote a version that has already been deployed
+        Given the deploy strategy is "<strategy>"
+        And the package is deployed on the deploy targets in the "stage" env
         When I run "deploy promote myapp 123"
         Then the output has "Application "myapp" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
 
-    Scenario: promote a version that has already been validated
-        Given the package is deployed on the deploy targets in the "stage" env
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: promote a version that has already been validated
+        Given the deploy strategy is "<strategy>"
+        And the package is deployed on the deploy targets in the "stage" env
         And the package has been validated in the "staging" environment
         When I run "deploy promote myapp 123"
         Then the output has "Application "myapp" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
 
-    Scenario: deploying to multiple hosts of different apptypes
-        Given there is a deploy target with name="other-apptype"
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: deploying to multiple hosts of different apptypes
+        Given the deploy strategy is "<strategy>"
+        And there is a deploy target with name="other-apptype"
         And there are hosts:
             | name       | env    |
             | dother01   | dev    |
@@ -177,8 +248,14 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | sprojhost02   |
             | sother01      |
 
-    Scenario: deploying older version to multiple hosts of different apptypes
-        Given there is a deploy target with name="other-apptype"
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
+    Scenario Outline: deploying older version to multiple hosts of different apptypes
+        Given the deploy strategy is "<strategy>"
+        And there is a deploy target with name="other-apptype"
         And there are hosts:
             | name       | env    |
             | dother01   | dev    |
@@ -196,3 +273,8 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | sprojhost01   |
             | sprojhost02   |
             | sother01      |
+
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
