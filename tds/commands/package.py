@@ -226,20 +226,26 @@ class PackageController(BaseController):
         if job is None:
             job = application.path
 
-        self._queue_rpm(pending_rpm, rpm_name, package, params['job'])
-
-        if utils.rpm.RPMDescriptor.from_path(pending_rpm) is None:
+        def fail_package():
             package.status = 'failed'
             tagopsdb.Session.commit()
 
-            try:
-                os.unlink(pending_rpm)
-            except OSError as exc:
-                log.error('Unable to remove file %s: %s', pending_rpm, exc)
+        try:
+            self._queue_rpm(pending_rpm, rpm_name, package, job)
+        except:
+            fail_package()
+            raise
+        else:
+            if utils.rpm.RPMDescriptor.from_path(pending_rpm) is None:
+                fail_package()
+                try:
+                    os.unlink(pending_rpm)
+                except OSError as exc:
+                    log.error('Unable to remove file %s: %s', pending_rpm, exc)
 
-            raise tds.exceptions.InvalidRPMError(
-                'Package %s is an invalid RPM', rpm_name
-            )
+                raise tds.exceptions.InvalidRPMError(
+                    'Package %s is an invalid RPM', rpm_name
+                )
 
         # Wait until status has been updated to 'failed' or 'completed',
         # or timeout occurs (meaning repository side failed, check logs there)
