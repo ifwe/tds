@@ -7,6 +7,7 @@ Feature: YUM repo updater
         Given there is an application with name="myapp"
         And there is a package with version="123",status="pending"
 
+    @email_server
     Scenario: adding a package
         Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
         And make will return 0
