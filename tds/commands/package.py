@@ -209,6 +209,9 @@ class PackageController(BaseController):
         self._queue_rpm(pending_rpm, rpm_name, package, params.get('job_name'))
 
         if utils.rpm.RPMDescriptor.from_path(pending_rpm) is None:
+            package.status = 'failed'
+            tagopsdb.Session.commit()
+
             try:
                 os.unlink(pending_rpm)
             except OSError as exc:
