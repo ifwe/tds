@@ -4,7 +4,8 @@ import re
 import sys
 import yaml
 
-def main(rpm_format, filename):
+def main(*args):
+    rpm_format, filename = args[-2:]
     data = yaml.load(open(filename))
 
     def sub(x):
