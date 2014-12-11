@@ -32,7 +32,7 @@ class RPMQueryProvider(object):
     @classmethod
     def query(cls, filename, fields):
         rpm_format = '\n'.join(
-            '%%{field}' for field in fields
+            ('%%{%s}' % field) for field in fields
         )
 
         try:
