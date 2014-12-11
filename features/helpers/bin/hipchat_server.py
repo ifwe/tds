@@ -1,4 +1,4 @@
-"""Mock servers for feature tests."""
+"""Mock HipChat server for feature tests."""
 
 import os
 import requests
@@ -71,7 +71,7 @@ class HipChatServer(HTTPServer, object):
         self.server_process.start()
 
     def add_notification(self, notification):
-        """Add a notification to the storage file."""
+        """Add a notification to the list."""
         self.notifications.append(notification)
 
     def halt(self):
