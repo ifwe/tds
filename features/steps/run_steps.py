@@ -9,10 +9,12 @@ import subprocess
 import tds
 import tds.scripts.tds_prog
 import tds.utils.processes as processes
+import tds.apps.repo_updater
 
 from behave import when, then
 
 TDS_SCRIPT = tds.scripts.tds_prog.__file__
+REPO_UPDATE_SCRIPT = tds.apps.repo_updater.__file__
 TRACEBACK_TEXT = 'Traceback (most recent call last)'
 
 
@@ -26,7 +28,9 @@ def when_i_run_command(context, command):
 
 @when(u'I start to run "{command}"')
 def when_i_start_to_run(context, command):
+    helpers_path = os.path.join(context.PROJECT_ROOT, 'features', 'helpers', 'bin')
     env = os.environ.copy()
+    env['PATH'] = os.pathsep.join(filter(None, [helpers_path, env.get('PATH', '')]))
     env['PYTHONPATH'] = context.PROJECT_ROOT
     env['BEHAVE_WORK_DIR'] = context.WORK_DIR
     proc = None
@@ -44,12 +48,19 @@ def when_i_start_to_run(context, command):
             sys.executable
         ]
 
-    cmd_parts = (
-        cmd_executable +
-        [TDS_SCRIPT] +
-        getattr(context, 'extra_run_args', []) +
-        cmd_parts
-    )
+    if cmd_parts[0] == "daemon":
+        cmd_parts = (
+            cmd_executable +
+            [REPO_UPDATE_SCRIPT] +
+            getattr(context, 'extra_run_args', [])
+        )
+    else:
+        cmd_parts = (
+            cmd_executable +
+            [TDS_SCRIPT] +
+            getattr(context, 'extra_run_args', []) +
+            cmd_parts
+        )
 
     try:
         proc = processes.start_process(
