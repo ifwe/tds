@@ -2,5 +2,6 @@
 
 from .base import DeployStrategy
 from .tds_mco import TDSMCODeployStrategy
+from .tds_salt import TDSSaltDeployStrategy
 
-__all__ = ['DeployStrategy', 'TDSMCODeployStrategy']
+__all__ = ['DeployStrategy', 'TDSMCODeployStrategy', 'TDSSaltDeployStrategy']

@@ -6,8 +6,13 @@ jenkins:
 logging:
   syslog_facility: fakelocal3
   syslog_priority: fakedebug
+deploy_strategy: mco
 mco:
   bin: 'mco'
+salt:
+  user: root
+  bin: /usr/bin/salt-call
+  c_dir: /etc/salt
 notifications:
   email:
     receiver: fake@example.com
