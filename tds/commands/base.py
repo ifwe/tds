@@ -191,7 +191,7 @@ class BaseController(object):
 
             try:
                 application = tds.model.Application.get(name=app_name)
-            except tagopsdb.exceptions.MultipleInstancesException as e:
+            except tagopsdb.exceptions.MultipleInstancesException:
                 raise tds.exceptions.MultipleResultsError(
                     'Multiple definitions for application found, '
                     'please file ticket in JIRA for TDS'
