@@ -1,23 +1,18 @@
 #!/usr/bin/env python
 
+import re
 import sys
-import os
 import yaml
 
-def main():
-    rpm_format = sys.argv[-2]
-    filename = sys.argv[-1]
-    file_yaml = yaml.load(open(filename))
-    arch = file_yaml['arch']
-    name = file_yaml['name']
-    version = file_yaml['version']
-    release = file_yaml['revision']
-    print arch
-    print name
-    print version
-    print release
+def main(rpm_format, filename):
+    data = yaml.load(open(filename))
+
+    def sub(x):
+        return str(data.get(x.group(1), ''))
+
+    print re.sub(r'%\{(.*?)}', sub, rpm_format)
     return 0
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(*sys.argv[1:]))
