@@ -73,6 +73,12 @@ class InvalidOperationError(TDSException):
     pass
 
 
+class InvalidRPMError(TDSException):
+    """Exception for when an RPM is found to be broken or invalid."""
+
+    pass
+
+
 class NotFoundError(TDSException):
     """Exception for when an item is not found or does not exist."""
 
