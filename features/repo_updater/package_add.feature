@@ -5,11 +5,11 @@ Feature: YUM repo updater
 
     Background:
         Given there is an application with name="myapp"
-        And there is a package with version="123",status="pending"
+        And there is a package with version="123",status="pending",revision="1"
 
     @email_server
     Scenario: adding a package
-        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
+        Given there is an RPM package with name="myapp",version="123",release="1",arch="noarch"
         And make will return 0
         When I run "daemon"
         Then the "incoming" directory is empty
@@ -28,7 +28,7 @@ Feature: YUM repo updater
         # And the package status is "failed"
 
     Scenario: make fails once (package should be added successfully)
-        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
+        Given there is an RPM package with name="myapp",version="123",release="1",arch="noarch"
         And make will return 2,0
         When I run "daemon"
         Then the "incoming" directory is empty
@@ -37,7 +37,7 @@ Feature: YUM repo updater
         And the update repo log file has "ERROR yum database update failed, retrying:"
 
     Scenario: make fails twice (package status should be set to failed, file removed)
-        Given there is an RPM package with name="myapp",version="123",revision="1",arch="noarch"
+        Given there is an RPM package with name="myapp",version="123",release="1",arch="noarch"
         And make will return 2,2
         When I run "daemon"
         Then the "incoming" directory is empty
@@ -46,7 +46,7 @@ Feature: YUM repo updater
         And the update repo log file has "ERROR yum database update failed, aborting:"
 
     Scenario: adding a package with a missing database entry
-        Given there is an RPM package with name="myapp",version="500",revision="1",arch="noarch"
+        Given there is an RPM package with name="myapp",version="500",release="1",arch="noarch"
         And make will return 0
         When I run "daemon"
         Then the "incoming" directory is empty
@@ -55,7 +55,7 @@ Feature: YUM repo updater
         And the update repo log file has "ERROR Missing entry for package "myapp", version 500, revision 1 in database"
 
     Scenario: processing a package with a missing database entry
-        Given there is an RPM package with name="myapp",version="500",revision="1",arch="noarch",directory="processing"
+        Given there is an RPM package with name="myapp",version="500",release="1",arch="noarch",directory="processing"
         And make will return 0
         When I run "daemon"
         Then the "incoming" directory is empty
