@@ -112,9 +112,6 @@ class RepoUpdater(TDSProgramBase):
     def prepare_rpms(self):
         """Move RPMs in incoming directory to the processing directory."""
 
-        log.info('Moving files in incoming directory to processing '
-                 'directory...')
-
         incoming_items = self.validate_rpms_in_dir(self.incoming_dir)
 
         self.handle_unprocessable_rpms(incoming_items.get('bad', []))
@@ -123,7 +120,8 @@ class RepoUpdater(TDSProgramBase):
         if not good:
             return
 
-        log.info('Files found, processing them...')
+        log.info('Valid files found, moving them from incoming directory '
+                 'to processing directory to be processed...')
 
         for rpm in good:
             package = model.Package.get(**rpm.info)
@@ -176,6 +174,7 @@ class RepoUpdater(TDSProgramBase):
         """Copy RPMs in processing directory to the repository and run
            update the repo.
         """
+
         ready_for_repo = []
         processing_items = self.validate_rpms_in_dir(self.processing_dir)
 
@@ -198,7 +197,7 @@ class RepoUpdater(TDSProgramBase):
 
             # TODO: ensure package is valid (security purposes)
 
-            dest_path = os.path.join(self.repo_dir, rpm.filename)
+            dest_path = os.path.join(self.repo_dir, rpm.arch)
 
             try:
                 shutil.copy(rpm.path, dest_path)
