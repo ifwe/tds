@@ -277,6 +277,7 @@ def then_there_is_a_project(context, properties):
 
 @then(u'there is a package with {properties}')
 def then_there_is_a_package(context, properties):
+    tagopsdb.Session.close()
     attrs = parse_properties(properties)
     package = tds.model.Package.get(**attrs)
 
