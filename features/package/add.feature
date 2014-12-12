@@ -57,7 +57,7 @@ Feature: package add application version [-f|--force]
         And there is a package with name="myapp",version=123,status="failed"
 
     @jenkins_server
-    Scenario: add a package to an application
+    Scenario: add a package that has previously failed to an application
         Given there is an application with name="myapp"
         And there is a jenkins job with name="job"
         And the job has a build with number="123"
