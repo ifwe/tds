@@ -84,12 +84,6 @@ class Base(_Base):
 
         Returns None if no matching instance is found.
         """
-
-        # NOTE: The close() feels a bit of a hack, but is needed
-        # in certain cases to force the database to be re-read
-        # so external changes are caught
-        tagopsdb.Session.close()
-
         delegate = cls.delegate.get(**kwargs)
         if delegate is None:
             return None
