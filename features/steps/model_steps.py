@@ -275,6 +275,13 @@ def then_there_is_a_project(context, properties):
 
     assert proj is not None
 
+@then(u'there is a package with {properties}')
+def then_there_is_a_package(context, properties):
+    tagopsdb.Session.close()
+    attrs = parse_properties(properties)
+    package = tds.model.Package.get(**attrs)
+
+    assert package is not None
 
 def add_target_to_proj_app(project, application, target):
     tagopsdb.Session.add(tagopsdb.ProjectPackage(
