@@ -1,7 +1,7 @@
-import unittest2
+import unittest
 import version
 
 
-class TestVersion(unittest2.TestCase):
+class TestVersion(unittest.TestCase):
     def test_version_exists(self):
-        assert isinstance(version.__version__, basestring)
+        self.assertIsInstance(version.__version__, basestring)

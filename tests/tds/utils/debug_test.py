@@ -1,8 +1,8 @@
-import unittest2
+import unittest
 import tds.utils.debug as debug
 
 
-class TestDebug(unittest2.TestCase):
+class TestDebug(unittest.TestCase):
     def test_no_exception(self):
         def f(a, b, c=3):
             return a + b + c

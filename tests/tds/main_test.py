@@ -1,6 +1,6 @@
 import contextlib
 import mock
-import unittest2
+import unittest
 
 from tests.factories.utils.config import (
     DeployConfigFactory,
@@ -10,7 +10,7 @@ from tests.factories.utils.config import (
 import tds.apps.main
 
 
-class TestTDS(unittest2.TestCase):
+class TestTDS(unittest.TestCase):
 
     def setUp(self):
         config = DeployConfigFactory()
@@ -45,8 +45,8 @@ class TestTDS(unittest2.TestCase):
 
         config = DeployConfigFactory()
 
-        assert t.params['user'] == 'fake'
-        assert t.params['env'] == 'fakedev'
+        self.assertEqual(t.params['user'], 'fake')
+        self.assertEqual(t.params['env'], 'fakedev')
 
     def test_initialize_db_from_opts(self):
 
@@ -71,6 +71,6 @@ class TestTDS(unittest2.TestCase):
             #     'fakityfake', 'superpassword'
             # )
 
-    @unittest2.skip('empty test')
+    @unittest.skip('empty test')
     def test_execute_command(self):
         pass

@@ -1,6 +1,6 @@
 from mock import Mock, patch
 from unittest_data_provider import data_provider
-import unittest2
+import unittest
 
 from tests.factories.utils.config import DeployConfigFactory
 
@@ -10,7 +10,7 @@ import tds.model
 import tagopsdb
 
 
-class TestPackageAdd(unittest2.TestCase):
+class TestPackageAdd(unittest.TestCase):
     def setUp(self):
         self.tds_project = patch(
             'tds.model.Project',

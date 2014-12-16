@@ -1,13 +1,13 @@
 '''Tests for the actor model'''
 
-import unittest2
+import unittest
 
 from mock import Mock
 
 import tds.model
 
 
-class TestActorModel(unittest2.TestCase):
+class TestActorModel(unittest.TestCase):
     'Tests for actor model'
 
     def setUp(self):
@@ -27,7 +27,7 @@ class TestActorModel(unittest2.TestCase):
     def test_name(self):
         'Ensure "name" property is functional'
 
-        assert self.actor.name == self.actor_properties['name']
+        self.assertEqual(self.actor.name, self.actor_properties['name'])
 
     @staticmethod
     def get_group_names(gid):
@@ -42,4 +42,4 @@ class TestActorModel(unittest2.TestCase):
     def test_groups(self):
         'Ensure "groups" property is functional'
 
-        assert self.actor.groups == self.actor_properties['groups']
+        self.assertEqual(self.actor.groups, self.actor_properties['groups'])
