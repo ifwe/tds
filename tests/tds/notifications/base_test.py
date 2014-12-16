@@ -1,7 +1,7 @@
 from mock import patch, Mock
 from unittest_data_provider import data_provider
 
-import unittest2
+import unittest
 import tds.notifications.base as base
 
 from tests.factories.utils.config import DeployConfigFactory
@@ -13,7 +13,7 @@ from tests.factories.model.deployment import (
 )
 
 
-class AppConfigProvider(unittest2.TestCase):
+class AppConfigProvider(unittest.TestCase):
     def setUp(self):
         self.app_config = DeployConfigFactory()
         self.config = self.app_config['notifications']
@@ -27,9 +27,9 @@ class TestNotifications(AppConfigProvider):
     def test_constructor(self):
         n = self.create_notification()
 
-        assert n.config == self.config
-        assert n.enabled_methods == self.config['enabled_methods']
-        assert n.validation_time == self.config['validation_time']
+        self.assertEqual(n.config, self.config)
+        self.assertEqual(n.enabled_methods, self.config['enabled_methods'])
+        self.assertEqual(n.validation_time, self.config['validation_time'])
 
     @patch('tds.notifications.mail.EmailNotifier', autospec=True)
     @patch('tds.notifications.hipchat.HipchatNotifier', autospec=True)
@@ -98,12 +98,12 @@ class TestNotifierClass(AppConfigProvider):
         deployment = deployment_factory()
         message = nots.message_for_deployment(deployment)
 
-        assert isinstance(message['subject'], basestring)
-        assert isinstance(message['body'], basestring)
+        self.assertIsInstance(message['subject'], basestring)
+        self.assertIsInstance(message['body'], basestring)
 
         # are these assertions really necessary?
-        assert message['subject'] == subject
-        assert message['body'] == body
+        self.assertEqual(message['subject'], subject)
+        self.assertEqual(message['body'], body)
 
     def test_message_for_unvalidated(self):
         n = base.Notifier(
@@ -114,6 +114,6 @@ class TestNotifierClass(AppConfigProvider):
         message = n.message_for_deployment(
             UnvalidatedDeploymentFactory()
         )
-        assert isinstance(message['subject'], basestring)
-        assert isinstance(message['body'], basestring)
+        self.assertIsInstance(message['subject'], basestring)
+        self.assertIsInstance(message['body'], basestring)
         # do we want to assert any more here?

@@ -1,6 +1,6 @@
 from mock import patch, Mock
 from unittest_data_provider import data_provider
-import unittest2
+import unittest
 
 from tests.factories.model.deployment import DeploymentFactory
 from tests.factories.utils.config import DeployConfigFactory
@@ -15,7 +15,7 @@ import tds.commands
 import tds.model
 
 
-class DeploySetUp(unittest2.TestCase):
+class DeploySetUp(unittest.TestCase):
     def setUp(self):
         self.session = patch(
             'tagopsdb.Session',
@@ -90,7 +90,7 @@ class TestPromoteAndPush(DeploySetUp):
             apptype=target,
         )
 
-        assert return_val == force_option_used
+        self.assertEqual(return_val, force_option_used)
 
     def test_promote_new_version(self):
         self.patch_method(self.deploy, 'send_notifications', None)
@@ -103,7 +103,7 @@ class TestPromoteAndPush(DeploySetUp):
             package=PackageFactory(version='whatever')
         )
 
-        assert self.deploy.perform_deployments.called
+        self.assertTrue(self.deploy.perform_deployments.called)
 
     @data_provider(lambda: [(True,), (False,)])
     def test_promote_version(self, version_is_new):
@@ -117,7 +117,7 @@ class TestPromoteAndPush(DeploySetUp):
             package=PackageFactory(version='whatever')
         )
 
-        assert self.deploy.perform_deployments.called
+        self.assertTrue(self.deploy.perform_deployments.called)
 
     @patch('tds.notifications.Notifications', autospec=True)
     def test_notifications_sent(self, Notifications):
