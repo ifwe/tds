@@ -16,5 +16,4 @@ pyntch==20091028
 pytest==2.3.5
 pytest-cov==1.6
 unittest-data-provider==1.0.1
-unittest2==0.5.1
 zope.interface==4.1.0
