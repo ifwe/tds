@@ -1,5 +1,5 @@
 import mock
-import unittest2
+import unittest
 from unittest_data_provider import data_provider
 
 import yaml
@@ -10,21 +10,21 @@ import tests
 import tests.factories.utils.config as config_factories
 
 
-class TestDottedDict(unittest2.TestCase):
+class TestDottedDict(unittest.TestCase):
     def setUp(self):
         self.d = config.DottedDict(a=dict(b=dict(c=1)))
 
     def test_getitem_hit(self):
-        assert self.d['a.b.c'] == 1
+        self.assertEqual(self.d['a.b.c'], 1)
 
     def test_getitem_miss(self):
         self.assertRaises(KeyError, self.d.__getitem__, 'a.b.d')
 
     def test_getitem_miss_default(self):
-        assert self.d.__getitem__(key='a.b.d', default='foo') == 'foo'
+        self.assertEqual(self.d.__getitem__(key='a.b.d', default='foo'), 'foo')
 
 
-class TestConfig(unittest2.TestCase):
+class TestConfig(unittest.TestCase):
     def test_load(self):
         c = config.Config()
         self.assertRaises(NotImplementedError, c.load)
@@ -45,10 +45,10 @@ class FileConfigLoader(object):
         m.assert_called_with(c.filename)
 
 
-class TestFileConfig(unittest2.TestCase, FileConfigLoader):
+class TestFileConfig(unittest.TestCase, FileConfigLoader):
     def test_constructor(self):
         c = config.FileConfig('foo')
-        assert c.filename == 'foo'
+        self.assertEqual(c.filename, 'foo')
 
     def test_load_success(self):
         c = config.FileConfig('foo')
@@ -78,7 +78,7 @@ class TestFileConfig(unittest2.TestCase, FileConfigLoader):
         self.assertRaises(NotImplementedError, c.parse, data=None)
 
 
-class TestYAMLConfig(unittest2.TestCase):
+class TestYAMLConfig(unittest.TestCase):
     def setUp(self):
         self.fake_config = dict(
             string='a string',
@@ -91,7 +91,7 @@ class TestYAMLConfig(unittest2.TestCase):
 
     def test_parse_success(self):
         c = config.YAMLConfig('foo')
-        assert self.fake_config == c.parse(yaml.dump(self.fake_config))
+        self.assertEqual(self.fake_config, c.parse(yaml.dump(self.fake_config)))
 
     def test_parse_invalid_yaml(self):
         c = config.YAMLConfig('foo')
@@ -105,7 +105,7 @@ class TestYAMLConfig(unittest2.TestCase):
         self.assertRaises(config.ConfigurationError, c.parse, data=config_data)
 
 
-class TestVerifyingConfig(unittest2.TestCase):
+class TestVerifyingConfig(unittest.TestCase):
 
     def test_super_load(self):
         class LoadImplemented(config.Config):
@@ -141,7 +141,7 @@ class TestVerifyingConfig(unittest2.TestCase):
                 c.load.return_value = None
                 c.verify()
 
-                assert not c.load.called
+                self.assertFalse(c.load.called)
 
             config.VerifyingConfig._verify.assert_called_with(
                 c, c.schema
@@ -155,7 +155,6 @@ class TestVerifyingConfig(unittest2.TestCase):
             data=dict(a=dict(b=1, c=2)),
             schema=dict(a=['b', 'c']),
         )
-        assert True, "Everything's ok if we get here!"
 
     def test__verify_failure_missing_toplevel_key(self):
         self.assertRaises(
@@ -190,17 +189,17 @@ class TestVerifyingConfig(unittest2.TestCase):
         )
 
 
-class TestTDSConfig(unittest2.TestCase):
+class TestTDSConfig(unittest.TestCase):
     def test_constructor_with_default(self):
         c = config.TDSConfig('foo')
-        assert c.filename == '%s/%s' % (c.default_conf_dir, 'foo')
+        self.assertEqual(c.filename, '%s/%s' % (c.default_conf_dir, 'foo'))
 
     def test_constructor_without_default(self):
         c = config.TDSConfig('foo', '/fake/dir')
-        assert c.filename == '/fake/dir/foo'
+        self.assertEqual(c.filename, '/fake/dir/foo')
 
 
-class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
+class TestTDSDatabaseConfig(unittest.TestCase, FileConfigLoader):
     constructor_kwargs_expected = lambda: [
         (
             dict(access_level='foo', base_name_fragment='bar'),
@@ -242,7 +241,7 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
     @data_provider(constructor_kwargs_expected)
     def test_constructor(self, kwargs, expected):
         c = config.TDSDatabaseConfig(**kwargs)
-        assert c.filename == expected
+        self.assertEqual(c.filename, expected)
 
     def test_schema_success(self):
         c = config.TDSDatabaseConfig('foo', 'bar')
@@ -250,8 +249,8 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
 
         fake_config = config_factories.DatabaseTestConfigFactory()
 
-        assert c['db.user'] == fake_config['db']['user']
-        assert c['db.password'] == fake_config['db']['password']
+        self.assertEqual(c['db.user'], fake_config['db']['user'])
+        self.assertEqual(c['db.password'], fake_config['db']['password'])
 
     def test_schema_failure(self):
         c = config.TDSDatabaseConfig('foo', 'bar')
@@ -260,7 +259,7 @@ class TestTDSDatabaseConfig(unittest2.TestCase, FileConfigLoader):
         self.assertRaises(config.ConfigurationError, c.verify)
 
 
-class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
+class TestTDSDeployConfig(unittest.TestCase, FileConfigLoader):
     constructor_kwargs_expected = lambda: [
         (
             {},
@@ -291,18 +290,18 @@ class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
     @data_provider(constructor_kwargs_expected)
     def test_constructor(self, kwargs, expected):
         c = config.TDSDeployConfig(**kwargs)
-        assert c.filename == expected
+        self.assertEqual(c.filename, expected)
 
     def test_schema_success(self):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
         fake_config = config_factories.DeployConfigFactory()
-        assert c == fake_config
+        self.assertEqual(c, fake_config)
 
     def test_dotted_key_hit(self):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
-        assert c['notifications.hipchat.token'] == 'deadbeef'
+        self.assertEqual(c['notifications.hipchat.token'], 'deadbeef')
 
     def test_dotted_key_miss(self):
         c = config.TDSDeployConfig('foo')
@@ -312,4 +311,4 @@ class TestTDSDeployConfig(unittest2.TestCase, FileConfigLoader):
     def test_dotted_key_miss_default(self):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
-        assert 'default' == c.get('notifications.hipchat.missing', 'default')
+        self.assertEqual('default', c.get('notifications.hipchat.missing', 'default'))

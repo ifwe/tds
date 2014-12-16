@@ -1,4 +1,4 @@
-import unittest2
+import unittest
 
 from mock import Mock, patch
 
@@ -15,7 +15,7 @@ from tests.factories.utils.config import (
 from datetime import datetime, timedelta
 
 
-class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
+class TestUnvalidatedDeploymentNotifier(unittest.TestCase):
     def get_mock_app_dep(self, actor, package):
         tds_deployment = Mock(
             environment='test',
@@ -68,7 +68,7 @@ class TestUnvalidatedDeploymentNotifier(unittest2.TestCase):
             assert base.notify.call_count == n
 
 
-class TDPProvider(unittest2.TestCase):
+class TDPProvider(unittest.TestCase):
     def __init__(self, dbconfig, get_all_return_value, *a, **k):
         self.dbconfig = dbconfig
         self.get_all_return_value = get_all_return_value
