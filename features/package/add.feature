@@ -107,12 +107,11 @@ Feature: package add application version [-f|--force]
         Then the output has "Added package: "myapp@123""
 
     @jenkins_server
-    Scenario: override default job with explicit --job flag
+    Scenario: package status was changed to 'failed' by repo updater
         Given there is an application with name="myapp"
         And there is a jenkins job with name="job"
-        And there is a jenkins job with name="another_job"
         And the job has a build with number="123"
-        When I start to run "package add --job another_job myapp 123"
+        When I start to run "package add myapp 123"
         And I wait 5 seconds
         And the status is changed to "failed" for package with name="myapp",version="123"
         And I wait 5 seconds
