@@ -1,6 +1,6 @@
 """Tests for authorize module."""
 
-import unittest2
+import unittest
 
 from unittest_data_provider import data_provider
 
@@ -32,7 +32,7 @@ GROUP_PROVIDER = lambda: [
 ]
 
 
-class TestAuthorization(unittest2.TestCase):
+class TestAuthorization(unittest.TestCase):
     """Tests for authorization module."""
 
     @data_provider(GROUP_PROVIDER)
@@ -41,4 +41,4 @@ class TestAuthorization(unittest2.TestCase):
         actor = ActorFactory()
         actor.groups = [GROUPS[gid]]
 
-        assert AuthConfigFactory().get_access_level(actor) == auth_level
+        self.assertEqual(AuthConfigFactory().get_access_level(actor), auth_level)

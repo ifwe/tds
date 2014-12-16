@@ -1,5 +1,5 @@
 from mock import patch
-import unittest2
+import unittest
 
 import tds.notifications.graphite as graphite
 
@@ -9,7 +9,7 @@ from tests.factories.model.deployment import DeploymentFactory
 APP_CONFIG = DeployConfigFactory()
 
 
-class TestGraphiteNotifier(unittest2.TestCase):
+class TestGraphiteNotifier(unittest.TestCase):
     def setUp(self):
         self.graphite_config = APP_CONFIG['notifications']['graphite']
         self.notifier = graphite.GraphiteNotifier(
@@ -26,7 +26,7 @@ class TestGraphiteNotifier(unittest2.TestCase):
         with patch.object(self.notifier, 'active_events', ()):
             self.notifier.notify(DeploymentFactory())
 
-        assert not self.graphite.called
+        self.assertFalse(self.graphite.called)
 
     def test_active_event(self):
         d = DeploymentFactory()
