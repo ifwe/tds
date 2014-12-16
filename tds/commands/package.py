@@ -59,13 +59,11 @@ class PackageController(BaseController):
 
             if package.status == 'failed':
                 # TODO: why did it fail? user needs to know
-                log.info(
+                raise tds.exceptions.TDSException(
                     'Failed to update repository with package '
-                    'for application "%s", version %s',
+                    'for application "%s", version %s.\nPlease try again.',
                     package.name, package.version
                 )
-                log.info('Please try again')
-                break
 
             if package.status != previous_status:
                 log.log(5, 'State of package is now: %s', package.status)
