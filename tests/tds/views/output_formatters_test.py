@@ -76,11 +76,22 @@ class TestPackageOutputFormatter(unittest.TestCase):
     def setUp(self):
         self.packages = [PackageFactory(),
                          PackageFactory()]
+        self.CLI = cli.CLI("blocks")
+        sys.stdout = self.out = StringIO()
 
     @patch('tds.views.cli.format_package')
     def test_generate_package_list_result(self, format_package):
-        cli.CLI("blocks").generate_package_list_result(result=self.packages)
+        self.CLI.generate_package_list_result(result=self.packages)
         format_package.assert_called_with(self.packages, "blocks")
+
+    def test_generate_package_add_result(self):
+        self.CLI.generate_package_add_result(
+            result=dict(package=self.packages[0])
+        )
+        self.assertIn(
+            'Added package: "{s.name}@{s.version}"'.format(s=self.packages[0]),
+            self.out.getvalue()
+        )
 
     def test_single_pkg_blocks_format(self):
         output = cli.format_package(self.packages[0])
@@ -126,11 +137,22 @@ class TestProjectOutputFormatter(unittest.TestCase):
     def setUp(self):
         self.projects = [ProjectFactory(name="proj1"),
                          ProjectFactory(name="proj2")]
+        self.CLI = cli.CLI("blocks")
+        sys.stdout = self.out = StringIO()
 
     @patch('tds.views.cli.format_project')
     def test_generate_project_list_result(self, format_project):
-        cli.CLI("blocks").generate_project_list_result(result=self.projects)
+        self.CLI.generate_project_list_result(result=self.projects)
         format_project.assert_called_with(self.projects, "blocks")
+
+    @patch('tds.views.cli.format_project')
+    def test_generate_project_add_result(self, format_project):
+        self.CLI.generate_project_add_result(result=self.projects[0])
+        self.assertIn(
+            'Created {s.name}:'.format(s=self.projects[0]),
+            self.out.getvalue()
+        )
+        format_project.assert_called_with(self.projects[0], "blocks")
 
 # TODO: Write this test suite more fully
 #
