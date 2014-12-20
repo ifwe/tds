@@ -1,6 +1,8 @@
 from mock import patch
 import unittest
 import json
+import sys
+from StringIO import StringIO
 
 from tests.factories.model.project import ProjectFactory
 from tests.factories.model.application import ApplicationFactory
@@ -19,11 +21,19 @@ class TestApplicationOutputFormatter(unittest.TestCase):
     def setUp(self):
         self.apps = [ApplicationFactory(),
                      ApplicationFactory()]
+        self.CLI = cli.CLI("blocks")
+        sys.stdout = self.out = StringIO()
 
     @patch('tds.views.cli.format_application')
     def test_generate_application_list_result(self, format_application):
-        cli.CLI("blocks").generate_application_list_result(result=self.apps)
+        self.CLI.generate_application_list_result(result=self.apps)
         format_application.assert_called_with(self.apps, "blocks")
+
+    @patch('tds.views.cli.format_application')
+    def test_generate_application_add_result(self, format_application):
+        self.CLI.generate_application_add_result(result=self.apps[0])
+        self.assertIn('Created {name}:'.format(name=self.apps[0].name), self.out.getvalue())
+        format_application.assert_called_with(self.apps[0], "blocks")
 
     def test_single_app_blocks_format(self):
         output = cli.format_application(self.apps[0])
