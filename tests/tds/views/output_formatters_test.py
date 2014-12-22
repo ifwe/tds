@@ -132,6 +132,73 @@ class TestPackageOutputFormatter(unittest.TestCase):
         self.assertEqual(output, expected)
 
 
+class TestDeploymentOutputFormatter(unittest.TestCase):
+
+    def setUp(self):
+        self.deployments = [
+            # dict(
+            #     package=,
+            #     environment=,
+            #     by_apptype=dict(
+            #         current_app_deployment=,
+            #         previous_app_deployment=,
+            #         host_deployments=,
+            #     ),
+            # ),
+            # dict(
+            #     package=,
+            #     environment=,
+            #     by_apptype=dict(
+            #         current_app_deployment=,
+            #         previous_app_deployment=,
+            #         host_deployments=,
+            #     ),
+            # ),
+        ]
+        self.CLI = cli.CLI("blocks")
+
+    @patch('tds.views.cli.format_deployments')
+    def test_generate_deploy_show_result(self, format_deployments):
+        self.CLI.generate_deploy_show_result(result=self.deployments)
+        format_deployments.assert_called_with(self.deployments)
+
+
+class TestExceptionOutputFormatter(unittest.TestCase):
+
+    def setUp(self):
+        self.CLI = cli.CLI("blocks")
+
+    @patch('tds.views.cli.format_exception')
+    def test_generate_deploy_show_result_error(self, format_exception):
+        self.CLI.generate_deploy_show_result(error=1)
+        format_exception.assert_called_with(1)
+
+    @patch('tds.views.cli.format_exception')
+    def test_generate_application_add_result_error(self, format_exception):
+        self.CLI.generate_application_add_result(error=1)
+        format_exception.assert_called_with(1)
+
+    @patch('tds.views.cli.format_exception')
+    def test_generate_application_delete_result_error(self, format_exception):
+        self.CLI.generate_application_delete_result(error=1)
+        format_exception.assert_called_with(1)
+
+    @patch('tds.views.cli.format_exception')
+    def test_generate_project_add_result_error(self, format_exception):
+        self.CLI.generate_project_add_result(error=1)
+        format_exception.assert_called_with(1)
+
+    @patch('tds.views.cli.format_exception')
+    def test_generate_project_delete_result_error(self, format_exception):
+        self.CLI.generate_project_delete_result(error=1)
+        format_exception.assert_called_with(1)
+
+    @patch('tds.views.cli.format_exception')
+    def test_generate_default_result_error(self, format_exception):
+        self.CLI.generate_default_result(error=1)
+        format_exception.assert_called_with(1)
+
+
 class TestProjectOutputFormatter(unittest.TestCase):
 
     def setUp(self):
@@ -158,4 +225,4 @@ class TestProjectOutputFormatter(unittest.TestCase):
 #
 #     def test_single_proj_blocks_format(self):
 #         output = cli.format_project(self.projects[0])
-#         assert False, output
+#         self.assertEqual(output, ...)
