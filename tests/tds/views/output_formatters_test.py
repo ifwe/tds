@@ -198,6 +198,34 @@ class TestExceptionOutputFormatter(unittest.TestCase):
         self.CLI.generate_default_result(error=1)
         format_exception.assert_called_with(1)
 
+    def test_format_exception_access_error(self):
+        class AccessError(Exception):
+            pass
+
+        error = AccessError()
+        output = cli.format_exception(error)
+        self.assertEqual(
+            ("You do not have the appropriate permissions to run this command. "
+             "Contact your manager."),
+            output
+        )
+
+    def test_format_exception_default_error(self):
+        error = Exception("Whoopsies")
+        output = cli.format_exception(error)
+        self.assertEqual(
+            "Whoopsies",
+            output
+        )
+
+    def test_format_exception_broken_error(self):
+        error = Exception()
+        output = cli.format_exception(error)
+        self.assertEqual(
+            "Exception=repr(Exception()) str() could not be formatted: IndexError('tuple index out of range',)",
+            output
+        )
+
 
 class TestProjectOutputFormatter(unittest.TestCase):
 
