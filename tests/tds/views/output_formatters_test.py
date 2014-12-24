@@ -139,20 +139,20 @@ class TestDeploymentOutputFormatter(unittest.TestCase):
             # dict(
             #     package=,
             #     environment=,
-            #     by_apptype=dict(
+            #     by_apptype=[dict(
             #         current_app_deployment=,
             #         previous_app_deployment=,
             #         host_deployments=,
-            #     ),
+            #     )],
             # ),
             # dict(
             #     package=,
             #     environment=,
-            #     by_apptype=dict(
+            #     by_apptype=[dict(
             #         current_app_deployment=,
             #         previous_app_deployment=,
             #         host_deployments=,
-            #     ),
+            #     )],
             # ),
         ]
         self.CLI = cli.CLI("blocks")
