@@ -91,7 +91,9 @@ class TestYAMLConfig(unittest.TestCase):
 
     def test_parse_success(self):
         c = config.YAMLConfig('foo')
-        self.assertEqual(self.fake_config, c.parse(yaml.dump(self.fake_config)))
+        self.assertEqual(
+            self.fake_config, c.parse(yaml.dump(self.fake_config))
+        )
 
     def test_parse_invalid_yaml(self):
         c = config.YAMLConfig('foo')
@@ -311,4 +313,6 @@ class TestTDSDeployConfig(unittest.TestCase, FileConfigLoader):
     def test_dotted_key_miss_default(self):
         c = config.TDSDeployConfig('foo')
         self.load_fake_config(c, 'deploy')
-        self.assertEqual('default', c.get('notifications.hipchat.missing', 'default'))
+        self.assertEqual(
+            'default', c.get('notifications.hipchat.missing', 'default')
+        )

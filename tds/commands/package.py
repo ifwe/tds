@@ -195,9 +195,10 @@ class PackageController(BaseController):
         else:
             if package.status == 'processing':
                 # TODO: verify still processing -- check processing directory
-                # if in processing directory, stop and raise exception (in progress)
-                # else, fix it by moving the file from processing to incoming,
-                # and state to pending. then continue this function
+                # if in processing directory, stop and raise exception
+                # (in progress) else, fix it by moving the file from
+                # processing to incoming, and state to pending. then continue
+                # this function
                 raise NotImplementedError
             elif package.status != 'failed':
                 # possible states: completed, processing, or removed

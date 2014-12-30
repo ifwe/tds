@@ -1,4 +1,4 @@
-from mock import patch, Mock
+from mock import patch
 from unittest_data_provider import data_provider
 
 import unittest

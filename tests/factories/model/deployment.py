@@ -7,7 +7,6 @@ import tds.model.deployment as d
 
 from .actor import ActorFactory
 from .package import PackageFactory
-from .project import ProjectFactory
 from .deploy_target import AppTargetFactory, HostTargetFactory, HipchatFactory
 
 

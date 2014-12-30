@@ -28,8 +28,8 @@ class TestHipChatNotifier(unittest.TestCase):
         deployment = DeploymentFactory()
         post.return_value = self.FakeResponse()
 
-        with patch.object(self.notifier, 'message_for_deployment') as mock_message:
-            mock_message.return_value = dict(
+        with patch.object(self.notifier, 'message_for_deployment') as mck_msg:
+            mck_msg.return_value = dict(
                 subject='fake_subj',
                 body='fake_body',
             )
@@ -61,8 +61,8 @@ class TestHipChatNotifier(unittest.TestCase):
         deployment = DeploymentFactory()
         post.return_value = self.FakeResponse(404)
 
-        with patch.object(self.notifier, 'message_for_deployment') as mock_message:
-            mock_message.return_value = dict(
+        with patch.object(self.notifier, 'message_for_deployment') as mck_msg:
+            mck_msg.return_value = dict(
                 subject='fake_subj',
                 body='fake_body',
             )

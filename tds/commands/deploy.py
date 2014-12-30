@@ -93,7 +93,9 @@ class DeployController(BaseController):
                 'Invalid deploy strategy: %r', deploy_strat_name
             )
 
-        self._deploy_strategy = cls(**self.app_config.get(deploy_strat_name, {}))
+        self._deploy_strategy = cls(
+            **self.app_config.get(deploy_strat_name, {})
+        )
 
     @property
     def deploy_strategy(self):
