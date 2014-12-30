@@ -10,6 +10,7 @@ from .application import ApplicationFactory
 #     targets = [AppTargetFactory(name="targ1"),
 #                AppTargetFactory(name="targ2")]
 
+
 class ProjectFactory(factory.Factory):
     '''
     Package for the following command:

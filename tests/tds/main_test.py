@@ -43,8 +43,6 @@ class TestTDS(unittest.TestCase):
         ):
             t.update_program_parameters()
 
-        config = DeployConfigFactory()
-
         self.assertEqual(t.params['user'], 'fake')
         self.assertEqual(t.params['env'], 'fakedev')
 

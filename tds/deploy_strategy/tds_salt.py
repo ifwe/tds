@@ -14,6 +14,7 @@ log = logging.getLogger('tds')
 # Then, after all the args to the function call being published, add
 # 'expr_form=list'
 
+
 class TDSSaltDeployStrategy(DeployStrategy):
     """Salt (master publish.publish) based DeployStrategy."""
 

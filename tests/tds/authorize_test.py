@@ -41,4 +41,5 @@ class TestAuthorization(unittest.TestCase):
         actor = ActorFactory()
         actor.groups = [GROUPS[gid]]
 
-        self.assertEqual(AuthConfigFactory().get_access_level(actor), auth_level)
+        self.assertEqual(AuthConfigFactory().get_access_level(actor),
+                         auth_level)

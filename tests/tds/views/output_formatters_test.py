@@ -16,6 +16,7 @@ class TestFormatSetting(unittest.TestCase):
         CLI = cli.CLI("blocks")
         self.assertEqual(CLI.output_format, "blocks")
 
+
 class TestApplicationOutputFormatter(unittest.TestCase):
 
     def setUp(self):
@@ -32,7 +33,8 @@ class TestApplicationOutputFormatter(unittest.TestCase):
     @patch('tds.views.cli.format_application')
     def test_generate_application_add_result(self, format_application):
         self.CLI.generate_application_add_result(result=self.apps[0])
-        self.assertIn('Created {name}:'.format(name=self.apps[0].name), self.out.getvalue())
+        self.assertIn('Created {name}:'.format(name=self.apps[0].name),
+                      self.out.getvalue())
         format_application.assert_called_with(self.apps[0], "blocks")
 
     def test_single_app_blocks_format(self):
@@ -68,7 +70,9 @@ class TestApplicationOutputFormatter(unittest.TestCase):
 
     def test_mult_app_table_format(self):
         output = cli.format_application(self.apps, "table")
-        expected = "| Application   |\n|---------------|\n| fake_package  | fake_package  |"
+        expected = ("| Application   |\n|---------------|\n| fake_package  |"
+                    "\n| fake_package  |")
+        self.assertEqual(output, expected)
 
 
 class TestPackageOutputFormatter(unittest.TestCase):
@@ -89,7 +93,9 @@ class TestPackageOutputFormatter(unittest.TestCase):
             result=dict(package=self.packages[0])
         )
         self.assertIn(
-            'Added package: "{s.name}@{s.version}"'.format(s=self.packages[0]),
+            'Added package: "{s.name}@{s.version}"'.format(
+                s=self.packages[0]
+            ),
             self.out.getvalue()
         )
 
@@ -116,19 +122,25 @@ class TestPackageOutputFormatter(unittest.TestCase):
     #
     # @patch('tagopsdb.Package.to_dict')
     # def test_mult_pkg_json_format(self, to_dict):
-    #     to_dict.return_value = [vars(self.packages[0]), vars(self.packages[1])]
+    #     to_dict.return_value = [vars(self.packages[0]),
+    #                             vars(self.packages[1])]
     #     output = json.loads(cli.format_package(self.packages, "json"))
     #     expected = [vars(self.packages[0]), vars(self.packages[1])]
     #     self.assertEqual(output, expected)
 
     def test_single_pkg_table_format(self):
         output = cli.format_package(self.packages[0], "table")
-        expected = "| Project      | Version   | Revision   |\n|--------------+-----------+------------|\n| fake_package | badf00d   | tums       |"
+        expected = ("| Project      | Version   | Revision   |\n|"
+                    "--------------+-----------+------------|\n| fake_package"
+                    " | badf00d   | tums       |")
         self.assertEqual(output, expected)
 
     def test_mult_pkg_table_format(self):
         output = cli.format_package(self.packages, "table")
-        expected = "| Project      | Version   | Revision   |\n|--------------+-----------+------------|\n| fake_package | badf00d   | tums       |\n| fake_package | badf00d   | tums       |"
+        expected = ("| Project      | Version   | Revision   |\n|"
+                    "--------------+-----------+------------|\n| fake_package"
+                    " | badf00d   | tums       |\n| fake_package | badf00d   "
+                    "| tums       |")
         self.assertEqual(output, expected)
 
 
@@ -205,8 +217,8 @@ class TestExceptionOutputFormatter(unittest.TestCase):
         error = AccessError()
         output = cli.format_exception(error)
         self.assertEqual(
-            ("You do not have the appropriate permissions to run this command. "
-             "Contact your manager."),
+            ("You do not have the appropriate permissions to run this command"
+             ". Contact your manager."),
             output
         )
 
@@ -222,7 +234,8 @@ class TestExceptionOutputFormatter(unittest.TestCase):
         error = Exception()
         output = cli.format_exception(error)
         self.assertEqual(
-            "Exception=repr(Exception()) str() could not be formatted: IndexError('tuple index out of range',)",
+            ("Exception=repr(Exception()) str() could not be formatted: "
+             "IndexError('tuple index out of range',)"),
             output
         )
 
