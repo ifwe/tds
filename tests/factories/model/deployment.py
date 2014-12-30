@@ -8,7 +8,7 @@ import tds.model.deployment as d
 from .actor import ActorFactory
 from .package import PackageFactory
 from .project import ProjectFactory
-from .deploy_target import AppTargetFactory, HostTargetFactory
+from .deploy_target import AppTargetFactory, HostTargetFactory, HipchatFactory
 
 
 class DeploymentFactory(factory.Factory):
@@ -30,7 +30,10 @@ class DeploymentFactory(factory.Factory):
 
     target = dict(
         env='dev',
-        apptypes=[AppTargetFactory(name='fake_apptype')],
+        apptypes=[AppTargetFactory(
+            name='fake_apptype',
+            hipchats=[HipchatFactory(room_name="fakeroom")]
+        )],
         hosts=None,
     )
 
