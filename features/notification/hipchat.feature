@@ -70,7 +70,7 @@ Feature: HipChat notifications
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: redeploy to all apptypes
+    Scenario: fix to all apptypes
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -78,13 +78,13 @@ Feature: HipChat notifications
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
-        When I run "deploy redeploy myapp --all-apptypes"
+        When I run "deploy fix myapp --all-apptypes"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "redeploy","of+version+123+of+myapp+on+app+tier","the-apptype","another-apptype","in+stage"
+        And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","the-apptype","another-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: redeploy to specific apptypes
+    Scenario: fix to specific apptypes
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -92,13 +92,13 @@ Feature: HipChat notifications
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
-        When I run "deploy redeploy myapp --apptypes another-apptype"
+        When I run "deploy fix myapp --apptypes another-apptype"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "redeploy","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
+        And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: redeploy to specific host
+    Scenario: fix to specific host
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -106,9 +106,9 @@ Feature: HipChat notifications
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
-        When I run "deploy redeploy myapp --hosts anotherhost01"
+        When I run "deploy fix myapp --hosts anotherhost01"
         Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "redeploy","of+version+123+of+myapp+on+hosts+anotherhost01","in+stage"
+        And a hipchat notification message contains "fix","of+version+123+of+myapp+on+hosts+anotherhost01","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server

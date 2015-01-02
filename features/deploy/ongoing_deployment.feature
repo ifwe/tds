@@ -72,7 +72,7 @@ Feature: Ongoing deployments blocking attempted new ones
         When I run "deploy promote myapp 123 --hosts dprojhost02"
         Then the output has "Completed: 1 out of 1 hosts"
 
-    Scenario Outline: redeploy with ongoing apptype deployment
+    Scenario Outline: fix with ongoing apptype deployment
         Given I have "stage" permissions
         And I am in the "stage" environment
         And there is a project with name="proj"
@@ -96,7 +96,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the package has been validated in the "development" environment
         And the package is deployed on the deploy targets in the "stage" env
         And there is an ongoing deployment on the deploy target
-        When I run "deploy redeploy myapp <targets>"
+        When I run "deploy fix myapp <targets>"
         Then the output has "User "test-user" is currently running a deployment for the the-apptype app tier in the staging environment, skipping..."
 
     Examples:

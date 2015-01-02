@@ -42,25 +42,25 @@ Feature: email notifications
         Then an email is sent with the relevant information for deptype="promote",hosts="dprojhost01:danotherhost01"
 
     @email_server
-    Scenario: redeploy of single apptype occurs with working mail notification
+    Scenario: fix of single apptype occurs with working mail notification
         Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
-        When I run "deploy redeploy myapp --apptypes the-apptype"
-        Then an email is sent with the relevant information for deptype="redeploy",apptypes="the-apptype"
+        When I run "deploy fix myapp --apptypes the-apptype"
+        Then an email is sent with the relevant information for deptype="fix",apptypes="the-apptype"
 
     @email_server
-    Scenario: redeploy of all apptypes occurs with working mail notification
+    Scenario: fix of all apptypes occurs with working mail notification
         Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
-        When I run "deploy redeploy myapp --all-apptypes"
-        Then an email is sent with the relevant information for deptype="redeploy",apptypes="the-apptype:another-apptype"
+        When I run "deploy fix myapp --all-apptypes"
+        Then an email is sent with the relevant information for deptype="fix",apptypes="the-apptype:another-apptype"
 
     @email_server
-    Scenario: redeploy of a host(s) occurs with working mail notification
+    Scenario: fix of a host(s) occurs with working mail notification
         Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
-        When I run "deploy redeploy myapp --hosts dprojhost02"
-        Then an email is sent with the relevant information for deptype="redeploy",hosts="dprojhost02"
+        When I run "deploy fix myapp --hosts dprojhost02"
+        Then an email is sent with the relevant information for deptype="fix",hosts="dprojhost02"
 
     @email_server
     Scenario: rollback of single apptype occurs with working mail notification
