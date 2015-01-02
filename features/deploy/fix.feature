@@ -1,6 +1,6 @@
-Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptypes]
+Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes]
     As a developer
-    I want to redeploy failed deployments to targets
+    I want to fix failed deployments to targets
     So I can complete a given deployment fully
 
     Background:
@@ -32,21 +32,21 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
         And the package is deployed on the deploy targets in the "stage" env
         And the package failed to deploy on the host with name="sprojhost02"
 
-    Scenario: redeploy application that doesn't exist
-        When I run "deploy redeploy badapp"
+    Scenario: fix application that doesn't exist
+        When I run "deploy fix badapp"
         Then the output has "Application does not exist: badapp"
 
-    Scenario: redeploy to host that doesn't exist
-        When I run "deploy redeploy myapp --hosts badhost01"
+    Scenario: fix to host that doesn't exist
+        When I run "deploy fix myapp --hosts badhost01"
         Then the output has "Host does not exist: badhost01"
 
-    Scenario: redeploy to apptype that doesn't exist
-        When I run "deploy redeploy myapp --apptype bad-apptype"
+    Scenario: fix to apptype that doesn't exist
+        When I run "deploy fix myapp --apptype bad-apptype"
         Then the output has "Valid apptypes for application "myapp" are: ['the-apptype']"
 
-    Scenario Outline: redeploy to hosts
+    Scenario Outline: fix to hosts
         Given the deploy strategy is "<strategy>"
-        When I run "deploy redeploy myapp --hosts sprojhost02"
+        When I run "deploy fix myapp --hosts sprojhost02"
         Then the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "123" was deployed to host "sprojhost02"
 
@@ -55,9 +55,9 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
             | mco      |
             | salt     |
 
-    Scenario Outline: redeploy to apptype
+    Scenario Outline: fix to apptype
         Given the deploy strategy is "<strategy>"
-        When I run "deploy redeploy myapp --apptype the-apptype"
+        When I run "deploy fix myapp --apptype the-apptype"
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Host "sprojhost01" already has "myapp@123" successfully deployed, skipping"
         And package "myapp" version "123" was deployed to host "sprojhost02"
@@ -67,7 +67,7 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
             | mco      |
             | salt     |
 
-    Scenario Outline: redeploy to all apptypes
+    Scenario Outline: fix to all apptypes
         Given the deploy strategy is "<strategy>"
         And there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
@@ -75,7 +75,7 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
-        When I run "deploy redeploy myapp --all-apptypes"
+        When I run "deploy fix myapp --all-apptypes"
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "123" was deployed to host "sprojhost02"
@@ -86,10 +86,10 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
             | mco      |
             | salt     |
 
-    Scenario Outline: redeploy to host with a failure
+    Scenario Outline: fix to host with a failure
         Given the deploy strategy is "<strategy>"
         And the host "sprojhost02" will fail to deploy
-        When I run "deploy redeploy myapp --hosts sprojhost02"
+        When I run "deploy fix myapp --hosts sprojhost02"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost02"
 
@@ -98,10 +98,10 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
             | mco      |
             | salt     |
 
-    Scenario Outline: redeploy to apptype with a failure
+    Scenario Outline: fix to apptype with a failure
         Given the deploy strategy is "<strategy>"
         And the host "sprojhost02" will fail to deploy
-        When I run "deploy redeploy myapp --apptype the-apptype"
+        When I run "deploy fix myapp --apptype the-apptype"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost02"
 
@@ -110,10 +110,10 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
             | mco      |
             | salt     |
 
-    Scenario Outline: redeploy to all apptypes with a failure
+    Scenario Outline: fix to all apptypes with a failure
         Given the deploy strategy is "<strategy>"
         And the host "sprojhost02" will fail to deploy
-        When I run "deploy redeploy myapp --all-apptypes"
+        When I run "deploy fix myapp --all-apptypes"
         Then the output has "Some hosts had failures"
         And the output has "Hostname: sprojhost02"
 
@@ -123,9 +123,9 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
             | salt     |
 
     @delay
-    Scenario Outline: redeploy with delay option
+    Scenario Outline: fix with delay option
         Given the deploy strategy is "<strategy>"
-        When I run "deploy redeploy myapp --delay 10"
+        When I run "deploy fix myapp --delay 10"
         Then the output has "Completed: 2 out of 2 hosts"
         And package "myapp" version "123" was deployed to host "sprojhost02"
         And the output has "Host "sprojhost01" already has "myapp@123" successfully deployed, skipping"
