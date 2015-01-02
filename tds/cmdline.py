@@ -158,6 +158,32 @@ PACKAGE_DATA = odict([
 ])
 
 DEPLOY_DATA = odict([
+    ('fix', odict([
+        ('help', 'Correct failed host deployments in current environment'),
+        ('subargs', odict([
+            (('application',), odict([
+                ('help', 'Name of application'),
+            ])),
+            (('--delay',), odict([
+                ('help', 'Time delay (in seconds) between each redeploy'),
+                ('type', int),
+            ])),
+            (('--hosts',), odict([
+                ('help', 'Specific host(s) for correction'),
+                ('metavar', 'HOST'),
+                ('nargs', '*'),
+            ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for correction'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
+            ])),
+            (('--all-apptypes',), odict([
+                ('help', 'Handle all app types for correction'),
+                ('action', 'store_true'),
+            ])),
+        ])),
+    ])),
     ('invalidate', odict([
         ('help', 'Mark a given deployment as not working'),
         ('subargs', odict([
@@ -216,7 +242,7 @@ DEPLOY_DATA = odict([
         ])),
     ])),
     ('redeploy', odict([
-        ('help', 'Redeploy project to current environment'),
+        ('help', 'Redeploy application to current environment - DEPRECATED'),
         ('subargs', odict([
             (('application',), odict([
                 ('help', 'Name of application'),
