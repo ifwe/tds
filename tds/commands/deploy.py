@@ -71,6 +71,7 @@ class DeployController(BaseController):
         'validate': 'environment',
         'promote': 'environment',
         'fix': 'environment',
+        'redeploy': 'environment',
         'rollback': 'environment',
         'restart': 'environment',
     }
@@ -1381,8 +1382,8 @@ class DeployController(BaseController):
         """Redeploy given application to requested tiers or hosts"""
 
         raise tds.exceptions.InvalidOperationError(
-            'This subcommand has been replaced by "fix".  Please use '
-            'the new subcommand.'
+            'The "redeploy" subcommand has been replaced by "fix".  '
+            'Please use "tds deploy fix" instead.'
         )
 
     @input_validate('package_hostonly')
