@@ -1,15 +1,12 @@
-Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptypes]
+Feature: deploy redeploy [DEPRECATED]
     As a developer
-    I want to redeploy failed deployments to targets
-    So I can complete a given deployment fully
+    I want to be told the 'deploy redeploy' command is deprecated
+    So I can find out about the new 'deploy fix' command
 
-    Background:
-        Given I have "stage" permissions
-        And there are environments
-            | name   |
-            | dev    |
-            | stage  |
-        And I am in the "stage" environment
+    Scenario: redeploy is deprecated
+        Given I have "dev" permissions
+        And there is an environment with name="dev"
+        And I am in the "dev" environment
         And there is a project with name="proj"
         And there is an application with name="myapp"
         And there is a deploy target with name="the-apptype"
@@ -18,120 +15,15 @@ Feature: deploy redeploy application [--delay] [--hosts|--apptypes|--all-apptype
             | name          | env     |
             | dprojhost01   | dev     |
             | dprojhost02   | dev     |
-            | sprojhost01   | stage   |
-            | sprojhost02   | stage   |
         And the hosts are associated with the deploy target
 
         And there is a package with version="122"
-        And the package is deployed on the deploy targets in the "stage" env
-        And the package has been validated in the "staging" environment
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
 
         And there is a package with version="123"
         And the package is deployed on the deploy targets in the "dev" env
-        And the package has been validated in the "development" environment
-        And the package is deployed on the deploy targets in the "stage" env
-        And the package failed to deploy on the host with name="sprojhost02"
+        And the package failed to deploy on the host with name="dprojhost02"
 
-    Scenario: redeploy application that doesn't exist
-        When I run "deploy redeploy badapp"
-        Then the output has "Application does not exist: badapp"
-
-    Scenario: redeploy to host that doesn't exist
-        When I run "deploy redeploy myapp --hosts badhost01"
-        Then the output has "Host does not exist: badhost01"
-
-    Scenario: redeploy to apptype that doesn't exist
-        When I run "deploy redeploy myapp --apptype bad-apptype"
-        Then the output has "Valid apptypes for application "myapp" are: ['the-apptype']"
-
-    Scenario Outline: redeploy to hosts
-        Given the deploy strategy is "<strategy>"
-        When I run "deploy redeploy myapp --hosts sprojhost02"
-        Then the output has "Completed: 1 out of 1 hosts"
-        And package "myapp" version "123" was deployed to host "sprojhost02"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: redeploy to apptype
-        Given the deploy strategy is "<strategy>"
         When I run "deploy redeploy myapp --apptype the-apptype"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And the output has "Host "sprojhost01" already has "myapp@123" successfully deployed, skipping"
-        And package "myapp" version "123" was deployed to host "sprojhost02"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: redeploy to all apptypes
-        Given the deploy strategy is "<strategy>"
-        And there is a deploy target with name="another-apptype"
-        And there is a host with name="anotherhost01"
-        And the host is associated with the deploy target
-        And the deploy target is a part of the project-application pair
-        And the package is deployed on the deploy target
-        And the package failed to deploy on the host with name="anotherhost01"
-        When I run "deploy redeploy myapp --all-apptypes"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And the output has "Completed: 1 out of 1 hosts"
-        And package "myapp" version "123" was deployed to host "sprojhost02"
-        And package "myapp" version "123" was deployed to host "anotherhost01"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: redeploy to host with a failure
-        Given the deploy strategy is "<strategy>"
-        And the host "sprojhost02" will fail to deploy
-        When I run "deploy redeploy myapp --hosts sprojhost02"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: sprojhost02"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: redeploy to apptype with a failure
-        Given the deploy strategy is "<strategy>"
-        And the host "sprojhost02" will fail to deploy
-        When I run "deploy redeploy myapp --apptype the-apptype"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: sprojhost02"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: redeploy to all apptypes with a failure
-        Given the deploy strategy is "<strategy>"
-        And the host "sprojhost02" will fail to deploy
-        When I run "deploy redeploy myapp --all-apptypes"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: sprojhost02"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    @delay
-    Scenario Outline: redeploy with delay option
-        Given the deploy strategy is "<strategy>"
-        When I run "deploy redeploy myapp --delay 10"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And package "myapp" version "123" was deployed to host "sprojhost02"
-        And the output has "Host "sprojhost01" already has "myapp@123" successfully deployed, skipping"
-        And it took at least 10 seconds
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
+        Then the output has "The "redeploy" subcommand has been replaced by "fix".  Please use "tds deploy fix" instead."
