@@ -23,7 +23,7 @@ class TDS(TDSProgramBase):
     view = tds.views.CLI
 
     views = {
-        ('deploy', 'redeploy'): 'deploy_promote',
+        ('deploy', 'fix'): 'deploy_promote',
     }
 
     def __init__(self, params):

@@ -496,5 +496,5 @@ class CLI(Base):
         generate_deploy_promote_result = \
         generate_deploy_validate_result = \
         generate_deploy_rollback_result = \
-        generate_deploy_redeploy_result = \
+        generate_deploy_fix_result = \
         silence(NotImplementedError)(generate_default_result)

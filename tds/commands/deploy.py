@@ -53,7 +53,7 @@ class DeployController(BaseController):
     """Commands to manage deployments for supported applications."""
 
     dep_types = {'promote': 'Deployment',
-                 'redeploy': 'Redeployment',
+                 'fix': 'Fix',
                  'rollback': 'Rollback',
                  'push': 'Push',
                  'repush': 'Repush',
@@ -70,6 +70,7 @@ class DeployController(BaseController):
         'show': 'environment',
         'validate': 'environment',
         'promote': 'environment',
+        'fix': 'environment',
         'redeploy': 'environment',
         'rollback': 'environment',
         'restart': 'environment',
@@ -1380,7 +1381,21 @@ class DeployController(BaseController):
                  **params):
         """Redeploy given application to requested tiers or hosts"""
 
-        log.debug('Redeploying application')
+        raise tds.exceptions.InvalidOperationError(
+            'The "redeploy" subcommand has been replaced by "fix".  '
+            'Please use "tds deploy fix" instead.'
+        )
+
+    @input_validate('package_hostonly')
+    @input_validate('targets')
+    @input_validate('application')
+    def fix(self, application, package, hosts=None, apptypes=None,
+                 **params):
+        """Fix failed deployments for a given application on requested tiers
+           or hosts
+        """
+
+        log.debug('Fixing failed deployments for application')
 
         apptypes = self.get_app_info(
             package, hosts, apptypes, params, hostonly=True
@@ -1389,9 +1404,8 @@ class DeployController(BaseController):
 
         if not len(list(filter(None, app_dep_map.itervalues()))):
             raise tds.exceptions.InvalidOperationError(
-                'Nothing to redeploy for application %r in %s '
-                'environment', application.name,
-                self.envs[params['env']]
+                'Nothing to fix for application %r in %s environment',
+                application.name, self.envs[params['env']]
             )
 
         deployment = package.deployments[-1]
