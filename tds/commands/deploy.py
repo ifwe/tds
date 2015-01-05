@@ -1390,7 +1390,7 @@ class DeployController(BaseController):
     @input_validate('targets')
     @input_validate('application')
     def fix(self, application, package, hosts=None, apptypes=None,
-                 **params):
+            **params):
         """Fix failed deployments for a given application on requested tiers
            or hosts
         """
