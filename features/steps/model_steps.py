@@ -1276,7 +1276,8 @@ def then_there_is_no_project_with_properties(context, properties):
 @then(u'there is no application with {properties}')
 def then_there_is_no_application_with_properties(context, properties):
     attrs = parse_properties(properties)
-    assert tds.model.Application.get(**attrs) is None
+    returned = tds.model.Application.get(**attrs)
+    assert returned is None, returned
 
 
 @then(u'the package is invalidated for deploy targets')

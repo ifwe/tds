@@ -20,6 +20,7 @@ class ApplicationController(BaseController):
         delete='admin',
         delete_apptype='admin',
         list='environment',
+        update='environment',
     )
 
     @staticmethod
@@ -34,7 +35,7 @@ class ApplicationController(BaseController):
                 "Application already exists: %s", application.name
             )
 
-        tds.model.Application.verify_package_arch(arch)
+        tds.model.Application.verify_arch(arch)
         tds.model.Application.verify_build_type(build_type)
 
         log.debug('Creating application %r', app_name)
@@ -184,3 +185,79 @@ class ApplicationController(BaseController):
             applications = tds.model.Application.all()
 
         return dict(result=applications)
+
+    @staticmethod
+    def _parse_properties(properties, valid_attrs=None, mappings=None):
+        """
+        Parse properties for the update function.
+        properties should be a string of the following form:
+            'attr1=val1 attr2=val2 ...'
+        valid_attrs should be an iterable. If valid_attrs is None, no checks
+        will be performed on the validity of an attr.
+        mappings should be a dictionary that maps attrs to their appropriate
+        names for use. If no mappings are passed, no mappings are made.
+        Note: attrs are checked against valid_attrs, not mappings of attrs.
+        """
+        parsed = dict()
+        for declaration in properties:
+            try:
+                attr, val = declaration.split('=')
+            except ValueError as e:
+                raise tds.exceptions.InvalidInputError(
+                    ("Invalid properties: %s. Split on '=' for a declaration "
+                     "returned %s argument%s, expected 2"),
+                    properties,
+                    len(declaration.split('=')),
+                    '' if len(declaration.split('=')) == 1 else 's',
+                )
+            if mappings and attr in mappings:
+                mapped_attr = mappings[attr]
+            else:
+                mapped_attr = attr
+            if valid_attrs and attr not in valid_attrs:
+                raise tds.exceptions.InvalidInputError(
+                    "Invalid attribute: %s. Valid attributes are: %r",
+                    attr, valid_attrs
+                )
+            elif mapped_attr in parsed:
+                raise tds.exceptions.InvalidInputError(
+                    "Attribute appeared more than once: %s", attr
+                )
+            parsed[mapped_attr] = val
+        return parsed
+
+    @validate('application')
+    def update(self, application, properties, **kwargs):
+        """
+        Update an existing application's properties.
+        properties should be a string of the following form:
+            'attr1=val1 attr2=val2 ...'
+        """
+        if kwargs['user_level'] == "admin":
+            valid_attrs = (
+                'name', 'deploy_type', 'arch', 'build_type', 'build_host',
+                'job_name',
+            )
+        else:
+            valid_attrs = ('job_name',)
+        mappings = dict(job_name="path")
+        properties = self._parse_properties(properties, valid_attrs, mappings)
+        updated = False
+
+        for attr in properties:
+            if getattr(application, attr) != properties[attr]:
+                meth = getattr(tds.model.Application, 'verify_%s' % attr,
+                               None)
+                if meth is not None:
+                    meth(properties[attr])
+                setattr(application, attr, properties[attr])
+                updated = True
+
+        if updated:
+            tagopsdb.Session.commit()
+            return dict(result=application)
+        else:
+            raise tds.exceptions.InvalidOperationError(
+                "Update values match current values for application %s. Nothing to do.",
+                application.name
+            )
