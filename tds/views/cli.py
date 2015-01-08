@@ -383,6 +383,16 @@ class CLI(Base):
 
         print format_application(result, self.output_format)
 
+    def generate_application_update_result(
+            self, result=None, error=None, **_kwds
+    ):
+        """Render view for an update of an application."""
+        if result is None and error is not None:
+            print format_exception(error)
+        else:
+            print format_application(result, self.output_format)
+            print "Application has been successfully updated."
+
     @staticmethod
     def generate_application_delete_result(result=None, error=None, **_kwds):
         """Render view for a deleted application."""
