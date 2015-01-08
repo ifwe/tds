@@ -7,7 +7,7 @@ Feature: application update application properties
         Given there is an environment with name="dev"
         And I am in the "dev" environment
         And I have "dev" permissions
-        When I run "application update myapp job_name=jenkins_job"
+        When I run "application update myapp job_name=new_job"
         Then the output is "Application does not exist: myapp"
 
     Scenario Outline: invalid properties
@@ -20,9 +20,9 @@ Feature: application update application properties
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
-            | properties                | prop_list                     |
-            | fake_prop                 | ['fake_prop']                 |
-            | job_name=job fake_prop    | ['job_name=job', 'fake_prop'] |
+            | properties                    | prop_list                         |
+            | fake_prop                     | ['fake_prop']                     |
+            | job_name=new_job fake_prop    | ['job_name=new_job', 'fake_prop'] |
 
     Scenario Outline: pass an attribute more than once
         Given there is an environment with name="dev"
@@ -65,7 +65,6 @@ Feature: application update application properties
             | properties                        |
             | app_name=new_name                 |
             | job_name=job app_name=new_name    |
-            | job_name=job job_name=job         |
 
     Scenario Outline: update with same information as already present in database
         Given there is an environment with name="dev"
