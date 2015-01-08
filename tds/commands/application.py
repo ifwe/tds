@@ -187,12 +187,16 @@ class ApplicationController(BaseController):
         return dict(result=applications)
 
     @staticmethod
-    def _parse_properties(properties, valid_attrs):
+    def _parse_properties(properties, valid_attrs=None, mappings=None):
         """
         Parse properties for the update function.
         properties should be a string of the following form:
             'attr1=val1 attr2=val2 ...'
-        valid_attrs should be an iterable
+        valid_attrs should be an iterabl. If valid_attrs is None, no checks
+        will be performed on the validity of an attr.
+        mappings should be a dictionary that maps attrs to their appropriate
+        names for use. If no mappings are passed, no mappings are made.
+        Note: attrs are checked against valid_attrs, not mappings of attrs.
         """
         parsed = dict()
         for declaration in properties:
@@ -206,16 +210,20 @@ class ApplicationController(BaseController):
                     len(declaration.split('=')),
                     '' if len(declaration.split('=')) == 1 else 's',
                 )
-            if attr not in valid_attrs:
+            if mappings and attr in mappings:
+                mapped_attr = mappings[attr]
+            else:
+                mapped_attr = attr
+            if valid_attrs and attr not in valid_attrs:
                 raise tds.exceptions.InvalidInputError(
                     "Invalid attribute: %s. Valid attributes are: %r",
                     attr, valid_attrs
                 )
-            elif attr in parsed:
+            elif mapped_attr in parsed:
                 raise tds.exceptions.InvalidInputError(
                     "Attribute appeared more than once: %s", attr
                 )
-            parsed[attr] = val
+            parsed[mapped_attr] = val
         return parsed
 
     @validate('application')
@@ -227,44 +235,23 @@ class ApplicationController(BaseController):
         """
         if kwargs['user_level'] == "admin":
             valid_attrs = (
-                'app_name', 'deploy_type', 'arch', 'build_type', 'build_host',
+                'name', 'deploy_type', 'arch', 'build_type', 'build_host',
                 'job_name',
             )
         else:
             valid_attrs = ('job_name',)
-        properties = self._parse_properties(properties, valid_attrs)
+        mappings = dict(job_name="path")
+        properties = self._parse_properties(properties, valid_attrs, mappings)
         updated = False
 
-        if 'app_name' in properties \
-                and application.name != properties['app_name']:
-            application.name = properties['app_name']
-            updated = True
-
-        if 'deploy_type' in properties\
-                and application.deploy_type != properties['deploy_type']:
-            application.deploy_type = properties['deploy_type']
-            updated = True
-
-        if 'job_name' in properties \
-                and application.path != properties['job_name']:
-            application.path = properties['job_name']
-            updated = True
-
-        if 'arch' in properties and application.arch != properties['arch']:
-            tds.model.Application.verify_package_arch(properties['arch'])
-            application.arch = properties['arch']
-            updated = True
-
-        if 'build_type' in properties \
-                and application.build_type != properties['build_type']:
-            tds.model.Application.verify_build_type(properties['build_type'])
-            application.build_type = properties['build_type']
-            updated = True
-
-        if 'build_host' in properties \
-                and application.build_host != properties['build_host']:
-            application.build_host = properties['build_host']
-            updated = True
+        for attr in properties:
+            if getattr(application, attr) != properties[attr]:
+                meth = getattr(tds.model.Application, 'verify_%s' % attr,
+                               None)
+                if meth is not None:
+                    meth(properties[attr])
+                setattr(application, attr, properties[attr])
+                updated = True
 
         if updated:
             tagopsdb.Session.commit()
