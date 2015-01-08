@@ -35,7 +35,7 @@ class ApplicationController(BaseController):
                 "Application already exists: %s", application.name
             )
 
-        tds.model.Application.verify_package_arch(arch)
+        tds.model.Application.verify_arch(arch)
         tds.model.Application.verify_build_type(build_type)
 
         log.debug('Creating application %r', app_name)
