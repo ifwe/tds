@@ -110,6 +110,20 @@ APPLICATION_DATA = odict([
             ])),
         ])),
     ])),
+    ('update', odict([
+        ('help', 'Update an existing application'),
+        ('subargs', odict([
+            (('application',), odict([
+                ('help', 'Name of the existing application'),
+            ])),
+            (('properties',), odict([
+                ('help', ('New properties. E.g., job_name=jenkins_job.'
+                          ' For admins: app_name=myapp '
+                          'job_name=jenkins_job deploy_type=rpm arch=noarch '
+                          'build_type=jenkins build_host=ci.tagged.com'))
+            ]))
+        ]))
+    ])),
 ])
 
 PACKAGE_DATA = odict([
