@@ -34,9 +34,9 @@ Feature: application update application properties
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
-            | properties                        | attr      |
-            | app_name=a app_name=b             | app_name  |
-            | job_name=a app_name=b job_name=c  | job_name  |
+            | properties                    | attr      |
+            | name=a name=b                 | name      |
+            | job_name=a name=b job_name=c  | job_name  |
 
     Scenario Outline: attempt update for a properties that don't exist
         Given there is an environment with name="dev"
@@ -58,13 +58,13 @@ Feature: application update application properties
         And I have "dev" permissions
         And there is an application with name="myapp"
         When I run "application update myapp <properties>"
-        Then the output is "Invalid attribute: app_name. Valid attributes are: ('job_name',)"
+        Then the output is "Invalid attribute: name. Valid attributes are: ('job_name',)"
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
-            | properties                        |
-            | app_name=new_name                 |
-            | job_name=job app_name=new_name    |
+            | properties                    |
+            | name=new_name                 |
+            | job_name=job name=new_name    |
 
     Scenario Outline: update with same information as already present in database
         Given there is an environment with name="dev"
@@ -76,9 +76,9 @@ Feature: application update application properties
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
-            | perm      | properties                                                                                                |
-            | dev       | job_name=job                                                                                              |
-            | admin     | job_name=job app_name=myapp deploy_type=rpm arch=noarch build_type=jenkins build_host=fakeci.example.org  |
+            | perm      | properties                                                                                            |
+            | dev       | job_name=job                                                                                          |
+            | admin     | job_name=job name=myapp deploy_type=rpm arch=noarch build_type=jenkins build_host=fakeci.example.org  |
 
     Scenario: unprivileged user updates job_name
         Given there is an environment with name="dev"
@@ -102,7 +102,7 @@ Feature: application update application properties
         And I am in the "dev" environment
         And I have "admin" permissions
         And there is an application with name="myapp",path="job"
-        When I run "application update myapp job_name=new_job app_name=new_name arch=x86_64 deploy_type=rpm build_type=hudson build_host=hudson.example.org"
+        When I run "application update myapp job_name=new_job name=new_name arch=x86_64 deploy_type=rpm build_type=hudson build_host=hudson.example.org"
         Then the output describes an application with name="new_name",arch="x86_64",path="new_job",deploy_type="rpm",build_host="hudson.example.org",build_type="hudson"
         And the output has "Application has been successfully updated."
         And there is an application
