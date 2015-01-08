@@ -27,7 +27,7 @@ class Application(Base):
         ]
 
     @staticmethod
-    def verify_package_arch(arch):
+    def verify_arch(arch):
         """Ensure architecture for package is supported."""
 
         table = tagopsdb.model.PackageDefinition.__table__
