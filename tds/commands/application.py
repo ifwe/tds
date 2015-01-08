@@ -1,6 +1,5 @@
 """Commands to manage the TDS applications."""
 import logging
-import re
 
 import tagopsdb
 import tagopsdb.deploy.repo
