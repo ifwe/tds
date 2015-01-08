@@ -187,74 +187,91 @@ class ApplicationController(BaseController):
 
         return dict(result=applications)
 
-    def _parse_properties(properties):
+    @staticmethod
+    def _parse_properties(properties, valid_attrs):
         """
         Parse properties for the update function.
-        properties should be a string of one of the following forms:
+        properties should be a string of the following form:
             'attr1=val1 attr2=val2 ...'
-            'attr1=val1,attr2=val2,...'
-            'attr1=val1, attr2=val2, ...'
+        valid_attrs should be an iterable
         """
         parsed = dict()
-        valid_attrs = (
-            # 'app_name', 'deploy_type', 'arch', 'build_type', 'build_host',
-            'job_name',
-            )
-        for declaration in re.split(',| ', properties.replace(', ', ',')):
+        for declaration in properties:
             try:
                 attr, val = declaration.split('=')
             except ValueError as e:
                 raise tds.exceptions.InvalidInputError(
                     ("Invalid properties: %s. Split on '=' for a declaration "
-                     "returned %s arguments, expected 2"),
+                     "returned %s argument%s, expected 2"),
                     properties,
-                    len(declaration.split('='))
+                    len(declaration.split('=')),
+                    '' if len(declaration.split('=')) == 1 else 's',
                 )
-            if attr in parsed:
-                raise tds.exceptions.InvalidInputError(
-                    "Attribute appeared more than once: %s", attr
-                )
-            elif attr not in valid_attrs:
+            if attr not in valid_attrs:
                 raise tds.exceptions.InvalidInputError(
                     "Invalid attribute: %s. Valid attributes are: %r",
                     attr, valid_attrs
                 )
-            dict[attr] = val
+            elif attr in parsed:
+                raise tds.exceptions.InvalidInputError(
+                    "Attribute appeared more than once: %s", attr
+                )
+            parsed[attr] = val
         return parsed
 
     @validate('application')
-    def update(self, application, properties):
+    def update(self, application, properties, **kwargs):
         """
         Update an existing application's properties.
-        properties should be a string of one of the following forms:
+        properties should be a string of the following form:
             'attr1=val1 attr2=val2 ...'
-            'attr1=val1,attr2=val2,...'
-            'attr1=val1, attr2=val2, ...'
         """
-        properties = _parse_properties(properties)
+        if kwargs['user_level'] == "admin":
+            valid_attrs = (
+                'app_name', 'deploy_type', 'arch', 'build_type', 'build_host',
+                'job_name',
+            )
+        else:
+            valid_attrs = ('job_name',)
+        properties = self._parse_properties(properties, valid_attrs)
         updated = False
-        # if 'app_name' in properties \
-        #         and application.name != properties['app_name']:
-        #     application.name = properties['app_name']
-        #     updated = True
-        # if 'deploy_type' in properties\
-        #         and application.deploy_type != properties['deploy_type']:
-        #     applicatin.deploy_type = properties['deploy_type']
-        #     updated = True
+
+        if 'app_name' in properties \
+                and application.name != properties['app_name']:
+            application.name = properties['app_name']
+            updated = True
+
+        if 'deploy_type' in properties\
+                and application.deploy_type != properties['deploy_type']:
+            application.deploy_type = properties['deploy_type']
+            updated = True
+
         if 'job_name' in properties \
                 and application.path != properties['job_name']:
             application.path = properties['job_name']
             updated = True
-        # if 'arch' in properties and application.arch != properties['arch']:
-        #     application.arch = properties['arch']
-        #     updated = True
-        # if 'build_type' in properties \
-        #         and application.build_type != properties['build_type']:
-        #     application.build_type = properties['build_type']
-        #     updated = True
-        # if 'build_host' in properties \
-        #         and application.build_host != properties['build_host']:
-        #     applicatin.build_host = properties['build_host']
-        #     updated = True
+
+        if 'arch' in properties and application.arch != properties['arch']:
+            tds.model.Application.verify_package_arch(properties['arch'])
+            application.arch = properties['arch']
+            updated = True
+
+        if 'build_type' in properties \
+                and application.build_type != properties['build_type']:
+            tds.model.Application.verify_build_type(properties['build_type'])
+            application.build_type = properties['build_type']
+            updated = True
+
+        if 'build_host' in properties \
+                and application.build_host != properties['build_host']:
+            application.build_host = properties['build_host']
+            updated = True
+
         if updated:
             tagopsdb.Session.commit()
+            return dict(result=application)
+        else:
+            raise tds.exceptions.InvalidOperationError(
+                "Update values match current values for application %s. Nothing to do.",
+                application.name
+            )
