@@ -192,7 +192,7 @@ class ApplicationController(BaseController):
         Parse properties for the update function.
         properties should be a string of the following form:
             'attr1=val1 attr2=val2 ...'
-        valid_attrs should be an iterabl. If valid_attrs is None, no checks
+        valid_attrs should be an iterable. If valid_attrs is None, no checks
         will be performed on the validity of an attr.
         mappings should be a dictionary that maps attrs to their appropriate
         names for use. If no mappings are passed, no mappings are made.
