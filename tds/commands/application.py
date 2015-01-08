@@ -1,5 +1,6 @@
 """Commands to manage the TDS applications."""
 import logging
+import re
 
 import tagopsdb
 import tagopsdb.deploy.repo
@@ -20,6 +21,7 @@ class ApplicationController(BaseController):
         delete='admin',
         delete_apptype='admin',
         list='environment',
+        update='environment',
     )
 
     @staticmethod
@@ -184,3 +186,75 @@ class ApplicationController(BaseController):
             applications = tds.model.Application.all()
 
         return dict(result=applications)
+
+    def _parse_properties(properties):
+        """
+        Parse properties for the update function.
+        properties should be a string of one of the following forms:
+            'attr1=val1 attr2=val2 ...'
+            'attr1=val1,attr2=val2,...'
+            'attr1=val1, attr2=val2, ...'
+        """
+        parsed = dict()
+        valid_attrs = (
+            # 'app_name', 'deploy_type', 'arch', 'build_type', 'build_host',
+            'job_name',
+            )
+        for declaration in re.split(',| ', properties.replace(', ', ',')):
+            try:
+                attr, val = declaration.split('=')
+            except ValueError as e:
+                raise tds.exceptions.InvalidInputError(
+                    ("Invalid properties: %s. Split on '=' for a declaration "
+                     "returned %s arguments, expected 2"),
+                    properties,
+                    len(declaration.split('='))
+                )
+            if attr in parsed:
+                raise tds.exceptions.InvalidInputError(
+                    "Attribute appeared more than once: %s", attr
+                )
+            elif attr not in valid_attrs:
+                raise tds.exceptions.InvalidInputError(
+                    "Invalid attribute: %s. Valid attributes are: %r",
+                    attr, valid_attrs
+                )
+            dict[attr] = val
+        return parsed
+
+    @validate('application')
+    def update(self, application, properties):
+        """
+        Update an existing application's properties.
+        properties should be a string of one of the following forms:
+            'attr1=val1 attr2=val2 ...'
+            'attr1=val1,attr2=val2,...'
+            'attr1=val1, attr2=val2, ...'
+        """
+        properties = _parse_properties(properties)
+        updated = False
+        # if 'app_name' in properties \
+        #         and application.name != properties['app_name']:
+        #     application.name = properties['app_name']
+        #     updated = True
+        # if 'deploy_type' in properties\
+        #         and application.deploy_type != properties['deploy_type']:
+        #     applicatin.deploy_type = properties['deploy_type']
+        #     updated = True
+        if 'job_name' in properties \
+                and application.path != properties['job_name']:
+            application.path = properties['job_name']
+            updated = True
+        # if 'arch' in properties and application.arch != properties['arch']:
+        #     application.arch = properties['arch']
+        #     updated = True
+        # if 'build_type' in properties \
+        #         and application.build_type != properties['build_type']:
+        #     application.build_type = properties['build_type']
+        #     updated = True
+        # if 'build_host' in properties \
+        #         and application.build_host != properties['build_host']:
+        #     applicatin.build_host = properties['build_host']
+        #     updated = True
+        if updated:
+            tagopsdb.Session.commit()
