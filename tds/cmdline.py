@@ -118,7 +118,7 @@ APPLICATION_DATA = odict([
             ])),
             (('properties',), odict([
                 ('help', ('New properties. E.g., job_name=jenkins_job.'
-                          ' For admins: app_name=myapp '
+                          ' For admins: name=myapp '
                           'job_name=jenkins_job deploy_type=rpm arch=noarch '
                           'build_type=jenkins build_host=ci.tagged.com')),
                 ('nargs', '*')
