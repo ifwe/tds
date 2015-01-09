@@ -13,7 +13,7 @@ import com.tagged.build.fpm.FPMPythonScripts
 def project = new PythonFPMMatrixProject(
     jobFactory,
     [
-        new StashSCM(project: "tds", name: "tds"),
+        scm: new StashSCM(project: "tds", name: "tds"),
         hipchatRoom: 'Tagged Deployment System',
         email: 'devtools@tagged.com',
         interpreters:['python27'],
