@@ -13,3 +13,7 @@ Abstract base model.
 `deploy_target` object type.
 * [./deployment.py](./deployment.py) -
 `deployment` object type.
+* [./package.py](./package.py) -
+`package` object type.
+* [./project.py](./project.py) -
+`project` object type.

@@ -3,12 +3,16 @@
 Models, views, controllers for primary database interactions.
 
 ## Navigation
-* [./commands/](./commands) -
+* [./apps/](./apps/) -
+Client and server applications for TDS.
+* [./commands/](./commands/) -
 Controllers for database models.
-* [./deploy_strategy/](./deploy_strategy/)
+* [./deploy_strategy/](./deploy_strategy/) -
+Enforcement methods (Salt, MCO).
 * [./model/](./model/) -
 Model definitions.
-* [./notifications/](./notifications/)
+* [./notifications/](./notifications/) -
+E-mail, Hipchat, etc. notifications.
 * [./scripts/](./scripts/)
 * [./utils/](./utils/)
 * [./views/](./views/) -
