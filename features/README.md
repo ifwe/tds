@@ -20,9 +20,9 @@ Test for the `application` command.
 Authorization and permissions tests.
 * [./deploy/](./deploy/) -
 Tests for the `deploy` command.
-* [./helpers/](./helpers/)
+* [./helpers/](./helpers/) -
 Helper applications for deployment tests.
-* [./notification/](./notification/)
+* [./notification/](./notification/) -
 Tests for supported notifications.
 * [./package/](./package/) -
 Tests for the `package` command.

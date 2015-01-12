@@ -202,7 +202,7 @@ class ApplicationController(BaseController):
         for declaration in properties:
             try:
                 attr, val = declaration.split('=')
-            except ValueError as e:
+            except ValueError:
                 raise tds.exceptions.InvalidInputError(
                     ("Invalid properties: %s. Split on '=' for a declaration "
                      "returned %s argument%s, expected 2"),
@@ -258,6 +258,7 @@ class ApplicationController(BaseController):
             return dict(result=application)
         else:
             raise tds.exceptions.InvalidOperationError(
-                "Update values match current values for application %s. Nothing to do.",
+                ("Update values match current values for application %s. "
+                 "Nothing to do."),
                 application.name
             )
