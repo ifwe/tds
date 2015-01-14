@@ -1132,7 +1132,9 @@ class DeployController(BaseController):
         if not (hosts or apptypes):
             return dict()
 
-        self.send_notifications(hosts=hosts, apptypes=apptypes, **params)
+        self.send_notifications(
+            hosts=hosts, apptypes=target_apptypes, **params
+        )
         self.perform_deployments(
             hosts, target_apptypes, package, params, app_dep_map
         )
