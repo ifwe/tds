@@ -1118,18 +1118,23 @@ class DeployController(BaseController):
         """
         log.debug('Deploying application')
 
-        apptypes = self.get_app_info(package, hosts, apptypes, params)
+        target_apptypes = self.get_app_info(package, hosts, apptypes, params)
 
         params['package_name'] = package.name
 
-        app_dep_map = self.find_app_deployments(package, apptypes, params)
-        app_dep_map = self.determine_new_deployments(
-            hosts, apptypes, params, package, app_dep_map
+        app_dep_map = self.find_app_deployments(
+            package, target_apptypes, params
         )
+        app_dep_map = self.determine_new_deployments(
+            hosts, target_apptypes, params, package, app_dep_map
+        )
+
+        if not (hosts or apptypes):
+            return dict()
 
         self.send_notifications(hosts=hosts, apptypes=apptypes, **params)
         self.perform_deployments(
-            hosts, apptypes, package, params, app_dep_map
+            hosts, target_apptypes, package, params, app_dep_map
         )
 
         tagopsdb.Session.commit()
