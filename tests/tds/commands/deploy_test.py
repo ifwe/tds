@@ -6,7 +6,8 @@ from tests.factories.model.deployment import DeploymentFactory
 from tests.factories.utils.config import DeployConfigFactory
 from tests.factories.model.project import ProjectFactory
 from tests.factories.model.package import PackageFactory
-from tests.factories.model.deploy_target import AppTargetFactory
+from tests.factories.model.deploy_target import AppTargetFactory, \
+    HostTargetFactory
 from tests.factories.model.application import ApplicationFactory
 
 import tagopsdb
@@ -100,7 +101,8 @@ class TestPromoteAndPush(DeploySetUp):
             env='dev',
             project=ProjectFactory(name='fake_app'),
             application=ApplicationFactory(),
-            package=PackageFactory(version='whatever')
+            package=PackageFactory(version='whatever'),
+            hosts=[HostTargetFactory()],
         )
 
         self.assertTrue(self.deploy.perform_deployments.called)
@@ -114,7 +116,8 @@ class TestPromoteAndPush(DeploySetUp):
             env='dev',
             project=ProjectFactory(name='fake_app'),
             application=ApplicationFactory(),
-            package=PackageFactory(version='whatever')
+            package=PackageFactory(version='whatever'),
+            apptypes=[AppTargetFactory()],
         )
 
         self.assertTrue(self.deploy.perform_deployments.called)
