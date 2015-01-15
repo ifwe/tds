@@ -101,3 +101,12 @@ def gauntlet = project.gauntlet([
 ])
 
 def (tds, branches) = project.branchBuilders(gauntlet.name)
+
+// Override default 30m timeout
+jobFactory.referencedJobs.each {
+    it.with {
+        wrappers {
+            timeout(60, false)
+        }
+    }
+}
