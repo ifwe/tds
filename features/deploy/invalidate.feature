@@ -37,8 +37,20 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
         When I run "deploy invalidate myapp 123 --apptype foo bar"
         Then the output is "Valid apptypes for application "myapp" are: ['foo']"
 
+    Scenario: invalidate a package from an application with no hosts associated
+        Given there is a deploy target with name="foo"
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the deploy target
+        When I run "deploy invalidate myapp 123 --apptype foo"
+        Then the output is "No hosts are associated with the app tier 'foo' in the dev environment"
+
     Scenario: invalidate a package from an application for an apptype with it currently deployed
         Given there is a deploy target with name="foo"
+        And there are hosts:
+            | name      |
+            | dhost01   |
+            | dhost02   |
+        And the hosts are associated with the deploy target
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         When I run "deploy invalidate myapp 123 --apptype foo"
@@ -46,6 +58,11 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
 
     Scenario: invalidate a package from an application for an apptype
         Given there is a deploy target with name="foo"
+        And there are hosts:
+            | name      |
+            | dhost01   |
+            | dhost02   |
+        And the hosts are associated with the deploy target
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         When I run "deploy invalidate myapp 123 --apptype foo"
@@ -53,6 +70,11 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
 
     Scenario: invalidate a package from an application with single apptype
         Given there is a deploy target with name="foo"
+        And there are hosts:
+            | name      |
+            | dhost01   |
+            | dhost02   |
+        And the hosts are associated with the deploy target
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         And the package has been validated
@@ -62,6 +84,11 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
 
     Scenario: invalidate a package from an application with single apptype with apptype option
         Given there is a deploy target with name="foo"
+        And there are hosts:
+            | name      |
+            | dhost01   |
+            | dhost02   |
+        And the hosts are associated with the deploy target
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         And the package has been validated
@@ -82,8 +109,13 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
     Scenario: invalidate a package from an application with multiple apptypes with apptype option
         Given there are deploy targets:
             | name  |
-            | foo   |
             | bar   |
+            | foo   |
+        And there are hosts:
+            | name      |
+            | dhost01   |
+            | dhost02   |
+        And the hosts are assoicated with the deploy target
         And the deploy targets are a part of the project-application pair
         And the package is deployed on the deploy targets
         And the package has been validated
@@ -91,10 +123,17 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
         Then the package is invalidated for deploy target with name="foo"
 
     Scenario: invalidate a package from an application with multiple apptypes with all-apptypes option
-        Given there are deploy targets:
-            | name  |
-            | foo   |
-            | bar   |
+        Given there is a deploy target with name="foo"
+        And there are hosts:
+            | name      |
+            | dfoo01    |
+            | dfoo02    |
+        And the hosts are associated with the deploy target
+        And there is a deploy target with name="bar"
+        And there is a host with name="dbar01"
+        And the host is associated with the deploy target
+        And there is a host with name="dbar02"
+        And the host is associated with the deploy target
         And the deploy targets are a part of the project-application pair
         And the package is deployed on the deploy targets
         And the package has been validated

@@ -77,24 +77,22 @@ Feature: deploy validate application version [-f|--force] [--apptypes|--all-appt
 
     Scenario: validate a package from an application with multiple apptypes with apptype option
         Given there is a deploy target with name="bar"
-        And there are hosts:
-            | name           | env  |
-            | anotherhost01  | dev  |
-            | anotherhost02  | dev  |
+        And there is a host with name="anotherhost01",env="dev"
+        And the host is associated with the deploy target
+        And there is a host with name="anotherhost02",env="dev"
+        And the host is associated with the deploy target
         And the deploy target is a part of the project-application pair
-        And the hosts are associated with the deploy target
         And the package is deployed on the deploy target
         When I run "deploy validate myapp 123 --apptype foo"
         Then the package is validated for deploy target with name="foo"
 
     Scenario: validate a package from an application with multiple apptypes with all-apptypes option
         Given there is a deploy target with name="bar"
-        And there are hosts:
-            | name           | env  |
-            | anotherhost01  | dev  |
-            | anotherhost02  | dev  |
+        And there is a host with name="anotherhost01",env="dev"
+        And the host is associated with the deploy target
+        And there is a host with name="anotherhost02",env="dev"
+        And the host is associated with the deploy target
         And the deploy target is a part of the project-application pair
-        And the hosts are associated with the deploy target
         And the package is deployed on the deploy target
         When I run "deploy validate myapp 123 --all-apptypes"
         Then the package is validated for the deploy targets
