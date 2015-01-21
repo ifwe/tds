@@ -912,6 +912,15 @@ class DeployController(BaseController):
         else:
             log.log(5, 'Verification is for application tiers...')
 
+            for apptype in apptypes:
+                if not tagopsdb.Host.find(application=apptype):
+                    raise tds.exceptions.InvalidOperationError(
+                        ("No hosts are associated with the app tier '%s' in "
+                         "the %s environment"),
+                        apptype.name,
+                        params['env'],
+                    )
+
         log.log(5, 'Package ID is: %s', package.id)
         log.log(
             5, 'Application IDs are: %s',
