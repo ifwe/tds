@@ -33,6 +33,14 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
 
+    Scenario: promote application to a tier with no hosts
+        Given there is a deploy target with name="other-apptype"
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
+        When I run "deploy promote myapp 123 --apptype other-apptype"
+        Then the output is "No hosts are associated with the app tier 'other-apptype' in the stage environment"
+
     Scenario: promote application that doesn't exist
         When I run "deploy promote badapp 456"
         Then the output is "Application does not exist: badapp"
