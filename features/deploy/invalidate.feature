@@ -115,7 +115,7 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
             | name      |
             | dhost01   |
             | dhost02   |
-        And the hosts are assoicated with the deploy target
+        And the hosts are associated with the deploy target
         And the deploy targets are a part of the project-application pair
         And the package is deployed on the deploy targets
         And the package has been validated
