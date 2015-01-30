@@ -50,9 +50,9 @@ thrown.
         <td>DELETE</td>
         <td>Delete all matching applications.</td>
         <td>
-            **204**: Application deleted. Nothing to return.<br />
-            **403**: Forbidden. Lack of permissions.<br />
-            **404**: Not found. No applications matching query.<br />
+            <b>204</b>: Application deleted. Nothing to return.<br />
+            <b>403</b>: Forbidden. Lack of permissions.<br />
+            <b>404</b>: Not found. No applications matching query.<br />
         </td>
     </tr>
     <tr>
@@ -60,9 +60,9 @@ thrown.
         <td>Retrieve the full details, including the unique IDs, for all
             applications matching attributes in a query</td>
         <td>
-            **200**: Return all matching applications. Can be empty list.
+            <b>200</b>: Return all matching applications. Can be empty list.
                 <br />
-            **400**: Bad request. Illegal attributes or malformed JSON most
+            <b>400</b>: Bad request. Illegal attributes or malformed JSON most
                 likely.<br />
         </td>
     </tr>
@@ -70,9 +70,9 @@ thrown.
         <td>POST</td>
         <td>Create one or more new applications.</td>
         <td>
-            **201**: Application(s) created.<br />
-            **400**: Bad request.<br />
-            **403**: Forbidden. Unique constraint violated or lack of
+            <b>201</b>: Application(s) created.<br />
+            <b>400</b>: Bad request.<br />
+            <b>403</b>: Forbidden. Unique constraint violated or lack of
                 permissions. Give specifics.<br />
         </td>
     </tr>
@@ -81,14 +81,14 @@ thrown.
         <td>Update all applications matching query attributes with given new
             attributes.</td>
         <td>
-            **200**: Application updated. Return new attributes.<br />
-            **400**: Bad request.<br />
-            **403**: Forbidden. Lack of permissions. Return list of
+            <b>200</b>: Application updated. Return new attributes.<br />
+            <b>400</b>: Bad request.<br />
+            <b>403</b>: Forbidden. Lack of permissions. Return list of
                 applications for which the user lacks authorization and
                 what attributes for each application require privileged
                 access.
                 <br />
-            **404**: Application(s) matching query not found.<br />
+            <b>404</b>: Application(s) matching query not found.<br />
         </td>
     </tr>
     <tr>
@@ -96,21 +96,21 @@ thrown.
         <td>DELETE</td>
         <td>Delete the application with name NAME.</td>
         <td>
-            **204**: Application deleted. Nothing to return.<br />
-            **400**: Bad request. Malformed name most likely.<br />
-            **403**: Forbidden. Lack of permissions.<br />
-            **404**: Not found.<br />
+            <b>204</b>: Application deleted. Nothing to return.<br />
+            <b>400</b>: Bad request. Malformed name most likely.<br />
+            <b>403</b>: Forbidden. Lack of permissions.<br />
+            <b>404</b>: Not found.<br />
         </td>
     </tr>
         <td>GET</td>
         <td>Retrieve the application with the name NAME.</td>
         <td>
-            **200**: Return application.<br />
-            **301**: Moved permanently. Renamed most likely.
+            <b>200</b>: Return application.<br />
+            <b>301</b>: Moved permanently. Renamed most likely.
                 Return the new URI, as per HTTP/1.1.<br />
-            **400**: Bad request.<br />
-            **404**: Not found.<br />
-            **410**: Gone. The application has been deleted.
+            <b>400</b>: Bad request.<br />
+            <b>404</b>: Not found.<br />
+            <b>410</b>: Gone. The application has been deleted.
                 *This may be hard to implement. We would need a table for
                 deleted applications.*<br />
         </td>
@@ -119,10 +119,10 @@ thrown.
         <td>PUT</td>
         <td>Update application with name NAME with new attributes.</td>
         <td>
-            **200**: Application updated. Return new attributes.<br />
-            **400**: Bad request.<br />
-            **403**: Forbidden. Lack of permissions.<br />
-            **404**: Not found.<br />
+            <b>200</b>: Application updated. Return new attributes.<br />
+            <b>400</b>: Bad request.<br />
+            <b>403</b>: Forbidden. Lack of permissions.<br />
+            <b>404</b>: Not found.<br />
         </td>
     </tr>
 </tbody>
