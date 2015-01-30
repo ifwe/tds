@@ -9,18 +9,18 @@ the user beware!
 POST /projects
 
 ### Data
-app_name: **project name**  
-build_host: **FQDN of build host**  
-project_type: **'application' or 'tagconfig'**  
-pkg_type: **'RPM'**  
-pkg_name: *(does not need to be sent, same as app_name currently)*  
+app_name: **project name**
+build_host: **FQDN of build host**
+project_type: **'application' or 'tagconfig'**
+pkg_type: **'RPM'**
+pkg_name: *(does not need to be sent, same as app_name currently)*
 path: **relative path on build host to packages**
 
 #### *Example*
-app_name: spambuild  
-build_host: djavabuild01.tag-dev.com  
-project_type: application  
-pkg_type: RPM  
+app_name: spambuild
+build_host: djavabuild01.tag-dev.com
+project_type: application
+pkg_type: RPM
 path: spambuild
 
 ### Expected results
@@ -28,13 +28,13 @@ path: spambuild
 200 OK
 
 #### Data returned
-id: **number** *(database ID from package_locations table)*  
-env_specific: **0 or 1**  
+id: **number** *(database ID from package_locations table)*
+env_specific: **0 or 1**
 packages: **empty list**
 
 #### *Example*
-id: 18  
-env_specific: 0  
+id: 18
+env_specific: 0
 packages: []
 
 
@@ -50,7 +50,7 @@ GET /project/spambuild
 200 OK
 
 #### Data returned
-id: **number** *(database ID from package_locations table)*  
+id: **number** *(database ID from package_locations table)*
 name: **project name**
 project_type: **'application' or 'tagconfig'**
 pkg_type: **'developer' or 'hudson' or 'jenkins'**
@@ -86,10 +86,10 @@ POST /project/<em>project name</em>/packages
 POST /project/spambuild/packages
 
 ### Data
-pkg_name: *(currently not sent, same as project name)*  
-version: **number**  
-revision: **number** *(currently not sent, hardcoded to 1)*  
-builder: *(unused at this point)*  
+pkg_name: *(currently not sent, same as project name)*
+version: **number**
+revision: **number** *(currently not sent, hardcoded to 1)*
+builder: *(unused at this point)*
 project_type: **'application' or 'tagconfig'** *(optional, unused at this point)*
 
 #### *Example*
@@ -100,17 +100,17 @@ version: 142
 200 OK
 
 #### Data returned
-id: **number** *(database ID from packages table)*  
-version: **number**  
-revision: **number**  
-project: **list of associated project names**  
+id: **number** *(database ID from packages table)*
+version: **number**
+revision: **number**
+project: **list of associated project names**
 created: **timestamp**
 
 #### *Example*
-id: 194  
-version: 142  
-revision: 1  
-project: [ spambuild ]  
+id: 194
+version: 142
+revision: 1
+project: [ spambuild ]
 created: 2012-11-12 12:06:55
 
 
@@ -126,17 +126,17 @@ GET /project/spambuild/package/142
 200 OK
 
 #### Data returned
-id: **number** *(database ID from packages table)*  
-version: **number**  
-revision: **number**  
-project: **list of associated project names**  
+id: **number** *(database ID from packages table)*
+version: **number**
+revision: **number**
+project: **list of associated project names**
 created: **timestamp**
 
 #### *Example*
-id: 194  
-version: 142  
-revision: 1  
-project: [ spambuild ]  
+id: 194
+version: 142
+revision: 1
+project: [ spambuild ]
 created: 2012-11-12 12:06:55
 
 
@@ -148,9 +148,9 @@ POST /project/<em>project name</em>/package/<em>version</em>/deploys
 POST /project/spambuild/package/142/deploys
 
 ### Data
-apptypes: **list of application type objects**  
-**OR** hosts: **list of hosts**  
-**OR** all_apptypes: true  
+apptypes: **list of application type objects**
+**OR** hosts: **list of hosts**
+**OR** all_apptypes: true
 delay: **number of seconds** *(optional)*
 
 #### *Example*
@@ -161,20 +161,20 @@ apptypes: [ { name: spambuild } ]
 200 OK
 
 #### Data returned
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **'inprogress'**  
-environment: **environment**  
+id: **number** *(database ID from deployments table)*
+hosts: **list of hosts if hosts were sent**
+apptypes: **list of application type objects if any were sent**
+declared: **timestamp**
+status: **'inprogress'**
+environment: **environment**
 user: **user name**
 
 #### *Example*
-id: 209  
-apptypes: [ { name: spambuild } ]  
-declared: 2012-11-12 12:08:12  
-status: inprogress  
-environment: development  
+id: 209
+apptypes: [ { name: spambuild } ]
+declared: 2012-11-12 12:08:12
+status: inprogress
+environment: development
 user: aneilson
 
 
@@ -183,9 +183,9 @@ user: aneilson
 GET /project/<em>project name</em>/deploys[?<em>options</em>]
 
 #### *Examples*
-GET /project/spambuild/deploys?id=209  
-GET /project/spambuild/deploys?status=inprogress  
-GET /project/spambuild/deploys?user=aneilson  
+GET /project/spambuild/deploys?id=209
+GET /project/spambuild/deploys?status=inprogress
+GET /project/spambuild/deploys?user=aneilson
 GET /project/spambuild/deploys?environment=staging
 
 ### Expected results
@@ -195,24 +195,24 @@ GET /project/spambuild/deploys?environment=staging
 #### Data returned
 List of objects of the following:
 
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **state** *(matches app deployment state or host deployment state)*  
-environment: **environment**  
+id: **number** *(database ID from deployments table)*
+hosts: **list of hosts if hosts were sent**
+apptypes: **list of application type objects if any were sent**
+declared: **timestamp**
+status: **state** *(matches app deployment state or host deployment state)*
+environment: **environment**
 user: **user name**
 
 #### *Example*
-[  
-&nbsp;&nbsp;{ id: 209,  
-&nbsp;&nbsp;&nbsp;&nbsp;  apptypes: [ { name: spambuild } ],  
-&nbsp;&nbsp;&nbsp;&nbsp;  declared: 2012-11-12 12:08:12,  
-&nbsp;&nbsp;&nbsp;&nbsp;  status: inprogress,  
-&nbsp;&nbsp;&nbsp;&nbsp;  environment: development,  
-&nbsp;&nbsp;&nbsp;&nbsp;  user: aneilson  
-&nbsp;&nbsp;},  
-&nbsp;&nbsp;[...]  
+[
+&nbsp;&nbsp;{ id: 209,
+&nbsp;&nbsp;&nbsp;&nbsp;  apptypes: [ { name: spambuild } ],
+&nbsp;&nbsp;&nbsp;&nbsp;  declared: 2012-11-12 12:08:12,
+&nbsp;&nbsp;&nbsp;&nbsp;  status: inprogress,
+&nbsp;&nbsp;&nbsp;&nbsp;  environment: development,
+&nbsp;&nbsp;&nbsp;&nbsp;  user: aneilson
+&nbsp;&nbsp;},
+&nbsp;&nbsp;[...]
 ]
 
 ## Performing a redeploy via TDS
@@ -223,9 +223,9 @@ PUT /project/<em>project name</em>/package/latest/deploys
 PUT /project/spambuild/package/latest/deploys
 
 ### Data
-apptypes: **list of application type objects**  
-**OR** hosts: **list of hosts**  
-**OR** all_apptypes: true  
+apptypes: **list of application type objects**
+**OR** hosts: **list of hosts**
+**OR** all_apptypes: true
 delay: **number of seconds** *(optional)*
 
 ### Expected results
@@ -233,20 +233,20 @@ delay: **number of seconds** *(optional)*
 200 OK
 
 #### Data returned
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **state** *(matches app deployment state or host deployment state)*  
-environment: **environment**  
+id: **number** *(database ID from deployments table)*
+hosts: **list of hosts if hosts were sent**
+apptypes: **list of application type objects if any were sent**
+declared: **timestamp**
+status: **state** *(matches app deployment state or host deployment state)*
+environment: **environment**
 user: **user name**
 
 #### *Example*
-id: 209  
-apptypes: [ { name: spambuild } ]  
-declared: 2012-11-12 12:08:12  
-status: inprogress  
-environment: development  
+id: 209
+apptypes: [ { name: spambuild } ]
+declared: 2012-11-12 12:08:12
+status: inprogress
+environment: development
 user: aneilson
 
 
@@ -258,27 +258,27 @@ DELETE /project/<em>project name</em>/package/latest/deploys
 DELETE /project/spambuild/package/latest/deploys
 
 ### Data
-apptypes: **list of application type objects**  
-**OR** hosts: **list of hosts**  
-**OR** all_apptypes: true  
+apptypes: **list of application type objects**
+**OR** hosts: **list of hosts**
+**OR** all_apptypes: true
 delay: **number of seconds** *(optional)*
 
 ### Expected results
 #### HTTP code returned
-If a single apptype or host:  
-&nbsp;&nbsp;&nbsp;&nbsp;303 See other  
-Else:  
+If a single apptype or host:
+&nbsp;&nbsp;&nbsp;&nbsp;303 See other
+Else:
 &nbsp;&nbsp;&nbsp;&nbsp;200 OK
 
 #### Data returned
-If HTTP code 303:  
-&nbsp;&nbsp;&nbsp;&nbsp;refer: **URL of previous validated deployment**  
-Else:  
+If HTTP code 303:
+&nbsp;&nbsp;&nbsp;&nbsp;refer: **URL of previous validated deployment**
+Else:
 &nbsp;&nbsp;&nbsp;&nbsp;**None**
 
 #### *Example*
-If HTTP code 303:  
-&nbsp;&nbsp;&nbsp;&nbsp;refer: http://deploy.tagged.com/project/spambuild/package/141/deploy  
+If HTTP code 303:
+&nbsp;&nbsp;&nbsp;&nbsp;refer: http://deploy.tagged.com/project/spambuild/package/141/deploy
 
 
 ## Restarting an application via TDS
@@ -289,9 +289,9 @@ PUT /project/<em>project name</em>/package/latest/deploy?restart_only=true
 PUT /project/spambuild/package/latest/deploy?restart_only=true
 
 ### Data
-apptypes: **list of application type objects**  
-**OR** hosts: **list of hosts**  
-**OR** all_apptypes: true  
+apptypes: **list of application type objects**
+**OR** hosts: **list of hosts**
+**OR** all_apptypes: true
 delay: **number of seconds** *(optional)*
 
 ### Expected results
@@ -299,38 +299,38 @@ delay: **number of seconds** *(optional)*
 200 OK
 
 #### Data returned
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **state** *(matches app deployment state or host deployment state)*  
-environment: **environment**  
+id: **number** *(database ID from deployments table)*
+hosts: **list of hosts if hosts were sent**
+apptypes: **list of application type objects if any were sent**
+declared: **timestamp**
+status: **state** *(matches app deployment state or host deployment state)*
+environment: **environment**
 user: **user name**
 
 #### *Example*
-id: 209  
-apptypes: [ { name: spambuild } ]  
-declared: 2012-11-12 12:08:12  
-status: inprogress  
-environment: development  
+id: 209
+apptypes: [ { name: spambuild } ]
+declared: 2012-11-12 12:08:12
+status: inprogress
+environment: development
 user: aneilson
 
 
 ## Validate/invalidate a deployment (or deployments) in TDS
 ### Action and endpoint
-PUT /project/<em>project name</em>/package/<em>version</em>/deploy/<em>:id</em>[?force=true]  
+PUT /project/<em>project name</em>/package/<em>version</em>/deploy/<em>:id</em>[?force=true]
 *':id' is from deployments table*
 
 #### *Example*
 PUT /project/spambuild/package/142/deploy/209
 
 ### Data
-apptypes: **list of application type objects**  
-**OR** all_apptypes: **'true'**  
+apptypes: **list of application type objects**
+**OR** all_apptypes: **'true'**
 status: **'validated' or 'invalidated'**
 
 #### *Example*
-apptypes: [ { name: spambuild } ]  
+apptypes: [ { name: spambuild } ]
 status: validated
 
 ### Expected results
@@ -338,20 +338,20 @@ status: validated
 200 OK
 
 #### Data returned
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **'validated' or 'invalidated'**  
-environment: **environment**  
+id: **number** *(database ID from deployments table)*
+hosts: **list of hosts if hosts were sent**
+apptypes: **list of application type objects if any were sent**
+declared: **timestamp**
+status: **'validated' or 'invalidated'**
+environment: **environment**
 user: **user name**
 
 #### *Example*
-id: 209  
-apptypes: [ { name: spambuild } ]  
-declared: 2012-11-12 12:08:12  
-status: validated  
-environment: development  
+id: 209
+apptypes: [ { name: spambuild } ]
+declared: 2012-11-12 12:08:12
+status: validated
+environment: development
 user: aneilson
 
 
@@ -398,4 +398,3 @@ apptypes: [ { name: spambuild } ]
 
 ### Data returned
 **None**
-
