@@ -139,7 +139,32 @@ As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 </table>
 
 
-## Attribute Table
+## Attributes
+
+### Timestamps
+Timestamps are represented as the number of seconds since 00:00:00 UTC,
+1 January 1970 (UNIX timestamp).
+
+Parsing from Python datetimes to ints:
+```
+import datetime
+import time
+now = datetime.datetime.now()
+json_timestamp = int(time.mktime(now.timetuple()))
+```
+
+Converting from timestamps to Python datetimes:
+```
+now = datetime.datetime.fromtimestamp(json_timestamp)
+```
+
+The fractions of seconds are lost in translation from Python datetimes to UNIX
+timestamps but it is of little consequence as MySQL also strips second
+fractions off timestamps.
+The data presented in the API and the data present in the database are
+therefore identical.
+
+### Attribute Table
 This table describes attributes of JSON objects mapped from the corresponding
 objects in Python.
 This will be fleshed out more as the API is more solidified.
@@ -159,57 +184,120 @@ This will be fleshed out more as the API is more solidified.
         <td rowspan="7">Application</td>
         <td>'id'</td>
         <td>Number</td>
-        <td>Unique integer ID for this application</td>
+        <td>Unique integer ID for this application.</td>
         <td>16</td>
     </tr>
         <tr>
             <td>'name'</td>
             <td>String</td>
-            <td>Unique name for this application</td>
+            <td>Unique name for this application.</td>
             <td>'tds'</td>
         </tr>
         <tr>
             <td>'job_name'</td>
             <td>String</td>
-            <td>Path on the build server to application's builds</td>
+            <td>Path on the build server to application's builds.</td>
             <td>'tds-tds-gauntlet'</td>
         </tr>
         <tr>
             <td>'build_host'</td>
             <td>String</td>
-            <td>FQDN of the build host for this application</td>
+            <td>FQDN of the build host for this application.</td>
             <td>'ci.tagged.com'</td>
         </tr>
         <tr>
             <td>'build_type'</td>
             <td>String</td>
-            <td>Type of build system</td>
+            <td>Type of build system.<br />
+                Choices: 'developer', 'hudson', 'jenkins'.</td>
             <td>'jenkins'</td>
         </tr>
         <tr>
             <td>'deploy_type'</td>
             <td>String</td>
-            <td>Type of package system</td>
+            <td>Type of package system.</td>
             <td>'rpm'</td>
         </tr>
         <tr>
             <td>'arch'</td>
             <td>String</td>
-            <td>Architecture of application's packages</td>
+            <td>Architecture of application's packages.</td>
             <td>'noarch'</td>
         </tr>
     <tr>
-        <td rowspan="7">Project</td>
+        <td rowspan="2">Project</td>
         <td>'id'</td>
         <td>Number</td>
-        <td>Unique integer ID for this project</td>
+        <td>Unique integer ID for this project.</td>
         <td>18</td>
     </tr>
         <tr>
             <td>'name'</td>
             <td>String</td>
-            <td>Unique name for this project</td>
+            <td>Unique name for this project.</td>
             <td>'tds'</td>
+        </tr>
+    <tr>
+        <td rowspan="9">Package</td>
+        <td>'id'</td>
+        <td>Number</td>
+        <td>Unique integer ID for this package.</td>
+        <td>20</td>
+    </tr>
+        <tr>
+            <td>'name'</td>
+            <td>String</td>
+            <td>Name for this package.</td>
+            <td>'tds'</td>
+        </tr>
+        <tr>
+            <td>'version'</td>
+            <td>Number</td>
+            <td>Package version.</td>
+            <td>22</td>
+        </tr>
+        <tr>
+            <td>'revision'</td>
+            <td>Number</td>
+            <td>Package revision.</td>
+            <td>24</td>
+        </tr>
+        <tr>
+            <td>'status'</td>
+            <td>String</td>
+            <td>Status of this package in TDS.<br />
+                Choices: 'completed', 'failed', 'pending', 'processing',
+                'removed'.</td>
+            <td>'completed'</td>
+        </tr>
+        <tr>
+            <td>'creator'</td>
+            <td>String</td>
+            <td>Name of the creator of the package.</td>
+            <td>'knagra'</td>
+        </tr>
+        <tr>
+            <td>'builder'</td>
+            <td>String</td>
+            <td>Build type for this package.<br />
+                Choices: 'developer', 'hudson', 'jenkins'.</td>
+            <td>'jenkins'</td>
+        </tr>
+        <tr>
+            <td>'created'</td>
+            <td>Number</td>
+            <td>UNIX timestamp.
+                Number of seconds 00:00:00 UTC, 1 January 1970 (Epoch) when
+                this package was created.
+                See the section on timestamps above for details.</td>
+            <td>1422653107</td>
+        </tr>
+        <tr>
+            <td>'application'</td>
+            <td>Number</td>
+            <td>Unique ID of the application of which this package is a
+                specific version-revision.</td>
+            <td>16</td>
         </tr>
 </tbody>
 </table>
