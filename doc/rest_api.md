@@ -121,7 +121,8 @@ thrown.
         <td>
             <b>200</b>: Application updated. Return new attributes.<br />
             <b>400</b>: Bad request.<br />
-            <b>403</b>: Forbidden. Lack of permissions.<br />
+            <b>403</b>: Forbidden. Lack of permissions or unique constraint.
+                <br />
             <b>404</b>: Not found.<br />
         </td>
     </tr>
@@ -216,3 +217,6 @@ This will be fleshed out more as the API is more solidified.
     create new ones if none matches?
     Doing so would be more work for us, but less for clients.
     * If 'Yes' to above, should we allow `POST` requests for /TYPE/NAME URLs?
+* Should we expose IDs of objects through the API?
+    It may prove useful, especially for resource types without other unique
+    attributes, but it may prove unnecessary if no such resources exist.
