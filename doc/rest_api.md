@@ -1,5 +1,6 @@
 # TDS 2.0 REST API specification
 Some quick notes:
+
 * All data in requests and responses is in JSON
 * All `GET` requests return lists of matching resources.
     It is up to the application using this API to determine when a request
@@ -25,6 +26,7 @@ As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 
 ### PUT
 `PUT` requests have two parts:
+
 * `select`: A query matching specific resources.
 * `update`: Update values for the matching resource.
     The `update` does not need all attributes. The API will only write those
@@ -33,6 +35,8 @@ As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 ## Routing
 The URLs and methods will be the same for /packages and /projects as for
 /applications below.
+URLs and methods will also be the same for /projects/NAME as for
+/applications/NAME below.
 URLs and methods for deploying have yet to be determined.
 
 ### Path-Method Table
@@ -337,3 +341,6 @@ This will be fleshed out more as the API is more solidified.
 * Should we hard-code defaults into the API for certain attributes or expect
     the immediate client to pass in its own determination of defaults?
     A good example of this would be the architecture for applications.
+* Should there be a /packages/ID URL or should we do
+    /applications/NAME-VERSION-REVISION?
+    The former seems more sane and canonical.
