@@ -2,9 +2,11 @@
 Some quick notes:
 
 * All data in requests and responses is in JSON
-* All `GET` requests return lists of matching resources.
-    It is up to the application using this API to determine when a request
-    should return only a single object and act appropriately.
+* All `GET` requests to resource type roots (e.g., /applications) return lists
+    of matching resources.
+    Well-behave clients should query URLs for specific resources (e.g,
+    /applications/tds) when only that resource is desired rather than query
+    the resource root with a large set of filters.
 
 ## LDAP integration
 Integrate with LDAP to get tokens for users that are passed with each request
@@ -123,7 +125,9 @@ URLs and methods for deploying have yet to be determined.
         <td><em>None</em></td>
         <td>
             <b>200</b>: Return application.<br />
-            <b>301</b>: Moved permanently.<br />
+            <b>301</b>: Moved permanently.
+                <em>This may be hard to implement. We would need a column for
+                former names for applications.</em><br />
             <b>400</b>: Bad request.<br />
             <b>404</b>: Not found.<br />
             <b>410</b>: Gone. The application has been deleted.
