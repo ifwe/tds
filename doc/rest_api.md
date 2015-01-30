@@ -30,7 +30,12 @@ As a result, `POST` requests will throw a `403: Forbidden` error in this case.
     The `update` does not need all attributes. The API will only write those
     attributes that are given. All other attributes will be preserved.
 
-## Path-Method Table
+## Routing
+The URLs and methods will be the same for /packages and /projects as for
+/applications below.
+URLs and methods for deploying have yet to be determined.
+
+### Path-Method Table
 <table>
 <thead>
     <tr>
@@ -145,7 +150,7 @@ As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 Timestamps are represented as the number of seconds since 00:00:00 UTC,
 1 January 1970 (UNIX timestamp).
 
-Parsing from Python datetimes to ints:
+Parsing from Python datetimes to timestamps:
 
 ```python
 import datetime
@@ -163,7 +168,7 @@ now = datetime.datetime.fromtimestamp(json_timestamp)
 The fractions of seconds are lost in translation from Python datetimes to UNIX
 timestamps but it is of little consequence as MySQL also strips second
 fractions off timestamps.
-The data presented in the API and the data present in the database are
+The data presented by the API and the data present in the database is
 therefore identical.
 
 ### Attribute Table
@@ -319,6 +324,16 @@ This will be fleshed out more as the API is more solidified.
 * Should we expose IDs of objects through the API?
     It may prove useful, especially for resource types without other unique
     attributes, but it may prove unnecessary if no such resources exist.
+    * Should we reference objects by other unique constraints or by ID?
+        This may be influenced by whether SQLAlchemy returns objects or IDs
+        for relations.
+        E.g., for packages, an application is linked to each package.
+        If SQLAlchemy returns the applciation that is linked to the package,
+        then it would be no trouble for the API to return the name of the
+        application to the client and have the client reference the
+        application with that name. But if SQLAlchemy returns just the ID then
+        it will be more overhead to retrieve the name for each application
+        using the ID and then pass that on to the client.
 * Should we hard-code defaults into the API for certain attributes or expect
     the immediate client to pass in its own determination of defaults?
     A good example of this would be the architecture for applications.
