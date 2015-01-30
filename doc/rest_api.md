@@ -146,7 +146,8 @@ Timestamps are represented as the number of seconds since 00:00:00 UTC,
 1 January 1970 (UNIX timestamp).
 
 Parsing from Python datetimes to ints:
-```
+
+```python
 import datetime
 import time
 now = datetime.datetime.now()
@@ -154,7 +155,8 @@ json_timestamp = int(time.mktime(now.timetuple()))
 ```
 
 Converting from timestamps to Python datetimes:
-```
+
+```python
 now = datetime.datetime.fromtimestamp(json_timestamp)
 ```
 
