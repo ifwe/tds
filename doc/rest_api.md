@@ -1,401 +1,218 @@
-# REST API For Tagged Deployment System (TDS)
-
-This document will cover the various processes one can do within TDS.  It is
-a living document currently in beta, and subject to incompatible changes;  let
-the user beware!
-
-## Adding a project to TDS
-### Action and endpoint
-POST /projects
-
-### Data
-app_name: **project name**  
-build_host: **FQDN of build host**  
-project_type: **'application' or 'tagconfig'**  
-pkg_type: **'RPM'**  
-pkg_name: *(does not need to be sent, same as app_name currently)*  
-path: **relative path on build host to packages**
-
-#### *Example*
-app_name: spambuild  
-build_host: djavabuild01.tag-dev.com  
-project_type: application  
-pkg_type: RPM  
-path: spambuild
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-id: **number** *(database ID from package_locations table)*  
-env_specific: **0 or 1**  
-packages: **empty list**
-
-#### *Example*
-id: 18  
-env_specific: 0  
-packages: []
-
-
-## Retrieving information about a project in TDS
-### Action and endpoint
-GET /project/<em>project name</em>
-
-#### *Example*
-GET /project/spambuild
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-id: **number** *(database ID from package_locations table)*  
-name: **project name**
-project_type: **'application' or 'tagconfig'**
-pkg_type: **'developer' or 'hudson' or 'jenkins'**
-pkg_name: **(same as app_name)**
-app_name: **project name**
-path: **relative path on build host to packages**
-arch: **'i386' or 'x64_64' or 'noarch'**
-build_host: **FQDN of build host**
-env_specific: **0 or 1**
-app_types: **application types related to project**
-packages: **list of existing packages**
-
-#### *Example*
-id: 18
-name: spambuild
-project_type: application
-pkg_type: jenkins
-pkg_name: spambuild
-app_name: spambuild
-path: spambuild
-arch: noarch
-build_host: djavabuild01.tag-dev.com
-env_specific: 0
-app_types: [ 'spambuild' ]
-packages: [ ... ]
-
-
-## Adding a package for a project to TDS
-### Action and endpoint
-POST /project/<em>project name</em>/packages
-
-#### *Example*
-POST /project/spambuild/packages
-
-### Data
-pkg_name: *(currently not sent, same as project name)*  
-version: **number**  
-revision: **number** *(currently not sent, hardcoded to 1)*  
-builder: *(unused at this point)*  
-project_type: **'application' or 'tagconfig'** *(optional, unused at this point)*
-
-#### *Example*
-version: 142
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-id: **number** *(database ID from packages table)*  
-version: **number**  
-revision: **number**  
-project: **list of associated project names**  
-created: **timestamp**
-
-#### *Example*
-id: 194  
-version: 142  
-revision: 1  
-project: [ spambuild ]  
-created: 2012-11-12 12:06:55
-
-
-## Retrieving information about a package in TDS
-### Action and endpoint
-GET /project/<em>project name</em>/package/<em>version</em>
-
-#### *Example*
-GET /project/spambuild/package/142
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-id: **number** *(database ID from packages table)*  
-version: **number**  
-revision: **number**  
-project: **list of associated project names**  
-created: **timestamp**
-
-#### *Example*
-id: 194  
-version: 142  
-revision: 1  
-project: [ spambuild ]  
-created: 2012-11-12 12:06:55
-
-
-## Perform a deployment via TDS
-### Action and endpoint
-POST /project/<em>project name</em>/package/<em>version</em>/deploys
-
-#### *Example*
-POST /project/spambuild/package/142/deploys
-
-### Data
-apptypes: **list of application type objects**  
-**OR** hosts: **list of hosts**  
-**OR** all_apptypes: true  
-delay: **number of seconds** *(optional)*
-
-#### *Example*
-apptypes: [ { name: spambuild } ]
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **'inprogress'**  
-environment: **environment**  
-user: **user name**
-
-#### *Example*
-id: 209  
-apptypes: [ { name: spambuild } ]  
-declared: 2012-11-12 12:08:12  
-status: inprogress  
-environment: development  
-user: aneilson
-
-
-## Get current state of a deployment (or deployments) via TDS
-### Action and endpoint
-GET /project/<em>project name</em>/deploys[?<em>options</em>]
-
-#### *Examples*
-GET /project/spambuild/deploys?id=209  
-GET /project/spambuild/deploys?status=inprogress  
-GET /project/spambuild/deploys?user=aneilson  
-GET /project/spambuild/deploys?environment=staging
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-List of objects of the following:
-
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **state** *(matches app deployment state or host deployment state)*  
-environment: **environment**  
-user: **user name**
-
-#### *Example*
-[  
-&nbsp;&nbsp;{ id: 209,  
-&nbsp;&nbsp;&nbsp;&nbsp;  apptypes: [ { name: spambuild } ],  
-&nbsp;&nbsp;&nbsp;&nbsp;  declared: 2012-11-12 12:08:12,  
-&nbsp;&nbsp;&nbsp;&nbsp;  status: inprogress,  
-&nbsp;&nbsp;&nbsp;&nbsp;  environment: development,  
-&nbsp;&nbsp;&nbsp;&nbsp;  user: aneilson  
-&nbsp;&nbsp;},  
-&nbsp;&nbsp;[...]  
-]
-
-## Performing a redeploy via TDS
-### Action and endpoint
-PUT /project/<em>project name</em>/package/latest/deploys
-
-#### *Example*
-PUT /project/spambuild/package/latest/deploys
-
-### Data
-apptypes: **list of application type objects**  
-**OR** hosts: **list of hosts**  
-**OR** all_apptypes: true  
-delay: **number of seconds** *(optional)*
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **state** *(matches app deployment state or host deployment state)*  
-environment: **environment**  
-user: **user name**
-
-#### *Example*
-id: 209  
-apptypes: [ { name: spambuild } ]  
-declared: 2012-11-12 12:08:12  
-status: inprogress  
-environment: development  
-user: aneilson
-
-
-## Performing a rollback of a deployment via TDS
-### Action and endpoint
-DELETE /project/<em>project name</em>/package/latest/deploys
-
-#### *Example*
-DELETE /project/spambuild/package/latest/deploys
-
-### Data
-apptypes: **list of application type objects**  
-**OR** hosts: **list of hosts**  
-**OR** all_apptypes: true  
-delay: **number of seconds** *(optional)*
-
-### Expected results
-#### HTTP code returned
-If a single apptype or host:  
-&nbsp;&nbsp;&nbsp;&nbsp;303 See other  
-Else:  
-&nbsp;&nbsp;&nbsp;&nbsp;200 OK
-
-#### Data returned
-If HTTP code 303:  
-&nbsp;&nbsp;&nbsp;&nbsp;refer: **URL of previous validated deployment**  
-Else:  
-&nbsp;&nbsp;&nbsp;&nbsp;**None**
-
-#### *Example*
-If HTTP code 303:  
-&nbsp;&nbsp;&nbsp;&nbsp;refer: http://deploy.tagged.com/project/spambuild/package/141/deploy  
-
-
-## Restarting an application via TDS
-### Action and endpoint
-PUT /project/<em>project name</em>/package/latest/deploy?restart_only=true
-
-#### *Example*
-PUT /project/spambuild/package/latest/deploy?restart_only=true
-
-### Data
-apptypes: **list of application type objects**  
-**OR** hosts: **list of hosts**  
-**OR** all_apptypes: true  
-delay: **number of seconds** *(optional)*
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **state** *(matches app deployment state or host deployment state)*  
-environment: **environment**  
-user: **user name**
-
-#### *Example*
-id: 209  
-apptypes: [ { name: spambuild } ]  
-declared: 2012-11-12 12:08:12  
-status: inprogress  
-environment: development  
-user: aneilson
-
-
-## Validate/invalidate a deployment (or deployments) in TDS
-### Action and endpoint
-PUT /project/<em>project name</em>/package/<em>version</em>/deploy/<em>:id</em>[?force=true]  
-*':id' is from deployments table*
-
-#### *Example*
-PUT /project/spambuild/package/142/deploy/209
-
-### Data
-apptypes: **list of application type objects**  
-**OR** all_apptypes: **'true'**  
-status: **'validated' or 'invalidated'**
-
-#### *Example*
-apptypes: [ { name: spambuild } ]  
-status: validated
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-#### Data returned
-id: **number** *(database ID from deployments table)*  
-hosts: **list of hosts if hosts were sent**  
-apptypes: **list of application type objects if any were sent**  
-declared: **timestamp**  
-status: **'validated' or 'invalidated'**  
-environment: **environment**  
-user: **user name**
-
-#### *Example*
-id: 209  
-apptypes: [ { name: spambuild } ]  
-declared: 2012-11-12 12:08:12  
-status: validated  
-environment: development  
-user: aneilson
-
-
-## Adding an application type from a project in TDS
-### Action and endpoint
-POST /project/<em>project name</em>/apptypes
-
-#### *Example*
-POST /project/tagconfig/apptypes
-
-### Data
-apptypes: **list of application type objects to be added**
-
-#### *Example*
-apptypes: [ { name: spambuild } ]
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-### Data returned
-apptypes: **list of application type objects just added**
-
-#### *Example*
-apptypes: [ { name: spambuild } ]
-
-
-## Deleting an application type from a project in TDS
-### Action and endpoint
-DELETE /project/<em>project name</em>/apptypes
-
-#### *Example*
-DELETE /project/tagconfig/apptypes
-
-### Data
-apptypes: **list of application type objects to be removed**
-
-#### *Example*
-apptypes: [ { name: spambuild } ]
-
-### Expected results
-#### HTTP code returned
-200 OK
-
-### Data returned
-**None**
-
+# TDS 2.0 REST API specification
+Some quick notes:
+* All data in requests and responses is in JSON
+* All `GET` requests return lists of matching resources.
+    It is up to the application using this API to determine when a request
+    should return only a single object and act appropriately.
+
+## LDAP integration
+Integrate with LDAP to get tokens for users that are passed with each request
+for authentication.
+All requests should throw a `401: Unauthorized` without LDAP authentication.
+
+## Queries Overview
+
+### DELETE
+Returns nothing for successful `DELETE` requests.
+
+### GET
+All `200` responses to `GET` requests are lists of matching objects.
+
+### POST
+`POST` requests run queries to see if any unique constraints will be violated
+by a potential write to the database before doing the actual write.
+As a result, `POST` requests will throw a `403: Forbidden` error in this case.
+
+### PUT
+Queries in `PUT` requests are mostly matched with `==` in SQL.
+A `300: Multiple Choices Found` error will be thrown if multiple resources
+match a given query.
+`PUT` cannot be used to create new resources; a `404: Not Found` error will be
+thrown.
+
+`PUT` requests have two parts:
+* `select`: A query matching specific resources.
+* `update`: Update values for the matching resource.
+
+## Path-Method Table
+<table>
+<thead>
+    <tr>
+        <th>URL</th>
+        <th>Method</th>
+        <th>Operation</th>
+        <th>Returns</th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td rowspan="4">/applications</td>
+        <td>DELETE</td>
+        <td>Delete all matching applications.</td>
+        <td>
+            **204**: Application deleted. Nothing to return.<br />
+            **403**: Forbidden. Lack of permissions.<br />
+            **404**: Not found. No applications matching query.<br />
+        </td>
+    </tr>
+    <tr>
+        <td>GET</td>
+        <td>Retrieve the full details, including the unique IDs, for all
+            applications matching attributes in a query</td>
+        <td>
+            **200**: Return all matching applications. Can be empty list.
+                <br />
+            **400**: Bad request. Illegal attributes or malformed JSON most
+                likely.<br />
+        </td>
+    </tr>
+    <tr>
+        <td>POST</td>
+        <td>Create one or more new applications.</td>
+        <td>
+            **201**: Application(s) created.<br />
+            **400**: Bad request.<br />
+            **403**: Forbidden. Unique constraint violated or lack of
+                permissions. Give specifics.<br />
+        </td>
+    </tr>
+    <tr>
+        <td>PUT</td>
+        <td>Update all applications matching query attributes with given new
+            attributes.</td>
+        <td>
+            **200**: Application updated. Return new attributes.<br />
+            **400**: Bad request.<br />
+            **403**: Forbidden. Lack of permissions. Return list of
+                applications for which the user lacks authorization and
+                what attributes for each application require privileged
+                access.
+                <br />
+            **404**: Application(s) matching query not found.<br />
+        </td>
+    </tr>
+    <tr>
+        <td rowspan="3">/applications/NAME</td>
+        <td>DELETE</td>
+        <td>Delete the application with name NAME.</td>
+        <td>
+            **204**: Application deleted. Nothing to return.<br />
+            **400**: Bad request. Malformed name most likely.<br />
+            **403**: Forbidden. Lack of permissions.<br />
+            **404**: Not found.<br />
+        </td>
+    </tr>
+        <td>GET</td>
+        <td>Retrieve the application with the name NAME.</td>
+        <td>
+            **200**: Return application.<br />
+            **301**: Moved permanently. Renamed most likely.
+                Return the new URI, as per HTTP/1.1.<br />
+            **400**: Bad request.<br />
+            **404**: Not found.<br />
+            **410**: Gone. The application has been deleted.
+                *This may be hard to implement. We would need a table for
+                deleted applications.*<br />
+        </td>
+    </tr>
+    <tr>
+        <td>PUT</td>
+        <td>Update application with name NAME with new attributes.</td>
+        <td>
+            **200**: Application updated. Return new attributes.<br />
+            **400**: Bad request.<br />
+            **403**: Forbidden. Lack of permissions.<br />
+            **404**: Not found.<br />
+        </td>
+    </tr>
+</tbody>
+</table>
+
+
+## Attribute Table
+This table describes attributes of JSON objects mapped from the corresponding
+objects in Python.
+This will be fleshed out more as the API is more solidified.
+
+<table>
+<thead>
+    <tr>
+        <th>Resource</th>
+        <th>Attribute</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Example</th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td rowspan="7">Application</td>
+        <td>'id'</td>
+        <td>Number</td>
+        <td>Unique integer ID for this application</td>
+        <td>16</td>
+    </tr>
+        <tr>
+            <td>'name'</td>
+            <td>String</td>
+            <td>Unique name for this application</td>
+            <td>'tds'</td>
+        </tr>
+        <tr>
+            <td>'job_name'</td>
+            <td>String</td>
+            <td>Path on the build server to application's builds</td>
+            <td>'tds-tds-gauntlet'</td>
+        </tr>
+        <tr>
+            <td>'build_host'</td>
+            <td>String</td>
+            <td>FQDN of the build host for this application</td>
+            <td>'ci.tagged.com'</td>
+        </tr>
+        <tr>
+            <td>'build_type'</td>
+            <td>String</td>
+            <td>Type of build system</td>
+            <td>'jenkins'</td>
+        </tr>
+        <tr>
+            <td>'deploy_type'</td>
+            <td>String</td>
+            <td>Type of package system</td>
+            <td>'rpm'</td>
+        </tr>
+        <tr>
+            <td>'arch'</td>
+            <td>String</td>
+            <td>Architecture of application's packages</td>
+            <td>'noarch'</td>
+        </tr>
+    <tr>
+        <td rowspan="7">Project</td>
+        <td>'id'</td>
+        <td>Number</td>
+        <td>Unique integer ID for this project</td>
+        <td>18</td>
+    </tr>
+        <tr>
+            <td>'name'</td>
+            <td>String</td>
+            <td>Unique name for this project</td>
+            <td>'tds'</td>
+        </tr>
+</tbody>
+</table>
+
+## Standing Questions
+* Should `GET` requests also have ACL restrictions?
+    A REST API would be a good place to start when incorporating ACL since we
+    plan to integrate LDAP authentication anyway.
+* Should the API support `OPTIONS` and `HEAD` HTTP methods?
+    Both can be useful and fairly easy to implement.
+    It would make the API more robust and allow lighter-weight queries for
+    testing transactions and development.
+* Should `POST` requests be allowed to update matching resources as well as
+    create new ones if none matches?
+    Doing so would be more work for us, but less for clients.
+    * If 'Yes' to above, should we allow `POST` requests for /TYPE/NAME URLs?
