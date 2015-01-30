@@ -24,15 +24,11 @@ by a potential write to the database before doing the actual write.
 As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 
 ### PUT
-Queries in `PUT` requests are mostly matched with `==` in SQL.
-A `300: Multiple Choices Found` error will be thrown if multiple resources
-match a given query.
-`PUT` cannot be used to create new resources; a `404: Not Found` error will be
-thrown.
-
 `PUT` requests have two parts:
 * `select`: A query matching specific resources.
 * `update`: Update values for the matching resource.
+    The `update` does not need all attributes. The API will only write those
+    attributes that are given. All other attributes will be preserved.
 
 ## Path-Method Table
 <table>
@@ -41,7 +37,8 @@ thrown.
         <th>URL</th>
         <th>Method</th>
         <th>Operation</th>
-        <th>Returns</th>
+        <th>Request</th>
+        <th>Response</th>
     </tr>
 </thead>
 <tbody>
@@ -49,6 +46,7 @@ thrown.
         <td rowspan="4">/applications</td>
         <td>DELETE</td>
         <td>Delete all matching applications.</td>
+        <td>'select': Attributes query matching applications to delete.</td>
         <td>
             <b>204</b>: Application deleted. Nothing to return.<br />
             <b>403</b>: Forbidden. Lack of permissions.<br />
@@ -59,6 +57,7 @@ thrown.
         <td>GET</td>
         <td>Retrieve the full details, including the unique IDs, for all
             applications matching attributes in a query</td>
+        <td>'select': Attributes query matching applications to retrieve.</td>
         <td>
             <b>200</b>: Return all matching applications. Can be empty list.
                 <br />
@@ -69,6 +68,7 @@ thrown.
     <tr>
         <td>POST</td>
         <td>Create one or more new applications.</td>
+        <td>'update': Attributes for the new application.</td>
         <td>
             <b>201</b>: Application(s) created.<br />
             <b>400</b>: Bad request.<br />
@@ -80,6 +80,10 @@ thrown.
         <td>PUT</td>
         <td>Update all applications matching query attributes with given new
             attributes.</td>
+        <td>
+            'select': Select applications to update.<br />
+            'update': New attributes to set for applications.<br />
+        </td>
         <td>
             <b>200</b>: Application updated. Return new attributes.<br />
             <b>400</b>: Bad request.<br />
@@ -95,8 +99,11 @@ thrown.
         <td rowspan="3">/applications/NAME</td>
         <td>DELETE</td>
         <td>Delete the application with name NAME.</td>
+        <td><em>None</em</td>
         <td>
             <b>204</b>: Application deleted. Nothing to return.<br />
+            <b>301</b>: Moved permanently. Renamed most likely.
+                Return the new URI, as per HTTP/1.1.<br />
             <b>400</b>: Bad request. Malformed name most likely.<br />
             <b>403</b>: Forbidden. Lack of permissions.<br />
             <b>404</b>: Not found.<br />
@@ -104,22 +111,24 @@ thrown.
     </tr>
         <td>GET</td>
         <td>Retrieve the application with the name NAME.</td>
+        <td><em>None</em></td>
         <td>
             <b>200</b>: Return application.<br />
-            <b>301</b>: Moved permanently. Renamed most likely.
-                Return the new URI, as per HTTP/1.1.<br />
+            <b>301</b>: Moved permanently.<br />
             <b>400</b>: Bad request.<br />
             <b>404</b>: Not found.<br />
             <b>410</b>: Gone. The application has been deleted.
-                *This may be hard to implement. We would need a table for
-                deleted applications.*<br />
+                <em>This may be hard to implement. We would need a table for
+                deleted applications.</em><br />
         </td>
     </tr>
     <tr>
         <td>PUT</td>
         <td>Update application with name NAME with new attributes.</td>
+        <td>'update': New attributes to set for the application.</td>
         <td>
             <b>200</b>: Application updated. Return new attributes.<br />
+            <b>301</b>: Moved permanently.<br />
             <b>400</b>: Bad request.<br />
             <b>403</b>: Forbidden. Lack of permissions or unique constraint.
                 <br />
@@ -220,3 +229,6 @@ This will be fleshed out more as the API is more solidified.
 * Should we expose IDs of objects through the API?
     It may prove useful, especially for resource types without other unique
     attributes, but it may prove unnecessary if no such resources exist.
+* Should we hard-code defaults into the API for certain attributes or expect
+    the immediate client to pass in its own determination of defaults?
+    A good example of this would be the architecture for applications.
