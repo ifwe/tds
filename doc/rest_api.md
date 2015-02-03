@@ -155,22 +155,36 @@ URLs and methods for deploying have yet to be determined.
 ## Attributes
 
 ### Timestamps
-Timestamps are represented as the number of seconds since 00:00:00 UTC,
-1 January 1970 (UNIX timestamp).
+Timestamps are represented in the format `YYYY-mm-ddTHH:MM:SS.SSSSSS+HHOO`,
+where:
 
-Parsing from Python datetimes to timestamps:
+* `YYYY` - four digit year.
+* `mm` - two digit month.
+* `dd` - two digit day.
+* `HH` - two digit hour.
+* `MM` - two digit minute.
+* `SS.SSSSSS` - float seconds
+* `HH` - two digit hour offset from UTC.
+* `OO` - two digit minute offset from UTC.
+
+So the datetime for 3:14:15.926535PM PST, 30 January 2015 would be represented
+by `2015-01-30T23:14:15.926535+0000`.
+
+Parsing from Python UTC datetimes to timestamps:
 
 ```python
 import datetime
-import time
-now = datetime.datetime.now()
-json_timestamp = int(time.mktime(now.timetuple()))
+now = datetime.datetime.utcnow()
+json_timestamp = now.isoformat() + '+0000'
 ```
 
-Converting from timestamps to Python datetimes:
+Converting from timestamps to Python UTC datetimes:
 
 ```python
-now = datetime.datetime.fromtimestamp(json_timestamp)
+date_format = "%Y-%m-%dT%H:%M:%S"
+now = datetime.datetime.strptime(json_timestamp[:19], date_format)
+rem = float(js[19:26]) + int(js[26:29]) * 3600 + int(js[29:31]) * 60
+now += datetime.timedelta(seconds=rem)
 ```
 
 The fractions of seconds are lost in translation from Python datetimes to UNIX
@@ -300,12 +314,10 @@ This will be fleshed out more as the API is more solidified.
         </tr>
         <tr>
             <td>'created'</td>
-            <td>Number</td>
+            <td>String</td>
             <td>UNIX timestamp.
-                Number of seconds 00:00:00 UTC, 1 January 1970 (Epoch) when
-                this package was created.
                 See the section on timestamps above for details.</td>
-            <td>1422653107</td>
+            <td>2015-01-30T23:14:15.926535+0000</td>
         </tr>
         <tr>
             <td>'application'</td>
