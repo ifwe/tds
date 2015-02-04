@@ -8,13 +8,14 @@ from .utils import make_response
 import tds.model
 
 
-@resource(collection_path="/projects", path="/projects/{name}")
+@resource(collection_path="/projects", path="/projects/{name_or_id}")
 class ProjectView(object):
     """
-    Project view. This object maps to the /projects and /projects/{name} URL.
+    Project view. This object maps to the /projects and /projects/{name_or_id}
+    URL.
     An object of this class is initalized to handle each request.
     The collection_* methods correspond to the /projects URL while the others
-    correspond to the /projects/{name} URL.
+    correspond to the /projects/{name_or_id} URL.
     """
 
     def __init__(self, request):
@@ -33,20 +34,30 @@ class ProjectView(object):
         the project to the request at request.validated['project'].
         This validator will raise a "400 Bad Request" error.
         """
-        name = self.request.matchdict['name']
-        project = tds.model.Project.get(name=name)
+        try:
+            proj_id = int(self.request.matchdict['name_or_id'])
+            project = tds.model.Project.get(id=proj_id)
+            name = False
+        except ValueError:
+            proj_id = False
+            name = self.request.matchdict['name_or_id']
+            project = tds.model.Project.get(name=name)
         if request.method == 'POST':
             if project is not None:
                 request.errors.add(
                     'path', 'name',
-                    "Project with name {name} already exists".format(
-                        name=name
+                    "Project with {prop} {val} already exists".format(
+                        prop="ID" if proj_id else "name",
+                        val=proj_id if proj_id else name,
                     )
                 )
         elif project is None:
             request.errors.add(
                 'path', 'name',
-                "Project with name {name} does not exist".format(name=name)
+                "Project with name {prop} {val} does not exist".format(
+                    prop="ID" if proj_id else "name",
+                    val=proj_id if proj_id else name,
+                ),
             )
         else:
             request.validated['project'] = project
@@ -58,44 +69,71 @@ class ProjectView(object):
         Else, set request.validated['projects'] to projects matching select
         query.
         """
-        if 'names' in request.params:
-            names = set(request.params.pop('name'))
-        else:
-            names = set()
-
-        if 'ids' in request.params:
-            proj_ids = set(request.params.pop('id'))
-        else:
-            proj_ids = set()
-
-        if 'name' in request.params:
-            names.add(request.params.pop('name'))
-        if 'id' in request.params:
-            proj_ids.add(request.params.pop('id'))
-
-        if request.params:
-            for key in request.params:
+        all_params = ('limit', 'last',) # for later: 'sort_by', 'reverse')
+        for key in request.params:
+            if key not in all_params:
                 request.errors.add(
-                    'query', key, "Unknown project attribute {attr}".format(
-                        attr=key,
-                    )
+                    'query', key,
+                    ("Unsupported query: {param}. Valid parameters: "
+                     "{all_params}".format(param=key, all_params=all_params))
                 )
 
-        if proj_ids and names:
-            request.validated['projects'] = tds.model.Project.find(
-                project_id.in_(proj_ids),
-                name.in_(names),
-            )
-        elif proj_ids:
-            request.validated['projects'] = tds.model.Project.find(
-                project_id.in_(proj_ids),
-            )
-        elif names:
-            request.validated['projects'] = tds.model.Project.find(
-                name.in_(names),
+        # This might be used later but isn't currently:
+        # if 'sort_by' in request.params:
+        #     valid_attrs = ('id', 'name')
+        #     if request.params['sort_by'] not in valid_attrs:
+        #         request.errors.add(
+        #             'query', 'sort_by',
+        #             ("Unsupported sort attribute: {val}. Valid attributes: "
+        #              "{all_attrs}".format(
+        #                 val=request.params['sort_by'],
+        #                 all_attrs=valid_attrs,
+        #              ))
+        #         )
+        #     elif request.params['sort_by'] == 'name':
+        #         sort_by = tds.model.Project.name
+        #     else:
+        #         sort_by = tds.model.Project.id
+        # request.validated['projects'].order_by(sort_by)
+
+        if 'last' in request.params and request.params['last']:
+            request.validated['projects'] = (
+                tds.model.Project.query().order_by(tds.model.Project.id)
+                    .filter(
+                        tds.model.Project.id > request.params['last']
+                    )
             )
         else:
-            request.validated['projects'] = tds.model.Project.all()
+            request.validated['projects'] = (
+                tds.model.Project.query()
+                                 .order_by(tds.model.Project.id)
+            )
+
+        if 'limit' in request.params and request.params['limit']:
+            request.validated['projects'] = (
+                request.validated['projects'].limit(request.params['limit'])
+            )
+
+        # This code was designed to allow filtering on attributes.
+        # It's preserved here for ideas in case it's relevant elsewhere.
+        # names = set(request.params.getall('name'))
+        # proj_ids = set(request.params.getall('id'))
+        #
+        # if proj_ids and names:
+        #     request.validated['projects'] = tds.model.Project.query().filter(
+        #         tds.model.Project.id.in_(tuple(proj_ids)),
+        #         tds.model.Project.name.in_(tuple(names)),
+        #     )
+        # elif proj_ids:
+        #     request.validated['projects'] = tds.model.Project.query().filter(
+        #         tds.model.Project.id.in_(tuple(proj_ids)),
+        #     )
+        # elif names:
+        #     request.validated['projects'] = tds.model.Project.query().filter(
+        #         tds.model.Project.name.in_(tuple(names)),
+        #     )
+        # else:
+        #     request.validated['projects'] = tds.model.Project.all()
 
     @view(validators=('validate_individual',))
     def delete(self):

@@ -32,12 +32,12 @@ def then_the_response_code_is(context, code):
     )
 
 
-@then(u'the response contains a list of {num} items')
+@then(u'the response is a list of {num} items')
 def then_the_response_contains_a_list_of_items(context, num):
-    assert len(context.response.json()) == int(num), context.response
+    assert len(context.response.json()) == int(num), context.response.json()
 
 
-@then(u'the response contains a project with {properties}')
+@then(u'the response list contains a project with {properties}')
 def then_the_response_contains_a_project_with(context, properties):
     properties = parse_properties(properties)
     assert any(all(properties[prop] == proj[prop] for prop in properties)
@@ -49,3 +49,15 @@ def then_the_response_is_a_project_with(context, properties):
     properties = parse_properties(properties)
     assert all(properties[prop] == context.response.json()[prop] for prop in
                properties), (context.response.json(), properties)
+
+
+@then(u'the response list contains id range {minimum} to {maximum}')
+def then_the_response_list_contains_id_range(context, minimum, maximum):
+    """
+    Make sure there is an object in the response for each ID
+    in [minimum, maximum].
+    """
+    minimum = int(minimum)
+    maximum = int(maximum)
+    assert all(any(obj['id'] == x for obj in context.response.json()) for
+               x in range(minimum, maximum+1))

@@ -359,7 +359,6 @@ def before_scenario(context, scenario):
         setup_rest_server(context)
 
 
-
 def after_scenario(context, scenario):
     import tagopsdb
     verbose = scenario.status != 'passed' and 'wip' in context.tags
