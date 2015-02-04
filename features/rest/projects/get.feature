@@ -7,7 +7,12 @@ Feature: GET project(s) from the REST API
     Scenario: no projects
         When I query GET "/projects"
         Then the response code is 200
-        And the response contains a list of 0 items
+        And the response is a list of 0 items
+
+    @rest
+    Scenario: get a project that doesn't exist
+        When I query GET "/noexist"
+        Then the response code is 404
 
     @rest
     Scenario: get all projects
@@ -18,13 +23,13 @@ Feature: GET project(s) from the REST API
             | proj3 |
         When I query GET "/projects"
         Then the response code is 200
-        And the response contains a list of 3 items
-        And the response contains a project with name="proj1"
-        And the response contains a project with name="proj2"
-        And the response contains a project with name="proj3"
+        And the response is a list of 3 items
+        And the response list contains a project with name="proj1"
+        And the response list contains a project with name="proj2"
+        And the response list contains a project with name="proj3"
 
     @rest
-    Scenario Outline: get a single project
+    Scenario Outline: get a single project by name
         Given there are projects:
             | name  |
             | proj1 |
@@ -39,3 +44,41 @@ Feature: GET project(s) from the REST API
             | proj1 |
             | proj2 |
             | proj3 |
+
+    @rest
+    Scenario Outline: get a single project by ID
+        Given there are projects:
+            | name  |
+            | proj1 |
+            | proj2 |
+            | proj3 |
+        When I query GET "/projects/<id>"
+        Then the response code is 200
+        And the response is a project with id=<id>
+
+        Examples:
+            | id    |
+            | 1     |
+            | 2     |
+            | 3     |
+
+    @rest
+    Scenario Outline: specify limit and/or last queries
+        Given there are projects:
+            | name  |
+            | proj1 |
+            | proj2 |
+            | proj3 |
+            | proj4 |
+            | proj5 |
+        When I query GET "/projects?limit=<limit>&last=<last>"
+        Then the response code is 200
+        And the response is a list of <num> items
+        And the response list contains id range <min> to <max>
+
+        Examples:
+            | limit | last  | num   | min   | max   |
+            |       |       | 5     | 1     | 5     |
+            |       | 2     | 3     | 3     | 5     |
+            | 10    |       | 5     | 1     | 5     |
+            | 4     | 1     | 4     | 4     | 5     |
