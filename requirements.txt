@@ -1,3 +1,4 @@
+--allow-all-external --allow-unverified progressbar
 PyYAML==3.10
 argcomplete>=0.3.7
 argparse==1.2.1
