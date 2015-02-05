@@ -11,16 +11,36 @@ import fnmatch
 # Get version of project
 import tds.version
 
+VIRTUAL_ENV = os.environ.get('VIRTUAL_ENV', None)
+
 
 class PyTest(TestCommand):
+    pytest_args = None
+    behave_args = None
+    user_options = [
+        ('pytest-args=', 'a', "Arguments to pass to py.test"),
+        ('behave-args=', 'b', "Arguments to pass to behave")
+    ]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = []
+        self.behave_args = []
+
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = [self.test_suite]
+        self.test_args = []
+        self.test_suite = True
 
     def run_tests(self):
         #import here, cause outside the eggs aren't loaded
         import pytest
-        errno = pytest.main(self.test_args)
+        errno = pytest.main(self.pytest_args)
+        if errno != 0:
+            raise SystemExit("Test failures (errno=%d)", errno)
+
+        import behave.__main__ as behave
+        errno = behave.main(self.behave_args)
         if errno != 0:
             raise SystemExit("Test failures (errno=%d)", errno)
 
@@ -104,7 +124,14 @@ setup_args = dict(
     data_files=[
         ('share/tds/salt', ['share/salt/tds.py']),
     ],
-    test_suite='tests',
+    behave_args=['--junit'],
+    pytest_args=[
+        '-v',
+        '--junitxml', 'reports/pyunit.xml',
+        '--cov-report', 'xml',
+        '--cov-config', 'coverage.rc',
+        '--cov', tds.__name__,
+    ] + (['--ignore', VIRTUAL_ENV] if VIRTUAL_ENV else []),
     tests_require=REQUIREMENTS['install'] + REQUIREMENTS['tests'],
     dependency_links=DEPENDENCY_LINKS,
     cmdclass=dict(test=PyTest)
