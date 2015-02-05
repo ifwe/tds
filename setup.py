@@ -124,18 +124,23 @@ setup_args = dict(
     data_files=[
         ('share/tds/salt', ['share/salt/tds.py']),
     ],
-    behave_args=['--junit'],
-    pytest_args=[
-        '-v',
-        '--junitxml', 'reports/pyunit.xml',
-        '--cov-report', 'xml',
-        '--cov-config', 'coverage.rc',
-        '--cov', tds.__name__,
-    ] + (['--ignore', VIRTUAL_ENV] if VIRTUAL_ENV else []),
     tests_require=REQUIREMENTS['install'] + REQUIREMENTS['tests'],
     dependency_links=DEPENDENCY_LINKS,
-    cmdclass=dict(test=PyTest)
+    cmdclass=dict(test=PyTest),
+    command_options=dict(
+        test={
+            'behave_args': ('setup.py', ['--junit']),
+            'pytest_args': ('setup.py', [
+                '-v',
+                '--junitxml', 'reports/pyunit.xml',
+                '--cov-report', 'xml',
+                '--cov-config', 'coverage.rc',
+                '--cov', tds.__name__,
+            ] + (['--ignore', VIRTUAL_ENV] if VIRTUAL_ENV else []))
+        }
+    )
 )
+
 
 if __name__ == '__main__':
     setup(**setup_args)
