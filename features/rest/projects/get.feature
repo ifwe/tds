@@ -11,7 +11,7 @@ Feature: GET project(s) from the REST API
 
     @rest
     Scenario: get a project that doesn't exist
-        When I query GET "/noexist"
+        When I query GET "/projects/noexist"
         Then the response code is 404
 
     @rest
@@ -24,9 +24,11 @@ Feature: GET project(s) from the REST API
         When I query GET "/projects"
         Then the response code is 200
         And the response is a list of 3 items
-        And the response list contains a project with name="proj1"
-        And the response list contains a project with name="proj2"
-        And the response list contains a project with name="proj3"
+        And the response list contains objects:
+            | name  |
+            | proj1 |
+            | proj2 |
+            | proj3 |
 
     @rest
     Scenario Outline: get a single project by name
@@ -37,7 +39,7 @@ Feature: GET project(s) from the REST API
             | proj3 |
         When I query GET "/projects/<proj>"
         Then the response code is 200
-        And the response is a project with name="<proj>"
+        And the response is an object with name="<proj>"
 
         Examples:
             | proj  |
@@ -54,7 +56,7 @@ Feature: GET project(s) from the REST API
             | proj3 |
         When I query GET "/projects/<id>"
         Then the response code is 200
-        And the response is a project with id=<id>
+        And the response is an object with id=<id>
 
         Examples:
             | id    |
