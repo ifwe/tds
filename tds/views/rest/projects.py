@@ -69,7 +69,7 @@ class ProjectView(object):
         Else, set request.validated['projects'] to projects matching select
         query.
         """
-        all_params = ('limit', 'last',) # for later: 'sort_by', 'reverse')
+        all_params = ('limit', 'start',) # for later: 'sort_by', 'reverse')
         for key in request.params:
             if key not in all_params:
                 request.errors.add(
@@ -96,11 +96,11 @@ class ProjectView(object):
         #         sort_by = tds.model.Project.id
         # request.validated['projects'].order_by(sort_by)
 
-        if 'last' in request.params and request.params['last']:
+        if 'start' in request.params and request.params['start']:
             request.validated['projects'] = (
                 tds.model.Project.query().order_by(tds.model.Project.id)
                     .filter(
-                        tds.model.Project.id > request.params['last']
+                        tds.model.Project.id >= request.params['start']
                     )
             )
         else:

@@ -71,14 +71,14 @@ Feature: GET project(s) from the REST API
             | proj3 |
             | proj4 |
             | proj5 |
-        When I query GET "/projects?limit=<limit>&last=<last>"
+        When I query GET "/projects?limit=<limit>&start=<start>"
         Then the response code is 200
         And the response is a list of <num> items
         And the response list contains id range <min> to <max>
 
         Examples:
-            | limit | last  | num   | min   | max   |
+            | limit | start | num   | min   | max   |
             |       |       | 5     | 1     | 5     |
-            |       | 2     | 3     | 3     | 5     |
+            |       | 2     | 4     | 2     | 5     |
             | 10    |       | 5     | 1     | 5     |
-            | 4     | 1     | 4     | 4     | 5     |
+            | 4     | 1     | 4     | 1     | 4     |

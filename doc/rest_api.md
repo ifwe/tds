@@ -70,7 +70,7 @@ URLs and methods for deploying have yet to be determined.
             applications</td>
         <td>'limit': Number of applications to return.<br />
             'start': Starting position for returned queries, by ID. If 'start'
-            = 10, then all applications with ID > 10 will be returned.
+            = 10, then all applications with ID >= 10 will be returned.
         </td>
         <td>
             <b>200</b>: Return all matching applications. Can be empty list.
