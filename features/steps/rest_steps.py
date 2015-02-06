@@ -61,3 +61,20 @@ def then_the_response_list_contains_id_range(context, minimum, maximum):
     maximum = int(maximum)
     assert all(any(obj['id'] == x for obj in context.response.json()) for
                x in range(minimum, maximum+1))
+
+
+@then(u'the response contains errors')
+def then_the_response_contains_errors(context):
+    """
+    Check the errors of the response JSON for the given errors.
+    """
+    errors = context.response.json()['errors']
+    props = ('location', 'name', 'description')
+    assert all(any(all(row[prop] == err[prop] for prop in props)
+                   for err in errors) for row in context.table), (row, errors)
+
+
+@then(u'the response body contains "{message}"')
+def then_the_response_body_contains(context, message):
+    assert False, context.response.text
+    assert message in context.response.text, (message, context.response.text)
