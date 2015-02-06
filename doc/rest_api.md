@@ -2,24 +2,34 @@
 Some quick notes:
 
 * All data in requests and responses is in JSON
-* All `GET` requests to resource type roots (e.g., /applications) return lists
+* All `GET` requests to resource type roots (e.g., `/applications`) return lists
     of matching resources.
     Well-behave clients should query URLs for specific resources (e.g,
-    /applications/tds) when only that resource is desired rather than query
-    the resource root with a large set of filters.
+    `/applications/tds`) when only that resource is desired rather than query
+    the resource root or searching for that resource with a query.
+
+## Terminology
+
+* Collection URL: The URL for interacting with collections of resources
+    (e.g., `/applications`)
+* Individual URL: The URL for interacting with a single known resource
+    (e.g., `/applications/tds`)
 
 ## LDAP integration
 Integrate with LDAP to get tokens for users that are passed with each request
 for authentication.
 All requests should throw a `401: Unauthorized` without LDAP authentication.
 
-## Queries Overview
+## Methods Overview
 
 ### DELETE
 Returns nothing for successful `DELETE` requests.
 
 ### GET
-All `200` responses to `GET` requests are lists of matching objects.
+All `200` responses to `GET` requests are:
+
+* lists of matching objects for resource collection URLs.
+* JSON objects for individual resource URLs.
 
 ### POST
 `POST` requests run queries to see if any unique constraints will be violated
@@ -27,18 +37,18 @@ by a potential write to the database before doing the actual write.
 As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 
 ### PUT
-`PUT` requests have two parts:
+`PUT` requests for resource collection URLs have two parts:
 
 * `select`: A query matching specific resources.
 * `update`: Update values for the matching resource.
     The `update` does not need all attributes. The API will only write those
-    attributes that are given. All other attributes will be preserved.
+    attributes that are given; all other attributes will be preserved.
 
 ## Routing
-The URLs and methods will be the same for /packages and /projects as for
-/applications below.
-URLs and methods will also be the same for /projects/NAME as for
-/applications/NAME below.
+The URLs and methods will be the same for `/packages` and `/projects` as for
+`/applications` below.
+URLs and methods will also be the same for `/projects/NAME` as for
+`/applications/NAME` below.
 URLs and methods for deploying have yet to be determined.
 
 ### Path-Method Table
@@ -54,21 +64,14 @@ URLs and methods for deploying have yet to be determined.
 </thead>
 <tbody>
     <tr>
-        <td rowspan="4">/applications</td>
-        <td>DELETE</td>
-        <td>Delete all matching applications.</td>
-        <td>'select': Attributes query matching applications to delete.</td>
-        <td>
-            <b>204</b>: Application deleted. Nothing to return.<br />
-            <b>403</b>: Forbidden. Lack of permissions.<br />
-            <b>404</b>: Not found. No applications matching query.<br />
-        </td>
-    </tr>
-    <tr>
+        <td rowspan="2">/applications</td>
         <td>GET</td>
         <td>Retrieve the full details, including the unique IDs, for all
-            applications matching attributes in a query</td>
-        <td>'select': Attributes query matching applications to retrieve.</td>
+            applications</td>
+        <td>'limit': Number of applications to return.<br />
+            'start': Starting position for returned queries, by ID. If 'start'
+            = 10, then all applications with ID > 10 will be returned.
+        </td>
         <td>
             <b>200</b>: Return all matching applications. Can be empty list.
                 <br />
@@ -79,31 +82,14 @@ URLs and methods for deploying have yet to be determined.
     <tr>
         <td>POST</td>
         <td>Create one or more new applications.</td>
-        <td>'update': Attributes for the new application.</td>
+        <td>Attributes for the new application.<br />
+            See Attributes section below for details.
+        </td>
         <td>
             <b>201</b>: Application(s) created.<br />
             <b>400</b>: Bad request.<br />
             <b>403</b>: Forbidden. Unique constraint violated or lack of
                 permissions. Give specifics.<br />
-        </td>
-    </tr>
-    <tr>
-        <td>PUT</td>
-        <td>Update all applications matching query attributes with given new
-            attributes.</td>
-        <td>
-            'select': Select applications to update.<br />
-            'update': New attributes to set for applications.<br />
-        </td>
-        <td>
-            <b>200</b>: Application updated. Return new attributes.<br />
-            <b>400</b>: Bad request.<br />
-            <b>403</b>: Forbidden. Lack of permissions. Return list of
-                applications for which the user lacks authorization and
-                what attributes for each application require privileged
-                access.
-                <br />
-            <b>404</b>: Application(s) matching query not found.<br />
         </td>
     </tr>
     <tr>
@@ -138,7 +124,9 @@ URLs and methods for deploying have yet to be determined.
     <tr>
         <td>PUT</td>
         <td>Update application with name NAME with new attributes.</td>
-        <td>'update': New attributes to set for the application.</td>
+        <td>New attributes to set for the application.<br />
+            See the Attributes section below for more details.
+        </td>
         <td>
             <b>200</b>: Application updated. Return new attributes.<br />
             <b>301</b>: Moved permanently.<br />
