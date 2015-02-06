@@ -68,7 +68,6 @@ def host_factory(context, name, env=None, **_kwargs):
         app_id=tagopsdb.Application.get(name=tagopsdb.Application.dummy).id,
         cage_location=len(tagopsdb.Host.all()),
         cab_location=name[:10],
-        section='underdoor',
         rack_location=1,
         console_port='abcdef',
         power_port='ghijkl',

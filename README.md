@@ -26,7 +26,7 @@ $ ./setup.py
 ### PyPI packages
 See `requirements.txt`. To install (NOTE: `setup.py` will do this for you):
 ```
-$ pip install -r requirements.txt --allow-all-external --allow-unverified progressbar
+$ pip install -r requirements.txt
 ```
 
 ### Other required packages
