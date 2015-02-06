@@ -82,3 +82,24 @@ Feature: GET project(s) from the REST API
             |       | 2     | 4     | 2     | 5     |
             | 10    |       | 5     | 1     | 5     |
             | 4     | 1     | 4     | 1     | 4     |
+
+    @rest
+    Scenario Outline: specify unknown query
+        Given there are projects:
+            | name  |
+            | proj1 |
+            | proj2 |
+            | proj3 |
+            | proj4 |
+            | proj5 |
+        When I query GET "/projects?<query>"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name  | description                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start')  |
+
+        Examples:
+            | query             |
+            | foo=bar           |
+            | limit=10&foo=bar  |
+            | foo=bar&last=2    |
