@@ -37,12 +37,7 @@ by a potential write to the database before doing the actual write.
 As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 
 ### PUT
-`PUT` requests for resource collection URLs have two parts:
-
-* `select`: A query matching specific resources.
-* `update`: Update values for the matching resource.
-    The `update` does not need all attributes. The API will only write those
-    attributes that are given; all other attributes will be preserved.
+`PUT` requests can only be made to individual resources currently.
 
 ## Routing
 The URLs and methods will be the same for `/packages` and `/projects` as for

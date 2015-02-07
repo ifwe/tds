@@ -104,4 +104,4 @@ Feature: GET application(s) from the REST API
             | query             |
             | foo=bar           |
             | limit=10&foo=bar  |
-            | foo=bar&last=2    |
+            | foo=bar&start=2   |
