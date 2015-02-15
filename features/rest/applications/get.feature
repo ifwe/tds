@@ -10,9 +10,17 @@ Feature: GET application(s) from the REST API
         And the response is a list of 0 items
 
     @rest
-    Scenario: get a project that doesn't exist
-        When I query GET "/applications/noexist"
+    Scenario Outline: get a application that doesn't exist
+        When I query GET "/applications/<select>"
         Then the response code is 404
+        And the response contains errors:
+            | location  | name          | description                                   |
+            | path      | name_or_id    | Application with <descript> does not exist.   |
+
+        Examples:
+            | select    | descript      |
+            | noexist   | name noexist  |
+            | 500       | ID 500        |
 
     @rest
     Scenario: get all applications
@@ -98,7 +106,7 @@ Feature: GET application(s) from the REST API
         Then the response code is 400
         And the response contains errors:
             | location  | name  | description                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start')  |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |
 
         Examples:
             | query             |
