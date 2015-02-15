@@ -79,7 +79,7 @@ def then_the_response_contains_errors(context):
     errors = context.response.json()['errors']
     props = ('location', 'name', 'description')
     assert all(any(all(row[prop] == err[prop] for prop in props)
-                   for err in errors) for row in context.table), (row, errors)
+                   for err in errors) for row in context.table), errors
 
 
 @then(u'the response body contains "{message}"')

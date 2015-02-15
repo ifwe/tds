@@ -22,9 +22,11 @@ def make_response(body, status="200 OK", renderer="json"):
             status=status,
         )
     else:
-        raise NotImplementedError("REST renderer not implemented: {r}".format(
-            r=renderer,
-        ))
+        raise NotImplementedError(
+            "REST renderer not implemented: {r}.".format(
+                r=renderer,
+            )
+        )
 
 
 def get_obj_by_name_or_id(obj_type, request):
@@ -32,7 +34,8 @@ def get_obj_by_name_or_id(obj_type, request):
     Validate that an object of type obj_type with the name_or_id given in the
     request exists and attach it to the request at
     request.validated[obj_type].
-    Attach an error with location='path', name='name_or_id' and a description.
+    Otherwise, attach an error with location='path', name='name_or_id' and a
+    description.
     This error will return a "400 Bad Request" response to this request.
     """
     obj_cls = getattr(tds.model, obj_type.title(), None)
@@ -49,7 +52,7 @@ def get_obj_by_name_or_id(obj_type, request):
     if obj is None:
         request.errors.add(
             'path', 'name_or_id',
-            "{obj_type} with {prop} {val} does not exist".format(
+            "{obj_type} with {prop} {val} does not exist.".format(
                 obj_type=obj_type.title(),
                 prop="ID" if obj_id else "name",
                 val=obj_id if obj_id else name,
@@ -58,6 +61,73 @@ def get_obj_by_name_or_id(obj_type, request):
         request.errors.status = 404
     else:
         request.validated[obj_type] = obj
+
+
+def get_pkg_by_version_revision(request):
+    """
+    Validate that the package with the version, revision, and application in
+    the request exists. Attach it at request.validated['package'] if it does.
+    Attach an error with location='path', name='revision' and a description
+    otherwise.
+    This error with return a "400 Bad Request" response to this request.
+    """
+    try:
+        version = int(request.matchdict['version'])
+    except ValueError:
+        request.errors.add(
+            'path', 'version',
+            'Version must be an integer'
+        )
+        return
+    try:
+        revision = int(request.matchdict['revision'])
+    except ValueError:
+        request.errors.add(
+            'path', 'revision',
+            'Revision must be an integer'
+        )
+        return
+    try:
+        pkg = tds.model.Package.get(
+            application=request.validated['application'],
+            version=request.matchdict['version'],
+            revision=request.matchdict['revision'],
+        )
+    except KeyError: # No request.validated['application'] entry
+        raise tds.exceptions.TDSException(
+            "No validated application when trying to locate package."
+        )
+    if pkg is None:
+        request.errors.add(
+            'path', 'revision',
+            ("Package with version {v} and revision {r} does"
+             " not exist for this application.".format(
+                v=version,
+                r=revision,
+             )
+            )
+        )
+        request.errors.status = 404
+    else:
+        request.validated['package'] = pkg
+
+
+def get_pkgs_by_limit_start(request):
+    """
+    Get all packages for the application request.validated['application'],
+    optionally paginated by request.params['limit'] and
+    request.params['start'] if those are non-null.
+    """
+    try:
+        pkgs = tds.model.Package.find(
+            application=request.validated['application'],
+        )
+    except KeyError: # No request.validated['application'] entry
+        raise tds.exceptions.TDSException(
+            "No validated application when trying to locate package."
+        )
+    else:
+        request.validated['packages'] = pkgs
 
 
 def get_collection_by_limit_start(obj_type, request):
@@ -76,7 +146,7 @@ def get_collection_by_limit_start(obj_type, request):
             request.errors.add(
                 'query', key,
                 ("Unsupported query: {param}. Valid parameters: "
-                 "{all_params}".format(param=key, all_params=all_params))
+                 "{all_params}.".format(param=key, all_params=all_params))
             )
 
     # This might be used later but isn't currently:

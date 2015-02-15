@@ -13,7 +13,7 @@ import tds.model
 class ProjectView(object):
     """
     Project view. This object maps to the /projects and /projects/{name_or_id}
-    URL.
+    URLs.
     An object of this class is initalized to handle each request.
     The collection_* methods correspond to the /projects URL while the others
     correspond to the /projects/{name_or_id} URL.

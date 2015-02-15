@@ -10,9 +10,17 @@ Feature: GET project(s) from the REST API
         And the response is a list of 0 items
 
     @rest
-    Scenario: get a project that doesn't exist
-        When I query GET "/projects/noexist"
+    Scenario Outline: get a project that doesn't exist
+        When I query GET "/projects/<select>"
         Then the response code is 404
+        And the response contains errors:
+            | location  | name          | description                               |
+            | path      | name_or_id    | Project with <descript> does not exist.   |
+
+        Examples:
+            | select    | descript      |
+            | noexist   | name noexist  |
+            | 5         | ID 5          |
 
     @rest
     Scenario: get all projects
@@ -98,7 +106,7 @@ Feature: GET project(s) from the REST API
         Then the response code is 400
         And the response contains errors:
             | location  | name  | description                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start')  |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |
 
         Examples:
             | query             |
