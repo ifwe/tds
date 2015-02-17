@@ -1,35 +1,11 @@
 """
-Utility functions for REST API.
+Utility functions for GET requests to the REST API.
 """
-
-import json
-
-from pyramid.response import Response
 
 import tds.model
 
-from ..json_encoder import TDSEncoder
 
-
-def make_response(body, status="200 OK", renderer="json"):
-    """
-    Make and return a Response with the given body and HTTP status code.
-    """
-    if renderer == "json":
-        return Response(
-            body=json.dumps(body, cls=TDSEncoder),
-            content_type="text/json",
-            status=status,
-        )
-    else:
-        raise NotImplementedError(
-            "REST renderer not implemented: {r}.".format(
-                r=renderer,
-            )
-        )
-
-
-def get_obj_by_name_or_id(obj_type, request):
+def obj_by_name_or_id(obj_type, request):
     """
     Validate that an object of type obj_type with the name_or_id given in the
     request exists and attach it to the request at
@@ -63,7 +39,7 @@ def get_obj_by_name_or_id(obj_type, request):
         request.validated[obj_type] = obj
 
 
-def get_pkg_by_version_revision(request):
+def pkg_by_version_revision(request):
     """
     Validate that the package with the version, revision, and application in
     the request exists. Attach it at request.validated['package'] if it does.
@@ -112,7 +88,7 @@ def get_pkg_by_version_revision(request):
         request.validated['package'] = pkg
 
 
-def get_pkgs_by_limit_start(request):
+def pkgs_by_limit_start(request):
     """
     Get all packages for the application request.validated['application'],
     optionally paginated by request.params['limit'] and
@@ -128,10 +104,10 @@ def get_pkgs_by_limit_start(request):
         )
     else:
         request.validated['packages'] = pkgs
-    get_collection_by_limit_start('package', request)
+    collection_by_limit_start('package', request)
 
 
-def get_collection_by_limit_start(obj_type, request):
+def collection_by_limit_start(obj_type, request):
     """
     Make sure that the selection parameters are valid for collection GET.
     If they are not, raise "400 Bad Request".
