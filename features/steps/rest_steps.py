@@ -34,7 +34,10 @@ def then_the_response_code_is(context, code):
 
 @then(u'the response is a list of {num} items')
 def then_the_response_contains_a_list_of_items(context, num):
-    assert len(context.response.json()) == int(num), context.response.json()
+    assert len(context.response.json()) == int(num), (
+        int(num),
+        len(context.response.json())
+    )
 
 
 @then(u'the response list contains an object with {properties}')

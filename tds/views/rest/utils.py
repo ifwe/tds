@@ -119,15 +119,16 @@ def get_pkgs_by_limit_start(request):
     request.params['start'] if those are non-null.
     """
     try:
-        pkgs = tds.model.Package.find(
-            application=request.validated['application'],
-        )
+        pkgs = tds.model.Package.query().filter(
+            tds.model.Package.application==request.validated['application'],
+        ).order_by(tds.model.Package.id)
     except KeyError: # No request.validated['application'] entry
         raise tds.exceptions.TDSException(
             "No validated application when trying to locate package."
         )
     else:
         request.validated['packages'] = pkgs
+    get_collection_by_limit_start('package', request)
 
 
 def get_collection_by_limit_start(obj_type, request):
@@ -167,15 +168,14 @@ def get_collection_by_limit_start(obj_type, request):
     #         sort_by = tds.model.Project.id
     # request.validated['projects'].order_by(sort_by)
 
+    if plural not in request.validated:
+        request.validated[plural] = obj_cls.query().order_by(obj_cls.id)
+
     if 'start' in request.params and request.params['start']:
         request.validated[plural] = (
-            obj_cls.query().order_by(obj_cls.id).filter(
+            request.validated[plural].filter(
                 obj_cls.id >= request.params['start']
             )
-        )
-    else:
-        request.validated[plural] = (
-            obj_cls.query().order_by(obj_cls.id)
         )
 
     if obj_cls == tds.model.Application:
