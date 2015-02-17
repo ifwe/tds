@@ -12,6 +12,9 @@ Feature: GET package(s) from the REST API
             | version   | revision  |
             | 1         | 2         |
             | 2         | 1         |
+            | 2         | 2         |
+            | 2         | 3         |
+            | 3         | 1         |
 
     @rest
     Scenario Outline: no application
@@ -65,8 +68,8 @@ Feature: GET package(s) from the REST API
         Examples:
             | select    | ver   | rev   |
             | app2      | 5     | 1     |
-            | 3         | 5     | 1     |
             | app2      | 1     | 5     |
+            | 3         | 5     | 1     |
             | 3         | 1     | 5     |
 
     @rest
@@ -78,6 +81,41 @@ Feature: GET package(s) from the REST API
         Examples:
             | select    | ver   | rev   |
             | app2      | 1     | 2     |
-            | 3         | 1     | 2     |
             | app2      | 2     | 1     |
+            | 3         | 1     | 2     |
             | 3         | 2     | 1     |
+
+    @rest
+    Scenario Outline: specify unknown query
+        When I query GET "/applications/<select>/packages?<query>"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name  | description                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |
+
+        Examples:
+            | select    | query             |
+            | app2      | foo=bar           |
+            | app2      | limit=10&foo=bar  |
+            | app2      | foo=bar&start=2   |
+            | 3         | foo=bar           |
+            | 3         | limit=10&foo=bar  |
+            | 3         | foo=bar&start=2   |
+
+    @rest
+    Scenario Outline: specify limit and/or last queries
+        When I query GET "/applications/<select>/packages?limit=<limit>&start=<start>"
+        Then the response code is 200
+        And the response is a list of <num> items
+        And the response list contains id range <min> to <max>
+
+        Examples:
+            | select    | limit | start | num   | min   | max   |
+            | app2      |       |       | 5     | 1     | 5     |
+            | app2      |       | 1     | 5     | 1     | 5     |
+            | app2      | 10    |       | 5     | 1     | 5     |
+            | app2      | 4     | 1     | 4     | 1     | 4     |
+            | 3         |       |       | 5     | 1     | 5     |
+            | 3         |       | 2     | 4     | 2     | 5     |
+            | 3         | 10    |       | 5     | 1     | 5     |
+            | 3         | 4     | 1     | 4     | 1     | 4     |
