@@ -46,11 +46,14 @@ Feature: GET package(s) from the REST API
     Scenario Outline: get all packages for an application
         When I query GET "/applications/<select>/packages"
         Then the response code is 200
-        And the response is a list of 2 items
+        And the response is a list of 5 items
         And the response list contains objects:
             | version   | revision  |
             | 1         | 2         |
             | 2         | 1         |
+            | 2         | 2         |
+            | 2         | 3         |
+            | 3         | 1         |
 
         Examples:
             | select    |
