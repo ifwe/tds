@@ -2,7 +2,7 @@
 REST API view for projects.
 """
 
-from cornice.resource import resource, view
+from cornice.resource import resource
 
 from .base import BaseView
 
@@ -17,44 +17,4 @@ class ProjectView(BaseView):
     correspond to the /projects/{name_or_id} URL.
     """
 
-    @view(validators=('validate_individual',))
-    def delete(self):
-        """
-        Delete an individual project.
-        """
-        #TODO Implement the delete part.
-        return self.make_response(request.validated['project'])
-
-    @view(validators=('validate_individual',))
-    def get(self):
-        """
-        Return an individual project.
-        """
-        return self.make_response(self.request.validated['project'])
-
-    @view(validators=('validate_individual',))
-    def put(self):
-        """
-        Update an existing project.
-        """
-        #TODO Implement this
-        return self.make_response({})
-
-    @view(validators=('validate_collection_get',))
-    def collection_get(self):
-        """
-        Return a list of matching projects for the query in the request.
-        Request parameters:
-            Request should either be empty (match all projects) or contain
-            a 'limit' and 'start' parameters for pagination.
-        Returns:
-            "200 OK" if valid request successfully processed
-        """
-        return self.make_response(self.request.validated['projects'])
-
-    def collection_post(self):
-        """
-        Create a new project with given params.
-        """
-        #TODO Implement this
-        return self.make_response([])
+    pass
