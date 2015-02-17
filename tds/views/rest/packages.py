@@ -2,8 +2,9 @@
 REST API view for packages.
 """
 
-from cornice.resource import resource, view
+from cornice.resource import resource
 
+import tds.model
 from .base import BaseView
 
 
@@ -18,45 +19,70 @@ class PackageView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
-    @view(validators=('validate_individual',))
-    def delete(self):
+    def get_pkg_by_version_revision(self):
         """
-        Delete an individual package.
+        Validate that the package with the version, revision, and application in
+        the request exists. Attach it at request.validated['package'] if it does.
+        Attach an error with location='path', name='revision' and a description
+        otherwise.
+        This error with return a "400 Bad Request" response to this request.
         """
-        #TODO Implement the delete part.
-        return self.make_response(request.validated['package'])
+        try:
+            version = int(self.request.matchdict['version'])
+        except ValueError:
+            self.request.errors.add(
+                'path', 'version',
+                'Version must be an integer'
+            )
+            return
+        try:
+            revision = int(self.request.matchdict['revision'])
+        except ValueError:
+            self.request.errors.add(
+                'path', 'revision',
+                'Revision must be an integer'
+            )
+            return
+        try:
+            pkg = tds.model.Package.get(
+                application=self.request.validated['application'],
+                version=self.request.matchdict['version'],
+                revision=self.request.matchdict['revision'],
+            )
+        except KeyError: # No request.validated['application'] entry
+            raise tds.exceptions.TDSException(
+                "No validated application when trying to locate package."
+            )
+        if pkg is None:
+            self.request.errors.add(
+                'path', 'revision',
+                ("Package with version {v} and revision {r} does"
+                 " not exist for this application.".format(
+                    v=version,
+                    r=revision,
+                 )
+                )
+            )
+            self.request.errors.status = 404
+        else:
+            self.request.validated['package'] = pkg
 
-    @view(validators=('validate_individual',))
-    def get(self):
+    def get_pkgs_by_limit_start(self):
         """
-        Return an individual package.
+        Get all packages for the application request.validated['application'],
+        optionally paginated by request.params['limit'] and
+        request.params['start'] if those are non-null.
         """
-        return self.make_response(self.request.validated['package'])
-
-    @view(validators=('validate_individual',))
-    def put(self):
-        """
-        Update an existing package.
-        """
-        #TODO Implement this
-        return self.make_response({})
-
-    @view(validators=('validate_collection_get',))
-    def collection_get(self):
-        """
-        Return a list of matching packages for the query in the request.
-        Request parameters:
-            Request should either be empty (match all packages for the given
-            application) or contain a 'limit' and 'start' parameters for
-            pagination.
-        Returns:
-            "200 OK" if valid request successfully processed
-        """
-        return self.make_response(self.request.validated['packages'])
-
-    def collection_post(self):
-        """
-        Create a new package.
-        """
-        #TODO Implement this
-        return self.make_response([])
+        try:
+            pkgs = tds.model.Package.query().filter(
+                tds.model.Package.application==self.request.validated[
+                    'application'
+                ],
+            ).order_by(tds.model.Package.id)
+        except KeyError: # No request.validated['application'] entry
+            raise tds.exceptions.TDSException(
+                "No validated application when trying to locate package."
+            )
+        else:
+            self.request.validated['packages'] = pkgs
+        self.get_collection_by_limit_start()
