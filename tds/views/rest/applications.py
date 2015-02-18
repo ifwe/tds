@@ -4,6 +4,7 @@ REST API view for applications.
 
 from cornice.resource import resource
 
+import tds.model
 from .base import BaseView
 
 
@@ -17,4 +18,6 @@ class ApplicationView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
-    pass
+    name = 'application'
+    plural = 'applications'
+    model = tds.model.Application

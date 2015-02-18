@@ -25,12 +25,8 @@ class BaseView(object):
         Set params for this request.
         See method corresponding the HTTP method below for details on expected
         parameters.
-        Retrieve the name of the object class being viewed (e.g., 'package'
-        for PackageView) and set it to self.name.
         """
         self.request = request
-        self.name = self.__class__.__name__.split('View')[0].lower()
-        self.plural = self.name + 's'
 
     @staticmethod
     def make_response(body, status="200 OK", renderer="json"):
@@ -102,7 +98,7 @@ class BaseView(object):
         Delete an individual package.
         """
         #TODO Implement the delete part.
-        return self.make_response(request.validated[self.name])
+        return self.make_response(self.request.validated[self.name])
 
     @view(validators=('validate_individual',))
     def put(self):
@@ -110,14 +106,14 @@ class BaseView(object):
         Update an existing package.
         """
         #TODO Implement this
-        return self.make_response({})
+        return self.make_response(self.request.validated[self.name])
 
     def collection_post(self):
         """
         Create a new package.
         """
         #TODO Implement this
-        return self.make_response([])
+        return self.make_response(self.request.validated[self.plural])
 
     def get_obj_by_name_or_id(self, obj_type=None):
         """
@@ -130,9 +126,12 @@ class BaseView(object):
         """
         if not obj_type:
             obj_type = self.name
-        obj_cls = getattr(tds.model, obj_type.title(), None)
-        if obj_cls is None:
-            raise tds.exceptions.NotFoundError('Model', [obj_type])
+            if getattr(self, 'model', None):
+                obj_cls = self.model
+        else:
+            obj_cls = getattr(tds.model, obj_type.title(), None)
+            if obj_cls is None:
+                raise tds.exceptions.NotFoundError('Model', [obj_type])
 
         try:
             obj_id = int(self.request.matchdict['name_or_id'])
@@ -172,6 +171,9 @@ class BaseView(object):
 
         if not obj_type:
             obj_type = self.name
+            if getattr(self, 'model', None):
+                obj_cls = self.model
+
 
         obj_cls = getattr(tds.model, obj_type.title(), None)
         if obj_cls is None:
@@ -212,7 +214,7 @@ class BaseView(object):
         if 'start' in self.request.params and self.request.params['start']:
             self.request.validated[plural] = (
                 self.request.validated[plural].filter(
-                    obj_cls.id >= self.request.params['start']
+                    obj_cls.id>=self.request.params['start']
                 )
             )
 
