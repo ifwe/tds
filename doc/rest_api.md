@@ -40,7 +40,7 @@ As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 `PUT` requests can only be made to individual resources currently.
 
 ## Routing
-The URLs and methods will be the same for `/packages` and `/projects` as for
+The URLs and methods will be the same for `/projects` as for
 `/applications` below.
 URLs and methods will also be the same for `/projects/NAME` as for
 `/applications/NAME` below.
@@ -76,33 +76,32 @@ URLs and methods for deploying have yet to be determined.
     </tr>
     <tr>
         <td>POST</td>
-        <td>Create one or more new applications.</td>
+        <td>Create a new applications.</td>
         <td>Attributes for the new application.<br />
             See Attributes section below for details.
         </td>
         <td>
-            <b>201</b>: Application(s) created.<br />
+            <b>201</b>: Application created.<br />
             <b>400</b>: Bad request.<br />
             <b>403</b>: Forbidden. Unique constraint violated or lack of
-                permissions. Give specifics.<br />
+                permissions. Check errors in response for specifics.<br />
         </td>
     </tr>
     <tr>
-        <td rowspan="3">/applications/NAME</td>
+        <td rowspan="3">/applications/NAME_OR_ID</td>
         <td>DELETE</td>
-        <td>Delete the application with name NAME.</td>
+        <td>Delete the application with name or ID NAME_OR_ID.</td>
         <td><em>None</em</td>
         <td>
             <b>204</b>: Application deleted. Nothing to return.<br />
             <b>301</b>: Moved permanently. Renamed most likely.
                 Return the new URI, as per HTTP/1.1.<br />
-            <b>400</b>: Bad request. Malformed name most likely.<br />
             <b>403</b>: Forbidden. Lack of permissions.<br />
             <b>404</b>: Not found.<br />
         </td>
     </tr>
         <td>GET</td>
-        <td>Retrieve the application with the name NAME.</td>
+        <td>Retrieve the application with the name or ID NAME_OR_ID.</td>
         <td><em>None</em></td>
         <td>
             <b>200</b>: Return application.<br />
@@ -118,9 +117,10 @@ URLs and methods for deploying have yet to be determined.
     </tr>
     <tr>
         <td>PUT</td>
-        <td>Update application with name NAME with new attributes.</td>
+        <td>Update application with name or ID NAME_OR_ID with new attributes.
+            </td>
         <td>New attributes to set for the application.<br />
-            See the Attributes section below for more details.
+            See the Attributes section below for details.
         </td>
         <td>
             <b>200</b>: Application updated. Return new attributes.<br />
@@ -128,6 +128,70 @@ URLs and methods for deploying have yet to be determined.
             <b>400</b>: Bad request.<br />
             <b>403</b>: Forbidden. Lack of permissions or unique constraint.
                 <br />
+            <b>404</b>: Not found.<br />
+        </td>
+    </tr>
+    <tr>
+        <td rowspan="2">/applications/NAME_OR_ID/packages</td>
+        <td>GET</td>
+        <td>Get all packages for the application with name or ID NAME_OR_ID,
+            paginated by 'limit' or 'start', optionally.</td>
+        <td>
+            'limit': Number of packages to return.
+            'start': Starting position for returned queries, by ID.
+            If 'start' = 10, then all packages with ID >= 10 will be returned.
+        </td>
+        <td>
+            <b>200</b>: Packages found and returned.<br />
+            <b>400</b>: Bad query.<br />
+            <b>404</b>: No such application found.<br />
+        </td>
+    </tr>
+    <tr>
+        <td>POST</td>
+        <td>Add a new package for the given application with the given
+            attributes.</td>
+        <td>
+            Attributes for the new package. See the Attributes section below
+            for details.
+        </td>
+        <td>
+            <b>201</b>: Package created.<br />
+            <b>400</b>: Bad request.<br />
+            <b>403</b>: Forbidden. Unique constraint violated or lack of
+                permissions. Check errors in response for specifics.<br />
+        </td>
+    </tr>
+    <tr>
+        <td rowspan="3">/applications/NAME_OR_ID/packages/VERSION/REVISION</td>
+        <td>DELETE</td>
+        <td>Get the package with version VERSION, revision REVISION for
+            application with name or ID NAME_OR_ID.</td>
+        <td><em>None</em></td>
+        <td>
+            <b>204</b>: Package delete. Nothing to return.<br />
+            <b>404</b>: Application or package not found. See errors in
+                response for specifics.<br />
+        </td>
+    </tr>
+    <tr>
+        <td>GET</td>
+        <td>Delete the given package.</td>
+        <td><em>None</em></td>
+        <td>
+            <b>200</b>: Return package.<br />
+            <b>404</b>: Not found.<br />
+        </td>
+    </tr>
+    <tr>
+        <td>PUT</td>
+        <td>Update this package.</td>
+        <td>New attributes for this package. See the Attributes section
+            below for details.</td>
+        <td>
+            <b>200</b>: Package updated.<br />
+            <b>400</b>: Bad request. See errors in response for specifics.
+                Most likely a bad query.<br />
             <b>404</b>: Not found.<br />
         </td>
     </tr>
