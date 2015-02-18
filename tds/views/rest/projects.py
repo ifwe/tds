@@ -4,6 +4,7 @@ REST API view for projects.
 
 from cornice.resource import resource
 
+import tds.model
 from .base import BaseView
 
 
@@ -17,4 +18,6 @@ class ProjectView(BaseView):
     correspond to the /projects/{name_or_id} URL.
     """
 
-    pass
+    name = 'project'
+    plural = 'projects'
+    model = tds.model.Project
