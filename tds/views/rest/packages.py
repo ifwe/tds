@@ -5,11 +5,12 @@ REST API view for packages.
 from cornice.resource import resource
 
 import tds.model
-from .base import BaseView
+from .base import BaseView, init_view
 
 
 @resource(collection_path="/applications/{name_or_id}/packages",
           path="/applications/{name_or_id}/packages/{version}/{revision}")
+@init_view(name='package')
 class PackageView(BaseView):
     """
     Package view. This object maps to the /applications/{name_or_id}/packages
@@ -18,10 +19,6 @@ class PackageView(BaseView):
     The collection_* methods correspond to the /applications URL while the
     others correspond to the /applications/{name_or_id} URL.
     """
-
-    name = 'package'
-    plural = 'packages'
-    model = tds.model.Package
 
     def get_pkg_by_version_revision(self):
         """
