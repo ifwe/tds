@@ -9,7 +9,52 @@ from cornice.resource import view
 
 from ..json_encoder import TDSEncoder
 
+import tagopsdb
+
 import tds.model
+
+
+def init_view(view=None, name=None, plural=None, model=None,
+              valid_attrs=None):
+    """
+    This is a decorator that will fill in some basic information for a class
+    based on the information provided.
+    For most views, just the name will be sufficient and is always required,
+    but each attribute set on the view class can be overridden by providing it
+    explicitly to this decorator.
+    The view is the child of BaseView below.
+    The attributes for directly added to the view (name -> view.name).
+    """
+
+    def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model,
+                       obj_attrs=valid_attrs):
+        if not obj_name:
+            raise AttributeError(
+                "No name provided for decorator."
+            )
+        cls.name = obj_name
+
+        if obj_plural is None:
+            obj_plural = cls.name + 's'
+        cls.plural = obj_plural
+
+        if obj_model is None:
+            obj_model = getattr(tds.model, cls.name.title(), None)
+        if obj_model is None:
+            raise AttributeError(
+                "No model named {name}.".format(name=cls.name.title())
+            )
+        cls.model = obj_model
+
+        if obj_attrs is None:
+            obj_attrs = filter(
+                lambda attr: not attr.startswith('_'),
+                cls.model.delegate.__dict__.keys()
+            )
+        cls.valid_attrs = obj_attrs
+
+        return cls
+    return real_decorator
 
 
 class BaseView(object):
@@ -72,6 +117,13 @@ class BaseView(object):
         else:
             self.get_collection_by_limit_start()
 
+    def validate_put(self, request):
+        """
+        Validate a PUT request by validating all given attributes against the
+        list of valid attributes for this view's associated model.
+        """
+        self._validate_params(self.valid_attrs)
+
     @view(validators=('validate_individual',))
     def get(self):
         """
@@ -100,12 +152,18 @@ class BaseView(object):
         #TODO Implement the delete part.
         return self.make_response(self.request.validated[self.name])
 
-    @view(validators=('validate_individual',))
+    @view(validators=('validate_individual', 'validate_put'))
     def put(self):
         """
         Update an existing package.
         """
-        #TODO Implement this
+        for attr in self.validated_params:
+            setattr(
+                self.request.validated[self.name],
+                attr,
+                self.validated_params[attr],
+            )
+        tagopsdb.Session.commit()
         return self.make_response(self.request.validated[self.name])
 
     def collection_post(self):
@@ -114,6 +172,25 @@ class BaseView(object):
         """
         #TODO Implement this
         return self.make_response(self.request.validated[self.plural])
+
+    def _validate_params(self, valid_params):
+        """
+        Validate all query parameters in self.request against valid_parameters
+        and add a 400 error at 'query'->key if the parameter key is invalid.
+        Add validated parameters with values to self.validated_params.
+        Ignore and drop validated parameters without values (e.g., "?q=&a=").
+        """
+        if not getattr(self, 'validated_params', None):
+            self.validated_params = dict()
+        for key in self.request.params:
+            if key not in valid_params:
+                self.request.errors.add(
+                    'query', key,
+                    ("Unsupported query: {param}. Valid parameters: "
+                     "{all}.".format(param=key, all=valid_params))
+                )
+            elif self.request.params[key]:
+                self.validated_params[key] = self.request.params[key]
 
     def get_obj_by_name_or_id(self, obj_type=None):
         """
@@ -174,47 +251,21 @@ class BaseView(object):
             if getattr(self, 'model', None):
                 obj_cls = self.model
 
-
         obj_cls = getattr(tds.model, obj_type.title(), None)
         if obj_cls is None:
             raise tds.exceptions.NotFoundError('Model', [obj_type])
 
-        all_params = ('limit', 'start',) # for later: 'sort_by', 'reverse')
-        for key in self.request.params:
-            if key not in all_params:
-                self.request.errors.add(
-                    'query', key,
-                    ("Unsupported query: {param}. Valid parameters: "
-                     "{all_params}.".format(param=key, all_params=all_params))
-                )
-
-        # This might be used later but isn't currently:
-        # if 'sort_by' in self.request.params:
-        #     valid_attrs = ('id', 'name')
-        #     if self.request.params['sort_by'] not in valid_attrs:
-        #         self.request.errors.add(
-        #             'query', 'sort_by',
-        #             ("Unsupported sort attribute: {val}. Valid attributes: "
-        #              "{all_attrs}".format(
-        #                 val=self.request.params['sort_by'],
-        #                 all_attrs=valid_attrs,
-        #              ))
-        #         )
-        #     elif self.request.params['sort_by'] == 'name':
-        #         sort_by = tds.model.Project.name
-        #     else:
-        #         sort_by = tds.model.Project.id
-        # self.request.validated['projects'].order_by(sort_by)
+        self._validate_params(('limit', 'start'))
 
         if plural not in self.request.validated:
             self.request.validated[plural] = obj_cls.query().order_by(
                 obj_cls.id
             )
 
-        if 'start' in self.request.params and self.request.params['start']:
+        if 'start' in self.validated_params:
             self.request.validated[plural] = (
                 self.request.validated[plural].filter(
-                    obj_cls.id>=self.request.params['start']
+                    obj_cls.id>=self.validated_params['start']
                 )
             )
 
@@ -225,30 +276,9 @@ class BaseView(object):
                 )
             )
 
-        if 'limit' in self.request.params and self.request.params['limit']:
+        if 'limit' in self.validated_params:
             self.request.validated[plural] = (
                 self.request.validated[plural].limit(
-                    self.request.params['limit']
+                    self.validated_params['limit']
                 )
             )
-
-        # This code was designed to allow filtering on attributes.
-        # It's preserved here for ideas in case it's relevant elsewhere.
-        # names = set(self.request.params.getall('name'))
-        # proj_ids = set(self.request.params.getall('id'))
-        #
-        # if proj_ids and names:
-        #     self.request.validated['projects'] = tds.model.Project.query().filter(
-        #         tds.model.Project.id.in_(tuple(proj_ids)),
-        #         tds.model.Project.name.in_(tuple(names)),
-        #     )
-        # elif proj_ids:
-        #     self.request.validated['projects'] = tds.model.Project.query().filter(
-        #         tds.model.Project.id.in_(tuple(proj_ids)),
-        #     )
-        # elif names:
-        #     self.request.validated['projects'] = tds.model.Project.query().filter(
-        #         tds.model.Project.name.in_(tuple(names)),
-        #     )
-        # else:
-        #     self.request.validated['projects'] = tds.model.Project.all()
