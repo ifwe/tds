@@ -4,7 +4,6 @@ REST API view for applications.
 
 from cornice.resource import resource
 
-import tds.model
 from .base import BaseView, init_view
 
 
