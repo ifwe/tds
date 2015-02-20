@@ -14,7 +14,7 @@ import tagopsdb
 import tds.model
 
 
-def init_view(view_cls=None, name=None, plural=None, model=None,
+def init_view(_view_cls=None, name=None, plural=None, model=None,
               valid_attrs=None):
     """
     This is a decorator that will fill in some basic information for a class
@@ -22,9 +22,9 @@ def init_view(view_cls=None, name=None, plural=None, model=None,
     For most views, just the name will be sufficient and is always required,
     but each attribute set on the view class can be overridden by providing it
     explicitly to this decorator.
-    The view_cls is the child of BaseView below.
+    The _view_cls is the child of BaseView below.
     The attributes for directly added to the view class
-    (name -> view_cls.name).
+    (name -> _view_cls.name).
     """
 
     def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model,
@@ -118,7 +118,7 @@ class BaseView(object):
         else:
             self.get_collection_by_limit_start()
 
-    def validate_put(self, request):
+    def validate_put(self, _request):
         """
         Validate a PUT request by validating all given attributes against the
         list of valid attributes for this view's associated model.
@@ -158,11 +158,11 @@ class BaseView(object):
         """
         Update an existing package.
         """
-        for attr in self.validated_params:
+        for attr in self.request.validated_params:
             setattr(
                 self.request.validated[self.name],
                 attr,
-                self.validated_params[attr],
+                self.request.validated_params[attr],
             )
         tagopsdb.Session.commit()
         return self.make_response(self.request.validated[self.name])
@@ -178,11 +178,11 @@ class BaseView(object):
         """
         Validate all query parameters in self.request against valid_parameters
         and add a 400 error at 'query'->key if the parameter key is invalid.
-        Add validated parameters with values to self.validated_params.
+        Add validated parameters with values to self.request.validated_params.
         Ignore and drop validated parameters without values (e.g., "?q=&a=").
         """
-        if not getattr(self, 'validated_params', None):
-            self.validated_params = dict()
+        if not getattr(self.request, 'validated_params', None):
+            self.request.validated_params = dict()
         for key in self.request.params:
             if key not in valid_params:
                 self.request.errors.add(
@@ -191,7 +191,7 @@ class BaseView(object):
                     "{all}.".format(param=key, all=valid_params)
                 )
             elif self.request.params[key]:
-                self.validated_params[key] = self.request.params[key]
+                self.request.validated_params[key] = self.request.params[key]
 
     def get_obj_by_name_or_id(self, obj_type=None):
         """
@@ -263,10 +263,10 @@ class BaseView(object):
                 obj_cls.id
             )
 
-        if 'start' in self.validated_params:
+        if 'start' in self.request.validated_params:
             self.request.validated[plural] = (
                 self.request.validated[plural].filter(
-                    obj_cls.id >= self.validated_params['start']
+                    obj_cls.id >= self.request.validated_params['start']
                 )
             )
 
@@ -277,9 +277,9 @@ class BaseView(object):
                 )
             )
 
-        if 'limit' in self.validated_params:
+        if 'limit' in self.request.validated_params:
             self.request.validated[plural] = (
                 self.request.validated[plural].limit(
-                    self.validated_params['limit']
+                    self.request.validated_params['limit']
                 )
             )
