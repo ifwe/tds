@@ -48,10 +48,10 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
         cls.model = obj_model
 
         if obj_attrs is None:
-            obj_attrs = filter(
-                lambda attr: not attr.startswith('_'),
-                cls.model.delegate.__dict__.keys()
-            )
+            obj_attrs = [
+                attr for attr in cls.model.delegate.__dict__.keys()
+                if not attr.startswith('_')
+            ]
         cls.valid_attrs = obj_attrs
 
         return cls
@@ -176,8 +176,8 @@ class BaseView(object):
 
     def _validate_params(self, valid_params):
         """
-        Validate all query parameters in self.request against valid_parameters
-        and add a 400 error at 'query'->key if the parameter key is invalid.
+        Validate all query parameters in self.request against valid_param and
+        add a 400 error at 'query'->key if the parameter key is invalid.
         Add validated parameters with values to self.request.validated_params.
         Ignore and drop validated parameters without values (e.g., "?q=&a=").
         """
