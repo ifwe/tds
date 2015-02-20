@@ -22,10 +22,11 @@ class PackageView(BaseView):
 
     def get_pkg_by_version_revision(self):
         """
-        Validate that the package with the version, revision, and application in
-        the request exists. Attach it at request.validated['package'] if it does.
-        Attach an error with location='path', name='revision' and a description
-        otherwise.
+        Validate that the package with the version, revision, and application
+        in the request exists.
+        Attach it at request.validated['package'] if it does.
+        Attach an error with location='path', name='revision' and a
+        description otherwise.
         This error with return a "400 Bad Request" response to this request.
         """
         try:
@@ -50,18 +51,17 @@ class PackageView(BaseView):
                 version=self.request.matchdict['version'],
                 revision=self.request.matchdict['revision'],
             )
-        except KeyError: # No request.validated['application'] entry
+        except KeyError:    # No request.validated['application'] entry
             raise tds.exceptions.TDSException(
                 "No validated application when trying to locate package."
             )
         if pkg is None:
             self.request.errors.add(
                 'path', 'revision',
-                ("Package with version {v} and revision {r} does"
-                 " not exist for this application.".format(
+                "Package with version {v} and revision {r} does"
+                " not exist for this application.".format(
                     v=version,
                     r=revision,
-                 )
                 )
             )
             self.request.errors.status = 404
@@ -76,11 +76,11 @@ class PackageView(BaseView):
         """
         try:
             pkgs = tds.model.Package.query().filter(
-                tds.model.Package.application==self.request.validated[
+                tds.model.Package.application == self.request.validated[
                     'application'
                 ],
             ).order_by(tds.model.Package.id)
-        except KeyError: # No request.validated['application'] entry
+        except KeyError:    # No request.validated['application'] entry
             raise tds.exceptions.TDSException(
                 "No validated application when trying to locate package."
             )

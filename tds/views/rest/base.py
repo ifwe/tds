@@ -14,7 +14,7 @@ import tagopsdb
 import tds.model
 
 
-def init_view(view=None, name=None, plural=None, model=None,
+def init_view(view_cls=None, name=None, plural=None, model=None,
               valid_attrs=None):
     """
     This is a decorator that will fill in some basic information for a class
@@ -22,8 +22,9 @@ def init_view(view=None, name=None, plural=None, model=None,
     For most views, just the name will be sufficient and is always required,
     but each attribute set on the view class can be overridden by providing it
     explicitly to this decorator.
-    The view is the child of BaseView below.
-    The attributes for directly added to the view (name -> view.name).
+    The view_cls is the child of BaseView below.
+    The attributes for directly added to the view class
+    (name -> view_cls.name).
     """
 
     def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model,
@@ -186,8 +187,8 @@ class BaseView(object):
             if key not in valid_params:
                 self.request.errors.add(
                     'query', key,
-                    ("Unsupported query: {param}. Valid parameters: "
-                     "{all}.".format(param=key, all=valid_params))
+                    "Unsupported query: {param}. Valid parameters: "
+                    "{all}.".format(param=key, all=valid_params)
                 )
             elif self.request.params[key]:
                 self.validated_params[key] = self.request.params[key]
@@ -265,14 +266,14 @@ class BaseView(object):
         if 'start' in self.validated_params:
             self.request.validated[plural] = (
                 self.request.validated[plural].filter(
-                    obj_cls.id>=self.validated_params['start']
+                    obj_cls.id >= self.validated_params['start']
                 )
             )
 
         if obj_cls == tds.model.Application:
             self.request.validated[plural] = (
                 self.request.validated[plural].filter(
-                    obj_cls.pkg_name!='__dummy__'
+                    obj_cls.pkg_name != '__dummy__'
                 )
             )
 
