@@ -12,6 +12,9 @@ from ..json_encoder import TDSEncoder
 import tagopsdb
 
 import tds.model
+import tds.exceptions
+
+from .validators import ValidatedView
 
 
 def init_view(_view_cls=None, name=None, plural=None, model=None,
@@ -30,7 +33,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
     def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model,
                        obj_attrs=valid_attrs):
         if not obj_name:
-            raise AttributeError(
+            raise tds.exceptions.ProgrammingError(
                 "No name provided for decorator."
             )
         cls.name = obj_name
@@ -42,7 +45,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
         if obj_model is None:
             obj_model = getattr(tds.model, cls.name.title(), None)
         if obj_model is None:
-            raise AttributeError(
+            raise tds.exceptions.ProgrammingError(
                 "No model named {name}.".format(name=cls.name.title())
             )
         cls.model = obj_model
@@ -58,21 +61,22 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
     return real_decorator
 
 
-class BaseView(object):
+class BaseView(ValidatedView):
     """
-    This class manages & enforces permission and does basic initialization of
-    views. It also handles validation for certain things.
+    This class manages & enforces permission, does basic view initialization.
+    It also handles validation for requests and parameters in requests.
     """
 
     #TODO: Add permissions system
 
-    def __init__(self, request):
+    def __init__(self, request, *args, **kwargs):
         """
         Set params for this request.
         See method corresponding the HTTP method below for details on expected
         parameters.
         """
         self.request = request
+        super(BaseView, self).__init__(*args, **kwargs)
 
     @staticmethod
     def make_response(body, status="200 OK", renderer="json"):
@@ -173,25 +177,6 @@ class BaseView(object):
         """
         #TODO Implement this
         return self.make_response(self.request.validated[self.plural])
-
-    def _validate_params(self, valid_params):
-        """
-        Validate all query parameters in self.request against valid_param and
-        add a 400 error at 'query'->key if the parameter key is invalid.
-        Add validated parameters with values to self.request.validated_params.
-        Ignore and drop validated parameters without values (e.g., "?q=&a=").
-        """
-        if not getattr(self.request, 'validated_params', None):
-            self.request.validated_params = dict()
-        for key in self.request.params:
-            if key not in valid_params:
-                self.request.errors.add(
-                    'query', key,
-                    "Unsupported query: {param}. Valid parameters: "
-                    "{all}.".format(param=key, all=valid_params)
-                )
-            elif self.request.params[key]:
-                self.request.validated_params[key] = self.request.params[key]
 
     def get_obj_by_name_or_id(self, obj_type=None):
         """

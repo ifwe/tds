@@ -131,3 +131,22 @@ class WrongProjectTypeError(TDSException):
     """Exception for command attempts with incorrect project type"""
 
     pass
+
+
+class ProgrammingError(TDSException):
+    """
+    Exception for when the application has been programmed incorrectly by the
+    developer(s). Usually, this occurs when bindings between layers of TDS are
+    broken or misused, such as misuse of decorators or constructors.
+    """
+
+    pass
+
+
+class IllegalStateError(TDSException):
+    """
+    Exception raised when the program is in a state that it should not reach.
+    For example, when validation is attempted on data that does not exist.
+    """
+
+    pass
