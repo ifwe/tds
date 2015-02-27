@@ -32,6 +32,9 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
 
     def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model,
                        obj_attrs=valid_attrs):
+        """
+        Do the usual function-in-function decorator thing.
+        """
         if not obj_name:
             raise tds.exceptions.ProgrammingError(
                 "No name provided for decorator."
@@ -128,6 +131,7 @@ class BaseView(ValidatedView):
         list of valid attributes for this view's associated model.
         """
         self._validate_params(self.valid_attrs)
+        self._validate_model_params()
 
     @view(validators=('validate_individual',))
     def get(self):

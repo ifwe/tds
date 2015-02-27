@@ -22,6 +22,7 @@ class ValidatedView(object):
         """
         if not getattr(self.request, 'validated_params', None):
             self.request.validated_params = dict()
+
         for key in self.request.params:
             if key not in valid_params:
                 self.request.errors.add(
@@ -42,39 +43,52 @@ class ValidatedView(object):
             raise tds.exceptions.IllegalStateError(
                 "No validated parameters in request."
             )
-        #TODO: finish this.
 
-    def _validate_id(self):
-        """
-        Validate that it is okay to add an object with the given ID to the
-        database for this view's model.
-        If it is, return True. Return False otherwise.
-        """
-        given_id = self.request.validated_params['id']
-        found = self.model.get(self.model.id == given_id)
-        if not found:
-            return True
-        elif self.name in self.request.validated and \
-                found == self.request.validated[self.name]:
-            return True
-        return False
+        self.validation_failures = dict()
 
-    def _validate_unique_string(self, param_name):
+        for param in self.request.validated_params:
+            if not param in self.validators:
+                continue
+            validator_name = self.validators[param]
+            validator = getattr(self, validator_name, None)
+            if not validator:
+                raise tds.exceptions.ProgrammingError(
+                    "No validator found: {v}.".format(v=validator_name)
+                )
+
+            failure = validator(param)
+            if failure:
+                self.request.errors.add(
+                    'query', param, "Validation failed"
+                )
+
+        for index, tup in enumerate(getattr(self, 'unique_together', list())):
+            failure = self._validate_unique_together(tup)
+            if failure:
+                self.request.errors.add(
+                    'query', self.unique_together[index][0],
+                    "Unique together constraint broken: "
+                    "{all}.".format(
+                        all=self.unique_together[index]
+                    )
+                )
+
+    def _validate_unique(self, param_name):
         """
-        Validate that it is okay to add an object with the given unique string
+        Validate that it is okay to add an object with the given unique attr
         to the database for this view's model.
-        If it is, return True. Return False otherwise.
+        If it is, return False. Return a descriptive message otherwise.
         """
-        given_string = self.request.validated_params[param_name]
-        found = self.model.get(
-            getattr(self.model, param_name) == given_string
+        given = self.request.validated_params[param_name]
+        found = self.model.find(
+            getattr(self.model, param_name) == given
         )
         if not found:
-            return True
+            return False
         elif self.name in self.request.validated and \
-                found == self.request.validated[self.name]:
-            return True
-        return False
+                found.one() == self.request.validated[self.name]:
+            return False
+        return "Unique constraint broken: {param}.".format(param=param_name)
 
     def _validate_fqdn(self, param_name):
         """
@@ -84,7 +98,7 @@ class ValidatedView(object):
         pass
         #TODO: implement this.
 
-    def _validate_unique_together(self, params_names):
+    def _validate_unique_together(self, param_names):
         """
         Validate that it is okay to add an object with the given param values
         which should be unique together in the database.
@@ -97,8 +111,10 @@ class ValidatedView(object):
             )
         found = query.one()
         if not found:
-            return True
+            return False
         elif self.name in self.request.validated and \
                 found == self.request.validated[self.name]:
-            return True
-        return False
+            return False
+        return "Unique constraint broken: {params}.".format(
+            params=param_names
+        )

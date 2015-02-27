@@ -20,6 +20,14 @@ class PackageView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
+    validators = {
+        'id': '_validate_unique',
+    }
+
+    unique_together = [
+        ('name', 'version', 'revision'),
+    ]
+
     def get_pkg_by_version_revision(self):
         """
         Validate that the package with the version, revision, and application
