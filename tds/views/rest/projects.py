@@ -18,4 +18,7 @@ class ProjectView(BaseView):
     correspond to the /projects/{name_or_id} URL.
     """
 
-    pass
+    validators = {
+        'id': '_validate_unique',
+        'name': '_validate_unique',
+    }
