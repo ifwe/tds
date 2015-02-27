@@ -121,7 +121,8 @@ APPLICATION_DATA = odict([
                           ' For admins: name=myapp '
                           'job_name=jenkins_job deploy_type=rpm arch=noarch '
                           'build_type=jenkins build_host=ci.tagged.com')),
-                ('nargs', '*')
+                ('metavar', 'PROPERTY'),
+                ('nargs', '*'),
             ])),
         ])),
     ])),

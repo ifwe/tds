@@ -60,6 +60,8 @@ def load_requirements(fname):
             req = '>='.join(req.rsplit('=')[-1].split('-', 3)[:2])
         if any(req.startswith(bl) for bl in REQ_BLACKLIST):
             continue
+        if req.startswith('--'):
+            continue
         requirements.append(req)
 
     return requirements
