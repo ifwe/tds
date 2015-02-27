@@ -358,6 +358,7 @@ class BaseController(object):
                 host_targets = [
                     host_target for host_target in all_host_targets
                     if host_target.host_deployments
+                    and host_target.environment == environment.environment
                 ]
 
             for host_target in host_targets:
