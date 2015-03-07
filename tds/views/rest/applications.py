@@ -18,8 +18,12 @@ class ApplicationView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
-    validators = {
-        'id': '_validate_unique',
-        'name': '_validate_unique',
-        'build_host': '_validate_fqdn',
+    types = {
+        'id': 'number',
+        'name': 'string',
+        'job_name': 'string',
+        'build_host': 'string',
+        'build_type': 'string',
+        'deploy_type': 'string',
+        'arch': 'string',
     }
