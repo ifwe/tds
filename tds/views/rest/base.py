@@ -26,7 +26,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
     but each attribute set on the view class can be overridden by providing it
     explicitly to this decorator.
     The _view_cls is the child of BaseView below.
-    The attributes for directly added to the view class
+    The attributes are directly added to the view class
     (name -> _view_cls.name).
     """
 
@@ -101,8 +101,8 @@ class BaseView(ValidatedView):
 
     def validate_individual(self, request):
         """
-        Validate that the project with given name exists and attach
-        the project to the request at request.validated['project'].
+        Validate that the resource with the given identifiers exists and
+        attach it to the request at request.validated[name].
         This validator can raise a "400 Bad Request" error.
         """
         if self.name == 'package':
@@ -114,9 +114,9 @@ class BaseView(ValidatedView):
 
     def validate_collection_get(self, request):
         """
-        Make sure that the selection parameters are valid for projects.
+        Make sure that the selection parameters are valid for resource type.
         If they are not, raise "400 Bad Request".
-        Else, set request.validated['projects'] to projects matching query.
+        Else, set request.validated[name] to resource matching query.
         """
         if self.name == 'package':
             self.get_obj_by_name_or_id('application')
@@ -136,14 +136,14 @@ class BaseView(ValidatedView):
     @view(validators=('validate_individual',))
     def get(self):
         """
-        Return an individual package.
+        Return an individual resource.
         """
         return self.make_response(self.request.validated[self.name])
 
     @view(validators=('validate_collection_get',))
     def collection_get(self):
         """
-        Return a list of matching packages for the query in the request.
+        Return a list of matching resources for the query in the request.
         Request parameters:
             Request should either be empty (match all packages for the given
             application) or contain a 'limit' and 'start' parameters for
@@ -156,7 +156,7 @@ class BaseView(ValidatedView):
     @view(validators=('validate_individual',))
     def delete(self):
         """
-        Delete an individual package.
+        Delete an individual resource.
         """
         #TODO Implement the delete part.
         return self.make_response(self.request.validated[self.name])
@@ -164,7 +164,7 @@ class BaseView(ValidatedView):
     @view(validators=('validate_individual', 'validate_put'))
     def put(self):
         """
-        Update an existing package.
+        Update an existing resource.
         """
         for attr in self.request.validated_params:
             setattr(
@@ -177,7 +177,7 @@ class BaseView(ValidatedView):
 
     def collection_post(self):
         """
-        Create a new package.
+        Create a new resource.
         """
         #TODO Implement this
         return self.make_response(self.request.validated[self.plural])
