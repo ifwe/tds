@@ -63,7 +63,8 @@ class UpdateDeployRepoDaemon(Daemon):
 
         log.info("Stopped.")
 
-    def create_zoo(self, zoo_config):
+    @staticmethod
+    def create_zoo(zoo_config):
         hostname = socket.gethostname()
 
         zoo = KazooClient('hosts=%s' % ','.join(zoo_config))
