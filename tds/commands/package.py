@@ -10,6 +10,7 @@ try:
     from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
 except ImportError:
     from jenkinsapi.exceptions import JenkinsAPIException, NotFound
+import requests.exceptions
 
 import tagopsdb
 import tagopsdb.exceptions
@@ -46,7 +47,8 @@ class PackageController(BaseController):
         'delete': 'environment',
     }
 
-    def wait_for_state_change(self, package):
+    @staticmethod
+    def wait_for_state_change(package):
         """Check for state change for package in database"""
 
         while True:
@@ -85,7 +87,7 @@ class PackageController(BaseController):
             )
 
         matrix_name = None
-        #assume matrix build
+        # Assume matrix build
         if '/' in job_name:
             job_name, matrix_name = job_name.split('/', 1)
 
@@ -130,21 +132,6 @@ class PackageController(BaseController):
                     matrix_name, job_name
                 )
 
-        try:
-            artifacts = build.get_artifact_dict()[rpm_name]
-            data = artifacts.get_data()
-        except (
-            KeyError,
-            JenkinsAPIException,
-            NotFound
-        ):
-            raise tds.exceptions.JenkinsJobNotFoundError(
-                'Artifact',
-                job_name,
-                package.version,
-                self.jenkins_url,
-            )
-
         tmpname = os.path.join(
             os.path.dirname(os.path.dirname(queued_rpm)), 'tmp', rpm_name
         )
@@ -154,14 +141,60 @@ class PackageController(BaseController):
             if not os.path.isdir(tmpdir):
                 os.makedirs(tmpdir)
 
-        with open(tmpname, 'wb') as tmp_rpm:
-            tmp_rpm.write(data)
+        # Re-try download of file if needed
+        for attempt in range(3):
+            try:
+                artifact = build.get_artifact_dict()[rpm_name]
+                data = artifact.get_data()
+            except (
+                KeyError,
+                JenkinsAPIException,
+                NotFound
+            ):
+                raise tds.exceptions.JenkinsJobNotFoundError(
+                    'Artifact',
+                    job_name,
+                    package.version,
+                    self.jenkins_url,
+                )
+
+            with open(tmpname, 'wb') as tmp_rpm:
+                tmp_rpm.write(data)
+                tmp_rpm.flush()
+                os.fsync(tmp_rpm.fileno())
+
+            # The jenkinsapi module will throw an HTTPError if
+            # fingerprinting is not enabled; allow this for now
+            # and warn user
+            try:
+                if not artifact._verify_download(tmpname):
+                    continue
+            except requests.exceptions.HTTPError:
+                log.info(
+                    "WARNING: Fingerprinting is not enabled, your RPM "
+                    "will not be validated first.  Please see:\n"
+                    "https://wiki.ifwe.co/display/siteops/Enabling+"
+                    "fingerprinting+for+archived+files+in+Jenkins\n"
+                    "for information on how to enable it."
+                )
+                break
+
+            break
+        else:
+            raise tds.exceptions.JenkinsJobTransferError(
+                'Artifact',
+                job_name,
+                package.version,
+                self.jenkins_url,
+            )
 
         os.link(tmpname, queued_rpm)
         os.unlink(tmpname)
 
     @validate('application')
-    def add(self, application, version, user, job=None, force=False, **params):
+    def add(
+        self, application, version, user, job=None, force=False, **params
+    ):
         """Add a given version of a package for a given project"""
 
         if force:
@@ -240,7 +273,9 @@ class PackageController(BaseController):
                 try:
                     os.unlink(pending_rpm)
                 except OSError as exc:
-                    log.error('Unable to remove file %s: %s', pending_rpm, exc)
+                    log.error(
+                        'Unable to remove file %s: %s', pending_rpm, exc
+                    )
 
                 raise tds.exceptions.InvalidRPMError(
                     'Package %s is an invalid RPM', rpm_name
