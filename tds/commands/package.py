@@ -1,7 +1,9 @@
 """Commands to support managing packages in the TDS system."""
 
+import hashlib
 import logging
 import os.path
+import re
 import signal
 import time
 
@@ -75,6 +77,32 @@ class PackageController(BaseController):
     @property
     def jenkins_url(self):
         return self.app_config['jenkins.url']
+
+    @staticmethod
+    def _verify_download(artifact, tmpname):
+        """Verify the download was good"""
+
+        re_md5 = re.compile('([0-9a-z]{32})')
+
+        try:
+            req = requests.get(artifact.url + '/*fingerprint*/')
+        except requests.exceptions.HTTPError:
+            raise tds.exceptions.NotFoundError(
+                'Request', artifact.url + '/*fingerprint*/'
+            )
+
+        artifact_md5 = re_md5.search(req.content).groups(1)[0]
+        md5 = hashlib.md5()
+
+        with open(tmpname) as fh:
+            md5.update(fh.read())
+
+        tmpname_md5 = md5.hexdigest()
+
+        if artifact_md5 == tmpname_md5:
+            return True
+        else:
+            return False
 
     def _queue_rpm(self, queued_rpm, rpm_name, package, job_name):
         """Move requested RPM into queue for processing"""
@@ -163,23 +191,10 @@ class PackageController(BaseController):
                 tmp_rpm.flush()
                 os.fsync(tmp_rpm.fileno())
 
-            # The jenkinsapi module will throw an HTTPError if
-            # fingerprinting is not enabled; allow this for now
-            # and warn user
-            try:
-                if not artifact._verify_download(tmpname):
-                    continue
-            except requests.exceptions.HTTPError:
-                log.info(
-                    "WARNING: Fingerprinting is not enabled, your RPM "
-                    "will not be validated first.  Please see:\n"
-                    "https://wiki.ifwe.co/display/siteops/Enabling+"
-                    "fingerprinting+for+archived+files+in+Jenkins\n"
-                    "for information on how to enable it."
-                )
+            if self._verify_download(artifact, tmpname):
                 break
-
-            break
+            else:
+                os.unlink(tmpname)
         else:
             raise tds.exceptions.JenkinsJobTransferError(
                 'Artifact',

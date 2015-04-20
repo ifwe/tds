@@ -113,6 +113,8 @@ def given_the_job_has_a_build(context, number):
         md5.update(fh.read())
     artifact_md5 = md5.hexdigest()
 
+    # Currently not used, but keeping for future possibilities
+    # Needed for when fingerprinting is turned on and used
     update_jenkins(
         context,
         'fingerprint/%s/api/python' % artifact_md5,
