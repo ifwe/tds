@@ -239,7 +239,7 @@ class PackageController(BaseController):
                 )
                 break
 
-            if fingerprint_md5 == tmpfile_md5:
+            if fingerprint_md5.lower() == tmpfile_md5.lower():
                 break
         else:
             raise tds.exceptions.JenkinsJobTransferError(
