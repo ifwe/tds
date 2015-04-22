@@ -94,20 +94,25 @@ class PackageController(BaseController):
         for the given job (specifically for the RPM artifacts).
         """
 
+        # Grab the 'fingerprints' page for the job
         req = requests.get(os.path.join(
             self.jenkins_url, 'job', job_name,
             str(package.version), 'fingerprints', ''
         ))
 
+        # The XPath is to extract an href from a row in a table
+        # where the artifact matches the RPM file
         html = lxml.html.fromstring(req.content)
         xpath = (
             '//td[contains(.,"%s")]/../td[contains(.,"details")]/a/@href'
             % rpm_name
         )
-        fingerprint = html.xpath(xpath)
+        fingerprint_href = html.xpath(xpath)
 
-        if fingerprint:
-            return fingerprint[0].split('/')[-2]
+        # Found an href?  Get the md5 in it (last part of the path)!
+        # Otherwise let user know it's not there
+        if fingerprint_href:
+            return fingerprint_href[0].split('/')[-2]
         else:
             return None
 
