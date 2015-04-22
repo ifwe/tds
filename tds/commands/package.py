@@ -80,6 +80,13 @@ class PackageController(BaseController):
     def jenkins_url(self):
         return self.app_config['jenkins.url']
 
+    @property
+    def jenkins_direct_url(self):
+        try:
+            return self.app_config['jenkins.direct_url']
+        except KeyError:
+            return None
+
     def _get_jenkins_fingerprint_md5(self, job_name, rpm_name, package):
         """
         Acquire the Jenkins fingerprint MD5 for the given package.
@@ -184,6 +191,11 @@ class PackageController(BaseController):
                     job_name,
                     package.version,
                     self.jenkins_url,
+                )
+
+            if self.jenkins_direct_url is not None:
+                rpm_url = rpm_url.replace(
+                    self.jenkins_url, self.jenkins_direct_url
                 )
 
             req = requests.get(rpm_url)
