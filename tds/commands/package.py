@@ -3,7 +3,6 @@
 import hashlib
 import logging
 import os.path
-import re
 import signal
 import time
 
@@ -12,6 +11,9 @@ try:
     from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
 except ImportError:
     from jenkinsapi.exceptions import JenkinsAPIException, NotFound
+
+import lxml.html
+import requests
 import requests.exceptions
 
 import tagopsdb
@@ -78,31 +80,29 @@ class PackageController(BaseController):
     def jenkins_url(self):
         return self.app_config['jenkins.url']
 
-    @staticmethod
-    def _verify_download(artifact, tmpname):
-        """Verify the download was good"""
+    def _get_jenkins_fingerprint_md5(self, job_name, rpm_name, package):
+        """
+        Acquire the Jenkins fingerprint MD5 for the given package.
+        This may return 'None' if fingerprinting has not been enabled
+        for the given job (specifically for the RPM artifacts).
+        """
 
-        re_md5 = re.compile('([0-9a-z]{32})')
+        req = requests.get(os.path.join(
+            self.jenkins_url, 'job', job_name,
+            str(package.version), 'fingerprints', ''
+        ))
 
-        try:
-            req = requests.get(artifact.url + '/*fingerprint*/')
-        except requests.exceptions.HTTPError:
-            raise tds.exceptions.NotFoundError(
-                'Request', artifact.url + '/*fingerprint*/'
-            )
+        html = lxml.html.fromstring(req.content)
+        xpath = (
+            '//td[contains(.,"%s")]/../td[contains(.,"details")]/a/@href'
+            % rpm_name
+        )
+        fingerprint = html.xpath(xpath)
 
-        artifact_md5 = re_md5.search(req.content).groups(1)[0]
-        md5 = hashlib.md5()
-
-        with open(tmpname) as fh:
-            md5.update(fh.read())
-
-        tmpname_md5 = md5.hexdigest()
-
-        if artifact_md5 == tmpname_md5:
-            return True
+        if fingerprint:
+            return fingerprint[0].split('/')[-2]
         else:
-            return False
+            return None
 
     def _queue_rpm(self, queued_rpm, rpm_name, package, job_name):
         """Move requested RPM into queue for processing"""
@@ -173,7 +173,7 @@ class PackageController(BaseController):
         for attempt in range(3):
             try:
                 artifact = build.get_artifact_dict()[rpm_name]
-                data = artifact.get_data()
+                rpm_url = artifact.url
             except (
                 KeyError,
                 JenkinsAPIException,
@@ -186,15 +186,44 @@ class PackageController(BaseController):
                     self.jenkins_url,
                 )
 
+            req = requests.get(rpm_url)
+
+            if req.status_code != requests.codes.ok:
+                raise tds.exceptions.JenkinsJobNotFoundError(
+                    'Artifact',
+                    job_name,
+                    package.version,
+                    self.jenkins_url,
+                )
+
+            data = req.content
+
             with open(tmpname, 'wb') as tmp_rpm:
                 tmp_rpm.write(data)
                 tmp_rpm.flush()
                 os.fsync(tmp_rpm.fileno())
 
-            if self._verify_download(artifact, tmpname):
+            md5 = hashlib.md5()
+            with open(tmpname) as fh:
+                md5.update(fh.read())
+                tmpfile_md5 = md5.hexdigest()
+
+            fingerprint_md5 = self._get_jenkins_fingerprint_md5(
+                job_name, rpm_name, package
+            )
+
+            if fingerprint_md5 is None:
+                log.info(
+                    "WARNING: Fingerprinting is not enabled, your RPM "
+                    "will not be validated first.  Please see:\n"
+                    "https://wiki.ifwe.co/display/siteops/Enabling+"
+                    "fingerprinting+for+archived+files+in+Jenkins\n"
+                    "for information on how to enable it."
+                )
                 break
-            else:
-                os.unlink(tmpname)
+
+            if fingerprint_md5 == tmpfile_md5:
+                break
         else:
             raise tds.exceptions.JenkinsJobTransferError(
                 'Artifact',
