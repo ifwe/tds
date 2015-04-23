@@ -2,13 +2,14 @@
 Updates the deploy yum repository with files in the configured directories
 """
 
-import sys
+import errno
+import logging
 import os
 import os.path
-import time
 import smtplib
 import subprocess
-import logging
+import sys
+import time
 
 from email.mime.text import MIMEText
 
@@ -80,7 +81,10 @@ class RepoUpdater(TDSProgramBase):
         try:
             os.unlink(rpm)
         except OSError as exc:
-            log.error('Unable to remove file %s: %s', rpm, exc)
+            if exc.errno == errno.ENOENT:
+                pass
+            else:
+                log.error('Unable to remove file %s: %s', rpm, exc)
 
     def notify_bad_rpm(self, rpm_path):
         try:
@@ -202,15 +206,17 @@ class RepoUpdater(TDSProgramBase):
 
             # TODO: ensure package is valid (security purposes)
 
-            dest_path = os.path.join(self.repo_dir, rpm.arch)
+            dest_file = os.path.join(self.repo_dir, rpm.arch, rpm.name)
 
             try:
-                os.link(rpm.path, dest_path)
+                self.remove_file(dest_file)
+                os.link(rpm.path, dest_file)
             except IOError:
                 time.sleep(2)   # Short delay before re-attempting
 
                 try:
-                    os.link(rpm.path, dest_path)
+                    self.remove_file(dest_file)
+                    os.link(rpm.path, dest_file)
                 except IOError:
                     package.status = 'failed'
                     self.remove_file(rpm.path)
