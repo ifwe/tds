@@ -249,6 +249,21 @@ class PackageController(BaseController):
                 self.jenkins_url,
             )
 
+        if utils.rpm.RPMDescriptor.from_path(tmpname) is None:
+            package.status = 'failed'
+            tagopsdb.Session.commit()
+
+            try:
+                os.unlink(tmpname)
+            except OSError as exc:
+                log.error(
+                    'Unable to remove file %s: %s', tmpname, exc
+                )
+
+            raise tds.exceptions.InvalidRPMError(
+                'Package %s is an invalid RPM', rpm_name
+            )
+
         os.link(tmpname, queued_rpm)
         os.unlink(tmpname)
 
@@ -319,28 +334,12 @@ class PackageController(BaseController):
         if job is None:
             job = application.path
 
-        def fail_package():
-            package.status = 'failed'
-            tagopsdb.Session.commit()
-
         try:
             self._queue_rpm(pending_rpm, rpm_name, package, job)
         except:
-            fail_package()
+            package.status = 'failed'
+            tagopsdb.Session.commit()
             raise
-        else:
-            if utils.rpm.RPMDescriptor.from_path(pending_rpm) is None:
-                fail_package()
-                try:
-                    os.unlink(pending_rpm)
-                except OSError as exc:
-                    log.error(
-                        'Unable to remove file %s: %s', pending_rpm, exc
-                    )
-
-                raise tds.exceptions.InvalidRPMError(
-                    'Package %s is an invalid RPM', rpm_name
-                )
 
         # Wait until status has been updated to 'failed' or 'completed',
         # or timeout occurs (meaning repository side failed, check logs there)
