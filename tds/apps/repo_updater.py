@@ -206,7 +206,7 @@ class RepoUpdater(TDSProgramBase):
 
             # TODO: ensure package is valid (security purposes)
 
-            dest_file = os.path.join(self.repo_dir, rpm.arch, rpm.name)
+            dest_file = os.path.join(self.repo_dir, rpm.arch, rpm.filename)
 
             try:
                 self.remove_file(dest_file)
