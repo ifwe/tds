@@ -78,7 +78,7 @@ def setup_workspace(context):
         opj(context.REPO_DIR, 'incoming'),
         opj(context.REPO_DIR, 'processing'),
         opj(context.REPO_DIR, 'tmp'),
-        opj(context.REPO_DIR, 'deploy')
+        opj(context.REPO_DIR, 'deploy', 'noarch')
     ):
         if not os.path.isdir(d):
             os.makedirs(d)
