@@ -22,3 +22,5 @@ class ProjectView(BaseView):
         'id': 'number',
         'name': 'string',
     }
+
+    required_post_fields = ('name',)

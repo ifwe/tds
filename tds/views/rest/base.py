@@ -78,6 +78,8 @@ class BaseView(ValidatedView):
             self.required_post_fields = tuple()
         if not getattr(self, 'param_routes', None):
             self.param_routes = {}
+        if not getattr(self, 'defaults', None):
+            self.defaults = {}
         super(BaseView, self).__init__(*args, **kwargs)
 
     @staticmethod
