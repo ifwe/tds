@@ -39,3 +39,59 @@ class ApplicationView(BaseView):
         'name': 'pkg_name',
         'job': 'path',
     }
+
+    defaults = {
+        'arch': 'noarch',
+        'build_type': 'jenkins',
+        'build_host': 'build_host',
+        'deploy_type': 'rpm',
+        'validation_type': 'matching',
+    }
+
+    required_post_fields = ("name", "job")
+
+    def validate_app_post(self, _request):
+        """
+        Validate a POST request by preventing collisions over unique fields
+        and verifying that arch and build_type are acceptable.
+        """
+        if 'id' in self.request.validated_params:
+            found_app = self.model.get(id=self.request.validated_params['id'])
+            if found_app:
+                self.request.errors.add(
+                    'query', 'id',
+                    "Unique constraint violated. An application with this ID"
+                    " already exists."
+                )
+                self.request.errors.status = 409
+        if 'name' in self.request.validated_params:
+            found_app = self.model.get(
+                pkg_name=self.request.validated_params['name']
+            )
+            if found_app:
+                self.request.errors.add(
+                    'query', 'name',
+                    "Unique constraint violated. An application with this name"
+                    " already exists."
+                )
+                self.request.errors.status = 409
+        self.model.verify_arch(self.request.validated_params['arch'])
+        self.model.verify_build_type(
+            self.request.validated_params['build_type']
+        )
+
+    @view(validators=('validate_put_post', 'validate_post_required',
+                      'validate_app_post'))
+    def collection_post(self):
+        """
+        Handle a POST request after the parameters are marked valid JSON.
+        """
+        for attr in self.param_routes:
+            self.request.validated_params[self.param_routes[attr]] = \
+                self.request.validated_params[attr]
+            del self.request.validated_params[attr]
+        self.request.validated[self.name] = self.model.create(
+            **self.request.validated_params
+        )
+        return self.make_response(self.request.validated[self.name],
+                                  "201 Created")

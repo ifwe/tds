@@ -80,6 +80,7 @@ class JSONValidatedView(object):
             self.request.validated_params[param_name] = given in ('1', 'true',
                                                                   'True')
             return False
+        print "given:", given
         return (
             "Value {val} for argument {param} is not a Boolean. Valid Boolean"
             " formats: (0, 1, 'true', 'false', 'True', 'False').".format(
