@@ -98,40 +98,6 @@ class BaseView(ValidatedView):
                 )
             )
 
-    def validate_individual(self, request):
-        """
-        Validate that the resource with the given identifiers exists and
-        attach it to the request at request.validated[name].
-        This validator can raise a "400 Bad Request" error.
-        """
-        if self.name == 'package':
-            self.get_obj_by_name_or_id('application')
-            if 'application' in request.validated:
-                self.get_pkg_by_version_revision()
-        else:
-            self.get_obj_by_name_or_id()
-
-    def validate_collection_get(self, request):
-        """
-        Make sure that the selection parameters are valid for resource type.
-        If they are not, raise "400 Bad Request".
-        Else, set request.validated[name] to resource matching query.
-        """
-        if self.name == 'package':
-            self.get_obj_by_name_or_id('application')
-            if 'application' in request.validated:
-                self.get_pkgs_by_limit_start()
-        else:
-            self.get_collection_by_limit_start()
-
-    def validate_put_post(self, _request):
-        """
-        Validate a PUT or POST request by validating all given attributes
-        against the list of valid attributes for this view's associated model.
-        """
-        self._validate_params(self.valid_attrs)
-        self._validate_model_params()
-
     @view(validators=('validate_individual',))
     def get(self):
         """
@@ -151,51 +117,6 @@ class BaseView(ValidatedView):
             "200 OK" if valid request successfully processed
         """
         return self.make_response(self.request.validated[self.plural])
-
-    def validate_obj_put(self, _request):
-        """
-        Validate a PUT request by preventing collisions over unique fields.
-        """
-        if self.name in ('application', 'project'):
-            self.validate_app_proj_put()
-        elif self.name == 'package':
-            self.validate_pkg_put()
-        else:
-            raise NotImplementedError(
-                'A collision validator for this view has not bee implemented.'
-            )
-
-    def validate_put_id(self):
-        """
-        Validate that the ID unique constraint isn't violated by a PUT request.
-        """
-        if 'id' in self.request.validated_params:
-            found_obj = self.model.get(id=self.request.validated_params['id'])
-            if found_obj and found_obj != self.request.validated[self.name]:
-                self.request.errors.add(
-                    'query', 'id',
-                    "Unique constraint violated. Another {type} with this"
-                    " ID already exists.".format(type=self.name)
-                )
-                self.request.errors.status = 409
-
-    def validate_app_proj_put(self):
-        """
-        Validate a PUT request by preventing collisions over unique fields for
-        applications and projects.
-        """
-        self.validate_put_id()
-        if 'name' in self.request.validated_params:
-            found_obj = self.model.get(
-                name=self.request.validated_params['name']
-            )
-            if found_obj and found_obj != self.request.validated[self.name]:
-                self.request.errors.add(
-                    'query', 'name',
-                    "Unique constraint violated. Another {type} with this"
-                    " name already exists.".format(type=self.name)
-                )
-                self.request.errors.status = 409
 
     @view(validators=('validate_individual', 'validate_put_post',
                       'validate_obj_put'))
