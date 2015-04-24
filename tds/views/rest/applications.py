@@ -37,5 +37,5 @@ class ApplicationView(BaseView):
     # Params not included are mapped to themselves.
     param_routes = {
         'name': 'pkg_name',
-        'job': 'job_name',
+        'job': 'path',
     }

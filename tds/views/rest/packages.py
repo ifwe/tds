@@ -101,7 +101,7 @@ class PackageView(BaseView):
         Validate a PUT request by preventing collisions over unique fields for
         packages.
         """
-        self.validate_put_id()
+        self._validate_put_id()
         if 'version' in self.request.validated_params or 'revision' in \
                 self.request.validated_params:
             found_pkg = self.model.get(

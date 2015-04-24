@@ -83,8 +83,9 @@ URLs and methods for deploying have yet to be determined.
         <td>
             <b>201</b>: Application created. Return application JSON.<br />
             <b>400</b>: Bad request.<br />
-            <b>403</b>: Forbidden. Unique constraint violated or lack of
-                permissions. Check errors in response for specifics.<br />
+            <b>403</b>: Forbidden. Lack of permissions.<br />
+            <b>409</b>: Conflict. Unique constraint violated. Check errors in
+                response for specifics.<br />
         </td>
     </tr>
     <tr>
