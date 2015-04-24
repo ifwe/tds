@@ -10,7 +10,7 @@ import tds.exceptions
 
 class ValidatedView(object):
     """
-    This class implements validators for parameters given in requests.
+    This class implements JSON validators for parameters given in requests.
     """
 
     def _validate_params(self, valid_params):
@@ -30,6 +30,7 @@ class ValidatedView(object):
                     "Unsupported query: {param}. Valid parameters: "
                     "{all}.".format(param=key, all=valid_params)
                 )
+                self.request.errors.status = 422
             elif self.request.params[key]:
                 self.request.validated_params[key] = self.request.params[key]
 
@@ -53,11 +54,11 @@ class ValidatedView(object):
                     )
                 )
 
-            failure = validator(param)
-            if failure:
+            message = validator(param)
+            if message:
                 self.request.errors.add(
                     'query', param, "Validation failed: {msg}".format(
-                        msg=failure
+                        msg=message
                     )
                 )
 

@@ -103,7 +103,7 @@ Feature: GET project(s) from the REST API
             | proj4 |
             | proj5 |
         When I query GET "/projects?<query>"
-        Then the response code is 400
+        Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                   |
             | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |

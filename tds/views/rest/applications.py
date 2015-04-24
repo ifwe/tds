@@ -2,7 +2,9 @@
 REST API view for applications.
 """
 
-from cornice.resource import resource
+from cornice.resource import resource, view
+
+import tagopsdb
 
 from .base import BaseView, init_view
 
@@ -18,12 +20,22 @@ class ApplicationView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
+    # JSON types for params.
     types = {
         'id': 'number',
         'name': 'string',
-        'job_name': 'string',
+        'job': 'string',
         'build_host': 'string',
         'build_type': 'string',
         'deploy_type': 'string',
         'arch': 'string',
+        'validation_type': 'string',
+        'env_specific': 'boolean',
+    }
+
+    # URL parameter routes to Python object fields.
+    # Params not included are mapped to themselves.
+    param_routes = {
+        'name': 'pkg_name',
+        'job': 'job_name',
     }

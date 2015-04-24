@@ -22,13 +22,10 @@ class PackageView(BaseView):
 
     types = {
         'id': 'number',
-        'name': 'string',
         'version': 'number',
         'revision': 'number',
         'status': 'string',
         'builder': 'string',
-        'created': 'timestamp',
-        'application': 'number',
     }
 
     def get_pkg_by_version_revision(self):
@@ -98,3 +95,31 @@ class PackageView(BaseView):
         else:
             self.request.validated['packages'] = pkgs
         self.get_collection_by_limit_start()
+
+    def validate_pkg_put(self):
+        """
+        Validate a PUT request by preventing collisions over unique fields for
+        packages.
+        """
+        self.validate_put_id()
+        if 'version' in self.request.validated_params or 'revision' in \
+                self.request.validated_params:
+            found_pkg = self.model.get(
+                application=self.request.validated['application'],
+                version=self.request.validated_params['version'] if 'version'
+                    in self.request.validated_params else
+                    self.request.validated[self.name].version,
+                revision=self.request.validated_params['revision'] if
+                    'revision' in self.request.validated_params else
+                    self.request.validated[self.name].revision,
+            )
+            if found_pkg and found_pkg != self.request.validated[self.name]:
+                self.request.errors.add(
+                    'query',
+                    'version' if 'version' in self.request.validated_params
+                        else 'revision',
+                    "Unique constraint violated. Another package for this"
+                    " application with this version and revision already"
+                    " exists."
+                )
+                self.request.errors.status = 409
