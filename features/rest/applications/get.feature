@@ -103,7 +103,7 @@ Feature: GET application(s) from the REST API
             | app4  |
             | app5  |
         When I query GET "/applications?<query>"
-        Then the response code is 400
+        Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                   |
             | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |

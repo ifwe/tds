@@ -47,10 +47,10 @@ Feature: Update (PUT) package on REST API
     @rest
     Scenario Outline: pass an invalid parameter
         When I query PUT "/applications/<select>/packages/2/3?<query>"
-        Then the response code is 400
+        Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                                                                                               |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'creator', 'project_type', 'pkg_def_id', 'package_definition', 'id', 'name', 'created', 'builder', 'deployments', 'application', 'version', 'pkg_name', 'revision']. |
+            | location  | name  | description                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'builder', 'version', 'id', 'revision']. |
         And there is a package with version=2,revision=3
 
         Examples:
@@ -73,3 +73,19 @@ Feature: Update (PUT) package on REST API
             | select    |
             | app2      |
             | 3         |
+
+    @rest
+    Scenario Outline: attemp to violate a unique constraint
+        When I query PUT "/applications/<select>/packages/2/3?<query>"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name      | description                                                                                                       |
+            | query     | <name>    | Unique constraint violated. Another package for this application with this version and revision already exists.   |
+        And there is a package with version=2,revision=3
+
+        Examples:
+            | select    | name      | query                 |
+            | app2      | revision  | revision=2            |
+            | 3         | revision  | revision=2            |
+            | app2      | version   | version=2&revision=2  |
+            | 3         | version   | version=2&revision=2  |

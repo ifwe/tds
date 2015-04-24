@@ -91,7 +91,7 @@ Feature: GET package(s) from the REST API
     @rest
     Scenario Outline: specify unknown query
         When I query GET "/applications/<select>/packages?<query>"
-        Then the response code is 400
+        Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                   |
             | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |

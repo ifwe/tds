@@ -70,8 +70,8 @@ URLs and methods for deploying have yet to be determined.
         <td>
             <b>200</b>: Return all matching applications. Can be empty list.
                 <br />
-            <b>400</b>: Bad request. Illegal attributes or malformed JSON most
-                likely.<br />
+            <b>422</b>: Unprocessable entity. Illegal attributes or malformed
+            JSON most likely.<br />
         </td>
     </tr>
     <tr>
@@ -81,7 +81,7 @@ URLs and methods for deploying have yet to be determined.
             See Attributes section below for details.
         </td>
         <td>
-            <b>201</b>: Application created.<br />
+            <b>201</b>: Application created. Return application JSON.<br />
             <b>400</b>: Bad request.<br />
             <b>403</b>: Forbidden. Unique constraint violated or lack of
                 permissions. Check errors in response for specifics.<br />
@@ -126,9 +126,9 @@ URLs and methods for deploying have yet to be determined.
             <b>200</b>: Application updated. Return new attributes.<br />
             <b>301</b>: Moved permanently.<br />
             <b>400</b>: Bad request.<br />
-            <b>403</b>: Forbidden. Lack of permissions or unique constraint.
-                <br />
+            <b>403</b>: Forbidden. Lack of permissions.<br />
             <b>404</b>: Not found.<br />
+            <b>409</b>: Conflict. Unique constraint violated.<br />
         </td>
     </tr>
     <tr>
@@ -143,7 +143,7 @@ URLs and methods for deploying have yet to be determined.
         </td>
         <td>
             <b>200</b>: Packages found and returned.<br />
-            <b>400</b>: Bad query.<br />
+            <b>422</b>: Bad query.<br />
             <b>404</b>: No such application found.<br />
         </td>
     </tr>
@@ -156,10 +156,11 @@ URLs and methods for deploying have yet to be determined.
             for details.
         </td>
         <td>
-            <b>201</b>: Package created.<br />
+            <b>201</b>: Package created. Return package JSON.<br />
             <b>400</b>: Bad request.<br />
-            <b>403</b>: Forbidden. Unique constraint violated or lack of
-                permissions. Check errors in response for specifics.<br />
+            <b>403</b>: Forbidden. Lack of permissions. Check errors in
+                response for specifics.<br />
+            <b>409</b>: Conflict. Unique constraint violated.<br />
         </td>
     </tr>
     <tr>
@@ -193,6 +194,7 @@ URLs and methods for deploying have yet to be determined.
             <b>400</b>: Bad request. See errors in response for specifics.
                 Most likely a bad query.<br />
             <b>404</b>: Not found.<br />
+            <b>409</b>: Conflict. Unique constraint violated.<br />
         </td>
     </tr>
 </tbody>

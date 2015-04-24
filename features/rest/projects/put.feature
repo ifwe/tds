@@ -38,10 +38,10 @@ Feature: Update (PUT) project on REST API
     @rest
     Scenario Outline: pass an invalid parameter
         When I query PUT "/projects/<select>?<query>"
-        Then the response code is 400
+        Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['package_definitions', 'applications', 'targets', 'name', 'id'].   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name'].   |
         And there is a project with name="proj2",id=2
 
         Examples:
@@ -52,3 +52,23 @@ Feature: Update (PUT) project on REST API
             | 2         | name=newname&foo=bar  |
             | proj2     | foo=bar&name=newname  |
             | 2         | foo=bar&name=newname  |
+
+    @rest
+    Scenario Outline: attempt to violate a unique constraint
+        When I query PUT "/projects/<select>?<query>"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name      | description                                                                   |
+            | query     | <name>    | Unique constraint violated. Another project with this <type> already exists.  |
+        And there is a project with name="proj1",id=1
+
+        Examples:
+            | select    | query             | name  | type  |
+            | proj1     | name=proj2        | name  | name  |
+            | 1         | name=proj2        | name  | name  |
+            | proj1     | id=2              | id    | ID    |
+            | 1         | id=2              | id    | ID    |
+            | proj1     | name=proj2&id=2   | name  | name  |
+            | proj1     | name=proj2&id=2   | id    | ID    |
+            | 1         | name=proj2&id=2   | name  | name  |
+            | 1         | name=proj2&id=2   | id    | ID    |

@@ -12,7 +12,7 @@ Feature: Update (PUT) application on REST API
 
     @rest
     Scenario Outline: update an application that doesn't exist
-        When I query PUT "/applications/<select>?pkg_name=newname"
+        When I query PUT "/applications/<select>?name=newname"
         Then the response code is 404
         And the response contains errors:
             | location  | name          | description                                   |
@@ -25,7 +25,7 @@ Feature: Update (PUT) application on REST API
 
     @rest
     Scenario Outline: update an application
-        When I query PUT "/applications/<select>?pkg_name=newname"
+        When I query PUT "/applications/<select>?name=newname"
         Then the response code is 200
         And the response is an object with pkg_name="newname",id=2
         And there is an application with pkg_name="newname",id=2
@@ -38,10 +38,10 @@ Feature: Update (PUT) application on REST API
     @rest
     Scenario Outline: pass an invalid parameter
         When I query PUT "/applications/<select>?<query>"
-        Then the response code is 400
+        Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                                                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['build_host', 'environment_specific', 'applications', 'path', 'packages', 'arch', 'build_type', 'projects', 'deploy_type', 'package_names', 'all_packages', 'name', 'created', 'validation_type', 'id', 'env_specific', 'pkg_name'].   |
+            | location  | name  | description                                                                                                                                              |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['job', 'validation_type', 'env_specific', 'name', 'build_host', 'deploy_type', 'arch', 'id', 'build_type'].   |
         And there is an application with pkg_name="app1",id=2
 
         Examples:
@@ -52,3 +52,23 @@ Feature: Update (PUT) application on REST API
             | 2         | pkg_name=newname&foo=bar  |
             | app1      | foo=bar&pkg_name=newname  |
             | 2         | foo=bar&pkg_name=newname  |
+
+    @rest
+    Scenario Outline: attempt to violate a unique constraint
+        When I query PUT "/applications/<select>?<query>"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name      | description                                                                        |
+            | query     | <name>    | Unique constraint violated. Another application with this <type> already exists.   |
+        And there is an application with pkg_name="app1",id=2
+
+        Examples:
+            | select    | query             | name  | type  |
+            | app1      | name=app2         | name  | name  |
+            | 2         | name=app2         | name  | name  |
+            | app1      | id=3              | id    | ID    |
+            | 2         | id=3              | id    | ID    |
+            | app1      | name=app2&id=3    | name  | name  |
+            | app1      | name=app2&id=3    | id    | ID    |
+            | 2         | name=app2&id=3    | name  | name  |
+            | 2         | name=app2&id=3    | id    | ID    |

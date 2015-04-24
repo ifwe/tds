@@ -17,8 +17,7 @@ import tds.exceptions
 from .validators import ValidatedView
 
 
-def init_view(_view_cls=None, name=None, plural=None, model=None,
-              valid_attrs=None):
+def init_view(_view_cls=None, name=None, plural=None, model=None):
     """
     This is a decorator that will fill in some basic information for a class
     based on the information provided.
@@ -30,8 +29,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
     (name -> _view_cls.name).
     """
 
-    def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model,
-                       obj_attrs=valid_attrs):
+    def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model):
         """
         Do the usual function-in-function decorator thing.
         """
@@ -53,13 +51,6 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
             )
         cls.model = obj_model
 
-        if obj_attrs is None:
-            obj_attrs = [
-                attr for attr in cls.model.delegate.__dict__.keys()
-                if not attr.startswith('_')
-            ]
-        cls.valid_attrs = obj_attrs
-
         return cls
     return real_decorator
 
@@ -79,6 +70,14 @@ class BaseView(ValidatedView):
         parameters.
         """
         self.request = request
+        if getattr(self, 'types', None):
+            self.valid_attrs = self.types.keys()
+        else:
+            self.valid_attrs = []
+        if not getattr(self, 'required_post_fields', None):
+            self.required_post_fields = tuple()
+        if not getattr(self, 'param_routes', None):
+            self.param_routes = {}
         super(BaseView, self).__init__(*args, **kwargs)
 
     @staticmethod
@@ -125,10 +124,10 @@ class BaseView(ValidatedView):
         else:
             self.get_collection_by_limit_start()
 
-    def validate_put(self, _request):
+    def validate_put_post(self, _request):
         """
-        Validate a PUT request by validating all given attributes against the
-        list of valid attributes for this view's associated model.
+        Validate a PUT or POST request by validating all given attributes
+        against the list of valid attributes for this view's associated model.
         """
         self._validate_params(self.valid_attrs)
         self._validate_model_params()
@@ -153,6 +152,66 @@ class BaseView(ValidatedView):
         """
         return self.make_response(self.request.validated[self.plural])
 
+    def validate_obj_put(self, _request):
+        """
+        Validate a PUT request by preventing collisions over unique fields.
+        """
+        if self.name in ('application', 'project'):
+            self.validate_app_proj_put()
+        elif self.name == 'package':
+            self.validate_pkg_put()
+        else:
+            raise NotImplementedError(
+                'A collision validator for this view has not bee implemented.'
+            )
+
+    def validate_put_id(self):
+        """
+        Validate that the ID unique constraint isn't violated by a PUT request.
+        """
+        if 'id' in self.request.validated_params:
+            found_obj = self.model.get(id=self.request.validated_params['id'])
+            if found_obj and found_obj != self.request.validated[self.name]:
+                self.request.errors.add(
+                    'query', 'id',
+                    "Unique constraint violated. Another {type} with this"
+                    " ID already exists.".format(type=self.name)
+                )
+                self.request.errors.status = 409
+
+    def validate_app_proj_put(self):
+        """
+        Validate a PUT request by preventing collisions over unique fields for
+        applications and projects.
+        """
+        self.validate_put_id()
+        if 'name' in self.request.validated_params:
+            found_obj = self.model.get(
+                name=self.request.validated_params['name']
+            )
+            if found_obj and found_obj != self.request.validated[self.name]:
+                self.request.errors.add(
+                    'query', 'name',
+                    "Unique constraint violated. Another {type} with this"
+                    " name already exists.".format(type=self.name)
+                )
+                self.request.errors.status = 409
+
+    @view(validators=('validate_individual', 'validate_put_post',
+                      'validate_obj_put'))
+    def put(self):
+        """
+        Handle a PUT request after the parameters are marked valid JSON.
+        """
+        for attr in self.request.validated_params:
+            setattr(
+                self.request.validated[self.name],
+                self.param_routes[attr] if attr in self.param_routes else attr,
+                self.request.validated_params[attr],
+            )
+        tagopsdb.Session.commit()
+        return self.make_response(self.request.validated[self.name])
+
     @view(validators=('validate_individual',))
     def delete(self):
         """
@@ -160,27 +219,6 @@ class BaseView(ValidatedView):
         """
         #TODO Implement the delete part.
         return self.make_response(self.request.validated[self.name])
-
-    @view(validators=('validate_individual', 'validate_put'))
-    def put(self):
-        """
-        Update an existing resource.
-        """
-        for attr in self.request.validated_params:
-            setattr(
-                self.request.validated[self.name],
-                attr,
-                self.request.validated_params[attr],
-            )
-        tagopsdb.Session.commit()
-        return self.make_response(self.request.validated[self.name])
-
-    def collection_post(self):
-        """
-        Create a new resource.
-        """
-        #TODO Implement this
-        return self.make_response(self.request.validated[self.plural])
 
     def get_obj_by_name_or_id(self, obj_type=None):
         """
