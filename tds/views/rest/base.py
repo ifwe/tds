@@ -100,6 +100,29 @@ class BaseView(ValidatedView):
                 )
             )
 
+    def _route_params(self):
+        """
+        Map params from their front-end names to their backend names in the
+        self.request.validated_params dictionary.
+        """
+        for attr in self.param_routes:
+            self.request.validated_params[self.param_routes[attr]] = \
+                self.request.validated_params[attr]
+            del self.request.validated_params[attr]
+
+    def _handle_collection_post(self):
+        """
+        Handle the addition and commit of the model in a POST request after
+        all validation has been completed.
+        Create and return the HTTP response.
+        """
+        self._route_params()
+        self.request.validated[self.name] = self.model.create(
+            **self.request.validated_params
+        )
+        return self.make_response(self.request.validated[self.name],
+                                  "201 Created")
+
     @view(validators=('validate_individual',))
     def get(self):
         """

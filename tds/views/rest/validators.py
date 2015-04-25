@@ -5,6 +5,8 @@ Its only intended use is as a base class for the BaseView; directly importing
 and using this view is discouraged.
 """
 
+import datetime
+
 import tds.exceptions
 
 
@@ -80,7 +82,6 @@ class JSONValidatedView(object):
             self.request.validated_params[param_name] = given in ('1', 'true',
                                                                   'True')
             return False
-        print "given:", given
         return (
             "Value {val} for argument {param} is not a Boolean. Valid Boolean"
             " formats: (0, 1, 'true', 'false', 'True', 'False').".format(
@@ -204,34 +205,66 @@ class ValidatedView(JSONValidatedView):
                 'A collision validator for this view has not bee implemented.'
             )
 
-    def _validate_put_id(self):
+    def _validate_id(self, request_type):
         """
-        Validate that the ID unique constraint isn't violated by a PUT request.
+        Validate that the ID unique constraint isn't violated for a request
+        with either POST or PUT request_type.
         """
         if 'id' in self.request.validated_params:
             found_obj = self.model.get(id=self.request.validated_params['id'])
-            if found_obj and found_obj != self.request.validated[self.name]:
+            if not found_obj:
+                return
+            elif request_type == 'POST':
+                self.request.errors.add(
+                    'query', 'id',
+                    "Unique constraint violated. A{n} {type} with this ID"
+                    " already exists.".format(
+                        n='n' if self.name[0] in ('a', 'e', 'i', 'o', 'u') else
+                            '',
+                        type=self.name
+                    )
+                )
+            elif found_obj != self.request.validated[self.name]:
                 self.request.errors.add(
                     'query', 'id',
                     "Unique constraint violated. Another {type} with this"
                     " ID already exists.".format(type=self.name)
                 )
-                self.request.errors.status = 409
+            self.request.errors.status = 409
+
+    def _validate_name(self, request_type):
+        """
+        Validate that the name unique constraint ins't violated for a request
+        with either POST or PUT request_type.
+        """
+        if 'name' in self.request.validated_params:
+            found_obj = self.model.get(
+                name=self.request.validated_params['name']
+            )
+            if not found_obj:
+                return
+            elif request_type == 'POST':
+                self.request.errors.add(
+                    'query', 'name',
+                    "Unique constraint violated. A{n} {type} with this name"
+                    " already exists.".format(
+                        n='n' if self.name[0] in ('a', 'e', 'i', 'o', 'u') else
+                            '',
+                        type=self.name
+                    )
+                )
+            elif found_obj != self.request.validated[self.name]:
+                self.request.errors.add(
+                    'query', 'name',
+                    "Unique constraint violated. Another {type} with this"
+                    " name already exists.".format(type=self.name)
+                )
+            self.request.errors.status = 409
 
     def validate_app_proj_put(self):
         """
         Validate a PUT request by preventing collisions over unique fields for
         applications and projects.
         """
-        self._validate_put_id()
-        if 'name' in self.request.validated_params:
-            found_obj = self.model.get(
-                name=self.request.validated_params['name']
-            )
-            if found_obj and found_obj != self.request.validated[self.name]:
-                self.request.errors.add(
-                    'query', 'name',
-                    "Unique constraint violated. Another {type} with this"
-                    " name already exists.".format(type=self.name)
-                )
-                self.request.errors.status = 409
+        self._validate_id("PUT")
+        self._validate_name("PUT")

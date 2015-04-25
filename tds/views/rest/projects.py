@@ -2,7 +2,7 @@
 REST API view for projects.
 """
 
-from cornice.resource import resource
+from cornice.resource import resource, view
 
 from .base import BaseView, init_view
 
@@ -24,3 +24,18 @@ class ProjectView(BaseView):
     }
 
     required_post_fields = ('name',)
+
+    def validate_proj_post(self, _request):
+        """
+        Validate a POST request by preventing collisions over name.
+        """
+        self._validate_id("POST")
+        self._validate_name("POST")
+
+    @view(validators=('validate_put_post', 'validate_post_required',
+                      'validate_proj_post'))
+    def collection_post(self):
+        """
+        Handle a POST request after the parameters are marked valid JSON.
+        """
+        return self._handle_collection_post()
