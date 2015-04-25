@@ -106,9 +106,15 @@ class BaseView(ValidatedView):
         self.request.validated_params dictionary.
         """
         for attr in self.param_routes:
-            self.request.validated_params[self.param_routes[attr]] = \
-                self.request.validated_params[attr]
-            del self.request.validated_params[attr]
+            if attr in self.request.validated_params:
+                self.request.validated_params[self.param_routes[attr]] = \
+                    self.request.validated_params[attr]
+                del self.request.validated_params[attr]
+        if self.name == 'package':
+            self.request.validated_params['application'] = \
+                self.request.validated['application']
+            self.request.validated_params['pkg_name'] = \
+                self.request.validated['application'].name
 
     def _handle_collection_post(self):
         """
@@ -165,94 +171,3 @@ class BaseView(ValidatedView):
         """
         #TODO Implement the delete part.
         return self.make_response(self.request.validated[self.name])
-
-    def get_obj_by_name_or_id(self, obj_type=None):
-        """
-        Validate that an object of type self.name with the name_or_id given in
-        the request exists and attach it to the request at
-        request.validated[obj_type].
-        Otherwise, attach an error with location='path', name='name_or_id' and
-        a description.
-        This error will return a "400 Bad Request" response to this request.
-        """
-        if not obj_type:
-            obj_type = self.name
-            if getattr(self, 'model', None):
-                obj_cls = self.model
-        else:
-            obj_cls = getattr(tds.model, obj_type.title(), None)
-            if obj_cls is None:
-                raise tds.exceptions.NotFoundError('Model', [obj_type])
-
-        try:
-            obj_id = int(self.request.matchdict['name_or_id'])
-            obj = obj_cls.get(id=obj_id)
-            name = False
-        except ValueError:
-            obj_id = False
-            name = self.request.matchdict['name_or_id']
-            obj = obj_cls.get(name=name)
-
-        if obj is None:
-            self.request.errors.add(
-                'path', 'name_or_id',
-                "{obj_type} with {prop} {val} does not exist.".format(
-                    obj_type=obj_type.title(),
-                    prop="ID" if obj_id else "name",
-                    val=obj_id if obj_id else name,
-                )
-            )
-            self.request.errors.status = 404
-        else:
-            self.request.validated[obj_type] = obj
-
-    def get_collection_by_limit_start(self, obj_type=None, plural=None):
-        """
-        Make sure that the selection parameters are valid for collection GET.
-        If they are not, raise "400 Bad Request".
-        Else, set request.validated[plural] to objects matching query.
-        If obj_type is not provided, it is defaulted to self.name.
-        If plural is not provided, it is defaulted to obj_type + 's' if
-        obj_type is provided and to self.plural if obj_type is not provided.
-        """
-        if not plural and not obj_type:
-            plural = self.plural
-        elif obj_type:
-            plural = obj_type + 's'
-
-        if not obj_type:
-            obj_type = self.name
-            if getattr(self, 'model', None):
-                obj_cls = self.model
-
-        obj_cls = getattr(tds.model, obj_type.title(), None)
-        if obj_cls is None:
-            raise tds.exceptions.NotFoundError('Model', [obj_type])
-
-        self._validate_params(('limit', 'start'))
-
-        if plural not in self.request.validated:
-            self.request.validated[plural] = obj_cls.query().order_by(
-                obj_cls.id
-            )
-
-        if 'start' in self.request.validated_params:
-            self.request.validated[plural] = (
-                self.request.validated[plural].filter(
-                    obj_cls.id >= self.request.validated_params['start']
-                )
-            )
-
-        if obj_cls == tds.model.Application:
-            self.request.validated[plural] = (
-                self.request.validated[plural].filter(
-                    obj_cls.pkg_name != '__dummy__'
-                )
-            )
-
-        if 'limit' in self.request.validated_params:
-            self.request.validated[plural] = (
-                self.request.validated[plural].limit(
-                    self.request.validated_params['limit']
-                )
-            )
