@@ -55,26 +55,8 @@ class ApplicationView(BaseView):
         Validate a POST request by preventing collisions over unique fields
         and verifying that arch and build_type are acceptable.
         """
-        if 'id' in self.request.validated_params:
-            found_app = self.model.get(id=self.request.validated_params['id'])
-            if found_app:
-                self.request.errors.add(
-                    'query', 'id',
-                    "Unique constraint violated. An application with this ID"
-                    " already exists."
-                )
-                self.request.errors.status = 409
-        if 'name' in self.request.validated_params:
-            found_app = self.model.get(
-                pkg_name=self.request.validated_params['name']
-            )
-            if found_app:
-                self.request.errors.add(
-                    'query', 'name',
-                    "Unique constraint violated. An application with this name"
-                    " already exists."
-                )
-                self.request.errors.status = 409
+        self._validate_id("POST")
+        self._validate_name("POST")
         self.model.verify_arch(self.request.validated_params['arch'])
         self.model.verify_build_type(
             self.request.validated_params['build_type']
@@ -86,12 +68,4 @@ class ApplicationView(BaseView):
         """
         Handle a POST request after the parameters are marked valid JSON.
         """
-        for attr in self.param_routes:
-            self.request.validated_params[self.param_routes[attr]] = \
-                self.request.validated_params[attr]
-            del self.request.validated_params[attr]
-        self.request.validated[self.name] = self.model.create(
-            **self.request.validated_params
-        )
-        return self.make_response(self.request.validated[self.name],
-                                  "201 Created")
+        return self._handle_collection_post()

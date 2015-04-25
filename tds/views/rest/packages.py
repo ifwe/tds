@@ -2,7 +2,7 @@
 REST API view for packages.
 """
 
-from cornice.resource import resource
+from cornice.resource import resource, view
 
 import tds.model
 from .base import BaseView, init_view
@@ -101,7 +101,7 @@ class PackageView(BaseView):
         Validate a PUT request by preventing collisions over unique fields for
         packages.
         """
-        self._validate_put_id()
+        self._validate_put_id("PUT")
         if 'version' in self.request.validated_params or 'revision' in \
                 self.request.validated_params:
             found_pkg = self.model.get(
