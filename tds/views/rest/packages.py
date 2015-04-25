@@ -26,7 +26,19 @@ class PackageView(BaseView):
         'revision': 'number',
         'status': 'string',
         'builder': 'string',
+        'job': 'string',
     }
+
+    param_routes = {
+        'job': 'path'
+    }
+
+    defaults = {
+        'status': 'pending',
+        'creator': self.user.username,
+    }
+
+    required_post_fields = ('version', 'revision')
 
     def get_pkg_by_version_revision(self):
         """
@@ -101,7 +113,7 @@ class PackageView(BaseView):
         Validate a PUT request by preventing collisions over unique fields for
         packages.
         """
-        self._validate_put_id("PUT")
+        self._validate_id("PUT")
         if 'version' in self.request.validated_params or 'revision' in \
                 self.request.validated_params:
             found_pkg = self.model.get(
@@ -123,3 +135,35 @@ class PackageView(BaseView):
                     " exists."
                 )
                 self.request.errors.status = 409
+
+    def validate_pkg_post(self, _request):
+        """
+        Validate a POST request by preventing collisions over unique fields.
+        """
+        self.get_obj_by_name_or_id('application')
+        self._validate_id("POST")
+        app_check = 'application' in self.request.validated
+        ver_check = 'version' in self.request.validated_params
+        rev_check = 'revision' in self.request.validated_params
+        if not (app_check and ver_check and rev_check):
+            return
+        found_pkg = self.model.get(
+            application=self.request.validated['application'],
+            version=self.request.validated_params['version'],
+            revision=self.request.validated_params['revision'],
+        )
+        if found_pkg:
+            self.request.errors.add(
+                'query', 'version',
+                "Unique constraint violated. A package for this application"
+                " with this version and revision already exists."
+            )
+            self.request.errors.status = 409
+
+    @view(validators=('validate_put_post', 'validate_post_required',
+                      'validate_pkg_post'))
+    def collection_post(self):
+        """
+        Handle a POST request after the parameters are marked valid JSON.
+        """
+        return self._handle_collection_post()

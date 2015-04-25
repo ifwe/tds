@@ -49,8 +49,8 @@ Feature: Update (PUT) package on REST API
         When I query PUT "/applications/<select>/packages/2/3?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'builder', 'version', 'id', 'revision']. |
+            | location  | name  | description                                                                                           |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'builder', 'job', 'version', 'id', 'revision'].  |
         And there is a package with version=2,revision=3
 
         Examples:
