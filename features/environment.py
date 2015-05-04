@@ -271,8 +271,6 @@ def setup_conf_file(context):
 
     add_config_val(context, 'mco', dict(bin=opj(context.BIN_DIR, 'mco')))
     add_config_val(context, 'salt', dict(
-        bin=opj(context.BIN_DIR, 'salt-call'),
-        user=None,
         c_dir=opj(context.BIN_DIR, 'salt-conf')
     ))
 
