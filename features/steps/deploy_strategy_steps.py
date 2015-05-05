@@ -14,7 +14,7 @@ from behave import given, then
 
 class DeployStrategyHelper(object):
     INPUT_FILE = None
-    OUTPUT_FILE = None
+    RESULTS_FILE = None
 
     def __init__(self, context):
         self.context = context
@@ -40,9 +40,6 @@ class DeployStrategyHelper(object):
             hostname,
             lambda x: (x['package'], x['restart'])
         )
-
-    def load_results(self):
-        raise NotImplementedError
 
     def _load_json(self, fname, default=None):
         if not os.path.isfile(fname):
@@ -274,6 +271,7 @@ def given_the_host_will_fail_to_deploy(context, hostname, action):
         hostname: {
             'hostname': hostname,
             'exitcode': 1,
-            'stderr': 'its broken!'
+            'stderr': 'its broken!',
+            'result': 'Something failed',
         }
     })
