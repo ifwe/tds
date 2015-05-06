@@ -19,7 +19,7 @@ import tds.utils.processes as processes
 import tds.utils.merge as merge
 
 sys.path.insert(
-    0, opj(os.path.dirname(os.path.realpath(__file__)), 'helpers', 'bin')
+    0, opj(os.path.dirname(os.path.realpath(__file__)), 'helpers', 'lib')
 )
 
 from hipchat_server import HipChatServer
