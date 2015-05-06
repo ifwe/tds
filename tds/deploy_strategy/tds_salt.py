@@ -49,8 +49,7 @@ class TDSSaltDeployStrategy(DeployStrategy):
 
         # We're assuming only one key is being returned currently
         host_result = result.values()[0]['ret']
-
-        success = True if host_result.endswith('successful') else False
+        success = host_result.endswith('successful')
 
         return (success, host_result)
 
