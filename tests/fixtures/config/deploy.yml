@@ -10,8 +10,6 @@ deploy_strategy: mco
 mco:
   bin: 'mco'
 salt:
-  user: root
-  bin: /usr/bin/salt-call
   c_dir: /etc/salt
 notifications:
   email:
