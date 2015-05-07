@@ -1,6 +1,10 @@
 """Salt-based DeployStrategy."""
 
-import json
+import os
+
+import salt.client
+import salt.config
+
 import tds.utils
 
 from .base import DeployStrategy
@@ -18,48 +22,46 @@ log = logging.getLogger('tds')
 class TDSSaltDeployStrategy(DeployStrategy):
     """Salt (master publish.publish) based DeployStrategy."""
 
-    def __init__(self, bin=None, user=None, c_dir=None, **kwargs):
-        self.bin = bin or 'salt-call'
-        self.user = user
+    def __init__(self, c_dir=None):
         self.c_dir = c_dir
 
-    def _publish(self, host, action, *args):
+    @tds.utils.debug
+    def _publish(self, host, cmd, *args):
         """Dispatch to salt master."""
 
-        user_cmd = []
-
-        if self.user is not None:
-            user_cmd = ['sudo', '-u', self.user]
-
-        salt_opts = ['--out', 'json']
         if self.c_dir is not None:
-            salt_opts += ['-c', self.c_dir]
+            opts = salt.config.minion_config(
+                os.path.join(self.c_dir, 'minion')
+            )
+        else:
+            opts = salt.config.minion_config('/etc/salt.tds/minion')
 
-        salt_cmd = [self.bin, 'publish.publish']
-        publish_args = [host, action] + list(args)
-        cmd = user_cmd + salt_cmd + salt_opts + publish_args
+        caller = salt.client.Caller(mopts=opts)
+        host_re = '%s.*' % host   # To allow FQDN matching
 
-        proc = tds.utils.processes.run(cmd, expect_return_code=None)
+        # Set timeout high because... RedHat
+        result = caller.sminion.functions['publish.full_data'](
+            host_re, cmd, args, timeout=120
+        )
 
-        info = {}
-        if proc.stdout:
-            try:
-                info = json.loads(proc.stdout)
-            except ValueError:
-                log.error(
-                    "Could not decode result from salt. stdout=%r, stderr=%r",
-                    proc.stdout, proc.stderr
-                )
+        if not result:
+            return (False, 'No data returned from host %s' % host)
 
-        return proc.returncode == 0, info
+        # We're assuming only one key is being returned currently
+        host_result = result.values()[0]['ret']
+        success = host_result.endswith('successful')
+
+        return (success, host_result)
 
     @tds.utils.debug
     def deploy_to_host(self, dep_host, app, version, retry=4):
         """Deploy an application to a given host"""
+
         log.debug('Deploying to host %r', dep_host)
         return self._publish(dep_host, 'tds.install', app, version)
 
     @tds.utils.debug
     def restart_host(self, dep_host, app, retry=4):
         """Restart application on a given host"""
+
         return self._publish(dep_host, 'tds.restart', app)
