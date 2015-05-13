@@ -104,10 +104,13 @@ class PackageController(BaseController):
         # where the artifact matches the RPM file
         html = lxml.html.fromstring(req.content)
         xpath = (
-            '//td[contains(.,"%s")]/../td[contains(.,"details")]/a/@href'
-            % rpm_name
+            '//td[re:test(.,"\W%s")]/../td[contains(.,"details")]/a/@href'
+            % rpm_name.replace('.', '\.')
         )
-        fingerprint_href = html.xpath(xpath)
+        fingerprint_href = html.xpath(
+            xpath,
+            namespaces = {'re': 'http://exslt.org/regular-expressions'}
+        )
 
         # Found an href?  Get the md5 in it (last part of the path)!
         # Otherwise let user know it's not there
