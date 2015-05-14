@@ -104,7 +104,7 @@ class PackageController(BaseController):
         # where the artifact matches the RPM file
         html = lxml.html.fromstring(req.content)
         xpath = (
-            '//td[re:test(.,"\W%s")]/../td[contains(.,"details")]/a/@href'
+            '//td[re:test(.,"(?<!\w)%s")]/../td[contains(.,"details")]/a/@href'
             % rpm_name.replace('.', '\.')
         )
         fingerprint_href = html.xpath(
