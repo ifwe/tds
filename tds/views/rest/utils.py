@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 def _create_digest(username, addr, seconds):
     """
     Create a digest for the given user, remote client address, and integer
-    seconds since epoch when the created digest's cookie will expire.
+    seconds since epoch when the created digest's cookie was created.
     """
     seconds = int(seconds)
     msg = "{username}&{addr}&{seconds}".format(username=username, addr=addr,
@@ -34,12 +34,11 @@ def set_cookie(response, username, addr):
         (
             datetime.now().replace(microsecond=0) -
             datetime.utcfromtimestamp(0)
-        ).total_seconds() +
-        tds.views.rest.settings.COOKIE_LIFE
+        ).total_seconds()
     )
     digest = _create_digest(username, addr, seconds)
-    cookie_value = "exp={exp}&user={user}&digest={digest}".format(
-        exp=seconds,
+    cookie_value = "issued={issued}&user={user}&digest={digest}".format(
+        issued=seconds,
         user=username,
         digest=digest,
     )
@@ -65,7 +64,7 @@ def validate_cookie(request):
 
     pairs = [p.split('=', 1) for p in response.cookies['session'].split('&')]
     for k, v in pairs:
-        if k == 'exp':
+        if k == 'issued':
             seconds = int(v)
         if k == 'user':
             username = v
@@ -79,7 +78,7 @@ def validate_cookie(request):
         return False
 
     if (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds() - \
-        seconds >= 0:
+        seconds - tds.views.rest.settings.COOKIE_LIFE >= 0:
             return False
 
     return True
