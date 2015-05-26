@@ -31,8 +31,11 @@ $ pip install -r requirements.txt
 
 ### Other required packages
 * MySQL development library
-    * Debian:`sudo apt-get install libmysqlclient-dev`
+    * Debian: `sudo apt-get install libmysqlclient-dev`
     * RHEL: `sudo yum install mysql-devel`
+* LDAP libraries:
+    * Debian: `sudo apt-get install libldap2-dev libsasl2-dev`
+    * RHEL: `sudo yum install openldap-devel`
 
 ## Testing
 First, install development requirements
