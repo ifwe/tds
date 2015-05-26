@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 def _create_digest(username, addr, seconds):
     """
     Create a digest for the given user, remote client address, and integer
-    seconds since epoch.
+    seconds since epoch when the created digest's cookie will expire.
     """
     seconds = int(seconds)
     msg = "{username}&{addr}&{seconds}".format(username=username, addr=addr,
@@ -47,6 +47,7 @@ def set_cookie(response, username, addr):
         key='session',
         value=cookie_value,
         max_age=tds.views.rest.settings.COOKIE_LIFE,
+        secure=True,
     )
 
 
