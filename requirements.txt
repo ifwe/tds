@@ -16,3 +16,4 @@ tabulate==0.7.2
 git+ssh://git@code.tagged.com/tagopsdb/tagopsdb.git@master#egg=tagopsdb-0.9.2
 git+ssh://git@code.tagged.com/lib-python/python-simpledaemon.git@master#egg=simpledaemon-1.0
 cornice==0.17
+python-ldap==2.4.19

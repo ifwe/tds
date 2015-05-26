@@ -1,4 +1,4 @@
-# TDS 2.0 REST API specification
+# TDS 2 REST API specification
 Some quick notes:
 
 * All data in requests and responses is in JSON
