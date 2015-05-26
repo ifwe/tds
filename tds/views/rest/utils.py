@@ -5,7 +5,6 @@ REST API utilities.
 import hmac
 import hashlib
 import base64
-import dt
 import tds.views.rest.settings
 from datetime import datetime, timedelta
 
@@ -32,7 +31,10 @@ def set_cookie(response, username, addr):
     for the given response.
     """
     seconds = int(
-        datetime.now().replace(microsecond=0).total_seconds() + \
+        (
+            datetime.now().replace(microsecond=0) -
+            datetime.utcfromtimestamp(0)
+        ).total_seconds() +
         tds.views.rest.settings.COOKIE_LIFE
     )
     digest = _create_digest(username, addr, seconds)
@@ -75,7 +77,8 @@ def validate_cookie(request):
     if _create_digest(username, request.remote_addr, seconds) != digest:
         return False
 
-    if datetime.now().total_seconds() - seconds >= 0:
-        return False
+    if (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds() - \
+        seconds >= 0:
+            return False
 
     return True
