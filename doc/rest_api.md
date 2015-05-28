@@ -198,6 +198,21 @@ URLs and methods for deploying have yet to be determined.
             <b>409</b>: Conflict. Unique constraint violated.<br />
         </td>
     </tr>
+    <tr>
+        <td>/login</td>
+        <td>POST</td>
+        <td>Get an auth cookie.</td>
+        <td>'user': The username for the authenticating LDAP user.<br />
+            'pw': Password for the authenticating LDAP user.<br />
+        </td>
+        <td>
+            <b>200</b>: Success. Cookie attached to response with name 'session'.<br />
+            <b>400</b>: Bad request. See errors in response for specifics.
+                Most likely a bad query.<br />
+            <b>422</b>: Unprocessable entity.<br />
+            <b>401</b>: Authentication failed.
+        </td>
+    </tr>
 </tbody>
 </table>
 

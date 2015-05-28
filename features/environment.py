@@ -357,6 +357,7 @@ def before_scenario(context, scenario):
 
     if 'rest' in context.tags:
         setup_rest_server(context)
+        setup_ldap_server(context)
 
 
 def after_scenario(context, scenario):
@@ -401,6 +402,7 @@ def after_scenario(context, scenario):
 
     if 'rest' in context.tags:
         teardown_rest_server(context)
+        teardown_ldap_server(context)
 
     teardown_workspace(context)
 
