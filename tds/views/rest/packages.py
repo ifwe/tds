@@ -35,7 +35,7 @@ class PackageView(BaseView):
 
     defaults = {
         'status': 'pending',
-        'creator': self.user.username,
+        'creator': lambda self: self.user.username,
     }
 
     required_post_fields = ('version', 'revision')

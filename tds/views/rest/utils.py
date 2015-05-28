@@ -52,13 +52,15 @@ def set_cookie(response, username, addr):
 
 def validate_cookie(request):
     """
-    Validate the cookie in the given request. Return True if the cookie is
-    present, the digest is valid, and the cookie is not expired.
-    Return False otherwise.
+    Validate the cookie in the given request.
+    Return (present, username) where:
+    present is whether the cookie is present.
+    username is the username in the cookie if present == True and the cookie
+    is valid, False otherwise.
     """
     if not getattr(request, 'cookies', None) or 'session' not in \
         request.cookies:
-            return False
+            return (False, False)
 
     digest = seconds = username = None
 
@@ -72,13 +74,13 @@ def validate_cookie(request):
             digest = v
 
     if None in (digest, seconds, username):
-        return False
+        return (True, False)
 
     if _create_digest(username, request.remote_addr, seconds) != digest:
-        return False
+        return (True, False)
 
     if (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds() - \
         seconds - tds.views.rest.settings.COOKIE_LIFE >= 0:
-            return False
+            return (True, False)
 
-    return True
+    return (True, username)

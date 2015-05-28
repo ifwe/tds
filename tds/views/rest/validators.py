@@ -9,6 +9,8 @@ import datetime
 
 import tds.exceptions
 
+from . import utils
+
 
 class JSONValidatedView(object):
     """
@@ -222,7 +224,7 @@ class ValidatedView(JSONValidatedView):
                 self.request.errors.add(
                     'query', key,
                     "Unsupported query: {param}. Valid parameters: "
-                    "{all}.".format(param=key, all=valid_params)
+                    "{all}.".format(param=key, all=valid_params),
                 )
                 self.request.errors.status = 422
             elif self.request.params[key]:
@@ -260,7 +262,14 @@ class ValidatedView(JSONValidatedView):
         """
         for attr in self.defaults:
             if attr not in self.request.validated_params:
-                self.request.validated_params[attr] = self.defaults[attr]
+                if type(self.defaults[attr]) == str:
+                    self.request.validated_params[attr] = self.defaults[attr]
+                else:
+                    self.request.validated_params[attr] = self.defaults[attr](
+                        self
+                    )
+        if not getattr(self, 'name', None):
+            return
         if self.name == 'package' and 'application' in self.request.validated:
             if 'job' not in self.request.validated_params:
                 self.request.validated_params['job'] = self.request.validated[
@@ -325,7 +334,7 @@ class ValidatedView(JSONValidatedView):
                 self.request.errors.add(
                     'query', 'id',
                     "Unique constraint violated. Another {type} with this"
-                    " ID already exists.".format(type=self.name)
+                    " ID already exists.".format(type=self.name),
                 )
             self.request.errors.status = 409
 
@@ -347,7 +356,7 @@ class ValidatedView(JSONValidatedView):
                     " already exists.".format(
                         n='n' if self.name[0] in ('a', 'e', 'i', 'o', 'u') else
                             '',
-                        type=self.name
+                        type=self.name,
                     )
                 )
             elif found_obj != self.request.validated[self.name]:
@@ -365,3 +374,20 @@ class ValidatedView(JSONValidatedView):
         """
         self._validate_id("PUT")
         self._validate_name("PUT")
+
+    def validate_cookie(self, _request):
+        """
+        Validate the cookie in the request. If the cookie is valid, add a user
+        to the request's validated_params dictionary.
+        """
+        (present, username) = utils.validate_cookie(self.request)
+        if not present:
+            return
+        elif not username:
+            self.request.errors.add(
+                'header', 'cookie',
+                'Cookie has expired or is invalid. Please reauthenticate.'
+            )
+            self.request.errors.status = 419
+        else:
+            self.request.validated['user'] = username

@@ -11,7 +11,7 @@ Feature: Add (POST) package on REST API
             | app3  |
         And there is a package with version=1,revision=1
 
-    @rest @wip
+    @rest
     Scenario Outline: add a new package
         When I query POST "/applications/<select>/packages?version=<ver>&revision=<rev>"
         Then the response code is 201
