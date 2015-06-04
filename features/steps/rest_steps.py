@@ -6,7 +6,9 @@ Steps for the REST API.
 import requests
 
 from behave import given, then, when
+from mockldap import MockLdap
 
+import tds.views.rest.settings
 from .model_steps import parse_properties
 
 
@@ -92,3 +94,28 @@ def then_the_response_contains_errors(context):
 def then_the_response_body_contains(context, message):
     assert False, context.response.text
     assert message in context.response.text, (message, context.response.text)
+
+
+@given(u'there is an LDAP user with username="{username}",password="{password}"')
+def given_there_is_an_ldap_user_with(context, username, password):
+    if getattr(context, 'mockldap_dict', None):
+        context.mockldap_dict[
+            "uid={username},ou=People,dc=tagged,dc=com".format(
+                username=username
+            )
+        ] = {
+            'uid': username,
+            'userPassword': [password],
+        }
+    else:
+        context.mockldap_dict = {
+            "uid={username},ou=People,dc=tagged,dc=com".format(
+                username=username
+            ): {
+                'uid': username,
+                'userPassword': [password],
+            },
+        }
+    context.mockldap = MockLdap(context.mockldap_dict)
+    context.mockldap.start()
+    context.ldapobj = context.mockldap[tds.views.rest.settings.LDAP_SERVER]

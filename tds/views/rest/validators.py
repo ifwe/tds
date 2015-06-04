@@ -380,7 +380,8 @@ class ValidatedView(JSONValidatedView):
         Validate the cookie in the request. If the cookie is valid, add a user
         to the request's validated_params dictionary.
         """
-        (present, username) = utils.validate_cookie(self.request)
+        (present, username) = utils.validate_cookie(self.request,
+                                                    self.settings)
         if not present:
             return
         elif not username:

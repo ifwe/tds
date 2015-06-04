@@ -5,11 +5,10 @@ REST API utilities.
 import hmac
 import hashlib
 import base64
-import tds.views.rest.settings
 from datetime import datetime, timedelta
 
 
-def _create_digest(username, addr, seconds):
+def _create_digest(username, addr, seconds, settings):
     """
     Create a digest for the given user, remote client address, and integer
     seconds since epoch when the created digest's cookie was created.
@@ -18,14 +17,14 @@ def _create_digest(username, addr, seconds):
     msg = "{username}&{addr}&{seconds}".format(username=username, addr=addr,
                                                seconds=seconds)
     dig = hmac.new(
-        tds.views.rest.settings.SECRET_KEY,
+        settings['secret_key'],
         msg=msg,
         digestmod=hashlib.sha256
     ).digest()
     return base64.b64encode(dig).decode()
 
 
-def set_cookie(response, username, addr):
+def set_cookie(response, username, addr, settings):
     """
     Create and set a cookie for the given username and remote client address
     for the given response.
@@ -45,12 +44,12 @@ def set_cookie(response, username, addr):
     response.set_cookie(
         key='session',
         value=cookie_value,
-        max_age=tds.views.rest.settings.COOKIE_LIFE,
+        max_age=settings['cookie_life'],
         secure=True,
     )
 
 
-def validate_cookie(request):
+def validate_cookie(request, settings):
     """
     Validate the cookie in the given request.
     Return (present, username) where:
@@ -80,7 +79,7 @@ def validate_cookie(request):
         return (True, False)
 
     if (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds() - \
-        seconds - tds.views.rest.settings.COOKIE_LIFE >= 0:
+        seconds - settings['cookie_life'] >= 0:
             return (True, False)
 
     return (True, username)

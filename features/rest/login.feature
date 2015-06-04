@@ -8,8 +8,8 @@ Feature: Login
         When I query POST "/login?<params>"
         Then the response code is 400
         And the response contains errors:
-            | location  | name      | description                   |
-            | query     |           | <name> is a required field.   |
+            | location  | name  | description                   |
+            | query     |       | <name> is a required field.   |
 
         Examples:
             | params                | name      |
@@ -24,11 +24,20 @@ Feature: Login
 
     @rest
     Scenario: invalid credentials
+        Given there is an LDAP user with username="someuser",password="secret"
         When I query POST "/login?user=horsefeathers&password=hensteeth"
         Then the response code is 401
         And the response contains errors:
             | location  | name      | description                                                               |
             | query     | user      | Authentication failed. If this problem persists, please contact SiteOps.  |
+
+    @rest
+    Scenario: LDAP server not accessible
+        When I query POST "/login?user=horsefeathers&password=hensteeth"
+        Then the response code is 500
+        And the response contains errors:
+            | location  | name  | description                       |
+            | url       |       | Could not connect to LDAP server. |
 
     @rest @wip
     Scenario: valid credentials
