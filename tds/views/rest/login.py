@@ -6,7 +6,7 @@ import ldap
 
 from cornice.resource import resource, view
 
-from . import settings, utils
+from . import utils
 from .base import BaseView, init_view
 
 @resource(path="/login")
@@ -29,17 +29,21 @@ class LoginView(BaseView):
         if self.request.errors:
             return
         try:
-            l = ldap.open(settings.LDAP_SERVER)
+            l = ldap.initialize(self.settings['ldap_server'])
             password = self.request.validated_params['password']
             dn = "uid={username},ou=People,dc=tagged,dc=com".format(
                 username=self.request.validated_params['user']
             )
-            print l.simple_bind(dn, password)
+            l.simple_bind(dn, password)
+        except ldap.SERVER_DOWN:
+            self.request.errors.add('url', '',
+                                    "Could not connect to LDAP server.")
+            self.request.errors.status = 500
         except ldap.LDAPError, e:
             self.request.errors.add(
                 'query', 'user',
-                "Authentication failed. If this problem persists, please"
-                " contact SiteOps."
+                "Authentication failed. Please check your username and "
+                "password and try again."
             )
             self.request.errors.status = 401
 

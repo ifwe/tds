@@ -2,7 +2,9 @@
 Base view class for REST API.
 """
 
+import os
 import json
+import yaml
 
 from pyramid.response import Response
 from cornice.resource import view
@@ -80,6 +82,9 @@ class BaseView(ValidatedView):
             self.param_routes = {}
         if not getattr(self, 'defaults', None):
             self.defaults = {}
+        try:
+            with open(os.path.dirname(os.path.realpath(__file__))) as f:
+                self.settings = yaml.load(f.read())
         super(BaseView, self).__init__(*args, **kwargs)
 
     @staticmethod
