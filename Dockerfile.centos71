@@ -30,5 +30,6 @@ WORKDIR /opt/deploy
 ENV interpreter python
 ENV GEM_HOME /usr/local/share/gems/gems
 ENV os centos71
+ENV FPM_COMMAND_PATH /usr/local/share/gems/gems/bin
 
 RUN ./.jenkins/scripts/rpm-package.sh
