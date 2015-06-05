@@ -18,10 +18,9 @@ if [ -n "$rvm_path" -a -f $rvm_path/scripts/rvm ]; then
     source $rvm_path/scripts/rvm
     rvm use system
 fi
-export GEM_HOME=/usr/lib/ruby/gems/1.8
 
 set -x
 
-/usr/lib/ruby/gems/1.8/bin/fpm --verbose -s python -t rpm --rpm-auto-add-directories --python-bin $FPM_INTERPRETER --python-package-name-prefix $FPM_PYPREFIX_PREFIX$FPM_PYPREFIX --version $FPM_PYPKG_VERSION --iteration $FPM_ITERATION .
+/usr/bin/fpm --verbose -s python -t rpm --rpm-auto-add-directories --python-bin $FPM_INTERPRETER --python-package-name-prefix $FPM_PYPREFIX_PREFIX$FPM_PYPREFIX --version $FPM_PYPKG_VERSION --iteration $FPM_ITERATION .
 
-/usr/lib/ruby/gems/1.8/bin/fpm --verbose -s dir -t rpm -C ./etc --prefix /etc/init.d --name tds-update-yum-repo --template-scripts --template-value update_init=update_deploy_repo --after-install pkg/rpm/after_install.sh --before-remove pkg/rpm/before_remove.sh --depends "$FPM_PYPREFIX_PREFIX$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_ITERATION" --description 'Daemon to update repository for deployment application' --version $FPM_PYPKG_VERSION --iteration $FPM_ITERATION $FPM_EXTRAS .
+/usr/bin/fpm --verbose -s dir -t rpm -C ./etc --prefix /etc/init.d --name tds-update-yum-repo --template-scripts --template-value update_init=update_deploy_repo --after-install pkg/rpm/after_install.sh --before-remove pkg/rpm/before_remove.sh --depends "$FPM_PYPREFIX_PREFIX$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_ITERATION" --description 'Daemon to update repository for deployment application' --version $FPM_PYPKG_VERSION --iteration $FPM_ITERATION $FPM_EXTRAS .

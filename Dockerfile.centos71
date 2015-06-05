@@ -2,11 +2,11 @@ FROM dockerregistry.tagged.com/siteops/centos:7.1
 MAINTAINER Ken Lareau <klarea@ifwe.co>
 
 RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/deploy
-RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/tagrepo/CentOS/6
-RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/tagged-updates/CentOS/6.5
-RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/CentOS6.5/epel/x86_64
-RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/CentOS6.5/updates/x86_64
-RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/CentOS6.5/os/x86_64
+RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/tagrepo/CentOS/7
+RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/tagged-updates/CentOS/7.1
+RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/CentOS7.1/epel/x86_64
+RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/CentOS7.1/updates/x86_64
+RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/CentOS7.1/os/x86_64
 RUN /usr/bin/yum makecache
 
 
@@ -26,3 +26,9 @@ RUN yum -y --nogpgcheck install rpm-build
 RUN mkdir -p /opt/deploy
 COPY . /opt/deploy
 WORKDIR /opt/deploy
+
+ENV interpreter python
+ENV GEM_HOME /usr/local/share/gems/gems
+ENV os centos71
+
+RUN ./.jenkins/scripts/rpm-package.sh
