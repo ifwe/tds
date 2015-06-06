@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 FPM_INTERPRETER=`echo "$interpreter" | sed -r 's/[0-9]/\0\./'`
 FPM_PYPREFIX=$interpreter
 FPM_CMD_PYTHON=python

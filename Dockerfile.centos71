@@ -9,7 +9,6 @@ RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/CentOS7
 RUN /usr/bin/yum-config-manager --add-repo http://serverbuild.tagged.com/CentOS7.1/os/x86_64
 RUN /usr/bin/yum makecache
 
-
 RUN yum -y --nogpgcheck update
 RUN yum -y --nogpgcheck install sudo
 RUN yum -y --nogpgcheck install gcc
@@ -31,5 +30,3 @@ ENV interpreter python
 ENV GEM_HOME /usr/local/share/gems/gems
 ENV os centos71
 ENV FPM_COMMAND_PATH /usr/local/share/gems/gems/bin
-
-RUN ./.jenkins/scripts/rpm-package.sh
