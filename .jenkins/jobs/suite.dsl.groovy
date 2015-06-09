@@ -1,34 +1,35 @@
-// @GrabResolver('https://artifactory.tagged.com/artifactory/libs-release-local/')
-// @Grab('com.tagged.build:jenkins-dsl-common:[0.1.0,)')
-// @Grab('com.tagged.build:tagged-fpm-scriptlet:0.0.2')
+@GrabResolver('https://artifactory.tagged.com/artifactory/libs-release-local/')
+@Grab('com.tagged.build:jenkins-dsl-common:[0.1.0,)')
+@Grab('com.tagged.build:tagged-fpm-scriptlet:0.0.2')
 
 import com.tagged.build.scm.*
 import com.tagged.build.common.*
-// import com.tagged.build.fpm.FPMPython
-// import com.tagged.build.fpm.FPMArg
-// import com.tagged.build.fpm.FPMCommonArgs
-// import com.tagged.build.fpm.FPMPythonArgs
-// import com.tagged.build.fpm.FPMPythonScripts
+import com.tagged.build.fpm.FPMPython
+import com.tagged.build.fpm.FPMArg
+import com.tagged.build.fpm.FPMCommonArgs
+import com.tagged.build.fpm.FPMPythonArgs
+import com.tagged.build.fpm.FPMPythonScripts
 
-// def project = new PythonFPMMatrixProject(
-//     jobFactory,
-//     [
-//         scm: new StashSCM(project: "tds", name: "tds"),
-//         hipchatRoom: 'Tagged Deployment System',
-//         email: 'devtools@tagged.com',
-//         interpreters:['python27'],
-//     ]
-// )
-
-def project = new Project(
+def project = new PythonFPMMatrixProject(
     jobFactory,
     [
         scm: new StashSCM(project: "tds", name: "tds"),
-        hipchatRoom: 'Tagged Deployment System (TDS)',
+        hipchatRoom: 'Tagged Deployment System',
         email: 'devtools@tagged.com',
-        interpreters: ['python27'],
+        interpreters:['python27'],
     ]
 )
+
+// Switch to this to get rid of the FPM matrix build.
+// def project = new Project(
+//     jobFactory,
+//     [
+//         scm: new StashSCM(project: "tds", name: "tds"),
+//         hipchatRoom: 'Tagged Deployment System (TDS)',
+//         email: 'devtools@tagged.com',
+//         interpreters: ['python27'],
+//     ]
+// )
 
 // Report pylint warnings and go 'unstable' when over the threshold
 def pylint = project.downstreamJob {
@@ -66,44 +67,44 @@ def features = project.downstreamJob {
     }
 }
 
-// def tds_update_repo = new FPMPython([
-//     FPMCommonArgs.verbose,
-//     new FPMArg('-s', 'dir'),
-//     FPMCommonArgs.type,
-//     new FPMArg('-C', './etc'),
-//     new FPMArg('--prefix','/etc/init.d'),
-//     new FPMArg('--name', 'tds-update-yum-repo'),
-//     new FPMArg('--template-scripts'),
-//     new FPMArg('--template-value', 'update_init=update_deploy_repo'),
-//     new FPMArg('--after-install', 'pkg/rpm/after_install.sh'),
-//     new FPMArg('--before-remove', 'pkg/rpm/before_remove.sh'),
-//     new FPMArg('--depends',
-//     '"$FPM_PYPREFIX_PREFIX$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_ITERATION"',
-//     [
-//         FPMPythonScripts.fpm_interpreter,
-//         FPMPythonScripts.fpm_version_iteration,
-//         FPMPythonScripts.fpm_python_tagged_iteration,
-//     ]),
-//     new FPMArg('--description',
-//     "'Daemon to update repository for deployment application'"),
-//     FPMPythonArgs.version,
-//     FPMPythonArgs.iteration,
-//     new FPMArg('$FPM_EXTRAS'),
-//     FPMCommonArgs.current_dir
-// ])
-//
-// def matrixRPMs = project.pythonFPMMatrixJob([
-//     'fpmsteps': [tds_update_repo]
-// ]) {
-//     name 'build'
-//     logRotator(-1, 50)
-//
-//     steps {
-//         publishers {
-//             archiveArtifacts('*.rpm')
-//         }
-//     }
-// }
+def tds_update_repo = new FPMPython([
+    FPMCommonArgs.verbose,
+    new FPMArg('-s', 'dir'),
+    FPMCommonArgs.type,
+    new FPMArg('-C', './etc'),
+    new FPMArg('--prefix','/etc/init.d'),
+    new FPMArg('--name', 'tds-update-yum-repo'),
+    new FPMArg('--template-scripts'),
+    new FPMArg('--template-value', 'update_init=update_deploy_repo'),
+    new FPMArg('--after-install', 'pkg/rpm/after_install.sh'),
+    new FPMArg('--before-remove', 'pkg/rpm/before_remove.sh'),
+    new FPMArg('--depends',
+    '"$FPM_PYPREFIX_PREFIX$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_ITERATION"',
+    [
+        FPMPythonScripts.fpm_interpreter,
+        FPMPythonScripts.fpm_version_iteration,
+        FPMPythonScripts.fpm_python_tagged_iteration,
+    ]),
+    new FPMArg('--description',
+    "'Daemon to update repository for deployment application'"),
+    FPMPythonArgs.version,
+    FPMPythonArgs.iteration,
+    new FPMArg('$FPM_EXTRAS'),
+    FPMCommonArgs.current_dir
+])
+
+def matrixRPMs = project.pythonFPMMatrixJob([
+    'fpmsteps': [tds_update_repo]
+]) {
+    name 'build'
+    logRotator(-1, 50)
+
+    steps {
+        publishers {
+            archiveArtifacts('*.rpm')
+        }
+    }
+}
 
 def build = project.downstreamJob {
     name 'docker-build'
@@ -123,8 +124,7 @@ def build = project.downstreamJob {
 
 def gauntlet = project.gauntlet([
     ['Gauntlet', [pylint, pyunit, features]],
-    // ['Build', [matrixRPMs]],
-    ['Build', [build]],
+    ['Build', [matrixRPMs, build]],
 ])
 
 def (tds, branches) = project.branchBuilders(gauntlet.name)
