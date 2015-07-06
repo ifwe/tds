@@ -106,6 +106,7 @@ def matrixRPMs = project.pythonFPMMatrixJob([
     }
 }
 
+// Build CentOS 6.5 & 7.1 RPMs.
 def build = project.downstreamJob {
     name 'docker-build'
     label 'docker'
