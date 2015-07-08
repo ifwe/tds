@@ -35,17 +35,21 @@ class LoginView(BaseView):
                 username=self.request.validated_params['user']
             )
             l.simple_bind(dn, password)
+            print "GOT HEEEEERE"
         except ldap.SERVER_DOWN:
             self.request.errors.add('url', '',
                                     "Could not connect to LDAP server.")
             self.request.errors.status = 500
-        except ldap.LDAPError, e:
+        except ldap.LDAPError:
+            print "GOT HERE"
             self.request.errors.add(
                 'query', 'user',
                 "Authentication failed. Please check your username and "
                 "password and try again."
             )
             self.request.errors.status = 401
+        finally:
+            l.unbind()
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_login'))
@@ -58,5 +62,6 @@ class LoginView(BaseView):
             response,
             self.request.validated_params['user'],
             self.request.remote_addr,
+            self.settings,
         )
         return response

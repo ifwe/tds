@@ -15,14 +15,14 @@ Feature: Login
             | params                | name      |
             |                       | user      |
             |                       | password  |
-            | user=foo              | password  |
             | password=bar          | user      |
+            | user=foo              | password  |
             | user=&password=bar    | user      |
             | user=foo&password=    | password  |
             | user=&password=       | user      |
             | user=&password=       | password  |
 
-    @rest
+    @rest @wip
     Scenario: invalid credentials
         Given there is an LDAP user with username="someuser",password="secret"
         When I query POST "/login?user=horsefeathers&password=hensteeth"

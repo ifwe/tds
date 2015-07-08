@@ -6,6 +6,8 @@ import os
 import json
 import yaml
 
+from os.path import join as opj
+
 from pyramid.response import Response
 from cornice.resource import view
 
@@ -83,8 +85,11 @@ class BaseView(ValidatedView):
         if not getattr(self, 'defaults', None):
             self.defaults = {}
         try:
-            with open(os.path.dirname(os.path.realpath(__file__))) as f:
+            with open(opj(os.path.dirname(os.path.realpath(__file__)),
+                          'settings.yml')) as f:
                 self.settings = yaml.load(f.read())
+        except:
+            pass
         super(BaseView, self).__init__(*args, **kwargs)
 
     @staticmethod
