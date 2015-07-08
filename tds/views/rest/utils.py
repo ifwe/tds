@@ -35,7 +35,7 @@ def set_cookie(response, username, addr, settings):
             datetime.utcfromtimestamp(0)
         ).total_seconds()
     )
-    digest = _create_digest(username, addr, seconds)
+    digest = _create_digest(username, addr, seconds, settings)
     cookie_value = "issued={issued}&user={user}&digest={digest}".format(
         issued=seconds,
         user=username,

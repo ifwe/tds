@@ -233,6 +233,20 @@ def teardown_graphite_server(context):
         print 'graphite notifications:', notifications
 
 
+def setup_ldap_server(context):
+    """
+    Set up an LDAP server with a single user.
+    """
+
+
+
+def teardown_ldap_server(context):
+    """
+    Tear down the LDAP server.
+    """
+
+
+
 def rest_server(context):
     context.rest_server.serve_forever()
 
@@ -356,6 +370,7 @@ def before_scenario(context, scenario):
     setup_temp_db(context)
 
     if 'rest' in context.tags:
+        setup_ldap_server(context)
         setup_rest_server(context)
 
 
@@ -400,6 +415,7 @@ def after_scenario(context, scenario):
         teardown_graphite_server(context)
 
     if 'rest' in context.tags:
+        teardown_ldap_server(context)
         teardown_rest_server(context)
 
     if getattr(context, 'mockldap', None):
