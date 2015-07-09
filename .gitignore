@@ -57,3 +57,6 @@ target/
 
 # behave test work directory
 work*/
+
+# RPMs built by the docker-build script, etc.
+*.rpm
