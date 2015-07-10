@@ -1,4 +1,4 @@
 ---
 secret_key: 'super secret'
 cookie_life: 1296000
-ldap_server: 'ldap://ldap.tagged.com'
+ldap_server: 'ldaps://ldap.tag-dev.com'

@@ -233,20 +233,6 @@ def teardown_graphite_server(context):
         print 'graphite notifications:', notifications
 
 
-def setup_ldap_server(context):
-    """
-    Set up an LDAP server with a single user.
-    """
-
-
-
-def teardown_ldap_server(context):
-    """
-    Tear down the LDAP server.
-    """
-
-
-
 def rest_server(context):
     context.rest_server.serve_forever()
 
@@ -255,6 +241,9 @@ def setup_rest_server(context):
     """
     Set up and run the REST API server.
     """
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml')) as f:
+        context.rest_settings = yaml.load(f.read())
     app = rest.config.make_wsgi_app()
     context.rest_server = make_server('0.0.0.0', 0, app)
     context.rest_process = Process(target=rest_server, args=(context,))
@@ -370,7 +359,6 @@ def before_scenario(context, scenario):
     setup_temp_db(context)
 
     if 'rest' in context.tags:
-        setup_ldap_server(context)
         setup_rest_server(context)
 
 
@@ -415,12 +403,7 @@ def after_scenario(context, scenario):
         teardown_graphite_server(context)
 
     if 'rest' in context.tags:
-        teardown_ldap_server(context)
         teardown_rest_server(context)
-
-    if getattr(context, 'mockldap', None):
-        context.mockldap.stop()
-        del context.ldapobj
 
     teardown_workspace(context)
 
