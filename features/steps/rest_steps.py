@@ -119,3 +119,14 @@ def given_there_is_an_ldap_user_with(context, username, password):
     context.mockldap = MockLdap(context.mockldap_dict)
     context.mockldap.start()
     context.ldapobj = context.mockldap[tds.views.rest.settings.LDAP_SERVER]
+
+
+@then(u'the response contains a cookie')
+def then_the_response_contains_a_cookie(context):
+    # assert False, context.response.cookies
+    assert len(context.response.cookies) > 0, context.response.cookies
+
+
+@then(u'the response does not contain a cookie')
+def then_the_response_does_not_contain_a_cookie(context):
+    assert len(context.response.cookies) == 0, context.response.cookies

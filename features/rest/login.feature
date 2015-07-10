@@ -24,12 +24,12 @@ Feature: Login
 
     @rest @wip
     Scenario: invalid credentials
-        Given there is an LDAP user with username="someuser",password="secret"
         When I query POST "/login?user=horsefeathers&password=hensteeth"
         Then the response code is 401
+        And the response does not contain a cookie
         And the response contains errors:
-            | location  | name      | description                                                               |
-            | query     | user      | Authentication failed. If this problem persists, please contact SiteOps.  |
+            | location  | name      | description                                                                   |
+            | query     | user      | Authentication failed. Please check your username and password and try again. |
 
     @rest
     Scenario: LDAP server not accessible
@@ -41,7 +41,7 @@ Feature: Login
 
     @rest @wip
     Scenario: valid credentials
-        Given there is an LDAP user with username="someuser",password="secret"
-        When I query POST "/login?user=someuser&password=secret"
+        # Given the LDAP server is running
+        When I query POST "/login?user=testuser&password=secret"
         Then the response code is 200
         And the response contains a cookie
