@@ -262,7 +262,7 @@ def disable_ldap_server(context):
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
                   'settings.yml')) as f:
         context.rest_settings = yaml.load(f.read())
-        rest_settings = yaml.load(f.read())
+        rest_settings = context.rest_settings.copy()
         rest_settings['ldap_server'] = 'ldaps://ldap.example.com'
         f.write(yaml.dump(rest_settings))
 
