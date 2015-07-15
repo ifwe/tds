@@ -241,9 +241,6 @@ def setup_rest_server(context):
     """
     Set up and run the REST API server.
     """
-    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
-                  'settings.yml')) as f:
-        context.rest_settings = yaml.load(f.read())
     app = rest.config.make_wsgi_app()
     context.rest_server = make_server('0.0.0.0', 0, app)
     context.rest_process = Process(target=rest_server, args=(context,))
@@ -256,6 +253,27 @@ def teardown_rest_server(context):
     """
     context.rest_process.terminate()
     context.rest_process.join()
+
+
+def disable_ldap_server(context):
+    """
+    Change the LDAP server URI to something that won't work.
+    """
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml')) as f:
+        context.rest_settings = yaml.load(f.read())
+        rest_settings = yaml.load(f.read())
+        rest_settings['ldap_server'] = 'ldaps://ldap.example.com'
+        f.write(yaml.dump(rest_settings))
+
+
+def restore_rest_settings(context):
+    """
+    Restore rest settings from before the removal of the LDAP server.
+    """
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml')) as f:
+        f.write(yaml.dump(context.ldap_settings))
 
 
 def setup_conf_file(context):
@@ -361,6 +379,9 @@ def before_scenario(context, scenario):
     if 'rest' in context.tags:
         setup_rest_server(context)
 
+    if 'ldap_off' in context.tags:
+        disable_ldap_server(context)
+
 
 def after_scenario(context, scenario):
     import tagopsdb
@@ -404,6 +425,9 @@ def after_scenario(context, scenario):
 
     if 'rest' in context.tags:
         teardown_rest_server(context)
+
+    if 'ldap_off' in context.tags:
+        restore_rest_settings(context)
 
     teardown_workspace(context)
 

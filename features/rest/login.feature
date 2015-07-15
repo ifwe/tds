@@ -22,7 +22,7 @@ Feature: Login
             | user=&password=       | user      |
             | user=&password=       | password  |
 
-    @rest @wip
+    @rest
     Scenario: invalid credentials
         When I query POST "/login?user=horsefeathers&password=hensteeth"
         Then the response code is 401
@@ -31,17 +31,17 @@ Feature: Login
             | location  | name      | description                                                                   |
             | query     | user      | Authentication failed. Please check your username and password and try again. |
 
-    @rest
+    @rest @ldap_off
     Scenario: LDAP server not accessible
+        Given the LDAP server is inaccessible
         When I query POST "/login?user=horsefeathers&password=hensteeth"
         Then the response code is 500
         And the response contains errors:
             | location  | name  | description                       |
             | url       |       | Could not connect to LDAP server. |
 
-    @rest @wip
+    @rest
     Scenario: valid credentials
-        # Given the LDAP server is running
         When I query POST "/login?user=testuser&password=secret"
         Then the response code is 200
         And the response contains a cookie

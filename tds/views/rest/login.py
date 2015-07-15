@@ -35,13 +35,11 @@ class LoginView(BaseView):
                 username=self.request.validated_params['user']
             )
             l.bind_s(dn, password)
-            print "1"
         except ldap.SERVER_DOWN:
             self.request.errors.add('url', '',
                                     "Could not connect to LDAP server.")
             self.request.errors.status = 500
         except ldap.LDAPError:
-            print "2"
             self.request.errors.add(
                 'query', 'user',
                 "Authentication failed. Please check your username and "
