@@ -260,11 +260,13 @@ def disable_ldap_server(context):
     Change the LDAP server URI to something that won't work.
     """
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
-                  'settings.yml')) as f:
+                  'settings.yml'), 'r+') as f:
         context.rest_settings = yaml.load(f.read())
         rest_settings = context.rest_settings.copy()
         rest_settings['ldap_server'] = 'ldaps://ldap.example.com'
-        f.write(yaml.dump(rest_settings))
+        f.seek(0)
+        f.truncate()
+        f.write(yaml.dump(rest_settings, default_flow_style=False))
 
 
 def restore_rest_settings(context):
@@ -272,8 +274,9 @@ def restore_rest_settings(context):
     Restore rest settings from before the removal of the LDAP server.
     """
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
-                  'settings.yml')) as f:
-        f.write(yaml.dump(context.ldap_settings))
+                  'settings.yml'), 'r+') as f:
+        f.truncate()
+        f.write(yaml.dump(context.rest_settings, default_flow_style=False))
 
 
 def setup_conf_file(context):

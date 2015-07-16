@@ -33,7 +33,6 @@ Feature: Login
 
     @rest @ldap_off
     Scenario: LDAP server not accessible
-        Given the LDAP server is inaccessible
         When I query POST "/login?user=horsefeathers&password=hensteeth"
         Then the response code is 500
         And the response contains errors:
