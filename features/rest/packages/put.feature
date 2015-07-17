@@ -15,6 +15,7 @@ Feature: Update (PUT) package on REST API
             | 2         | 2         |
             | 2         | 3         |
             | 3         | 1         |
+        And I have a cookie with user permissions
 
     @rest
     Scenario Outline: update a package for an application that doesn't exist
@@ -75,7 +76,7 @@ Feature: Update (PUT) package on REST API
             | 3         |
 
     @rest
-    Scenario Outline: attemp to violate a unique constraint
+    Scenario Outline: attempt to violate a unique constraint
         When I query PUT "/applications/<select>/packages/2/3?<query>"
         Then the response code is 409
         And the response contains errors:

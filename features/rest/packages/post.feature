@@ -10,13 +10,14 @@ Feature: Add (POST) package on REST API
             | app2  |
             | app3  |
         And there is a package with version=1,revision=1
+        And I have a cookie with user permissions
 
     @rest
     Scenario Outline: add a new package
         When I query POST "/applications/<select>/packages?version=<ver>&revision=<rev>"
         Then the response code is 201
-        And the response is an object with version=<ver>,revision=<rev>
-        And there is a package with version=<ver>,revision=<rev>
+        And the response is an object with version="<ver>",revision="<rev>",creator="testuser"
+        And there is a package with version="<ver>",revision="<rev>",creator="testuser"
 
         Examples:
             | select    | ver   | rev   |
@@ -25,44 +26,44 @@ Feature: Add (POST) package on REST API
 
     @rest
     Scenario: specify id
-        When I query POST "/packages?name=pkg4&id=10"
+        When I query POST "/applications/app3/packages?version=2&revision=2&id=10"
         Then the response code is 201
-        And the response is an object with name="pkg4",id=10
-        And there is a package with name="pkg4",id=10
+        And the response is an object with version="2",revision="2",id=10
+        And there is a package with version="2",revision="2",id=10
 
     @rest
     Scenario: omit required field
-        When I query POST "/packages"
+        When I query POST "/applications/app3/packages?revision=2"
         Then the response code is 400
         And the response contains errors:
-            | location  | name  | description               |
-            | query     |       | name is a required field. |
-        And there is no package with name="pkg4"
+            | location  | name  | description                   |
+            | query     |       | version is a required field.  |
+        And there is no package with version="2",revision="2"
 
     @rest
     Scenario Outline: pass an invalid parameter
-        When I query POST "/packages?<query>"
+        When I query POST "/applications/app3/packages?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                               |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name']. |
-        And there is no package with name="pkg4"
+            | location  | name  | description                                                                                           |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'builder', 'job', 'version', 'id', 'revision'].  |
+        And there is no package with version="2",revision="2"
 
         Examples:
-            | query                |
-            | name=pkg4&foo=bar   |
-            | foo=bar&name=pkg4   |
+            | query                         |
+            | version=2&revision=2&foo=bar  |
+            | foo=bar&version=2&revision=2  |
 
     @rest
     Scenario Outline: attempt to violate a unique constraint
-        When I query POST "/packages?<query>"
+        When I query POST "/applications/app3/packages?<query>"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                               |
-            | query     | <name>    | Unique constraint violated. A package with this <type> already exists.    |
+            | location  | name      | description                                                   |
+            | query     | <name>    | Unique constraint violated. A package <type> already exists.  |
 
         Examples:
-            | query             | name  | type  |
-            | name=pkg3        | name  | name  |
-            | name=pkg3&id=2   | name  | name  |
-            | name=pkg3&id=2   | id    | ID    |
+            | query                     | name      | type                                                  |
+            | version=1&revision=1      | version   | for this application with this version and revision   |
+            | version=1&revision=1&id=3 | version   | for this application with this version and revision   |
+            | version=2&revision=2&id=1 | id        | with this ID                                          |

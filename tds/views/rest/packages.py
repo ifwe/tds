@@ -35,7 +35,6 @@ class PackageView(BaseView):
 
     defaults = {
         'status': 'pending',
-        'creator': lambda self: self.user.username,
     }
 
     required_post_fields = ('version', 'revision')
@@ -161,9 +160,12 @@ class PackageView(BaseView):
             self.request.errors.status = 409
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_pkg_post'))
+                      'validate_pkg_post', 'validate_cookie'))
     def collection_post(self):
         """
         Handle a POST request after the parameters are marked valid JSON.
         """
+        self.request.validated_params['creator'] = self.request.validated[
+            'user'
+        ]
         return self._handle_collection_post()
