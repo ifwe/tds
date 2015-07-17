@@ -15,6 +15,7 @@ Feature: GET package(s) from the REST API
             | 2         | 2         |
             | 2         | 3         |
             | 3         | 1         |
+        And I have a cookie with user permissions
 
     @rest
     Scenario Outline: no application

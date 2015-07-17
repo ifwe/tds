@@ -33,7 +33,7 @@ class ProjectView(BaseView):
         self._validate_name("POST")
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_proj_post'))
+                      'validate_proj_post', 'validate_cookie'))
     def collection_post(self):
         """
         Handle a POST request after the parameters are marked valid JSON.

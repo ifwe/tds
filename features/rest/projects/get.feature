@@ -3,6 +3,9 @@ Feature: GET project(s) from the REST API
     I want information on projects
     So that I can be informed of the current state of the database
 
+    Background:
+        Given I have a cookie with user permissions
+
     @rest
     Scenario: no projects
         When I query GET "/projects"

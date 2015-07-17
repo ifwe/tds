@@ -3,6 +3,9 @@ Feature: GET application(s) from the REST API
     I want information on applications
     So that I can be informed of the current state of the database
 
+    Background:
+        Given I have a cookie with user permissions
+
     @rest
     Scenario: no applications
         When I query GET "/applications"
