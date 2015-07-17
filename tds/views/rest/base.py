@@ -140,14 +140,14 @@ class BaseView(ValidatedView):
         return self.make_response(self.request.validated[self.name],
                                   "201 Created")
 
-    @view(validators=('validate_individual',))
+    @view(validators=('validate_individual', 'validate_cookie'))
     def get(self):
         """
         Return an individual resource.
         """
         return self.make_response(self.request.validated[self.name])
 
-    @view(validators=('validate_collection_get',))
+    @view(validators=('validate_collection_get', 'validate_cookie'))
     def collection_get(self):
         """
         Return a list of matching resources for the query in the request.
@@ -161,7 +161,7 @@ class BaseView(ValidatedView):
         return self.make_response(self.request.validated[self.plural])
 
     @view(validators=('validate_individual', 'validate_put_post',
-                      'validate_obj_put'))
+                      'validate_obj_put', 'validate_cookie'))
     def put(self):
         """
         Handle a PUT request after the parameters are marked valid JSON.
@@ -175,7 +175,7 @@ class BaseView(ValidatedView):
         tagopsdb.Session.commit()
         return self.make_response(self.request.validated[self.name])
 
-    @view(validators=('validate_individual',))
+    @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
         """
         Delete an individual resource.

@@ -9,6 +9,7 @@ Feature: Add (POST) application on REST API
             | app1  |
             | app2  |
             | app3  |
+        And I have a cookie with user permissions
 
     @rest
     Scenario: add a new application

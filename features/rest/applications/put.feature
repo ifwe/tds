@@ -9,6 +9,7 @@ Feature: Update (PUT) application on REST API
             | app1  |
             | app2  |
             | app3  |
+        And I have a cookie with user permissions
 
     @rest
     Scenario Outline: update an application that doesn't exist

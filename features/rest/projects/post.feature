@@ -9,6 +9,7 @@ Feature: Add (POST) project on REST API
             | proj1 |
             | proj2 |
             | proj3 |
+        And I have a cookie with user permissions
 
     @rest
     Scenario: add a new project
