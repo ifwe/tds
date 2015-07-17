@@ -28,8 +28,8 @@ Feature: Add (POST) package on REST API
     Scenario: specify id
         When I query POST "/applications/app3/packages?version=2&revision=2&id=10"
         Then the response code is 201
-        And the response is an object with version="2",revision="2",id=10
-        And there is a package with version="2",revision="2",id=10
+        And the response is an object with version="2",revision="2",id=10,creator="testuser"
+        And there is a package with version="2",revision="2",id=10,creator="testuser"
 
     @rest
     Scenario: omit required field
@@ -38,7 +38,7 @@ Feature: Add (POST) package on REST API
         And the response contains errors:
             | location  | name  | description                   |
             | query     |       | version is a required field.  |
-        And there is no package with version="2",revision="2"
+        And there is no package with version="2",revision="2",creator="testuser"
 
     @rest
     Scenario Outline: pass an invalid parameter
@@ -47,7 +47,7 @@ Feature: Add (POST) package on REST API
         And the response contains errors:
             | location  | name  | description                                                                                           |
             | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'builder', 'job', 'version', 'id', 'revision'].  |
-        And there is no package with version="2",revision="2"
+        And there is no package with version="2",revision="2",creator="testuser"
 
         Examples:
             | query                         |
