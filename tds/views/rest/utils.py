@@ -24,10 +24,9 @@ def _create_digest(username, addr, seconds, settings):
     return base64.b64encode(dig).decode()
 
 
-def set_cookie(response, username, addr, settings):
+def _create_cookie(username, addr, settings):
     """
-    Create and set a cookie for the given username and remote client address
-    for the given response.
+    Create a cookie with the given username and remote client address.
     """
     seconds = int(
         (
@@ -36,11 +35,19 @@ def set_cookie(response, username, addr, settings):
         ).total_seconds()
     )
     digest = _create_digest(username, addr, seconds, settings)
-    cookie_value = "issued={issued}&user={user}&digest={digest}".format(
+    return "issued={issued}&user={user}&digest={digest}".format(
         issued=seconds,
         user=username,
         digest=digest,
     )
+
+
+def set_cookie(response, username, addr, settings):
+    """
+    Create and set a cookie for the given username and remote client address
+    for the given response.
+    """
+    cookie_value = _create_cookie(username, addr, settings)
     response.set_cookie(
         key='session',
         value=cookie_value,
@@ -63,7 +70,7 @@ def validate_cookie(request, settings):
 
     digest = seconds = username = None
 
-    pairs = [p.split('=', 1) for p in response.cookies['session'].split('&')]
+    pairs = [p.split('=', 1) for p in request.cookies['session'].split('&')]
     for k, v in pairs:
         if k == 'issued':
             seconds = int(v)
@@ -75,7 +82,8 @@ def validate_cookie(request, settings):
     if None in (digest, seconds, username):
         return (True, False)
 
-    if _create_digest(username, request.remote_addr, seconds) != digest:
+    if _create_digest(username, request.remote_addr, seconds,
+                      settings) != digest:
         return (True, False)
 
     if (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds() - \

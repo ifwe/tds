@@ -1279,6 +1279,15 @@ def then_there_is_no_application_with_properties(context, properties):
     assert returned is None, returned
 
 
+@then(u'there is no package with {properties}')
+def then_there_is_no_package_with(context, properties):
+    tagopsdb.Session.close()
+    attrs = parse_properties(properties)
+    package = tds.model.Package.get(**attrs)
+
+    assert package is None
+
+
 @then(u'the package is invalidated for deploy targets')
 def then_the_package_is_invalidated_for_deploy_targets(context):
     attr_sets = [

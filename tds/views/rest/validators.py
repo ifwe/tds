@@ -383,12 +383,18 @@ class ValidatedView(JSONValidatedView):
         (present, username) = utils.validate_cookie(self.request,
                                                     self.settings)
         if not present:
-            return
+            self.request.errors.add(
+                'header', 'cookie',
+                'Authentication required. Please login.'
+            )
+            if self.request.errors.status == 400:
+                self.request.errors.status = 401
         elif not username:
             self.request.errors.add(
                 'header', 'cookie',
                 'Cookie has expired or is invalid. Please reauthenticate.'
             )
-            self.request.errors.status = 419
+            if self.request.errors.status == 400:
+                self.request.errors.status = 419
         else:
             self.request.validated['user'] = username

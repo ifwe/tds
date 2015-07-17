@@ -2,12 +2,33 @@
 Steps for the REST API.
 """
 
+from os.path import join as opj
 
 import requests
+import yaml
 
 from behave import given, then, when
 
+from tds.views.rest import utils
 from .model_steps import parse_properties
+
+
+@given(u'I have a cookie with {perm_type} permissions')
+def given_i_have_a_cookie_with_permissions(context, perm_type):
+    """
+    Add a cookie at context.cookie with the permission type perm_type.
+    """
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'), 'r+') as f:
+        rest_settings = yaml.load(f.read())
+    if perm_type == 'user':
+        context.cookie = utils._create_cookie('testuser', '127.0.0.1',
+                                              rest_settings)
+    elif perm_type == 'admin':
+        pass    # add admin cookie code here after permissions system is done
+    else:
+        assert False, ("Unknown permission type: {p}. "
+                       "Valid options: user, admin.".format(p=perm_type))
 
 
 @when(u'I query {method} "{path}"')
@@ -18,11 +39,23 @@ def when_i_query(context, method, path):
     http_method = getattr(requests, method.lower(), None)
     if http_method is None:
         assert False, "Unkown method: {method}".format(method=method)
-    context.response = http_method("http://{addr}:{port}{path}".format(
-        addr=context.rest_server.server_name,
-        port=context.rest_server.server_port,
-        path=path,
-    ))
+
+    if getattr(context, 'cookie', None):
+        context.response = http_method(
+            "http://{addr}:{port}{path}".format(
+                addr=context.rest_server.server_name,
+                port=context.rest_server.server_port,
+                path=path,
+            ),
+            cookies=dict(session=context.cookie),
+        )
+        print context.response.text
+    else:
+        context.response = http_method("http://{addr}:{port}{path}".format(
+            addr=context.rest_server.server_name,
+            port=context.rest_server.server_port,
+            path=path,
+        ))
 
 
 @then(u'the response code is {code}')
@@ -56,7 +89,7 @@ def then_the_response_list_contains_objects(context):
 
 
 @then(u'the response is an object with {properties}')
-def then_the_response_is_a_project_with(context, properties):
+def then_the_response_is_an_object_with(context, properties):
     properties = parse_properties(properties)
     try:
         assert all(properties[prop] == context.response.json()[prop] for prop
