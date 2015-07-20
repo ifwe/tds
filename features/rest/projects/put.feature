@@ -41,8 +41,8 @@ Feature: Update (PUT) project on REST API
         When I query PUT "/projects/<select>?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name'].   |
+            | location  | name  | description                                               |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name']. |
         And there is a project with name="proj2",id=2
 
         Examples:

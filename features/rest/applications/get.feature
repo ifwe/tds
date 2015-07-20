@@ -13,7 +13,7 @@ Feature: GET application(s) from the REST API
         And the response is a list of 0 items
 
     @rest
-    Scenario Outline: get a application that doesn't exist
+    Scenario Outline: get an application that doesn't exist
         When I query GET "/applications/<select>"
         Then the response code is 404
         And the response contains errors:
