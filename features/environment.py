@@ -245,6 +245,16 @@ def setup_rest_server(context):
     context.rest_server = make_server('0.0.0.0', 0, app)
     context.rest_process = Process(target=rest_server, args=(context,))
     context.rest_process.start()
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'), 'r+') as f:
+        context.rest_settings = yaml.load(f.read())
+        context.new_rest_settings = context.rest_settings.copy()
+        context.new_rest_settings['ldap_server'] = 'ldaps://ldap.tag-dev.com'
+        f.seek(0)
+        f.truncate()
+        f.write(
+            yaml.dump(context.new_rest_settings, default_flow_style=False)
+        )
 
 
 def teardown_rest_server(context):
@@ -253,6 +263,7 @@ def teardown_rest_server(context):
     """
     context.rest_process.terminate()
     context.rest_process.join()
+    restore_rest_settings(context)
 
 
 def disable_ldap_server(context):
@@ -261,10 +272,7 @@ def disable_ldap_server(context):
     """
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
                   'settings.yml'), 'r+') as f:
-        context.rest_settings = yaml.load(f.read())
-        context.new_rest_settings = context.rest_settings.copy()
         context.new_rest_settings['ldap_server'] = 'ldaps://ldap.example.com'
-        f.seek(0)
         f.truncate()
         f.write(
             yaml.dump(context.new_rest_settings, default_flow_style=False)
@@ -430,9 +438,6 @@ def after_scenario(context, scenario):
 
     if 'rest' in context.tags:
         teardown_rest_server(context)
-
-    if 'ldap_off' in context.tags:
-        restore_rest_settings(context)
 
     teardown_workspace(context)
 
