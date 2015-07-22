@@ -70,6 +70,8 @@ URLs and methods for deploying have yet to be determined.
         <td>
             <b>200</b>: Return all matching applications. Can be empty list.
                 <br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>422</b>: Unprocessable entity. Illegal attributes or malformed
             JSON most likely.<br />
         </td>
@@ -83,6 +85,8 @@ URLs and methods for deploying have yet to be determined.
         <td>
             <b>201</b>: Application created. Return application JSON.<br />
             <b>400</b>: Bad request.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>403</b>: Forbidden. Lack of permissions.<br />
             <b>409</b>: Conflict. Unique constraint violated. Check errors in
                 response for specifics.<br />
@@ -97,6 +101,8 @@ URLs and methods for deploying have yet to be determined.
             <b>204</b>: Application deleted. Nothing to return.<br />
             <b>301</b>: Moved permanently. Renamed most likely.
                 Return the new URI, as per HTTP/1.1.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>403</b>: Forbidden. Lack of permissions.<br />
             <b>404</b>: Not found.<br />
         </td>
@@ -110,6 +116,8 @@ URLs and methods for deploying have yet to be determined.
                 <em>This may be hard to implement. We would need a column for
                 former names for applications.</em><br />
             <b>400</b>: Bad request.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>404</b>: Not found.<br />
             <b>410</b>: Gone. The application has been deleted.
                 <em>This may be hard to implement. We would need a table for
@@ -127,6 +135,8 @@ URLs and methods for deploying have yet to be determined.
             <b>200</b>: Application updated. Return new attributes.<br />
             <b>301</b>: Moved permanently.<br />
             <b>400</b>: Bad request.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>403</b>: Forbidden. Lack of permissions.<br />
             <b>404</b>: Not found.<br />
             <b>409</b>: Conflict. Unique constraint violated.<br />
@@ -144,8 +154,10 @@ URLs and methods for deploying have yet to be determined.
         </td>
         <td>
             <b>200</b>: Packages found and returned.<br />
-            <b>422</b>: Bad query.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>404</b>: No such application found.<br />
+            <b>422</b>: Bad query.<br />
         </td>
     </tr>
     <tr>
@@ -159,6 +171,8 @@ URLs and methods for deploying have yet to be determined.
         <td>
             <b>201</b>: Package created. Return package JSON.<br />
             <b>400</b>: Bad request.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>403</b>: Forbidden. Lack of permissions. Check errors in
                 response for specifics.<br />
             <b>409</b>: Conflict. Unique constraint violated.<br />
@@ -172,6 +186,8 @@ URLs and methods for deploying have yet to be determined.
         <td><em>None</em></td>
         <td>
             <b>204</b>: Package delete. Nothing to return.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>404</b>: Application or package not found. See errors in
                 response for specifics.<br />
         </td>
@@ -182,6 +198,8 @@ URLs and methods for deploying have yet to be determined.
         <td><em>None</em></td>
         <td>
             <b>200</b>: Return package.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>404</b>: Not found.<br />
         </td>
     </tr>
@@ -194,6 +212,8 @@ URLs and methods for deploying have yet to be determined.
             <b>200</b>: Package updated.<br />
             <b>400</b>: Bad request. See errors in response for specifics.
                 Most likely a bad query.<br />
+            <b>401</b>: Authentication required. Cookie not present, valid,
+                and/or unexpired.<br />
             <b>404</b>: Not found.<br />
             <b>409</b>: Conflict. Unique constraint violated.<br />
         </td>
