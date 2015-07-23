@@ -18,12 +18,14 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
     """
     Add a cookie at context.cookie with the permission type perm_type.
     """
-    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
-                  'settings.yml'), 'r+') as f:
-        rest_settings = yaml.load(f.read())
     if perm_type == 'user':
-        context.cookie = utils._create_cookie('testuser', '127.0.0.1',
-                                              rest_settings)
+        response = requests.post(
+            "http://{addr}:{port}/login?user=testuser&password=secret".format(
+                addr=context.rest_server.server_name,
+                port=context.rest_server.server_port,
+            )
+        )
+        context.cookie = response.cookies['session']
     elif perm_type == 'admin':
         pass    # add admin cookie code here after permissions system is done
     else:
