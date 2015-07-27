@@ -34,7 +34,7 @@ class HipChatHandler(BaseHTTPRequestHandler):
         form = self.parse_post()
         response = self.determine_response(form)
         self.server.add_notification((form, response))
-        if form and 'version+500+of+myapp+on' not in form['message']:
+        if response != 'No response':
             self.send_response(response)
         return
 

@@ -81,9 +81,10 @@ class HipchatNotifier(Notifier):
             )
 
             if resp.status_code != requests.codes.ok:
-                log.error('Notification to HipChat failed, status code '
-                          'is: %r', resp.status_code)
-        except requests.RequestException as e:
+                log.error('Deployment was successful. However, notification to '
+                          'HipChat failed, status code is: %r', resp.status_code)
+        except requests.RequestException as exc:
             log.error(
-                'Notification to HipChat failed, message is: {e}'.format(e=e)
+                'Deployment was successful. However, notification to HipChat '
+                'failed, message is: {exc}'.format(exc=exc)
             )
