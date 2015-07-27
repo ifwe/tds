@@ -72,13 +72,18 @@ class HipchatNotifier(Notifier):
         # Content-Length must be set in header due to bug in Python 2.6
         headers = {'Content-Length': '0'}
 
-        resp = requests.post(
-            self.receiver,
-            params=payload,
-            headers=headers,
-            proxies=self.proxies
-        )
+        try:
+            resp = requests.post(
+                self.receiver,
+                params=payload,
+                headers=headers,
+                proxies=self.proxies
+            )
 
-        if resp.status_code != requests.codes.ok:
-            log.error('Notification to HipChat failed, status code '
-                      'is: %r', resp.status_code)
+            if resp.status_code != requests.codes.ok:
+                log.error('Notification to HipChat failed, status code '
+                          'is: %r', resp.status_code)
+        except requests.RequestException as e:
+            log.error(
+                'Notification to HipChat failed, message is: {e}'.format(e=e)
+            )
