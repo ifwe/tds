@@ -7,7 +7,7 @@ and using this view is discouraged.
 
 import datetime
 
-import tds.exceptions
+import tds, tagopsdb
 
 from . import utils
 
@@ -128,8 +128,9 @@ class ValidatedView(JSONValidatedView):
         """
         if not obj_type:
             obj_type = self.name
-            if getattr(self, 'model', None):
-                obj_cls = self.model
+
+        if getattr(self, 'model', None):
+            obj_cls = self.model
         else:
             obj_cls = getattr(tds.model, obj_type.title(), None)
             if obj_cls is None:
@@ -174,10 +175,12 @@ class ValidatedView(JSONValidatedView):
 
         if not obj_type:
             obj_type = self.name
-            if getattr(self, 'model', None):
-                obj_cls = self.model
 
-        obj_cls = getattr(tds.model, obj_type.title(), None)
+        if getattr(self, 'model', None):
+            obj_cls = self.model
+        else:
+            obj_cls = getattr(tds.model, obj_type.title(), None)
+
         if obj_cls is None:
             raise tds.exceptions.NotFoundError('Model', [obj_type])
 
@@ -199,6 +202,12 @@ class ValidatedView(JSONValidatedView):
             self.request.validated[plural] = (
                 self.request.validated[plural].filter(
                     obj_cls.pkg_name != '__dummy__'
+                )
+            )
+        elif obj_cls == tds.model.AppTarget:
+            self.request.validated[plural] = (
+                self.request.validated[plural].filter(
+                    obj_cls.app_type != '__dummy__'
                 )
             )
 
