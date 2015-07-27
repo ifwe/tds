@@ -4,11 +4,13 @@ REST API view for app tiers.
 
 from cornice.resource import resource, view
 
+import tds.model
+
 from . import utils
 from .base import BaseView, init_view
 
-@resource(collection_path="/tiers", path="/tiers/name_or_id")
-@init_view(name='appTarget')
+@resource(collection_path="/tiers", path="/tiers/{name_or_id}")
+@init_view(name='tier', model=tds.model.AppTarget)
 class TierView(BaseView):
     """
     Tier view. This object maps to the /tiers and /tiers/{name_or_id} URLs.
