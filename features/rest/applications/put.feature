@@ -28,7 +28,7 @@ Feature: Update (PUT) application on REST API
     Scenario Outline: update an application
         When I query PUT "/applications/<select>?name=newname"
         Then the response code is 200
-        And the response is an object with pkg_name="newname",id=2
+        And the response is an object with name="newname",id=2
         And there is an application with pkg_name="newname",id=2
 
         Examples:

@@ -128,9 +128,8 @@ class ValidatedView(JSONValidatedView):
         """
         if not obj_type:
             obj_type = self.name
-
-        if getattr(self, 'model', None):
-            obj_cls = self.model
+            if getattr(self, 'model', None):
+                obj_cls = self.model
         else:
             obj_cls = getattr(tds.model, obj_type.title(), None)
             if obj_cls is None:

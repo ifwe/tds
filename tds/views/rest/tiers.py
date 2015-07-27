@@ -34,7 +34,9 @@ class TierView(BaseView):
 
     # URL parameter routes to Python object fields.
     # Params not included are mapped to themselves.
-    param_routes = {}
+    param_routes = {
+        'name': 'app_type',
+    }
 
     defaults = {}
 
