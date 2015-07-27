@@ -93,6 +93,20 @@ class BaseView(ValidatedView):
             pass
         super(BaseView, self).__init__(*args, **kwargs)
 
+    def to_json_obj(self, obj):
+        """
+        Return a JSON object representation of this object.
+        """
+        d = obj.to_dict()
+        if not self.param_routes:
+            return d
+
+        for k in self.param_routes:
+            if self.param_routes[k] in d:
+                d[k] = d[self.param_routes[k]]
+                del d[self.param_routes[k]]
+        return d
+
     @staticmethod
     def make_response(body, status="200 OK", renderer="json"):
         """
@@ -137,15 +151,19 @@ class BaseView(ValidatedView):
         self.request.validated[self.name] = self.model.create(
             **self.request.validated_params
         )
-        return self.make_response(self.request.validated[self.name],
-                                  "201 Created")
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name]),
+            "201 Created",
+        )
 
     @view(validators=('validate_individual', 'validate_cookie'))
     def get(self):
         """
         Return an individual resource.
         """
-        return self.make_response(self.request.validated[self.name])
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )
 
     @view(validators=('validate_collection_get', 'validate_cookie'))
     def collection_get(self):
@@ -158,7 +176,9 @@ class BaseView(ValidatedView):
         Returns:
             "200 OK" if valid request successfully processed
         """
-        return self.make_response(self.request.validated[self.plural])
+        return self.make_response(
+            [self.to_json_obj(x) for x in self.request.validated[self.plural]]
+        )
 
     @view(validators=('validate_individual', 'validate_put_post',
                       'validate_obj_put', 'validate_cookie'))
@@ -173,7 +193,9 @@ class BaseView(ValidatedView):
                 self.request.validated_params[attr],
             )
         tagopsdb.Session.commit()
-        return self.make_response(self.request.validated[self.name])
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )
 
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
@@ -181,4 +203,6 @@ class BaseView(ValidatedView):
         Delete an individual resource.
         """
         #TODO Implement the delete part.
-        return self.make_response(self.request.validated[self.name])
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )

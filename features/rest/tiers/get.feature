@@ -33,9 +33,9 @@ Feature: GET app tier(s) from the REST API
         Then the response code is 200
         And the response is a list of 2 items
         And the response list contains objects:
-            | app_type  |
-            | tier1     |
-            | tier2     |
+            | name  |
+            | tier1 |
+            | tier2 |
 
     @rest
     Scenario Outline: get a single tier by name
@@ -43,7 +43,7 @@ Feature: GET app tier(s) from the REST API
         And there is a deploy target with name="tier2"
         When I query GET "/tiers/<tier>"
         Then the response code is 200
-        And the response is an object with app_type="<tier>"
+        And the response is an object with name="<tier>"
 
         Examples:
             | tier  |
@@ -83,7 +83,7 @@ Feature: GET app tier(s) from the REST API
             | 10    |       | 5     | 2     | 6     |
             | 4     | 1     | 4     | 2     | 5     |
 
-    @rest @wip
+    @rest
     Scenario Outline: specify unknown query
         Given there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"

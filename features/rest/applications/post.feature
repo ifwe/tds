@@ -15,15 +15,15 @@ Feature: Add (POST) application on REST API
     Scenario: add a new application
         When I query POST "/applications?name=app4&job=myjob"
         Then the response code is 201
-        And the response is an object with pkg_name="app4",id=5
-        And there is an application with name="app4",id=5
+        And the response is an object with name="app4",id=5,job="myjob"
+        And there is an application with name="app4",id=5,path="myjob"
 
     @rest
     Scenario Outline: specify advanced parameters
         When I query POST "/applications?name=app4&job=myjob&<query>"
         Then the response code is 201
-        And the response is an object with pkg_name="app4",id=5,<props>
-        And there is an application with name="app4",id=5,<props>
+        And the response is an object with name="app4",id=5,job="myjob",<props>
+        And there is an application with pkg_name="app4",id=5,path="myjob",<props>
 
         Examples:
             | query                     | props                         |

@@ -36,10 +36,10 @@ Feature: GET application(s) from the REST API
         Then the response code is 200
         And the response is a list of 3 items
         And the response list contains objects:
-            | pkg_name  |
-            | app1      |
-            | app2      |
-            | app3      |
+            | name  |
+            | app1  |
+            | app2  |
+            | app3  |
 
     @rest
     Scenario Outline: get a single application by name
@@ -50,7 +50,7 @@ Feature: GET application(s) from the REST API
             | app3  |
         When I query GET "/applications/<app>"
         Then the response code is 200
-        And the response is an object with pkg_name="<app>"
+        And the response is an object with name="<app>"
 
         Examples:
             | app   |
