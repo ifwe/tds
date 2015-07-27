@@ -16,7 +16,7 @@ Feature: application update application properties
         And I have "dev" permissions
         And there is an application with name="myapp"
         When I run "application update myapp <properties>"
-        Then the output is "Invalid properties: <prop_list>. Split on '=' for a declaration returned 1 argument, expected 2"
+        Then the output is "Invalid properties: <prop_list>. Split on '=' once for the declaration fake_prop returned 1 argument, expected 2"
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
@@ -95,6 +95,23 @@ Feature: application update application properties
             | deploy_type   | rpm                   |
             | build_type    | jenkins               |
             | build_host    | fakeci.example.org    |
+        And there is no application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
+
+    Scenario: matrix_build in job_name
+        Given there is an environment with name="dev"
+        And I am in the "dev" environment
+        And I have "dev" permissions
+        And there is an application with name="myapp",path="job"
+        When I run "application update myapp job_name=new_job&os=centos6.4&lang=python2.7"
+        Then the output describes an application with name="myapp",arch="noarch",path="new_job&os=centos6.4&lang=python2.7",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
+        And the output has "Application has been successfully updated."
+        And there is an application
+            | name          | myapp                                 |
+            | arch          | noarch                                |
+            | path          | new_job&os=centos6.4&lang=python2.7   |
+            | deploy_type   | rpm                                   |
+            | build_type    | jenkins                               |
+            | build_host    | fakeci.example.org                    |
         And there is no application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
     Scenario: admin updates application attributes
