@@ -102,9 +102,6 @@ Feature: GET application(s) from the REST API
             | name  |
             | app1  |
             | app2  |
-            | app3  |
-            | app4  |
-            | app5  |
         When I query GET "/applications?<query>"
         Then the response code is 422
         And the response contains errors:
