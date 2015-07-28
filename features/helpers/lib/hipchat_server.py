@@ -26,13 +26,16 @@ class HipChatHandler(BaseHTTPRequestHandler):
         # TODO: url unquoting
         if form and 'version+200+of+myapp+on' in form['message']:
             return 403
+        if form and 'version+500+of+myapp+on' in form['message']:
+            return 'No response'
         return 200
 
     def do_POST(self):
         form = self.parse_post()
         response = self.determine_response(form)
         self.server.add_notification((form, response))
-        self.send_response(response)
+        if response != 'No response':
+            self.send_response(response)
         return
 
 
