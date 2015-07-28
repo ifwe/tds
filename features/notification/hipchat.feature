@@ -188,4 +188,15 @@ Feature: HipChat notifications
 
         When I run "deploy rollback myapp --hosts sprojhost01"
         Then there is a hipchat failure
-        And the output has "Notification to HipChat failed, status code is: 403"
+        And the output has "Deployment was successful. However, notification to HipChat failed, status code is: 403"
+
+    @hipchat_server
+    Scenario: no hipchat response
+        Given there is a package with version="500"
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package has been validated in the "development" environment
+
+        And hipchat notifications are enabled
+
+        When I run "deploy promote myapp 500 --all-apptypes"
+        Then the output has "Deployment was successful. However, notification to HipChat failed, message is: "
