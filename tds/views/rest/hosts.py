@@ -10,7 +10,7 @@ from . import utils
 from .base import BaseView, init_view
 
 @resource(collection_path="/hosts", path="/hosts/{name_or_id}")
-@init_view(name='host target', model=tds.model.HostTarget)
+@init_view(name='host', model=tds.model.HostTarget)
 class HostView(BaseView):
     """
     Application view. This object maps to the /hosts and
@@ -28,7 +28,9 @@ class HostView(BaseView):
 
     # URL parameter routes to Python object fields.
     # Params not included are mapped to themselves.
-    param_routes = {}
+    param_routes = {
+        'name': 'hostname',
+    }
 
     defaults = {}
 

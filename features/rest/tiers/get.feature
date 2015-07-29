@@ -87,7 +87,7 @@ Feature: GET app tier(s) from the REST API
     Scenario Outline: specify unknown query
         Given there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
-        When I query GET "/applications?<query>"
+        When I query GET "/tiers?<query>"
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                   |
