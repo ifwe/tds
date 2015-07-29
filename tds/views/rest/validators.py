@@ -352,6 +352,9 @@ class ValidatedView(JSONValidatedView):
         with either POST or PUT request_type.
         """
         if 'name' in self.request.validated_params:
+            dict_key = 'name'
+            if 'name' in self.param_routes:
+                dict_key = self.param_routes['name']
             found_obj = self.model.get(
                 name=self.request.validated_params['name']
             )

@@ -52,8 +52,8 @@ class ApplicationView(BaseView):
 
     def validate_app_post(self, _request):
         """
-        Validate a POST request by preventing collisions over unique fields
-        and verifying that arch and build_type are acceptable.
+        Validate a POST request by preventing collisions over unique fields and
+        verifying that arch and build_type are acceptable.
         """
         self._validate_id("POST")
         self._validate_name("POST")
