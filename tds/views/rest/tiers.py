@@ -42,8 +42,15 @@ class TierView(BaseView):
 
     required_post_fields = ("name",)
 
+    def validate_tier_post(self, _request):
+        """
+        Validate a POST request by preventing collisions over unique fields.
+        """
+        self._validate_id("POST")
+        self._validate_name("POST")
+
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_cookie'))
+                      'validate_tier_post', 'validate_cookie'))
     def collection_post(self):
         """
         Handle a POST request after the parameters are marked valid JSON.

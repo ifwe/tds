@@ -71,8 +71,8 @@ Feature: Add (POST) application on REST API
         When I query POST "/applications?<query>"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                                       |
-            | query     | <name>    | Unique constraint violated. An application with this <type> already exists.  |
+            | location  | name      | description                                                                   |
+            | query     | <name>    | Unique constraint violated. An application with this <type> already exists.   |
 
         Examples:
             | query                     | name  | type  |
