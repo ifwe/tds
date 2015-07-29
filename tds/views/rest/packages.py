@@ -21,9 +21,9 @@ class PackageView(BaseView):
     """
 
     types = {
-        'id': 'number',
-        'version': 'number',
-        'revision': 'number',
+        'id': 'integer',
+        'version': 'integer',
+        'revision': 'integer',
         'status': 'string',
         'builder': 'string',
         'job': 'string',

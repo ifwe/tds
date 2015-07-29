@@ -52,7 +52,26 @@ class JSONValidatedView(object):
         try:
             float(given)
         except ValueError:
-            return ("Value {val} for argument {param} is not a number,"
+            return (
+                "Value {val} for argument {param} is not a number,"
+                " is {t}.".format(
+                    val=given, param=param_name, t=type(given)
+                )
+            )
+        else:
+            return False
+
+    def _validate_integer(self, param_name):
+        """
+        Validate that the given param name argument value in the query is an
+        integer and return False if it is; return an error message if it isn't.
+        """
+        given = self.request.validated_params[param_name]
+        try:
+            int(given)
+        except ValueError:
+            return (
+                "Value {val} for argument {param} is not an integer,"
                 " is {t}.".format(
                     val=given, param=param_name, t=type(given)
                 )
@@ -348,7 +367,7 @@ class ValidatedView(JSONValidatedView):
 
     def _validate_name(self, request_type):
         """
-        Validate that the name unique constraint ins't violated for a request
+        Validate that the name unique constraint isn't violated for a request
         with either POST or PUT request_type.
         """
         if 'name' in self.request.validated_params:
