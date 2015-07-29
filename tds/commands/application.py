@@ -201,14 +201,13 @@ class ApplicationController(BaseController):
         parsed = dict()
         for declaration in properties:
             try:
-                attr, val = declaration.split('=')
+                attr, val = declaration.split('=', 1)
             except ValueError:
                 raise tds.exceptions.InvalidInputError(
-                    ("Invalid properties: %s. Split on '=' for a declaration "
-                     "returned %s argument%s, expected 2"),
+                    ("Invalid properties: %s. Split on '=' once for the "
+                     "declaration %s returned 1 argument, expected 2"),
                     properties,
-                    len(declaration.split('=')),
-                    '' if len(declaration.split('=')) == 1 else 's',
+                    declaration,
                 )
             if mappings and attr in mappings:
                 mapped_attr = mappings[attr]

@@ -1,7 +1,8 @@
 """Jenkins configuration for feature tests"""
 
-import os.path
 import collections
+import hashlib
+import os.path
 import shutil
 
 from behave import given
@@ -95,11 +96,43 @@ def given_the_job_has_a_build(context, number):
         )
     )
 
+    artifact_fspath = path_fragment + '/artifact/' + artifact_filename
+
     update_jenkins(
         context,
-        path_fragment + '/artifact/' + artifact_filename,
+        artifact_fspath,
         dict(
             stuff=True
+        )
+    )
+
+    md5 = hashlib.md5()
+    with open(
+        os.path.join(context.JENKINS_SERVER_DIR, artifact_fspath)
+    ) as fh:
+        md5.update(fh.read())
+    artifact_md5 = md5.hexdigest()
+
+    # Currently not used, but keeping for future possibilities
+    # Needed for when fingerprinting is turned on and used
+    update_jenkins(
+        context,
+        'fingerprint/%s/api/python' % artifact_md5,
+        dict(
+            fileName=artifact_filename,
+            hash=artifact_md5,
+            original=dict(
+                name=job,
+                number=number,
+            ),
+            usage=[
+                dict(
+                    name=job,
+                    ranges=dict(
+                        ranges=[dict(end=number+1, start=number)]
+                    )
+                )
+            ],
         )
     )
 

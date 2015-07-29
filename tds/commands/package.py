@@ -1,5 +1,6 @@
 """Commands to support managing packages in the TDS system."""
 
+import hashlib
 import logging
 import os.path
 import signal
@@ -10,6 +11,10 @@ try:
     from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
 except ImportError:
     from jenkinsapi.exceptions import JenkinsAPIException, NotFound
+
+import lxml.html
+import requests
+import requests.exceptions
 
 import tagopsdb
 import tagopsdb.exceptions
@@ -46,7 +51,8 @@ class PackageController(BaseController):
         'delete': 'environment',
     }
 
-    def wait_for_state_change(self, package):
+    @staticmethod
+    def wait_for_state_change(package):
         """Check for state change for package in database"""
 
         while True:
@@ -74,6 +80,45 @@ class PackageController(BaseController):
     def jenkins_url(self):
         return self.app_config['jenkins.url']
 
+    @property
+    def jenkins_direct_url(self):
+        try:
+            return self.app_config['jenkins.direct_url']
+        except KeyError:
+            return None
+
+    def _get_jenkins_fingerprint_md5(self, job_name, rpm_name, package):
+        """
+        Acquire the Jenkins fingerprint MD5 for the given package.
+        This may return 'None' if fingerprinting has not been enabled
+        for the given job (specifically for the RPM artifacts).
+        """
+
+        # Grab the 'fingerprints' page for the job
+        req = requests.get(os.path.join(
+            self.jenkins_url, 'job', job_name,
+            str(package.version), 'fingerprints', ''
+        ))
+
+        # The XPath is to extract an href from a row in a table
+        # where the artifact matches the RPM file
+        html = lxml.html.fromstring(req.content)
+        xpath = (
+            '//td[re:test(.,"(?<!\w)%s")]/../td[contains(.,"details")]/a/@href'
+            % rpm_name.replace('.', '\.')
+        )
+        fingerprint_href = html.xpath(
+            xpath,
+            namespaces = {'re': 'http://exslt.org/regular-expressions'}
+        )
+
+        # Found an href?  Get the md5 in it (last part of the path)!
+        # Otherwise let user know it's not there
+        if fingerprint_href:
+            return fingerprint_href[0].split('/')[-2]
+        else:
+            return None
+
     def _queue_rpm(self, queued_rpm, rpm_name, package, job_name):
         """Move requested RPM into queue for processing"""
 
@@ -85,7 +130,7 @@ class PackageController(BaseController):
             )
 
         matrix_name = None
-        #assume matrix build
+        # Assume matrix build
         if '/' in job_name:
             job_name, matrix_name = job_name.split('/', 1)
 
@@ -130,21 +175,6 @@ class PackageController(BaseController):
                     matrix_name, job_name
                 )
 
-        try:
-            artifacts = build.get_artifact_dict()[rpm_name]
-            data = artifacts.get_data()
-        except (
-            KeyError,
-            JenkinsAPIException,
-            NotFound
-        ):
-            raise tds.exceptions.JenkinsJobNotFoundError(
-                'Artifact',
-                job_name,
-                package.version,
-                self.jenkins_url,
-            )
-
         tmpname = os.path.join(
             os.path.dirname(os.path.dirname(queued_rpm)), 'tmp', rpm_name
         )
@@ -154,14 +184,96 @@ class PackageController(BaseController):
             if not os.path.isdir(tmpdir):
                 os.makedirs(tmpdir)
 
-        with open(tmpname, 'wb') as tmp_rpm:
-            tmp_rpm.write(data)
+        # Re-try download of file if needed
+        for attempt in range(3):
+            try:
+                artifact = build.get_artifact_dict()[rpm_name]
+                rpm_url = artifact.url
+            except (
+                KeyError,
+                JenkinsAPIException,
+                NotFound
+            ):
+                raise tds.exceptions.JenkinsJobNotFoundError(
+                    'Artifact',
+                    job_name,
+                    package.version,
+                    self.jenkins_url,
+                )
+
+            if self.jenkins_direct_url is not None:
+                rpm_url = rpm_url.replace(
+                    self.jenkins_url, self.jenkins_direct_url
+                )
+
+            req = requests.get(rpm_url)
+
+            if req.status_code != requests.codes.ok:
+                raise tds.exceptions.JenkinsJobNotFoundError(
+                    'Artifact',
+                    job_name,
+                    package.version,
+                    self.jenkins_url,
+                )
+
+            data = req.content
+
+            with open(tmpname, 'wb') as tmp_rpm:
+                tmp_rpm.write(data)
+                tmp_rpm.flush()
+                os.fsync(tmp_rpm.fileno())
+
+            md5 = hashlib.md5()
+            with open(tmpname) as fh:
+                md5.update(fh.read())
+                tmpfile_md5 = md5.hexdigest()
+
+            fingerprint_md5 = self._get_jenkins_fingerprint_md5(
+                job_name, rpm_name, package
+            )
+
+            if fingerprint_md5 is None:
+                log.info(
+                    "WARNING: Fingerprinting is not enabled, your RPM "
+                    "will not be validated first.  Please see:\n"
+                    "https://wiki.ifwe.co/display/siteops/Enabling+"
+                    "fingerprinting+for+archived+files+in+Jenkins\n"
+                    "for information on how to enable it."
+                )
+                break
+
+            if fingerprint_md5.lower() == tmpfile_md5.lower():
+                break
+        else:
+            raise tds.exceptions.JenkinsJobTransferError(
+                'Artifact',
+                job_name,
+                package.version,
+                self.jenkins_url,
+            )
+
+        if utils.rpm.RPMDescriptor.from_path(tmpname) is None:
+            package.status = 'failed'
+            tagopsdb.Session.commit()
+
+            try:
+                os.unlink(tmpname)
+            except OSError as exc:
+                log.error(
+                    'Unable to remove file %s: %s', tmpname, exc
+                )
+
+            raise tds.exceptions.InvalidRPMError(
+                'Package %s is an invalid RPM', rpm_name
+            )
 
         os.link(tmpname, queued_rpm)
         os.unlink(tmpname)
 
     @validate('application')
-    def add(self, application, version, user, job=None, force=False, **params):
+    def add(
+        self, application, version, user, job=None, force=False, **params
+    ):
         """Add a given version of a package for a given project"""
 
         if force:
@@ -225,26 +337,12 @@ class PackageController(BaseController):
         if job is None:
             job = application.path
 
-        def fail_package():
-            package.status = 'failed'
-            tagopsdb.Session.commit()
-
         try:
             self._queue_rpm(pending_rpm, rpm_name, package, job)
         except:
-            fail_package()
+            package.status = 'failed'
+            tagopsdb.Session.commit()
             raise
-        else:
-            if utils.rpm.RPMDescriptor.from_path(pending_rpm) is None:
-                fail_package()
-                try:
-                    os.unlink(pending_rpm)
-                except OSError as exc:
-                    log.error('Unable to remove file %s: %s', pending_rpm, exc)
-
-                raise tds.exceptions.InvalidRPMError(
-                    'Package %s is an invalid RPM', rpm_name
-                )
 
         # Wait until status has been updated to 'failed' or 'completed',
         # or timeout occurs (meaning repository side failed, check logs there)

@@ -1,14 +1,15 @@
-'''
-Updates the deploy yum repsitory with files in the configured directories
-'''
-import sys
+"""
+Updates the deploy yum repository with files in the configured directories
+"""
+
+import errno
+import logging
 import os
 import os.path
-import time
-import shutil
 import smtplib
 import subprocess
-import logging
+import sys
+import time
 
 from email.mime.text import MIMEText
 
@@ -29,14 +30,15 @@ log = logging.getLogger('tds.apps.repo_updater')
 
 
 class RepoUpdater(TDSProgramBase):
-    '''
+    """
     TDS app that updates the yum repository based on files
     in the incoming directory
-    '''
+    """
+
     valid_rpms = None
 
     def initialize(self):
-        'Init the required config and resources for the app'
+        """Init the required config and resources for the app"""
 
         log.info('Initializing database session')
         self.initialize_db()
@@ -55,7 +57,9 @@ class RepoUpdater(TDSProgramBase):
             self.email_receiver = None
 
     def validate_repo_config(self):
-        "Make sure we've got all the values we need for the yum repository"
+        """
+        Make sure we've got all the values we need for the yum repository
+        """
 
         repo_config = self.config.get('repo', None)
 
@@ -70,13 +74,17 @@ class RepoUpdater(TDSProgramBase):
                     'parameter in "repo" section: %s' % key
                 )
 
-    def remove_file(self, rpm):
+    @staticmethod
+    def remove_file(rpm):
         """Remove file from system."""
 
         try:
             os.unlink(rpm)
         except OSError as exc:
-            log.error('Unable to remove file %s: %s', rpm, exc)
+            if exc.errno == errno.ENOENT:
+                pass
+            else:
+                log.error('Unable to remove file %s: %s', rpm, exc)
 
     def notify_bad_rpm(self, rpm_path):
         try:
@@ -85,12 +93,13 @@ class RepoUpdater(TDSProgramBase):
         except smtplib.SMTPException as exc:
             log.error('Email send failed: %s', exc)
 
-    def validate_rpms_in_dir(self, dir):
+    @staticmethod
+    def validate_rpms_in_dir(curr_dir):
         good = []
         bad = []
 
-        for name in os.listdir(dir):
-            fullpath = os.path.join(dir, name)
+        for name in os.listdir(curr_dir):
+            fullpath = os.path.join(curr_dir, name)
             if not os.path.isfile(fullpath):
                 continue
 
@@ -197,15 +206,17 @@ class RepoUpdater(TDSProgramBase):
 
             # TODO: ensure package is valid (security purposes)
 
-            dest_path = os.path.join(self.repo_dir, rpm.arch)
+            dest_file = os.path.join(self.repo_dir, rpm.arch, rpm.filename)
 
             try:
-                shutil.copy(rpm.path, dest_path)
+                self.remove_file(dest_file)
+                os.link(rpm.path, dest_file)
             except IOError:
                 time.sleep(2)   # Short delay before re-attempting
 
                 try:
-                    shutil.copy(rpm.path, dest_path)
+                    self.remove_file(dest_file)
+                    os.link(rpm.path, dest_file)
                 except IOError:
                     package.status = 'failed'
                     self.remove_file(rpm.path)
@@ -250,9 +261,9 @@ class RepoUpdater(TDSProgramBase):
             self.remove_file(rpm.path)
 
     def run(self):
-        '''
+        """
         Find files in incoming dir and add them to the yum repository
-        '''
+        """
 
         self.prepare_rpms()
         self.process_rpms()
@@ -273,10 +284,10 @@ class RepoUpdater(TDSProgramBase):
         return self.config['repo.repo_location']
 
 if __name__ == '__main__':
-    def parse_command_line(args):
+    def parse_command_line(cl_args):
         # TODO implement parser thing?
         return {
-            'config_dir': args[1]
+            'config_dir': cl_args[1]
         }
     args = parse_command_line(sys.argv[1:])
 

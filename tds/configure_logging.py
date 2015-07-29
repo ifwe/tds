@@ -92,7 +92,7 @@ def configure_logging(config_dir, verbosity, use_color, daemon=False):
                             use_color=use_color)
 
     sqla_logger = logging.getLogger('sqlalchemy.engine')
-    sqla_logger.setLevel(1)
+    sqla_logger.setLevel(20)
 
     if not daemon:
         log_wrap.add_stream(sqla_logger, 'stdout', stream=sys.stdout,

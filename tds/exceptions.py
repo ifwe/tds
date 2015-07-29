@@ -113,6 +113,22 @@ class JenkinsJobNotFoundError(TDSException):
         super(JenkinsJobNotFoundError, self).__init__(message)
 
 
+class JenkinsJobTransferError(TDSException):
+    """Exception for when a Jenkins job is not transferred correctly."""
+
+    def __init__(self, object_type, job, version, jenkins_url):
+        message = "{object_type} was not transferred correctly from {url}: "\
+                  "{job}@{version}"\
+            .format(
+                object_type=object_type,
+                url=jenkins_url,
+                job=job,
+                version=version,
+            )
+
+        super(JenkinsJobTransferError, self).__init__(message)
+
+
 class MultipleResultsError(TDSException):
     """Exception for when multiple results are returned and a single
        result is expected
