@@ -135,3 +135,18 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes]
             | strategy |
             | mco      |
             | salt     |
+
+    Scenario Outline: TDS-51
+        Given I am in the "dev" environment
+        And the deploy strategy is "<strategy>"
+        And there is a package with version="124"
+        And the package is deployed on the deploy targets in the "dev" env
+        And the package failed to deploy on the host with name="dprojhost01"
+        When I run "deploy fix myapp --apptypes the-apptype"
+        Then the output has "Completed: 2 out of 2 hosts"
+        And package "myapp" version "124" was deployed to host "dprojhost01"
+
+        Examples:
+            | strategy  |
+            | mco       |
+            | salt      |

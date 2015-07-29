@@ -22,7 +22,7 @@ import tds.utils.merge as merge
 import tds.views.rest as rest
 
 sys.path.insert(
-    0, opj(os.path.dirname(os.path.realpath(__file__)), 'helpers', 'bin')
+    0, opj(os.path.dirname(os.path.realpath(__file__)), 'helpers', 'lib')
 )
 
 from hipchat_server import HipChatServer
@@ -81,7 +81,7 @@ def setup_workspace(context):
         opj(context.REPO_DIR, 'incoming'),
         opj(context.REPO_DIR, 'processing'),
         opj(context.REPO_DIR, 'tmp'),
-        opj(context.REPO_DIR, 'deploy')
+        opj(context.REPO_DIR, 'deploy', 'noarch')
     ):
         if not os.path.isdir(d):
             os.makedirs(d)
@@ -330,8 +330,6 @@ def setup_conf_file(context):
 
     add_config_val(context, 'mco', dict(bin=opj(context.BIN_DIR, 'mco')))
     add_config_val(context, 'salt', dict(
-        bin=opj(context.BIN_DIR, 'salt-call'),
-        user=None,
         c_dir=opj(context.BIN_DIR, 'salt-conf')
     ))
 
