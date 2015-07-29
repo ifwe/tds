@@ -21,15 +21,15 @@ class TierView(BaseView):
 
     # JSON types for params.
     types = {
-        'id': 'number',
+        'id': 'integer',
         'name': 'string',
         'distribution': 'string',
         'puppet_class': 'string',
-        'ganglia_id': 'number',
+        'ganglia_id': 'integer',
         'ganglia_group_name': 'string',
         'status': 'string',
         'hipchats': 'string',
-        'hosts': 'number',
+        'hosts': 'integer',
     }
 
     # URL parameter routes to Python object fields.

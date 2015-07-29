@@ -22,7 +22,7 @@ class ApplicationView(BaseView):
 
     # JSON types for params.
     types = {
-        'id': 'number',
+        'id': 'integer',
         'name': 'string',
         'job': 'string',
         'build_host': 'string',
