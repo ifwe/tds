@@ -46,10 +46,21 @@ class TierView(BaseView):
 
     def validate_tier_post(self, _request):
         """
-        Validate a POST request by preventing collisions over unique fields.
+        Validate a POST request by preventing collisions over unique fields and
+        validating that a Ganglia object exists for the given ID.
         """
         self._validate_id("POST")
         self._validate_name("POST")
+        self._validate_foreign_key('ganglia_id', 'Ganglia object',
+                                   tagopsdb.model.Ganglia)
+
+    def validate_tier_put(self):
+        """
+        Validate a PUT request by preventing collisions over unique fields and
+        validating that a Ganglia object exists for the given ID.
+        """
+        self._validate_id("PUT")
+        self._validate_name("PUT")
         self._validate_foreign_key('ganglia_id', 'Ganglia object',
                                    tagopsdb.model.Ganglia)
 

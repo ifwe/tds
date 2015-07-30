@@ -66,23 +66,21 @@ class HostView(BaseView):
 
     def validate_host_post(self, _request):
         """
-        Validate a POST request by preventing collisions over unique fields.
+        Validate a POST request by preventing collisions over unique fields and
+        validating that an app tier with the given tier_id exists.
         """
         self._validate_id("POST")
         self._validate_name("POST")
         self._validate_foreign_key('tier_id', 'app tier', tds.model.AppTarget)
-        # if 'tier_id' in self.request.validated_params:
-        #     found_app = tds.model.AppTarget.get(
-        #         id=self.request.validated_params['tier_id']
-        #     )
-        #     if found_app is None:
-        #         self.request.errors.add(
-        #             'query', 'tier_id',
-        #             "No app tier with ID {tid} exists.".format(
-        #                 tid=self.request.validated_params['tier_id']
-        #             )
-        #         )
-        #         self.request.errors.status = 400
+
+    def validate_host_put(self):
+        """
+        Validate a PUT request by preventing collisions over unique fields and
+        validating that an app tier with the given tier_id exists.
+        """
+        self.validate_id("PUT")
+        self._validate_name("PUT")
+        self._validate_foreign_key('tier_id', 'app_tier', tds.model.AppTarget)
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_host_post', 'validate_cookie'))
