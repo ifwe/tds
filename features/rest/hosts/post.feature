@@ -79,7 +79,7 @@ Feature: POST host(s) from the REST API
         Then the response code is 400
         And the response contains errors:
             | location  | name      | description                       |
-            | query     | tier_id   | No app tier with this ID exists.  |
+            | query     | tier_id   | No app tier with ID 500 exists.   |
         And there is no host with name="host3"
         And there is no host with id=3
 

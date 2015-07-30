@@ -5,6 +5,7 @@ REST API view for app tiers.
 from cornice.resource import resource, view
 
 import tds.model
+import tagopsdb
 
 from . import utils
 from .base import BaseView, init_view
@@ -26,8 +27,8 @@ class TierView(BaseView):
         'distribution': 'string',
         'puppet_class': 'string',
         'ganglia_id': 'integer',
-        'ganglia_group_name': 'string',
-        'status': 'string',
+        'ganglia_name': 'string',
+        'status': 'choice',
         'hipchats': 'string',
         'hosts': 'integer',
     }
@@ -36,6 +37,7 @@ class TierView(BaseView):
     # Params not included are mapped to themselves.
     param_routes = {
         'name': 'app_type',
+        'ganglia_name': 'ganglia_group_name',
     }
 
     defaults = {}
@@ -48,6 +50,8 @@ class TierView(BaseView):
         """
         self._validate_id("POST")
         self._validate_name("POST")
+        self._validate_foreign_key('ganglia_id', 'Ganglia object',
+                                   tagopsdb.model.Ganglia)
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_tier_post', 'validate_cookie'))
