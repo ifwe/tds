@@ -350,9 +350,13 @@ class ValidatedView(JSONValidatedView):
             self.validate_app_proj_put()
         elif self.name == 'package':
             self.validate_pkg_put()
+        elif self.name == 'tier':
+            self.validate_tier_put()
+        elif self.name == 'host':
+            self.validate_host_put()
         else:
             raise NotImplementedError(
-                'A collision validator for this view has not bee implemented.'
+                'A collision validator for this view has not been implemented.'
             )
 
     def _validate_id(self, request_type):
@@ -369,8 +373,7 @@ class ValidatedView(JSONValidatedView):
                     'query', 'id',
                     "Unique constraint violated. A{n} {type} with this ID"
                     " already exists.".format(
-                        n='n' if self.name[0] in ('a', 'e', 'i', 'o', 'u') else
-                            '',
+                        n='n' if self.name[0] in 'aeiou' else '',
                         type=self.name
                     )
                 )
