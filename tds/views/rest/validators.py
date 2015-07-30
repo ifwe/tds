@@ -127,6 +127,25 @@ class JSONValidatedView(object):
                 .format(val=given, param=param_name)
         else:
             self.request.validated_params[param_name] = date
+            return False
+
+    def _validate_choice(self, param_name):
+        """
+        Validate that the given param_name argument value in the query is in
+        self.<param_name>_choices and return False if it is; return an error
+        message if it isn't.
+        """
+        given = self.request.validated_params[param_name]
+        choices = getattr(self, "{param}_choices".format(param=param_name))
+        if given not in choices:
+            return (
+                "Value {val} for argument {param} must be one of: "
+                "{choices}.".format(
+                    val=given, param=param_name, choices=choices
+                )
+            )
+        else:
+            return False
 
 
 class ValidatedView(JSONValidatedView):
@@ -426,3 +445,48 @@ class ValidatedView(JSONValidatedView):
                 self.request.errors.status = 419
         else:
             self.request.validated['user'] = username
+
+    def _validate_foreign_key(self, param_name, model_name, model,
+                              attr_name=None):
+        """
+        Validate that a foreign key object with the name or ID in
+        self.request.validated_params.
+        If param_name is not in validated_params, just return.
+        If an object with the name or ID can't be found, add an error to
+        self.request.errors and set the status to 400.
+        If name_param is give, look for the name at that field in the model;
+        otherwise, look in model.name
+        """
+        if param_name not in self.request.validated_params:
+            return
+        try:
+            obj_id = int(self.request.validated_params[param_name])
+            found = model.get(id=obj_id)
+            if found is None:
+                self.request.errors.add(
+                    'query', param_name,
+                    "No {type} with ID {obj_id} exists.".format(
+                        type=model_name,
+                        obj_id=obj_id,
+                    )
+                )
+                self.request.errors.status = 400
+        except ValueError:
+            if self.request.errors.status == 400:
+                return
+            name = self.request.validated_params[param_name]
+            attrs = dict()
+            if attr_name:
+                attrs[attr_name] = name
+            else:
+                attrs['name'] = name
+            found = model.get(**attrs)
+            if found is None:
+                self.request.errors.add(
+                    'query', param_name,
+                    "No {type} with name {name} exists.".format(
+                        type=model_name,
+                        name=name
+                    )
+                )
+                self.request.errors.status = 400

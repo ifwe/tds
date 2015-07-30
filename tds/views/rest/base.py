@@ -91,6 +91,28 @@ class BaseView(ValidatedView):
                 self.settings = yaml.load(f.read())
         except:
             pass
+        if self.valid_attrs and len(self.types) > 0:
+            for y in [x for x in self.types if self.types[x] == 'choice']:
+                choices = getattr(
+                    self, '{param}_choices'.format(param=y), None
+                )
+                if choices is None or len(choices) == 0:
+                    try:
+                        table = self.model.delegate.__table__
+                        col_name = y
+                        if y in self.param_routes:
+                            col_name = self.param_routes[y]
+                        setattr(
+                            self,
+                            '{param}_choices'.format(param=y),
+                            table.columns[col_name].type.enums
+                        )
+                    except Exception as exc:
+                        raise tds.exceptions.ProgrammingError(
+                            "No choices set for param {param}. "
+                            "Got exception {e}".format(param=y, e=exc)
+                        )
+
         super(BaseView, self).__init__(*args, **kwargs)
 
     def to_json_obj(self, obj):

@@ -41,8 +41,8 @@ Feature: POST app tier(s) from the REST API
         When I query POST "/tiers?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'puppet_class', 'hosts', 'name', 'distribution', 'ganglia_group_name', 'hipchats', 'id', 'ganglia_id'].  |
+            | location  | name  | description                                                                                                                                               |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'puppet_class', 'hosts', 'name', 'ganglia_name', 'distribution', 'hipchats', 'id', 'ganglia_id'].    |
         And there is no deploy target with name="tier3"
         And there is no deploy target with id=4
 
@@ -76,5 +76,24 @@ Feature: POST app tier(s) from the REST API
         And there is no deploy target with id=<id>
 
         Examples:
-            | query         | name      | id        | type      |
-            | id=3.1415     | id        | 3.1415    | id        |
+            | query             | name          | id        | type          |
+            | id=3.1415         | id            | 3.1415    | id            |
+            | ganglia_id=3.1415 | ganglia_id    | 4         | ganglia_id    |
+
+    @rest
+    Scenario: pass a Ganglia ID for a Ganglia entry that doesn't exist
+        When I query POST "/tiers?name=tier3&ganglia_id=500"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name          | description                           |
+            | query     | ganglia_id    | No Ganglia object with ID 500 exists. |
+        And there is no deploy target with name="tier3"
+
+    @rest
+    Scenario: pass an invalid status
+        When I query POST "/tiers?name=tier3&status=foo"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name      | description                                                                               |
+            | query     | status    | Validation failed: Value foo for argument status must be one of: ('active', 'inactive').  |
+        And there is no deploy target with name="tier3"

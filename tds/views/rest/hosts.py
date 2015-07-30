@@ -33,11 +33,20 @@ class HostView(BaseView):
         'power_port': 'string',
         'power_circuit': 'string',
         'state': 'string',
-        'arch': 'string',
-        'distribution': 'string',
+        'arch': 'choice',
+        'distribution': 'choice',
         'timezone': 'string',
         'environment_id': 'integer',
     }
+
+    # Remove these choice fields when they are defined in TagOpsDB.
+    arch_choices = ('i386', 'noarch', 'x86_64',)
+
+    distribution_choices = (
+        'centos5.4', 'centos6.2', 'centos6.4', 'centos6.5',
+        'centos7.0', 'centos7.1', 'fedora18', 'rhel5.3', 'rhel6.2',
+        'rhel6.3', 'rhel6.4', 'rhel6.5', 'ontap',
+    )
 
     # URL parameter routes to Python object fields.
     # Params not included are mapped to themselves.
@@ -61,16 +70,19 @@ class HostView(BaseView):
         """
         self._validate_id("POST")
         self._validate_name("POST")
-        if 'tier_id' in self.request.validated_params:
-            found_app = tds.model.AppTarget.get(
-                id=self.request.validated_params['tier_id']
-            )
-            if found_app is None:
-                self.request.errors.add(
-                    'query', 'tier_id',
-                    "No app tier with this ID exists."
-                )
-                self.request.errors.status = 400
+        self._validate_foreign_key('tier_id', 'app tier', tds.model.AppTarget)
+        # if 'tier_id' in self.request.validated_params:
+        #     found_app = tds.model.AppTarget.get(
+        #         id=self.request.validated_params['tier_id']
+        #     )
+        #     if found_app is None:
+        #         self.request.errors.add(
+        #             'query', 'tier_id',
+        #             "No app tier with ID {tid} exists.".format(
+        #                 tid=self.request.validated_params['tier_id']
+        #             )
+        #         )
+        #         self.request.errors.status = 400
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_host_post', 'validate_cookie'))

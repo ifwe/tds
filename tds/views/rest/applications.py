@@ -26,9 +26,9 @@ class ApplicationView(BaseView):
         'name': 'string',
         'job': 'string',
         'build_host': 'string',
-        'build_type': 'string',
+        'build_type': 'choice',
         'deploy_type': 'string',
-        'arch': 'string',
+        'arch': 'choice',
         'validation_type': 'string',
         'env_specific': 'boolean',
     }
@@ -57,10 +57,6 @@ class ApplicationView(BaseView):
         """
         self._validate_id("POST")
         self._validate_name("POST")
-        self.model.verify_arch(self.request.validated_params['arch'])
-        self.model.verify_build_type(
-            self.request.validated_params['build_type']
-        )
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_app_post', 'validate_cookie'))

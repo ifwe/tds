@@ -79,3 +79,16 @@ Feature: Add (POST) application on REST API
             | name=app3&job=myjob       | name  | name  |
             | name=app3&id=2&job=myjob  | name  | name  |
             | name=app3&id=2&job=myjob  | id    | ID    |
+
+    @rest
+    Scenario Outline: attempt to violate choice field restrictions
+        When I query POST "/applications?name=app3&job=myjob&<query>"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name      | description                                                                   |
+            | query     | <name>    | Validation failed: Value foo for argument <name> must be one of: (<choices>).  |
+
+        Examples:
+            | query             | name          | choices                               |
+            | arch=foo          | arch          | 'i386', 'x86_64', 'noarch'            |
+            | build_type=foo    | build_type    | u'developer', u'hudson', u'jenkins'   |
