@@ -64,3 +64,17 @@ Feature: POST app tier(s) from the REST API
             | name=tier2        | name  | name  |
             | name=tier2&id=1   | name  | name  |
             | name=tier2&id=1   | id    | ID    |
+
+    @rest
+    Scenario Outline: pass a non-integer for an integer param
+        When I query POST "/tiers?name=tier3&<query>"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name      | description                                                               |
+            | query     | <name>    | Validation failed: Value 3.1415 for argument <type> is not an integer.    |
+        And there is no deploy target with name="tier3"
+        And there is no deploy target with id=<id>
+
+        Examples:
+            | query         | name      | id        | type      |
+            | id=3.1415     | id        | 3.1415    | id        |

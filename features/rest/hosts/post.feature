@@ -88,8 +88,8 @@ Feature: POST host(s) from the REST API
         When I query POST "/hosts?name=host3&<query>"
         Then the response code is 400
         And the response contains errors:
-            | location  | name      | description                                                                                   |
-            | query     | <name>    | Validation failed: Value 3.1415 for argument <type> is not an integer, is <type 'unicode'>.   |
+            | location  | name      | description                                                               |
+            | query     | <name>    | Validation failed: Value 3.1415 for argument <type> is not an integer.    |
         And there is no host with name="host3"
         And there is no host with id=<id>
 
