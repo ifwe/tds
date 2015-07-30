@@ -53,9 +53,8 @@ class JSONValidatedView(object):
             float(given)
         except ValueError:
             return (
-                "Value {val} for argument {param} is not a number,"
-                " is {t}.".format(
-                    val=given, param=param_name, t=type(given)
+                "Value {val} for argument {param} is not a number.".format(
+                    val=given, param=param_name
                 )
             )
         else:
@@ -71,9 +70,8 @@ class JSONValidatedView(object):
             int(given)
         except ValueError:
             return (
-                "Value {val} for argument {param} is not an integer,"
-                " is {t}.".format(
-                    val=given, param=param_name, t=type(given)
+                "Value {val} for argument {param} is not an integer.".format(
+                    val=given, param=param_name
                 )
             )
         else:
@@ -87,9 +85,9 @@ class JSONValidatedView(object):
         given = self.request.validated_params[param_name]
         if isinstance(given, str) or isinstance(given, unicode):
             return False
-        return ("Value {val} for argument {param} is not a string,"
-            " is {t}.".format(
-                val=given, param=param_name, t=type(given)
+        return (
+            "Value {val} for argument {param} is not a string.".format(
+                val=given, param=param_name
             )
         )
 
