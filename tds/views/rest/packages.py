@@ -24,8 +24,8 @@ class PackageView(BaseView):
         'id': 'integer',
         'version': 'integer',
         'revision': 'integer',
-        'status': 'string',
-        'builder': 'string',
+        'status': 'choice',
+        'builder': 'choice',
         'job': 'string',
     }
 
