@@ -359,6 +359,8 @@ class ValidatedView(JSONValidatedView):
             self.validate_tier_put()
         elif self.name == 'host':
             self.validate_host_put()
+        elif self.name == 'ganglia':
+            self.validate_ganglia_put()
         else:
             raise NotImplementedError(
                 'A collision validator for this view has not been implemented.'

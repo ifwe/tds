@@ -18,6 +18,7 @@ Feature: Update (PUT) application on REST API
         And the response contains errors:
             | location  | name          | description                                   |
             | path      | name_or_id    | Application with <descript> does not exist.   |
+        And there is no application with pkg_name="newname"
 
         Examples:
             | select    | descript      |
