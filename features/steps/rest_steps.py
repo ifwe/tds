@@ -51,7 +51,6 @@ def when_i_query(context, method, path):
             ),
             cookies=dict(session=context.cookie),
         )
-        print context.response.text
     else:
         context.response = http_method("http://{addr}:{port}{path}".format(
             addr=context.rest_server.server_name,
