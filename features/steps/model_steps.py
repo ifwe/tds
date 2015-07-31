@@ -1550,5 +1550,21 @@ def then_update_repo_log_file_has(context, text):
 @given(u'there is a Ganglia with {properties}')
 def given_there_is_a_ganglia_with(context, properties):
     properties = parse_properties(properties)
-    created = tagopsdb.Ganglia.update_or_create(properties)
+    created = tagopsdb.model.Ganglia.update_or_create(properties)
     tagopsdb.Session.commit()
+
+
+@then(u'there is a Ganglia with {properties}')
+def then_there_is_a_ganglia_with(context, properties):
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = tagopsdb.model.Ganglia.get(**properties)
+    assert found is not None, (found, tagopsdb.model.Ganglia.all())
+
+
+@then(u'there is no Ganglia with {properties}')
+def then_there_is_no_ganglia_with(context, properties):
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = tagopsdb.model.Ganglia.get(**properties)
+    assert found is None, found

@@ -173,9 +173,15 @@ class BaseView(ValidatedView):
         Create and return the HTTP response.
         """
         self._route_params()
-        self.request.validated[self.name] = self.model.create(
-            **self.request.validated_params
-        )
+        if getattr(self.model, 'create', None):
+            self.request.validated[self.name] = self.model.create(
+                **self.request.validated_params
+            )
+        else:
+            self.request.validated[self.name] = self.model.update_or_create(
+                self.request.validated_params
+            )
+            tagopsdb.Session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             "201 Created",

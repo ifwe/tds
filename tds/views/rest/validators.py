@@ -400,7 +400,7 @@ class ValidatedView(JSONValidatedView):
             if 'name' in self.param_routes:
                 dict_key = self.param_routes['name']
             found_obj = self.model.get(
-                name=self.request.validated_params['name']
+                **{dict_key: self.request.validated_params['name']}
             )
             if not found_obj:
                 return
@@ -409,8 +409,7 @@ class ValidatedView(JSONValidatedView):
                     'query', 'name',
                     "Unique constraint violated. A{n} {type} with this name"
                     " already exists.".format(
-                        n='n' if self.name[0] in ('a', 'e', 'i', 'o', 'u') else
-                            '',
+                        n='n' if self.name[0] in 'aeiou' else '',
                         type=self.name,
                     )
                 )
