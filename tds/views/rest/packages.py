@@ -107,7 +107,7 @@ class PackageView(BaseView):
             self.request.validated['packages'] = pkgs
         self.get_collection_by_limit_start()
 
-    def validate_pkg_put(self):
+    def validate_package_put(self):
         """
         Validate a PUT request by preventing collisions over unique fields for
         packages.

@@ -32,6 +32,13 @@ class ProjectView(BaseView):
         self._validate_id("POST")
         self._validate_name("POST")
 
+    def validate_project_put(self):
+        """
+        Validate a PUT request by preventing collisions over unique fields.
+        """
+        self._validate_id("PUT")
+        self._validate_name("PUT")
+
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_proj_post', 'validate_cookie'))
     def collection_post(self):

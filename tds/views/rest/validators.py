@@ -351,16 +351,8 @@ class ValidatedView(JSONValidatedView):
         """
         Validate a PUT request by preventing collisions over unique fields.
         """
-        if self.name in ('application', 'project'):
-            self.validate_app_proj_put()
-        elif self.name == 'package':
-            self.validate_pkg_put()
-        elif self.name == 'tier':
-            self.validate_tier_put()
-        elif self.name == 'host':
-            self.validate_host_put()
-        elif self.name == 'ganglia':
-            self.validate_ganglia_put()
+        if getattr(self, 'validate_{name}_put'.format(name=self.name), None):
+            getattr(self, 'validate_{name}_put'.format(name=self.name))()
         else:
             raise NotImplementedError(
                 'A collision validator for this view has not been implemented.'
@@ -422,14 +414,6 @@ class ValidatedView(JSONValidatedView):
                     " name already exists.".format(type=self.name)
                 )
             self.request.errors.status = 409
-
-    def validate_app_proj_put(self):
-        """
-        Validate a PUT request by preventing collisions over unique fields for
-        applications and projects.
-        """
-        self._validate_id("PUT")
-        self._validate_name("PUT")
 
     def validate_cookie(self, _request):
         """
