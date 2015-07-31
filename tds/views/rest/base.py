@@ -98,7 +98,10 @@ class BaseView(ValidatedView):
                 )
                 if choices is None or len(choices) == 0:
                     try:
-                        table = self.model.delegate.__table__
+                        if getattr(self.model, 'delegate', None):
+                            table = self.model.delegate.__table__
+                        else:
+                            table = self.model.__table__
                         col_name = y
                         if y in self.param_routes:
                             col_name = self.param_routes[y]

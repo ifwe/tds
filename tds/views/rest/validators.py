@@ -178,7 +178,12 @@ class ValidatedView(JSONValidatedView):
         except ValueError:
             obj_id = False
             name = self.request.matchdict['name_or_id']
-            obj = obj_cls.get(name=name)
+            obj_dict = dict()
+            if 'name' in self.param_routes:
+                obj_dict[self.param_routes['name']] = name
+            else:
+                obj_dict['name'] = name
+            obj = obj_cls.get(**obj_dict)
 
         if obj is None:
             self.request.errors.add(
