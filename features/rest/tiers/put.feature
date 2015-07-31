@@ -1,7 +1,7 @@
 Feature: PUT app tier(s) from the REST API
     As an admin
     I want to update an app tier
-    So that information reflects the current environment state
+    So that database information reflects the current environment state
 
     Background:
         #TODO: Change to admin permissions
@@ -29,12 +29,13 @@ Feature: PUT app tier(s) from the REST API
             | tier2     | name=tier100&id=20                | name="tier100",id=20                          |
 
     @rest
-    Scenario Outline: attempt to update a tier that doesn't exists
+    Scenario Outline: attempt to update a tier that doesn't exist
         When I query PUT "/tiers/<select>?name=tier100"
         Then the response code is 404
         And the response contains errors:
             | location  | name          | description                           |
             | path      | name_or_id    | Tier with <descript> does not exist.  |
+        And there is no deploy target with name="tier100"
 
         Examples:
             | select    | descript      |

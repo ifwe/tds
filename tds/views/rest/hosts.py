@@ -32,7 +32,7 @@ class HostView(BaseView):
         'console_port': 'string',
         'power_port': 'string',
         'power_circuit': 'string',
-        'state': 'string',
+        'state': 'choice',
         'arch': 'choice',
         'distribution': 'choice',
         'timezone': 'string',
@@ -78,7 +78,7 @@ class HostView(BaseView):
         Validate a PUT request by preventing collisions over unique fields and
         validating that an app tier with the given tier_id exists.
         """
-        self.validate_id("PUT")
+        self._validate_id("PUT")
         self._validate_name("PUT")
         self._validate_foreign_key('tier_id', 'app_tier', tds.model.AppTarget)
 
