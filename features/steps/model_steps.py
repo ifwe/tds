@@ -1545,3 +1545,10 @@ def then_update_repo_log_file_has(context, text):
     with open(os.path.join(context.WORK_DIR, 'update_deploy_repo.log')) as fh:
         actual = fh.read()
         assert text in actual, (text, actual)
+
+
+@given(u'there is a Ganglia with {properties}')
+def given_there_is_a_ganglia_with(context, properties):
+    properties = parse_properties(properties)
+    created = tagopsdb.Ganglia.update_or_create(properties)
+    tagopsdb.Session.commit()
