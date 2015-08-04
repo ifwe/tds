@@ -187,15 +187,6 @@ class BaseView(ValidatedView):
             "201 Created",
         )
 
-    @view(validators=('validate_individual', 'validate_cookie'))
-    def get(self):
-        """
-        Return an individual resource.
-        """
-        return self.make_response(
-            self.to_json_obj(self.request.validated[self.name])
-        )
-
     @view(validators=('validate_collection_get', 'validate_cookie'))
     def collection_get(self):
         """
@@ -211,6 +202,33 @@ class BaseView(ValidatedView):
             [self.to_json_obj(x) for x in self.request.validated[self.plural]]
         )
 
+    @view(validators=('validate_put_post', 'validate_post_required',
+                      'validate_cookie'))
+    def collection_post(self):
+        """
+        Handle a POST request after the parameters are marked valid JSON.
+        """
+        return self._handle_collection_post()
+
+    @view(validators=('validate_individual', 'validate_cookie'))
+    def delete(self):
+        """
+        Delete an individual resource.
+        """
+        #TODO Implement the delete part.
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )
+
+    @view(validators=('validate_individual', 'validate_cookie'))
+    def get(self):
+        """
+        Return an individual resource.
+        """
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )
+
     @view(validators=('validate_individual', 'validate_put_post',
                       'validate_obj_put', 'validate_cookie'))
     def put(self):
@@ -224,16 +242,6 @@ class BaseView(ValidatedView):
                 self.request.validated_params[attr],
             )
         tagopsdb.Session.commit()
-        return self.make_response(
-            self.to_json_obj(self.request.validated[self.name])
-        )
-
-    @view(validators=('validate_individual', 'validate_cookie'))
-    def delete(self):
-        """
-        Delete an individual resource.
-        """
-        #TODO Implement the delete part.
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

@@ -55,11 +55,3 @@ class ApplicationView(BaseView):
         'delete': 'admin',
         'collection_post': 'admin',
     }
-
-    @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_cookie'))
-    def collection_post(self):
-        """
-        Handle a POST request after the parameters are marked valid JSON.
-        """
-        return self._handle_collection_post()
