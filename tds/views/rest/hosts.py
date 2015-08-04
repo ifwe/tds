@@ -87,11 +87,3 @@ class HostView(BaseView):
         self._validate_id("PUT")
         self._validate_name("PUT")
         self._validate_foreign_key('tier_id', 'app_tier', tds.model.AppTarget)
-
-    @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_cookie'))
-    def collection_post(self):
-        """
-        Handle a POST request after the parameters are marked valid JSON.
-        """
-        return self._handle_collection_post()
