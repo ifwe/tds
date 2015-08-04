@@ -96,7 +96,6 @@ setup_args = dict(
     entry_points={
         'console_scripts': [
             'tds = tds.scripts.tds_prog:main',
-            'tds_install = tds.scripts.tds_install:main',
             'unvalidated_deploy_check = tds.scripts.unvalidated_deploy_check:main',
             'update_deploy_repo = tds.scripts.update_deploy_repo:daemon_main',
         ]
