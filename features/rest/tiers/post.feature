@@ -4,8 +4,7 @@ Feature: POST app tier(s) from the REST API
     So that developers can deploy to it using TDS
 
     Background:
-        #TODO: Change to admin permissions
-        Given I have a cookie with user permissions
+        Given I have a cookie with admin permissions
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
 
@@ -14,6 +13,7 @@ Feature: POST app tier(s) from the REST API
         When I query POST "/tiers?name=tier3&<params>"
         Then the response code is 201
         And the response is an object with name="tier3"<props>
+        And there is a deploy target with name="tier3"
 
         Examples:
             | params                    | props                         |

@@ -9,7 +9,7 @@ Feature: Update (PUT) project on REST API
             | proj1 |
             | proj2 |
             | proj3 |
-        And I have a cookie with user permissions
+        And I have a cookie with admin permissions
 
     @rest
     Scenario Outline: update a project that doesn't exist

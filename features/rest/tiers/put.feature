@@ -4,8 +4,7 @@ Feature: PUT app tier(s) from the REST API
     So that database information reflects the current environment state
 
     Background:
-        #TODO: Change to admin permissions
-        Given I have a cookie with user permissions
+        Given I have a cookie with admin permissions
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
 

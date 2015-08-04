@@ -4,8 +4,7 @@ Feature: PUT Ganglia(s) from the REST API
     So that the database reflects the current state of the environment
 
     Background:
-        #TODO: Change this to admin permissions
-        Given I have a cookie with user permissions
+        Given I have a cookie with admin permissions
         And there is a Ganglia with cluster_name="ganglia1"
         And there is a Ganglia with cluster_name="ganglia2"
 

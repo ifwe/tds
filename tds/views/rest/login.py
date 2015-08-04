@@ -35,6 +35,16 @@ class LoginView(BaseView):
                 username=self.request.validated_params['user']
             )
             l.bind_s(dn, password)
+            results = l.search_s("cn=siteops,ou=Groups,dc=tagged,dc=com",
+                                 ldap.SCOPE_BASE)
+            try:
+                self.request.is_admin = (
+                    self.request.validated_params['user'] in
+                    [member for result in results for member in
+                     result[1]['memberUid']]
+                )
+            except KeyError, IndexError:
+                self.request.is_admin = False
             l.unbind()
         except ldap.SERVER_DOWN:
             self.request.errors.add('url', '',
@@ -60,5 +70,6 @@ class LoginView(BaseView):
             self.request.validated_params['user'],
             self.request.remote_addr,
             self.settings,
+            self.request.is_admin,
         )
         return response

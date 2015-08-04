@@ -4,8 +4,7 @@ Feature: POST Ganglia(s) from the REST API
     So that it can be used in the database
 
     Background:
-        #TODO: Change this to admin permissions
-        Given I have a cookie with user permissions
+        Given I have a cookie with admin permissions
         And there is a Ganglia with cluster_name="ganglia1"
         And there is a Ganglia with cluster_name="ganglia2"
 
