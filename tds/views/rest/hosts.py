@@ -64,7 +64,13 @@ class HostView(BaseView):
 
     required_post_fields = ("name", "tier_id")
 
-    def validate_host_post(self, _request):
+    permissions = {
+        'put': 'admin',
+        'delete': 'admin',
+        'collection_post': 'admin',
+    }
+
+    def validate_host_post(self):
         """
         Validate a POST request by preventing collisions over unique fields and
         validating that an app tier with the given tier_id exists.
@@ -83,7 +89,7 @@ class HostView(BaseView):
         self._validate_foreign_key('tier_id', 'app_tier', tds.model.AppTarget)
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_host_post', 'validate_cookie'))
+                      'validate_cookie'))
     def collection_post(self):
         """
         Handle a POST request after the parameters are marked valid JSON.

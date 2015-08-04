@@ -34,22 +34,14 @@ class GangliaView(BaseView):
 
     required_post_fields = ("name",)
 
-    def validate_ganglia_post(self, _request):
-        """
-        Validate a post request.
-        """
-        self._validate_id("POST")
-        self._validate_name("POST")
-
-    def validate_ganglia_put(self):
-        """
-        Validate a PUT request.
-        """
-        self._validate_id("PUT")
-        self._validate_name("PUT")
+    permissions = {
+        'put': 'admin',
+        'delete': 'admin',
+        'collection_post': 'admin',
+    }
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_ganglia_post', 'validate_cookie'))
+                      'validate_cookie'))
     def collection_post(self):
         """
         Handle a POST request after the parameters are marked valid JSON.

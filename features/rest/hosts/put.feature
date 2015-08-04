@@ -4,7 +4,7 @@ Feature: PUT host(s) from the REST API
     So that database information reflects the current environment state
 
     Background:
-        Given I have a cookie with user permissions
+        Given I have a cookie with admin permissions
         And there is an environment with name="dev"
         And there is a deploy target with name="tier1"
         And there are hosts:

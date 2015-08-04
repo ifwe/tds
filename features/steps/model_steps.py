@@ -1297,6 +1297,15 @@ def then_there_is_no_deploy_target_with(context, properties):
     assert target is None, target
 
 
+@then(u'there is a deploy target with {properties}')
+def then_there_is_a_deploy_target_with(context, properties):
+    tagopsdb.Session.close()
+    attrs = parse_properties(properties)
+    target = tds.model.AppTarget.get(**attrs)
+
+    assert target is not None, tds.model.AppTarget.all()
+
+
 @then(u'there is no host with {properties}')
 def then_there_is_no_host_with(context, properties):
     tagopsdb.Session.close()
@@ -1304,6 +1313,15 @@ def then_there_is_no_host_with(context, properties):
     host = tds.model.HostTarget.get(**attrs)
 
     assert host is None, host
+
+
+@then(u'there is a host with {properties}')
+def then_there_is_a_host_with(context, properties):
+    tagopsdb.Session.close()
+    attrs = parse_properties(properties)
+    host = tds.model.HostTarget.get(**attrs)
+
+    assert host is not None, tds.model.HostTarget.all(0)
 
 
 @then(u'the package is invalidated for deploy targets')

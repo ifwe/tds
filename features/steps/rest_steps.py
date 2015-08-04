@@ -27,7 +27,13 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
         )
         context.cookie = response.cookies['session']
     elif perm_type == 'admin':
-        pass    # add admin cookie code here after permissions system is done
+        response = requests.post(
+            "http://{addr}:{port}/login?user=testadmin&password=itzhNTk(".format(
+                addr=context.rest_server.server_name,
+                port=context.rest_server.server_port,
+            )
+        )
+        context.cookie = response.cookies['session']
     else:
         assert False, ("Unknown permission type: {p}. "
                        "Valid options: user, admin.".format(p=perm_type))

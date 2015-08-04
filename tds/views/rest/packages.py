@@ -39,6 +39,8 @@ class PackageView(BaseView):
 
     required_post_fields = ('version', 'revision')
 
+    permissions = {}
+
     def get_pkg_by_version_revision(self):
         """
         Validate that the package with the version, revision, and application
@@ -135,7 +137,7 @@ class PackageView(BaseView):
                 )
                 self.request.errors.status = 409
 
-    def validate_pkg_post(self, _request):
+    def validate_package_post(self):
         """
         Validate a POST request by preventing collisions over unique fields.
         """
@@ -160,7 +162,7 @@ class PackageView(BaseView):
             self.request.errors.status = 409
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_pkg_post', 'validate_cookie'))
+                      'validate_cookie'))
     def collection_post(self):
         """
         Handle a POST request after the parameters are marked valid JSON.

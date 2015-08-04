@@ -333,6 +333,19 @@ class ValidatedView(JSONValidatedView):
         self._validate_params(self.valid_attrs)
         self._validate_model_params()
         self._add_post_defaults()
+        if not getattr(self, 'name', None):
+            return
+        if getattr(self, 'validate_{name}_post'.format(name=self.name), None):
+            getattr(self, 'validate_{name}_post'.format(name=self.name))()
+        else:
+            try:
+                self._validate_id("POST")
+                self._validate_name("POST")
+            except:
+                raise NotImplementedError(
+                    'A collision validator for this view has not been '
+                    'implemented.'
+                )
 
     def validate_post_required(self, _request):
         """
@@ -354,9 +367,14 @@ class ValidatedView(JSONValidatedView):
         if getattr(self, 'validate_{name}_put'.format(name=self.name), None):
             getattr(self, 'validate_{name}_put'.format(name=self.name))()
         else:
-            raise NotImplementedError(
-                'A collision validator for this view has not been implemented.'
-            )
+            try:
+                self._validate_id("PUT")
+                self._validate_name("PUT")
+            except:
+                raise NotImplementedError(
+                    'A collision validator for this view has not been '
+                    'implemented.'
+                )
 
     def _validate_id(self, request_type):
         """
@@ -419,9 +437,11 @@ class ValidatedView(JSONValidatedView):
         """
         Validate the cookie in the request. If the cookie is valid, add a user
         to the request's validated_params dictionary.
+        If the user is not authorized to do the current action, add the
+        corresponding error.
         """
-        (present, username) = utils.validate_cookie(self.request,
-                                                    self.settings)
+        (present, username, is_admin) = utils.validate_cookie(self.request,
+                                                              self.settings)
         if not present:
             self.request.errors.add(
                 'header', 'cookie',
@@ -438,6 +458,27 @@ class ValidatedView(JSONValidatedView):
                 self.request.errors.status = 419
         else:
             self.request.validated['user'] = username
+            self.request.is_admin = is_admin
+            collection_path = self._services[
+                'collection_{name}'.format(
+                    name=self.__class__.__name__.lower()
+                )
+            ].path
+            prefix = (
+                "collection_" if self.request.path == collection_path else
+                ''
+            )
+            permissions_key = prefix + self.request.method.lower()
+            if permissions_key not in self.permissions:
+                return
+            if self.permissions[permissions_key] == 'admin':
+                if not self.request.is_admin:
+                    self.request.errors.add(
+                        'header', 'cookie',
+                        'Admin authorization required. Please contact someone '
+                        'in SiteOps to perform this operation for you.'
+                    )
+                    self.request.errors.status = 403
 
     def _validate_foreign_key(self, param_name, model_name, model,
                               attr_name=None):
