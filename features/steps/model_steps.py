@@ -1572,6 +1572,13 @@ def given_there_is_a_ganglia_with(context, properties):
     tagopsdb.Session.commit()
 
 
+@given(u'there is a HipChat with {properties}')
+def given_there_is_a_hipchat_with(context, properties):
+    properties = parse_properties(properties)
+    created = tagopsdb.model.Hipchat.update_or_create(properties)
+    tagopsdb.Session.commit()
+
+
 @then(u'there is a Ganglia with {properties}')
 def then_there_is_a_ganglia_with(context, properties):
     tagopsdb.Session.close()
