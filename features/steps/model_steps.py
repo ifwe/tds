@@ -1572,13 +1572,6 @@ def given_there_is_a_ganglia_with(context, properties):
     tagopsdb.Session.commit()
 
 
-@given(u'there is a HipChat with {properties}')
-def given_there_is_a_hipchat_with(context, properties):
-    properties = parse_properties(properties)
-    created = tagopsdb.model.Hipchat.update_or_create(properties)
-    tagopsdb.Session.commit()
-
-
 @then(u'there is a Ganglia with {properties}')
 def then_there_is_a_ganglia_with(context, properties):
     tagopsdb.Session.close()
@@ -1592,4 +1585,27 @@ def then_there_is_no_ganglia_with(context, properties):
     tagopsdb.Session.close()
     properties = parse_properties(properties)
     found = tagopsdb.model.Ganglia.get(**properties)
+    assert found is None, found
+
+
+@given(u'there is a HipChat with {properties}')
+def given_there_is_a_hipchat_with(context, properties):
+    properties = parse_properties(properties)
+    created = tagopsdb.model.Hipchat.update_or_create(properties)
+    tagopsdb.Session.commit()
+
+
+@then(u'there is a HipChat with {properties}')
+def then_there_is_a_hipchat_with(context, properties):
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = tagopsdb.model.Hipchat.get(**properties)
+    assert found is not None, (found, tagopsdb.model.Hipchat.all())
+
+
+@then(u'there is no HipChat with {properties}')
+def then_there_is_no_hipchat_with(context, properties):
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = tagopsdb.model.Hipchat.get(**properties)
     assert found is None, found
