@@ -16,9 +16,12 @@ Some quick notes:
     (e.g., `/applications/tds`)
 
 ## LDAP integration
-Integrate with LDAP to get tokens for users that are passed with each request
-for authentication.
-All requests should throw a `401: Unauthorized` without LDAP authentication.
+This API integrates with LDAP for authentication and authorization.
+Post to `/login` with your LDAP login credentials to receive a session cookie
+to be used for the duration of your session.
+Session cookies are valid, as of 2015-08-10, for 15 days since time of issuance.
+All requests other than to `/login` throw a `401: Unauthorized` without LDAP
+authentication.
 
 ## Methods Overview
 
@@ -34,14 +37,15 @@ All `200` responses to `GET` requests are:
 ### POST
 `POST` requests run queries to see if any unique constraints will be violated
 by a potential write to the database before doing the actual write.
+They also check for the validity of foreign key relationships.
 As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 
 ### PUT
 `PUT` requests can only be made to individual resources currently.
 
 ## Routing
-The URLs and methods will be the same for `/projects` as for
-`/applications` below.
+The URLs and methods will be the same for `/projects`, `/ganglias`, `/hipchats`,
+`/hosts`, and `/tiers` as for `/applications` below.
 URLs and methods will also be the same for `/projects/NAME` as for
 `/applications/NAME` below.
 URLs and methods for deploying have yet to be determined.
@@ -253,7 +257,7 @@ where:
 * `OO` - two digit minute offset from UTC.
 
 So the datetime for 3:14:15.926535PM PST, 30 January 2015 would be represented
-by `2015-01-30T23:14:15.926535+0000`.
+by `2015-01-30T15:14:15.926535+0000`.
 
 Parsing from Python UTC datetimes to timestamps:
 
@@ -295,9 +299,9 @@ This will be fleshed out more as the API is more solidified.
 </thead>
 <tbody>
     <tr>
-        <td rowspan="7">Application</td>
+        <td rowspan="9">Application</td>
         <td>'id'</td>
-        <td>Number</td>
+        <td>Integer</td>
         <td>Unique integer ID for this application.</td>
         <td>16</td>
     </tr>
@@ -308,7 +312,7 @@ This will be fleshed out more as the API is more solidified.
             <td>'tds'</td>
         </tr>
         <tr>
-            <td>'job_name'</td>
+            <td>'job'</td>
             <td>String</td>
             <td>Path on the build server to application's builds.</td>
             <td>'tds-tds-gauntlet'</td>
@@ -338,23 +342,147 @@ This will be fleshed out more as the API is more solidified.
             <td>Architecture of application's packages.</td>
             <td>'noarch'</td>
         </tr>
+        <tr>
+            <td>'validation_type'</td>
+            <td>String</td>
+            <td>The validation type for this application.</td>
+            <td>'user'</td>
+        </tr>
+        <tr>
+            <td>'env_specific'</td>
+            <td>Boolean</td>
+            <td>Whether this application is environment-specific.</td>
+            <td>True</td>
     <tr>
-        <td rowspan="2">Project</td>
+        <td rowspan="3">Ganglia</td>
         <td>'id'</td>
-        <td>Number</td>
-        <td>Unique integer ID for this project.</td>
-        <td>18</td>
+        <td>Integer</td>
+        <td>Unique integer ID for this Ganglia.</td>
+        <td>80</td>
     </tr>
         <tr>
             <td>'name'</td>
             <td>String</td>
-            <td>Unique name for this project.</td>
-            <td>'tds'</td>
+            <td>Unique string identifier for this Ganglia.</td>
+            <td>'ganglia1'</td>
+        </tr>
+        <tr>
+            <td>'port'</td>
+            <td>Integer</td>
+            <td>Port for this Ganglia</td>
+            <td>986</td>
         </tr>
     <tr>
-        <td rowspan="9">Package</td>
+        <td rowspan="2">HipChat</td>
         <td>'id'</td>
-        <td>Number</td>
+        <td>Integer</td>
+        <td>Unique integer ID for this HipChat</td>
+        <td>34</td>
+    </tr>
+        <tr>
+            <td>'name'</td>
+            <td>String</td>
+            <td>Unique name for this HipChat</td>
+            <td>'hipchat1'</td>
+        </tr>
+    <tr>
+        <td rowspan="15">Host</td>
+        <td>'id'</td>
+        <td>Integer</td>
+        <td>Unique integer ID for this host</td>
+        <td>34</td>
+    </tr>
+        <tr>
+            <td>'name'</td>
+            <td>String</td>
+            <td>Unique name for this host</td>
+            <td>'host1'</td>
+        </tr>
+        <tr>
+            <td>'tier_id'</td>
+            <td>Integer</td>
+            <td>Foreign key to a tier</td>
+            <td>5</td>
+        </tr>
+        <tr>
+            <td>'cage'</td>
+            <td>Integer</td>
+            <td>Cage location for this host</td>
+            <td>10</td>
+        </tr>
+        <tr>
+            <td>'cab'</td>
+            <td>String</td>
+            <td>Cab location for this host</td>
+            <td>'some_cab'</td>
+        </tr>
+        <tr>
+            <td>'rack'</td>
+            <td>Integer</td>
+            <td>Rack location for this host</td>
+            <td>32</td>
+        </tr>
+        <tr>
+            <td>'kernel_version'</td>
+            <td>String</td>
+            <td>Kernel version running on this host</td>
+            <td>'3.19.0-15-generic'</td>
+        </tr>
+        <tr>
+            <td>'console_port'</td>
+            <td>String</td>
+            <td>Port for the console to this host</td>
+            <td>'some_port'</td>
+        </tr>
+        <tr>
+            <td>'power_port'</td>
+            <td>String</td>
+            <td>Power port for this host</td>
+            <td>'some_port'</td>
+        </tr>
+        <tr>
+            <td>'power_circuit'</td>
+            <td>String</td>
+            <td>Power circuit for this host</td>
+            <td>'some_circuit'</td>
+        </tr>
+        <tr>
+            <td>'state'</td>
+            <td>String</td>
+            <td>Choice of: 'baremetal', 'operational', 'repair', 'parts',
+                'reserved', 'escrow'</td>
+            <td>'operational'</td>
+        </tr>
+        <tr>
+            <td>'arch'</td>
+            <td>String</td>
+            <td>Choice of: 'i386', 'noarch', 'x86_64'</td>
+            <td>'noarch'</td>
+        </tr>
+        <tr>
+            <td>'distribution'</td>
+            <td>String</td>
+            <td>Choice of: 'centos5.4', 'centos6.2', 'centos6.4', 'centos6.5',
+                'centos7.0', 'centos7.1', 'fedora18', 'rhel5.3', 'rhel6.2',
+                'rhel6.3', 'rhel6.4', 'rhel6.5', 'ontap'</td>
+            <td>'centos7.1'</td>
+        </tr>
+        <tr>
+            <td>'timezone'</td>
+            <td>String</td>
+            <td>Timezone for this host</td>
+            <td>'PST'</td>
+        </tr>
+        <tr>
+            <td>'environment_id'</td>
+            <td>Integer</td>
+            <td>ID of this host's environment</td>
+            <td>1</td>
+        </tr>
+    <tr>
+        <td rowspan="6">Package</td>
+        <td>'id'</td>
+        <td>Integer</td>
         <td>Unique integer ID for this package.</td>
         <td>20</td>
     </tr>
@@ -366,13 +494,13 @@ This will be fleshed out more as the API is more solidified.
         </tr>
         <tr>
             <td>'version'</td>
-            <td>Number</td>
+            <td>Integer</td>
             <td>Package version.</td>
             <td>22</td>
         </tr>
         <tr>
             <td>'revision'</td>
-            <td>Number</td>
+            <td>Integer</td>
             <td>Package revision.</td>
             <td>24</td>
         </tr>
@@ -385,63 +513,75 @@ This will be fleshed out more as the API is more solidified.
             <td>'completed'</td>
         </tr>
         <tr>
-            <td>'creator'</td>
-            <td>String</td>
-            <td>Name of the creator of the package.</td>
-            <td>'knagra'</td>
-        </tr>
-        <tr>
             <td>'builder'</td>
             <td>String</td>
             <td>Build type for this package.<br />
                 Choices: 'developer', 'hudson', 'jenkins'.</td>
             <td>'jenkins'</td>
         </tr>
+    <tr>
+        <td rowspan="2">Project</td>
+        <td>'id'</td>
+        <td>Integer</td>
+        <td>Unique integer ID for this project.</td>
+        <td>18</td>
+    </tr>
         <tr>
-            <td>'created'</td>
+            <td>'name'</td>
             <td>String</td>
-            <td>UNIX timestamp.
-                See the section on timestamps above for details.</td>
-            <td>2015-01-30T23:14:15.926535+0000</td>
+            <td>Unique name for this project.</td>
+            <td>'tds'</td>
+        </tr>
+    <tr>
+        <td rowspan="8">Tier</td>
+        <td>'id'</td>
+        <td>Integer</td>
+        <td>Unique integer ID for this tier.</td>
+        <td>23</td>
+    </tr>
+        <tr>
+            <td>'name'</td>
+            <td>String</td>
+            <td>Name identifying this tier</td>
+            <td>'tier1'</td>
         </tr>
         <tr>
-            <td>'application'</td>
-            <td>Number</td>
-            <td>Unique ID of the application of which this package is a
-                specific version-revision.</td>
-            <td>16</td>
+            <td>'distribution'</td>
+            <td>String</td>
+            <td>Choice of: 'centos5.4', 'centos6.2', 'centos6.4', 'centos6.5',
+                'centos7.0', 'centos7.1', 'fedora18', 'rhel5.3', 'rhel6.2',
+                'rhel6.3', 'rhel6.4', 'rhel6.5', 'ontap'</td>
+            <td>'centos7.1'</td>
+        </tr>
+        <tr>
+            <td>'puppet_class'</td>
+            <td>String</td>
+            <td>Puppet class for this tier</td>
+            <td>'baseclass'</td>
+        </tr>
+        <tr>
+            <td>'ganglia_id'</td>
+            <td>Integer</td>
+            <td>ID for the ganglia for this tier</td>
+            <td>1</td>
+        </tr>
+        <tr>
+            <td>'ganglia_name'</td>
+            <td>String</td>
+            <td>Ganglia name</td>
+            <td>'some_ganglia_thing'</td>
+        </tr>
+        <tr>
+            <td>'status'</td>
+            <td>String</td>
+            <td>Choice of: 'active', 'inactive'</td>
+            <td>'active'</td>
+        </tr>
+        <tr>
+            <td>'hipchats'</td>
+            <td>Integers</td>
+            <td>Array of HipChat IDs for this tier</td>
+            <td>1</td>
         </tr>
 </tbody>
 </table>
-
-## Standing Questions
-* Should `GET` requests also have ACL restrictions?
-    A REST API would be a good place to start when incorporating ACL since we
-    plan to integrate LDAP authentication anyway.
-* Should the API support `OPTIONS` and `HEAD` HTTP methods?
-    Both can be useful and fairly easy to implement.
-    It would make the API more robust and allow lighter-weight queries for
-    testing transactions and development.
-* Should `POST` requests be allowed to update matching resources as well as
-    create new ones if none matches?
-    Doing so would be more work for us, but less for clients.
-    * If 'Yes' to above, should we allow `POST` requests for /TYPE/NAME URLs?
-* Should we expose IDs of objects through the API?
-    It may prove useful, especially for resource types without other unique
-    attributes, but it may prove unnecessary if no such resources exist.
-    * Should we reference objects by other unique constraints or by ID?
-        This may be influenced by whether SQLAlchemy returns objects or IDs
-        for relations.
-        E.g., for packages, an application is linked to each package.
-        If SQLAlchemy returns the applciation that is linked to the package,
-        then it would be no trouble for the API to return the name of the
-        application to the client and have the client reference the
-        application with that name. But if SQLAlchemy returns just the ID then
-        it will be more overhead to retrieve the name for each application
-        using the ID and then pass that on to the client.
-* Should we hard-code defaults into the API for certain attributes or expect
-    the immediate client to pass in its own determination of defaults?
-    A good example of this would be the architecture for applications.
-* Should there be a /packages/ID URL or should we do
-    /applications/NAME-VERSION-REVISION?
-    The former seems more sane and canonical.
