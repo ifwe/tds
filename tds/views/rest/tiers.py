@@ -24,13 +24,12 @@ class TierView(BaseView):
     types = {
         'id': 'integer',
         'name': 'string',
-        'distribution': 'string',
+        'distribution': 'choice',
         'puppet_class': 'string',
         'ganglia_id': 'integer',
         'ganglia_name': 'string',
         'status': 'choice',
-        'hipchats': 'string',
-        'hosts': 'integer',
+        'hipchats': 'integer',
     }
 
     # URL parameter routes to Python object fields.
