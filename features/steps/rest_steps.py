@@ -81,7 +81,7 @@ def then_the_response_contains_a_list_of_items(context, num):
 
 
 @then(u'the response list contains an object with {properties}')
-def then_the_response_contains_a_project_with(context, properties):
+def then_the_response_contains_an_object_with(context, properties):
     properties = parse_properties(properties)
     assert any(all(properties[prop] == proj[prop] for prop in properties)
                for proj in context.response.json())
@@ -130,7 +130,6 @@ def then_the_response_contains_errors(context):
 
 @then(u'the response body contains "{message}"')
 def then_the_response_body_contains(context, message):
-    assert False, context.response.text
     assert message in context.response.text, (message, context.response.text)
 
 
