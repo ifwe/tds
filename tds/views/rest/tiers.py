@@ -29,7 +29,6 @@ class TierView(BaseView):
         'ganglia_id': 'integer',
         'ganglia_name': 'string',
         'status': 'choice',
-        'hipchats': 'integer',
     }
 
     # URL parameter routes to Python object fields.
@@ -57,7 +56,7 @@ class TierView(BaseView):
         self._validate_id("POST")
         self._validate_name("POST")
         self._validate_foreign_key('ganglia_id', 'Ganglia object',
-                                   tagopsdb.model.Ganglia)
+                                   tagopsdb.model.Ganglia, 'cluster_name')
 
     def validate_tier_put(self):
         """
@@ -67,4 +66,4 @@ class TierView(BaseView):
         self._validate_id("PUT")
         self._validate_name("PUT")
         self._validate_foreign_key('ganglia_id', 'Ganglia object',
-                                   tagopsdb.model.Ganglia)
+                                   tagopsdb.model.Ganglia, 'cluster_name')

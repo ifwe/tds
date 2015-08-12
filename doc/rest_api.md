@@ -285,7 +285,6 @@ therefore identical.
 ### Attribute Table
 This table describes attributes of JSON objects mapped from the corresponding
 objects in Python.
-This will be fleshed out more as the API is more solidified.
 
 <table>
 <thead>

@@ -86,4 +86,4 @@ class HostView(BaseView):
         """
         self._validate_id("PUT")
         self._validate_name("PUT")
-        self._validate_foreign_key('tier_id', 'app_tier', tds.model.AppTarget)
+        self._validate_foreign_key('tier_id', 'app tier', tds.model.AppTarget)

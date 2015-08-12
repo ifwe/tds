@@ -77,6 +77,22 @@ class JSONValidatedView(object):
         else:
             return False
 
+    def _validate_integer_list(self, param_name):
+        """
+        Validate that the given param name argument value in the query is an
+        integer list and return False if it is; return an error message if it
+        isn't.
+        """
+        given = self.request.validated_params[param_name].split(',')
+        for item in given:
+            try:
+                int(given)
+            except ValueError:
+                return (
+                    "Value {val} for argument {param} is not a comma-separated"
+                    " list of integers.".format(val=give, param=param_name)
+                )
+
     def _validate_string(self, param_name):
         """
         Validate that the given param_name argument value in the query is a
@@ -153,7 +169,7 @@ class ValidatedView(JSONValidatedView):
     This class implements common non-JSON validators.
     """
 
-    def get_obj_by_name_or_id(self, obj_type=None):
+    def get_obj_by_name_or_id(self, obj_type=None, model=None, name_attr=None):
         """
         Validate that an object of type self.name with the name_or_id given in
         the request exists and attach it to the request at
@@ -166,24 +182,26 @@ class ValidatedView(JSONValidatedView):
             obj_type = self.name
             if getattr(self, 'model', None):
                 obj_cls = self.model
-        else:
-            obj_cls = getattr(tds.model, obj_type.title(), None)
-            if obj_cls is None:
+        elif not model:
+            model = getattr(tds.model, obj_type.title(), None)
+            if model is None:
                 raise tds.exceptions.NotFoundError('Model', [obj_type])
 
         try:
             obj_id = int(self.request.matchdict['name_or_id'])
-            obj = obj_cls.get(id=obj_id)
+            obj = model.get(id=obj_id)
             name = False
         except ValueError:
             obj_id = False
             name = self.request.matchdict['name_or_id']
             obj_dict = dict()
-            if 'name' in self.param_routes:
+            if name_attr:
+                obj_dict[name_attr] = name
+            elif 'name' in self.param_routes:
                 obj_dict[self.param_routes['name']] = name
             else:
                 obj_dict['name'] = name
-            obj = obj_cls.get(**obj_dict)
+            obj = model.get(**obj_dict)
 
         if obj is None:
             self.request.errors.add(
@@ -302,6 +320,13 @@ class ValidatedView(JSONValidatedView):
             self.get_obj_by_name_or_id('application')
             if 'application' in request.validated:
                 self.get_pkgs_by_limit_start()
+        if self.name == 'tier-hipchat':
+            self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
+                                       'app_type')
+            if 'tier' in request.validated:
+                self.request.validated[self.plural] = request.validated[
+                    'tier'
+                ].hipchats
         else:
             self.get_collection_by_limit_start()
 
@@ -488,13 +513,30 @@ class ValidatedView(JSONValidatedView):
         If param_name is not in validated_params, just return.
         If an object with the name or ID can't be found, add an error to
         self.request.errors and set the status to 400.
-        If name_param is give, look for the name at that field in the model;
+        If attr_name is give, look for the name at that field in the model;
         otherwise, look in model.name
         """
         if param_name not in self.request.validated_params:
             return
+        found = self._validate_foreign_key_existence(
+            param_name,
+            self.request.validated_params[param_name],
+            model,
+            model_name,
+            attr_name
+        )
+        if found:
+            self.request.validated_params[param_name] = found.id
+
+    def _validate_foreign_key_existence(self, param_name, param, model,
+                                        model_name, attr_name=None):
+        """
+        Verify that an object of type model with the given model_name exists
+        and return it if it does.
+        If it doesn't, set an error and return False
+        """
         try:
-            obj_id = int(self.request.validated_params[param_name])
+            obj_id = int(param)
             found = model.get(id=obj_id)
             if found is None:
                 self.request.errors.add(
@@ -505,15 +547,11 @@ class ValidatedView(JSONValidatedView):
                     )
                 )
                 self.request.errors.status = 400
+                return False
+            return found
         except ValueError:
-            if self.request.errors.status == 400:
-                return
-            name = self.request.validated_params[param_name]
-            attrs = dict()
-            if attr_name:
-                attrs[attr_name] = name
-            else:
-                attrs['name'] = name
+            name = param
+            attrs = {attr_name: name} if attr_name else {'name': name}
             found = model.get(**attrs)
             if found is None:
                 self.request.errors.add(
@@ -524,3 +562,33 @@ class ValidatedView(JSONValidatedView):
                     )
                 )
                 self.request.errors.status = 400
+                return False
+            return found
+
+    def _validate_foreign_key_list(self, param_name, model_name, model,
+                                   attr_name=None):
+        """
+        Validate the list or individual foreign key.
+        """
+        if param_name not in self.request.validated_params:
+            return
+        identifiers = self.request.validated_params[param_name].split(',')
+        found_list = list()
+        for identifier in identifiers:
+            found = self._validate_foreign_key_existence(
+                param_name,
+                identifier,
+                model,
+                model_name,
+                attr_name
+            )
+            if found:
+                found_list.append(found)
+        self.request.validated_params[param_name] = found_list
+
+    def method_not_allowed(self, _request):
+        """
+        Validator used to make methods not valid for a URL.
+        """
+        self.request.errors.add('url', 'method', "Method not allowed.")
+        self.request.errors.status = 405
