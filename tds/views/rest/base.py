@@ -166,27 +166,6 @@ class BaseView(ValidatedView):
             self.request.validated_params['pkg_name'] = \
                 self.request.validated['application'].name
 
-    def _handle_collection_post(self):
-        """
-        Handle the addition and commit of the model in a POST request after
-        all validation has been completed.
-        Create and return the HTTP response.
-        """
-        self._route_params()
-        if getattr(self.model, 'create', None):
-            self.request.validated[self.name] = self.model.create(
-                **self.request.validated_params
-            )
-        else:
-            self.request.validated[self.name] = self.model.update_or_create(
-                self.request.validated_params
-            )
-            tagopsdb.Session.commit()
-        return self.make_response(
-            self.to_json_obj(self.request.validated[self.name]),
-            "201 Created",
-        )
-
     @view(validators=('validate_collection_get', 'validate_cookie'))
     def collection_get(self):
         """
@@ -208,7 +187,20 @@ class BaseView(ValidatedView):
         """
         Handle a POST request after the parameters are marked valid JSON.
         """
-        return self._handle_collection_post()
+        self._route_params()
+        if getattr(self.model, 'create', None):
+            self.request.validated[self.name] = self.model.create(
+                **self.request.validated_params
+            )
+        else:
+            self.request.validated[self.name] = self.model.update_or_create(
+                self.request.validated_params
+            )
+            tagopsdb.Session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name]),
+            "201 Created",
+        )
 
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):

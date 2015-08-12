@@ -68,7 +68,7 @@ def when_i_query(context, method, path):
 @then(u'the response code is {code}')
 def then_the_response_code_is(context, code):
     assert int(code) == context.response.status_code, (
-        context.response.status_code, code
+        context.response.status_code, code, context.response.json()
     )
 
 

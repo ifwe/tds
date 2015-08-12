@@ -1609,3 +1609,30 @@ def then_there_is_no_hipchat_with(context, properties):
     properties = parse_properties(properties)
     found = tagopsdb.model.Hipchat.get(**properties)
     assert found is None, found
+
+
+@given(u'there are hipchat rooms')
+def given_there_are_hipchat_rooms(context):
+    hipchats = getattr(context, 'hipchats', list())
+    for row in context.table:
+        hipchat = tagopsdb.Hipchat(
+            room_name=row['room_name'],
+        )
+        hipchats.append(hipchat)
+        tagopsdb.Session.add(hipchat)
+    tagopsdb.Session.commit()
+    context.hipchats = hipchats
+
+
+@given(u'the deploy target "{targ}" is associated with the hipchat "{room}"')
+def given_the_deploy_target_is_associated_with_the_hipchat(context, targ,
+                                                           room):
+    hipchat = tagopsdb.Hipchat.get(room_name=room)
+    target = tagopsdb.AppDefinition.get(name=targ)
+    if hipchat is None:
+        assert False, "HipChat %s doesn't exist" % room
+    if target is None:
+        assert False, "Target %s doesn't exist" % targ
+    if target not in hipchat.app_definitions:
+        hipchat.app_definitions.append(target)
+    tagopsdb.Session.commit()
