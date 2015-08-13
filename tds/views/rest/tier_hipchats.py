@@ -4,6 +4,7 @@ REST API view for Tier-Hipchat relationships.
 
 from cornice.resource import resource, view
 
+import tds.model
 import tagopsdb
 from .base import BaseView, init_view
 
@@ -27,6 +28,50 @@ class TierHipchatView(BaseView):
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
         pass
+
+    def validate_tier_hipchat_post(self, request):
+        self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')
+        if 'tier' not in request.validated:
+            return
+
+        if 'id' in request.params:
+            found = self.model.get(id=request.params['id'])
+        elif 'name' in request.params:
+            found = self.model.get(room_name=request.params['name'])
+        else:
+            request.errors.add(
+                'query', '',
+                "Either name or ID for the HipChat is required."
+            )
+            request.errors.status = 400
+            return
+
+        if not found:
+            request.errors.add(
+                'query', 'id' if 'id' in request.params else 'name',
+                "Hipchat with {param} {val} does not exist.".format(
+                    param='ID' if 'id' in request.params else 'name',
+                    val=request.params['id'] if 'id' in request.params else
+                        request.params['name'],
+                )
+            )
+            request.errors.status = 404
+            return
+        request.validated[self.name] = found
+
+        if found in request.validated['tier'].hipchats:
+            self.response_code = "200 OK"
+        else:
+            request.validated['tier'].hipchats.append(found)
+            self.response_code = "201 Created"
+
+    @view(validators=('validate_tier_hipchat_post', 'validate_cookie'))
+    def collection_post(self):
+        tagopsdb.Session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name]),
+            self.response_code,
+        )
 
     @view(validators=('method_not_allowed'))
     def put(self):

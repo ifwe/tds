@@ -520,10 +520,7 @@ class ValidatedView(JSONValidatedView):
                     name=self.__class__.__name__.lower()
                 )
             ].path
-            prefix = (
-                "collection_" if request.path == collection_path else
-                ''
-            )
+            prefix = "collection_" if request.path == collection_path else ''
             if not getattr(self, 'permissions', None):
                 return
             permissions_key = prefix + request.method.lower()

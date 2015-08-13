@@ -1636,3 +1636,25 @@ def given_the_deploy_target_is_associated_with_the_hipchat(context, targ,
     if target not in hipchat.app_definitions:
         hipchat.app_definitions.append(target)
     tagopsdb.Session.commit()
+
+
+def targ_room_associated(context, targ, room):
+    """
+    Return true if the application type with name targ is associated with the
+    HipChat room with name room, false otherwise.
+    Raise exception if either targ or room doesn't resolve to a tier or
+    HipChat room, respectively
+    """
+    hipchat = tagopsdb.Hipchat.get(room_name=room)
+    target = tagopsdb.AppDefinition.get(name=targ)
+    if hipchat is None:
+        assert False, "HipChat %s doesn't exist" % room
+    if target is None:
+        assert False, "Target %s doesn't exist" % targ
+    return target in hipchat.app_definitions
+
+
+@then(u'the deploy target "{targ}" is associated with the hipchat "{room}"')
+def then_the_deploy_target_is_associated_with_the_hipchat(context, targ,
+                                                          room):
+    assert targ_room_associated(context, targ, room)
