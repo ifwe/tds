@@ -41,3 +41,12 @@ Feature: POST tier-hipchat relationship(s) from the REST API
             | params            | name  | descript          |
             | name=hipchat500   | name  | name hipchat500   |
             | id=500            | id    | ID 500            |
+
+    @rest
+    Scenario: pass an invalid parameter
+        When I query POST "/tiers/tier1/hipchats?name=hipchat3&foo=bar"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name  | description                                               |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name']. |
+        And the deploy target "tier1" is not associated with the hipchat "hipchat3"
