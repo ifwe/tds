@@ -32,22 +32,30 @@ Feature: GET tier-hipchat relationship(s) from the REST API
             | hipchat1  |
             | hipchat2  |
 
-    # @rest @wip
-    # Scenario Outline: get a specific hipchat
-    #     When I query GET "/tiers/tier1/hipchats/<select>"
-    #     Then the response code is 200
-    #     And the response is an object with name="hipchat1",id=1
-    #
-    #     Examples:
-    #         | select    |
-    #         | hipchat1  |
-    #         | 1         |
-    #
-    # @rest @wip
-    # Scenario: pass a parameter
-    #     When I query GET "/tiers/tier1/hipchats?limit=10&start=10"
-    #     Then the response code is 401
-    #     And the response contains errors:
-    #         | location  | name  | description                               |
-    #         | query     | limit | Unsupported query: start.                 |
-    #         | query     | start | Unsupported query: start.                 |
+    @rest
+    Scenario: get a HipChat that doesn't exist
+        When I query GET "/tiers/tier1/hipchats/hipchat500"
+        Then the response code is 404
+        And the response contains errors:
+            | location  | name                  | description                                   |
+            | path      | hipchat_name_or_id    | Hipchat with name hipchat500 does not exist.  |
+
+    @rest
+    Scenario Outline: get a specific hipchat
+        When I query GET "/tiers/tier1/hipchats/<select>"
+        Then the response code is 200
+        And the response is an object with name="hipchat1",id=1
+
+        Examples:
+            | select    |
+            | hipchat1  |
+            | 1         |
+
+    @rest
+    Scenario: pass a parameter
+        When I query GET "/tiers/tier1/hipchats?limit=10&start=10"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name  | description                                                               |
+            | query     | limit | Unsupported query: limit. There are no valid parameters for this method.  |
+            | query     | start | Unsupported query: start. There are no valid parameters for this method.  |

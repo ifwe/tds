@@ -169,7 +169,8 @@ class ValidatedView(JSONValidatedView):
     This class implements common non-JSON validators.
     """
 
-    def get_obj_by_name_or_id(self, obj_type=None, model=None, name_attr=None):
+    def get_obj_by_name_or_id(self, obj_type=None, model=None, name_attr=None,
+                              param_name=None):
         """
         Validate that an object of type self.name with the name_or_id given in
         the request exists and attach it to the request at
@@ -181,19 +182,22 @@ class ValidatedView(JSONValidatedView):
         if not obj_type:
             obj_type = self.name
             if getattr(self, 'model', None):
-                obj_cls = self.model
+                model = self.model
         elif not model:
             model = getattr(tds.model, obj_type.title(), None)
             if model is None:
                 raise tds.exceptions.NotFoundError('Model', [obj_type])
 
+        if not param_name:
+            param_name = 'name_or_id'
+
         try:
-            obj_id = int(self.request.matchdict['name_or_id'])
+            obj_id = int(self.request.matchdict[param_name])
             obj = model.get(id=obj_id)
             name = False
         except ValueError:
             obj_id = False
-            name = self.request.matchdict['name_or_id']
+            name = self.request.matchdict[param_name]
             obj_dict = dict()
             if name_attr:
                 obj_dict[name_attr] = name
@@ -205,7 +209,7 @@ class ValidatedView(JSONValidatedView):
 
         if obj is None:
             self.request.errors.add(
-                'path', 'name_or_id',
+                'path', param_name,
                 "{obj_type} with {prop} {val} does not exist.".format(
                     obj_type=obj_type.title(),
                     prop="ID" if obj_id else "name",
@@ -307,6 +311,25 @@ class ValidatedView(JSONValidatedView):
             self.get_obj_by_name_or_id('application')
             if 'application' in request.validated:
                 self.get_pkg_by_version_revision()
+        elif self.name == 'tier-hipchat':
+            self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')
+            if 'tier' in request.validated:
+                self.get_obj_by_name_or_id(
+                    obj_type="HipChat",
+                    param_name='hipchat_name_or_id',
+                    model=self.model,
+                )
+                if 'HipChat' not in request.validated:
+                    return
+                if request.validated['HipChat'] not in request.validated[
+                    'tier'
+                ].hipchats:
+                    request.errors.add(
+                        'path', 'hipchat_name_or_id',
+                        "This tier-HipChat association does not exist."
+                    )
+                    request.errors.status = 404
+                request.validated[self.name] = request.validated['HipChat']
         else:
             self.get_obj_by_name_or_id()
 
@@ -321,10 +344,18 @@ class ValidatedView(JSONValidatedView):
             if 'application' in request.validated:
                 self.get_pkgs_by_limit_start()
         if self.name == 'tier-hipchat':
+            if len(request.params) > 0:
+                for key in request.params:
+                    request.errors.add(
+                        'query', key,
+                        "Unsupported query: {key}. There are no valid "
+                        "parameters for this method.".format(key=key),
+                    )
+                request.errors.status = 422
             self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
                                        'app_type')
             if 'tier' in request.validated:
-                self.request.validated[self.plural] = request.validated[
+                request.validated[self.plural] = request.validated[
                     'tier'
                 ].hipchats
         else:
@@ -372,18 +403,18 @@ class ValidatedView(JSONValidatedView):
                     'implemented.'
                 )
 
-    def validate_post_required(self, _request):
+    def validate_post_required(self, request):
         """
         Validate that the fields required for a POST are present in the
         parameters of the request.
         """
         for field in self.required_post_fields:
-            if field not in self.request.validated_params:
-                self.request.errors.add(
+            if field not in request.validated_params:
+                request.errors.add(
                     'query', '',
                     "{field} is a required field.".format(field=field)
                 )
-                self.request.errors.status = 400
+                request.errors.status = 400
 
     def validate_obj_put(self, _request):
         """
@@ -458,52 +489,52 @@ class ValidatedView(JSONValidatedView):
                 )
             self.request.errors.status = 409
 
-    def validate_cookie(self, _request):
+    def validate_cookie(self, request):
         """
         Validate the cookie in the request. If the cookie is valid, add a user
         to the request's validated_params dictionary.
         If the user is not authorized to do the current action, add the
         corresponding error.
         """
-        (present, username, is_admin) = utils.validate_cookie(self.request,
+        (present, username, is_admin) = utils.validate_cookie(request,
                                                               self.settings)
         if not present:
-            self.request.errors.add(
+            request.errors.add(
                 'header', 'cookie',
                 'Authentication required. Please login.'
             )
-            if self.request.errors.status == 400:
-                self.request.errors.status = 401
+            if request.errors.status == 400:
+                request.errors.status = 401
         elif not username:
-            self.request.errors.add(
+            request.errors.add(
                 'header', 'cookie',
                 'Cookie has expired or is invalid. Please reauthenticate.'
             )
-            if self.request.errors.status == 400:
-                self.request.errors.status = 419
+            if request.errors.status == 400:
+                request.errors.status = 419
         else:
-            self.request.validated['user'] = username
-            self.request.is_admin = is_admin
+            request.validated['user'] = username
+            request.is_admin = is_admin
             collection_path = self._services[
                 'collection_{name}'.format(
                     name=self.__class__.__name__.lower()
                 )
             ].path
             prefix = (
-                "collection_" if self.request.path == collection_path else
+                "collection_" if request.path == collection_path else
                 ''
             )
-            permissions_key = prefix + self.request.method.lower()
+            permissions_key = prefix + request.method.lower()
             if permissions_key not in self.permissions:
                 return
             if self.permissions[permissions_key] == 'admin':
-                if not self.request.is_admin:
-                    self.request.errors.add(
+                if not request.is_admin:
+                    request.errors.add(
                         'header', 'cookie',
                         'Admin authorization required. Please contact someone '
                         'in SiteOps to perform this operation for you.'
                     )
-                    self.request.errors.status = 403
+                    request.errors.status = 403
 
     def _validate_foreign_key(self, param_name, model_name, model,
                               attr_name=None):
@@ -586,9 +617,9 @@ class ValidatedView(JSONValidatedView):
                 found_list.append(found)
         self.request.validated_params[param_name] = found_list
 
-    def method_not_allowed(self, _request):
+    def method_not_allowed(self, request):
         """
         Validator used to make methods not valid for a URL.
         """
-        self.request.errors.add('url', 'method', "Method not allowed.")
-        self.request.errors.status = 405
+        request.errors.add('url', 'method', "Method not allowed.")
+        request.errors.status = 405
