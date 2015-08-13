@@ -30,6 +30,7 @@ class TierHipchatView(BaseView):
         pass
 
     def validate_tier_hipchat_post(self, request):
+        self._validate_params(self.valid_attrs)
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')
         if 'tier' not in request.validated:
             return

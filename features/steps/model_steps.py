@@ -1638,7 +1638,7 @@ def given_the_deploy_target_is_associated_with_the_hipchat(context, targ,
     tagopsdb.Session.commit()
 
 
-def targ_room_associated(context, targ, room):
+def targ_room_associated(targ, room):
     """
     Return true if the application type with name targ is associated with the
     HipChat room with name room, false otherwise.
@@ -1657,4 +1657,10 @@ def targ_room_associated(context, targ, room):
 @then(u'the deploy target "{targ}" is associated with the hipchat "{room}"')
 def then_the_deploy_target_is_associated_with_the_hipchat(context, targ,
                                                           room):
-    assert targ_room_associated(context, targ, room)
+    assert targ_room_associated(targ, room)
+
+
+@then(u'the deploy target "{targ}" is not associated with the hipchat "{room}"')
+def then_the_deploy_target_is_not_associated_with_the_hipchat(context, targ,
+                                                              room):
+    assert not targ_room_associated(targ, room)
