@@ -24,8 +24,6 @@ class TierHipchatView(BaseView):
         'name': 'room_name',
     }
 
-    permissions = {}
-
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
         pass

@@ -524,6 +524,8 @@ class ValidatedView(JSONValidatedView):
                 "collection_" if request.path == collection_path else
                 ''
             )
+            if not getattr(self, 'permissions', None):
+                return
             permissions_key = prefix + request.method.lower()
             if permissions_key not in self.permissions:
                 return

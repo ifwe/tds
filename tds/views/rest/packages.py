@@ -39,8 +39,6 @@ class PackageView(BaseView):
 
     required_post_fields = ('version', 'revision')
 
-    permissions = {}
-
     def get_pkg_by_version_revision(self):
         """
         Validate that the package with the version, revision, and application
