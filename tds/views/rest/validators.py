@@ -343,7 +343,7 @@ class ValidatedView(JSONValidatedView):
             self.get_obj_by_name_or_id('application')
             if 'application' in request.validated:
                 self.get_pkgs_by_limit_start()
-        if self.name == 'tier-hipchat':
+        elif self.name == 'tier-hipchat':
             if len(request.params) > 0:
                 for key in request.params:
                     request.errors.add(
