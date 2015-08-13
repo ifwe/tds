@@ -27,7 +27,13 @@ class TierHipchatView(BaseView):
 
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
-        pass
+        self.request.validated['tier'].hipchats.remove(self.request.validated[
+            'HipChat'
+        ])
+        tagopsdb.Session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated['HipChat'])
+        )
 
     def validate_tier_hipchat_post(self, request):
         self._validate_params(self.valid_attrs)
