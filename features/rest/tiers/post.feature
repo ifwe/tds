@@ -41,8 +41,8 @@ Feature: POST app tier(s) from the REST API
         When I query POST "/tiers?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'puppet_class', 'name', 'ganglia_name', 'distribution', 'hipchats', 'id', 'ganglia_id']. |
+            | location  | name  | description                                                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'puppet_class', 'ganglia_name', 'id', 'distribution', 'ganglia_id', 'name']. |
         And there is no deploy target with name="tier3"
         And there is no deploy target with id=4
 

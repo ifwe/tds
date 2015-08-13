@@ -181,11 +181,11 @@ class BaseView(ValidatedView):
             [self.to_json_obj(x) for x in self.request.validated[self.plural]]
         )
 
-    @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_cookie'))
-    def collection_post(self):
+    def _handle_collection_post(self):
         """
-        Handle a POST request after the parameters are marked valid JSON.
+        Handle the addition and commit of the model in a POST request after
+        all validation has been completed.
+        Create and return the HTTP response.
         """
         self._route_params()
         if getattr(self.model, 'create', None):
@@ -201,6 +201,14 @@ class BaseView(ValidatedView):
             self.to_json_obj(self.request.validated[self.name]),
             "201 Created",
         )
+
+    @view(validators=('validate_put_post', 'validate_post_required',
+                      'validate_cookie'))
+    def collection_post(self):
+        """
+        Handle a POST request after the parameters are marked valid JSON.
+        """
+        return self._handle_collection_post()
 
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
