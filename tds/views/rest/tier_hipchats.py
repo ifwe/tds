@@ -30,10 +30,6 @@ class TierHipchatView(BaseView):
     def delete(self):
         pass
 
-    @view(validators=('validate_individual', 'validate_cookie'))
-    def get(self):
-        pass
-
     @view(validators=('method_not_allowed'))
     def put(self):
         """

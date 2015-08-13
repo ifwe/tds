@@ -81,7 +81,7 @@ def then_the_response_contains_a_list_of_items(context, num):
 
 
 @then(u'the response list contains an object with {properties}')
-def then_the_response_contains_an_object_with(context, properties):
+def then_the_response_list_contains_an_object_with(context, properties):
     properties = parse_properties(properties)
     assert any(all(properties[prop] == proj[prop] for prop in properties)
                for proj in context.response.json())
@@ -101,7 +101,7 @@ def then_the_response_is_an_object_with(context, properties):
     try:
         assert all(properties[prop] == context.response.json()[prop] for prop
                    in properties), (context.response.json(), properties)
-    except KeyError as e:
+    except (KeyError, TypeError) as e:
         assert False, (e, context.response.json())
 
 
