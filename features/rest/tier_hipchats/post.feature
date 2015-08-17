@@ -16,11 +16,16 @@ Feature: POST tier-hipchat relationship(s) from the REST API
         And the deploy target "tier1" is associated with the hipchat "hipchat2"
 
     @rest
-    Scenario: post a tier-hipchat association
-        When I query POST "/tiers/tier1/hipchats?name=hipchat3"
+    Scenario Outline: post a tier-hipchat association
+        When I query POST "/tiers/tier1/hipchats?<query>"
         Then the response code is 201
         And the response is an object with name="hipchat3",id=3
         And the deploy target "tier1" is associated with the hipchat "hipchat3"
+
+        Examples:
+            | query         |
+            | name=hipchat3 |
+            | id=3          |
 
     @rest
     Scenario: post a tier-hipchat association that already exists
@@ -41,6 +46,14 @@ Feature: POST tier-hipchat relationship(s) from the REST API
             | params            | name  | descript          |
             | name=hipchat500   | name  | name hipchat500   |
             | id=500            | id    | ID 500            |
+
+    @rest
+    Scenario: omit required fields
+        When I query POST "/tiers/tier1/hipchats?"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name      | description                                       |
+            | query     |           | Either name or ID for the HipChat is required.    |
 
     @rest
     Scenario: pass an invalid parameter

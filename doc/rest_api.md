@@ -237,6 +237,52 @@ URLs and methods for deploying have yet to be determined.
             <b>401</b>: Authentication failed.
         </td>
     </tr>
+    <tr>
+        <td rowspan="2">/tiers/NAME_OR_ID/hipchats</td>
+        <td>GET</td>
+        <td>Get all HipChats associated with the tier with name or ID
+            NAME_OR_ID.</td>
+        <td><em>None. NOTE: this URL does not supported limit or start
+            queries</em></td>
+        <td>
+            <b>200</b>: OK. HipChats returned.<br />
+            <b>404</b>: Tier not found.<br />
+            <b>422</b>: Unprocessable entity. This status will be returned for
+                queries that include the limit or start parameters.
+        </td>
+    </tr>
+    <tr>
+        <td>POST</td>
+        <td>Associate an existing HipChat with the tier with name or ID
+            NAME_OR_ID.</td>
+        <td>'id': ID of the HipChat to associate. Takes precedence over name.
+            'name': Name of the HipChat to associate. Gives precedence to ID.
+        </td>
+        <td>
+            <b>200</b>: OK. The HipChat was already associated with the tier.<br />
+            <b>201</b>: Create. The HipChat was successfully associated with
+                the tier.<br />
+            <b>400</b>: Either 'name' or 'id' must be provided in the query.<br />
+            <b>404</b>: Either the tier or the HipChat does not exist.<br />
+            <b>422</b>: Unprocessable entity.
+        </td>
+    </tr>
+    <tr>
+        <td rowspan="2">/tiers/NAME_OR_ID/hipchats/HIPCHAT_NAME_OR_ID</td>
+        <td>DELETE</td>
+        <td>Delete a Tier-HipChat association.</td>
+        <td>
+            <b>200</b>: HipChat disassociated from tier. HipChat returned.<br />
+            <b>404</b>: Tier or tier-HipChat association does not exist.
+        </td>
+    </tr>
+        <td>GET</td>
+        <td>Get a HipChat that is associated with the given tier.</td>
+        <td><em>None</em></td>
+        <td>
+            <b>200</b>: OK. HipChat returned.<br />
+            <b>404</b>: Tier or tier-HipChat association does not exist.
+        </td>
 </tbody>
 </table>
 
