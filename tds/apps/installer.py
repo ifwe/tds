@@ -3,20 +3,30 @@ Daemon to do installs. It checks the database to see what deployments it needs
 to do, does them, and updates the database.
 """
 
+import logging
+import os
+import sys
+
 from datetime import datetime, timedelta
 from multiprocessing import Process
-
-from simpledaemon import Daemon
 
 import tagopsdb
 import tds.deploy_strategy
 import tds.exceptions
 import tds.model
 
-from tds.apps.base import TDSProgramBase
+if __package__ is None:
+    # This unused import is necessary if the file is executed as a script,
+    # usually during testing
+    import tds.apps
+    __package__ = 'tds.apps'
+
+from . import TDSProgramBase
+
+log = logging.getLogger('tds.apps.tds_installer')
 
 
-class TDSInstallerDaemon(Daemon, TDSProgramBase):
+class Installer(TDSProgramBase):
     """
     Thing to do the thing.
     """
@@ -26,6 +36,9 @@ class TDSInstallerDaemon(Daemon, TDSProgramBase):
         Determine deployment strategy and initialize several parameters
         """
 
+        log.info('Initializing database session')
+        self.initialize_db()
+
         # ongoing_deployments is a list with items of form:
         # (deployment_entry, process_doing_deployment,
         #  time_of_deployment_start)
@@ -34,7 +47,7 @@ class TDSInstallerDaemon(Daemon, TDSProgramBase):
         self.threshold = kwargs.pop('threshold') if 'threshold' in kwargs \
             else timedelta(minutes=5)
 
-        super(TDSInstallerDaemon, self).__init__(*args, **kwargs)
+        super(Installer, self).__init__(*args, **kwargs)
 
         self.create_deploy_strategy(
             self.config.get('deploy_strategy', 'salt')
@@ -166,3 +179,32 @@ class TDSInstallerDaemon(Daemon, TDSProgramBase):
 
             for host_deployment in host_deployments:
                 self._do_host_deployment(host_deployment)
+
+    def run(self):
+        """
+        Find a deployment in need of being done (which spawns a process
+        that handles the actual deployment)
+        """
+
+        self.find_deployments()
+
+
+if __name__ == '__main__':
+    def parse_command_line(cl_args):
+        # TODO implement parser thing?
+        return {
+            'config_dir': cl_args[1]
+        }
+    args = parse_command_line(sys.argv[1:])
+
+    log.setLevel(logging.DEBUG)
+    logfile = os.path.join(args['config_dir'], 'tds_installer.log')
+    handler = logging.FileHandler(logfile, 'a')
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
+                                  "%b %e %H:%M:%S")
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
+
+    prog = Installer(args)
+    prog.run()
