@@ -402,8 +402,11 @@ class ValidatedView(JSONValidatedView):
         self._add_post_defaults()
         if not getattr(self, 'name', None):
             return
-        if getattr(self, 'validate_{name}_post'.format(name=self.name), None):
-            getattr(self, 'validate_{name}_post'.format(name=self.name))()
+        func_name = 'validate_{name}_post'.format(
+            name=self.name.replace('-', '_')
+        )
+        if getattr(self, func_name, None):
+            getattr(self, func_name)()
         else:
             try:
                 self._validate_id("POST")
@@ -443,11 +446,13 @@ class ValidatedView(JSONValidatedView):
                     'implemented.'
                 )
 
-    def _validate_id(self, request_type):
+    def _validate_id(self, request_type, obj_type=None):
         """
         Validate that the ID unique constraint isn't violated for a request
         with either POST or PUT request_type.
         """
+        if not obj_type:
+            obj_type = self.name
         if 'id' in self.request.validated_params:
             found_obj = self.model.get(id=self.request.validated_params['id'])
             if not found_obj:
@@ -457,23 +462,25 @@ class ValidatedView(JSONValidatedView):
                     'query', 'id',
                     "Unique constraint violated. A{n} {type} with this ID"
                     " already exists.".format(
-                        n='n' if self.name[0] in 'aeiou' else '',
-                        type=self.name
+                        n='n' if obj_type[0] in 'aeiou' else '',
+                        type=obj_type
                     )
                 )
-            elif found_obj != self.request.validated[self.name]:
+            elif found_obj != self.request.validated[obj_type]:
                 self.request.errors.add(
                     'query', 'id',
                     "Unique constraint violated. Another {type} with this"
-                    " ID already exists.".format(type=self.name),
+                    " ID already exists.".format(type=obj_type),
                 )
             self.request.errors.status = 409
 
-    def _validate_name(self, request_type):
+    def _validate_name(self, request_type, obj_type=None):
         """
         Validate that the name unique constraint isn't violated for a request
         with either POST or PUT request_type.
         """
+        if not obj_type:
+            obj_type = self.name
         if 'name' in self.request.validated_params:
             dict_key = 'name'
             if 'name' in self.param_routes:
@@ -488,15 +495,15 @@ class ValidatedView(JSONValidatedView):
                     'query', 'name',
                     "Unique constraint violated. A{n} {type} with this name"
                     " already exists.".format(
-                        n='n' if self.name[0] in 'aeiou' else '',
-                        type=self.name,
+                        n='n' if obj_type[0] in 'aeiou' else '',
+                        type=obj_type,
                     )
                 )
-            elif found_obj != self.request.validated[self.name]:
+            elif found_obj != self.request.validated[obj_type]:
                 self.request.errors.add(
                     'query', 'name',
                     "Unique constraint violated. Another {type} with this"
-                    " name already exists.".format(type=self.name)
+                    " name already exists.".format(type=obj_type)
                 )
             self.request.errors.status = 409
 

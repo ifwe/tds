@@ -52,7 +52,7 @@ Feature: GET package(s) from the REST API by ID
             | location  | name  | description                                                   |
             | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |
 
-    @rest @wip
+    @rest
     Scenario Outline: specify limit and/or last queries
         When I query GET "/packages?limit=<limit>&start=<start>"
         Then the response code is 200
