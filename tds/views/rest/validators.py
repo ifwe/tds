@@ -170,7 +170,8 @@ class ValidatedView(JSONValidatedView):
     """
 
     def get_obj_by_name_or_id(self, obj_type=None, model=None, name_attr=None,
-                              param_name=None):
+                              param_name=None, can_be_name=True,
+                              dict_name=None):
         """
         Validate that an object of type self.name with the name_or_id given in
         the request exists and attach it to the request at
@@ -196,16 +197,20 @@ class ValidatedView(JSONValidatedView):
             obj = model.get(id=obj_id)
             name = False
         except ValueError:
-            obj_id = False
-            name = self.request.matchdict[param_name]
-            obj_dict = dict()
-            if name_attr:
-                obj_dict[name_attr] = name
-            elif 'name' in self.param_routes:
-                obj_dict[self.param_routes['name']] = name
+            if can_be_name:
+                obj_id = False
+                name = self.request.matchdict[param_name]
+                obj_dict = dict()
+                if name_attr:
+                    obj_dict[name_attr] = name
+                elif 'name' in self.param_routes:
+                    obj_dict[self.param_routes['name']] = name
+                else:
+                    obj_dict['name'] = name
+                obj = model.get(**obj_dict)
             else:
-                obj_dict['name'] = name
-            obj = model.get(**obj_dict)
+                obj_id = self.request.matchdict[param_name]
+                obj = None
 
         if obj is None:
             self.request.errors.add(
@@ -217,6 +222,8 @@ class ValidatedView(JSONValidatedView):
                 )
             )
             self.request.errors.status = 404
+        elif dict_name:
+            self.request.validated[dict_name] = obj
         else:
             self.request.validated[obj_type] = obj
 
@@ -330,6 +337,10 @@ class ValidatedView(JSONValidatedView):
                     )
                     request.errors.status = 404
                 request.validated[self.name] = request.validated['HipChat']
+        elif self.name == 'package-by-id':
+            self.get_obj_by_name_or_id(obj_type='Package', model=self.model,
+                                       param_name='id', can_be_name=False,
+                                       dict_name=self.name)
         else:
             self.get_obj_by_name_or_id()
 
