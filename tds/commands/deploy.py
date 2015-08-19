@@ -81,4 +81,9 @@ class DeployController(BaseController):
     @input_validate('application')
     def validate(self, application, package, hosts=None, apptypes=None,
                  **params):
+        # Ensure that, for the tiers we're checking, the given package is the
+        # current deployment and that the tier is in 'complete' state.
+        # If so, verify all the hosts have deployments in 'ok' state.
+        # If so, update tier to 'validated' and remove host deployments.
+        # Otherwise, throw appropriate error.
         pass
