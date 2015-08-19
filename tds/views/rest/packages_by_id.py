@@ -18,43 +18,63 @@ class PackageByIDView(BaseView):
         'status': 'choice',
         'builder': 'choice',
         'job': 'string',
-        'app_name': 'string',
+        'name': 'string',
     }
 
     param_routes = {
         'job': 'path',
-        'app_name': 'name',
+        'name': 'pkg_name',
     }
 
     defaults = {
         'status': 'pending',
     }
 
-    required_post_fields = ('version', 'revision', 'app_name')
+    required_post_fields = ('version', 'revision', 'name')
 
     def validate_package_by_id_put(self):
         self._validate_id("PUT", "package")
 
-        if 'version' in self.request.validated_params or 'revision' in \
-                self.request.validated_params:
+        if any(x in self.request.validated_params for x in
+               ('version', 'revision', 'name')):
             found_pkg = self.model.get(
-                # application=
+                application=tds.model.Application.get(
+                    pkg_name=self.request.validated_params['name']
+                ) if 'name' in self.request.validated_params else
+                    self.request.validated[self.name].application,
+                version=self.request.validated_params['version'] if 'version'
+                    in self.request.validated_params else
+                    self.request.validated[self.name].version,
+                revision=self.request.validated_params['revision'] if
+                    'revision' in self.request.validated_params else
+                    self.request.validated[self.name].revision,
             )
+            if found_pkg and found_pkg != self.request.validated[self.name]:
+                self.request.errors.add(
+                    'query',
+                    'name' if 'name' in self.request.validated_params
+                        else 'version' if 'version' in
+                        self.request.validated_params else 'revision',
+                    "Unique constraint violated. Another package for this"
+                    " application with this version and revision already"
+                    " exists."
+                )
+                self.request.errors.status = 409
 
     def validate_package_by_id_post(self):
         self._validate_id("POST", "package")
-        if 'app_name' not in self.request.validated_params:
+        if 'name' not in self.request.validated_params:
             return
         found_app = tds.model.Application.get(
-            pkg_name=self.request.validated_params['app_name']
+            pkg_name=self.request.validated_params['name']
         )
         ver_check = 'version' in self.request.validated_params
         rev_check = 'revision' in self.request.validated_params
         if not found_app:
             self.request.errors.add(
-                'query', 'app_name',
+                'query', 'name',
                 "Application with name {name} does not exist.".format(
-                    name=self.request.validated_params['app_name']
+                    name=self.request.validated_params['name']
                 )
             )
             self.request.status = 400
