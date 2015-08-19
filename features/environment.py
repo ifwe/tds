@@ -246,14 +246,14 @@ def setup_rest_server(context):
     context.rest_process = Process(target=rest_server, args=(context,))
     context.rest_process.start()
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
-                  'settings.yml'), 'r+') as f:
-        context.rest_settings = yaml.load(f.read())
-        context.new_rest_settings = context.rest_settings.copy()
-        context.new_rest_settings['ldap_server'] = 'ldaps://ldap.tag-dev.com'
-        f.seek(0)
-        f.truncate()
+                  'settings.yml'), 'w') as f:
+        context.rest_settings = {
+            'cookie_life': 1296000,
+            'ldap_server': 'ldaps://ldap.tag-dev.com',
+            'secret_key': 'super secret',
+        }
         f.write(
-            yaml.dump(context.new_rest_settings, default_flow_style=False)
+            yaml.dump(context.rest_settings, default_flow_style=False)
         )
 
 
@@ -263,7 +263,8 @@ def teardown_rest_server(context):
     """
     context.rest_process.terminate()
     context.rest_process.join()
-    restore_rest_settings(context)
+    os.remove(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'))
 
 
 def disable_ldap_server(context):
@@ -272,21 +273,11 @@ def disable_ldap_server(context):
     """
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
                   'settings.yml'), 'r+') as f:
-        context.new_rest_settings['ldap_server'] = 'ldaps://ldap.example.com'
+        context.rest_settings['ldap_server'] = 'ldaps://ldap.example.com'
         f.truncate()
         f.write(
-            yaml.dump(context.new_rest_settings, default_flow_style=False)
+            yaml.dump(context.rest_settings, default_flow_style=False)
         )
-
-
-def restore_rest_settings(context):
-    """
-    Restore rest settings from before the removal of the LDAP server.
-    """
-    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
-                  'settings.yml'), 'r+') as f:
-        f.truncate()
-        f.write(yaml.dump(context.rest_settings, default_flow_style=False))
 
 
 def setup_conf_file(context):
