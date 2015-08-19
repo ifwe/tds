@@ -386,11 +386,12 @@ class ValidatedView(JSONValidatedView):
                     )
         if not getattr(self, 'name', None):
             return
-        if self.name == 'package' and 'application' in self.request.validated:
-            if 'job' not in self.request.validated_params:
-                self.request.validated_params['job'] = self.request.validated[
-                    'application'
-                ].path
+        if 'application' in self.request.validated:
+            if 'package' in self.name:
+                if 'job' not in self.request.validated_params:
+                    self.request.validated_params['job'] = self.request.validated[
+                        'application'
+                    ].path
 
     def validate_put_post(self, _request):
         """
@@ -434,8 +435,11 @@ class ValidatedView(JSONValidatedView):
         """
         Validate a PUT request by preventing collisions over unique fields.
         """
-        if getattr(self, 'validate_{name}_put'.format(name=self.name), None):
-            getattr(self, 'validate_{name}_put'.format(name=self.name))()
+        func_name = 'validate_{name}_put'.format(
+            name=self.name.replace('-', '_')
+        )
+        if getattr(self, func_name, None):
+            getattr(self, func_name)()
         else:
             try:
                 self._validate_id("PUT")

@@ -14,7 +14,7 @@ Feature: POST package(s) from the REST API by ID
 
     @rest
     Scenario: add a new package
-        When I query POST "/packages?app_name=app3&version=2&revision=2"
+        When I query POST "/packages?name=app3&version=2&revision=2"
         Then the response code is 201
         And the response is an object with version="2",revision="2",creator="testuser"
         And there is a package with version="2",revision="2",creator="testuser"
@@ -25,30 +25,30 @@ Feature: POST package(s) from the REST API by ID
         Then the response code is 400
         And the response contains errors:
             | location  | name  | description                   |
-            | query     |       | app_name is a required field. |
+            | query     |       | name is a required field. |
         And there is no package with version="2",revision="2",creator="testuser"
 
     @rest
-    Scenario: pass an app_name for an application that doesn't exist
-        When I query POST "/packages?app_name=noexist&version=2&revision=2"
+    Scenario: pass an name for an application that doesn't exist
+        When I query POST "/packages?name=noexist&version=2&revision=2"
         Then the response code is 400
         And the response contains errors:
             | location  | name      | description                                   |
-            | query     | app_name  | Application with name noexist does not exist. |
+            | query     | name  | Application with name noexist does not exist. |
         And there is no package with version="2",revision="2",creator="testuser"
 
     @rest
     Scenario: pass an invalid parameter
-        When I query POST "/packages?app_name=app3&version=2&revision=2&foo=bar"
+        When I query POST "/packages?name=app3&version=2&revision=2&foo=bar"
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'app_name', 'builder', 'job', 'version', 'id', 'revision'].  |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'name', 'builder', 'job', 'version', 'id', 'revision'].  |
         And there is no package with version="2",revision="2",creator="testuser"
 
     @rest
     Scenario Outline: attempt to violate a unique constraint
-        When I query POST "/packages?app_name=app3&<query>"
+        When I query POST "/packages?name=app3&<query>"
         Then the response code is 409
         And the response contains errors:
             | location  | name      | description                                                   |
