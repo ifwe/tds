@@ -4,6 +4,9 @@ Controller for 'deploy' commands.
 
 import logging
 
+import tagopsdb
+import tagopsdb.deploy.deploy
+
 from .base import BaseController, validate as input_validate
 
 log = logging.getLogger('tds')
@@ -37,6 +40,45 @@ class DeployController(BaseController):
         'rollback': 'environment',
         'restart': 'environment',
     }
+
+    def find_app_deployments(self, package, apptypes, params):
+        """
+        Given a specific package, determine current deployments of that
+        package for a given set of apptypes in a given environment.
+        """
+
+        environment = tagopsdb.Environment.get(
+            environment=self.envs[params['env']]
+        )
+
+        app_deployments = {}
+
+        for apptype in apptypes:
+            app_deployments[apptype.id] = (apptype.name, None)
+
+            for app_deployment in apptype.app_deployments:
+                if app_deployment.environment_obj != environment:
+                    continue
+                if app_deployment.deployment.package != package:
+                    break
+
+                app_deployments[apptype.id] = (apptype.name, app_deployment)
+
+        return app_deployments
+
+    def perform_validation(self, app_deployment, package, params):
+        """
+        Perform validation on a given app deployment
+        """
+
+        app_deployment.status = 'validated'
+        tagopsdb.Session.commit()
+
+        tagopsdb.deploy.deploy.delete_host_deployments(
+            package.name,
+            app_deployment.app_id,
+            self.envs[params['env']]
+        )
 
     @input_validate('package_hostonly')
     @input_validate('targets')
@@ -113,4 +155,37 @@ class DeployController(BaseController):
         # If so, verify all the hosts have deployments in 'ok' state.
         # If so, update tier to 'validated' and remove host deployments.
         # Otherwise, throw appropriate error.
-        pass
+        app_deployments = self.find_app_deployments(package, apptypes, params)
+
+        for apptype_id in app_deployments:
+            tier_name, app_deployment = app_deployments[apptype_id]
+
+            if app_deployment is None:
+                log.info('Tier "%s" has no current deployment for '
+                         'application "%s", version "%s" to validate',
+                         tier_name, application.name, package.version)
+                continue
+
+            deploy_status = app_deployment.status
+
+            if deploy_status == 'inprogress':
+                log.info('Tier "%s" has a current deployment that is '
+                         'in progress, skipping...', tier_name)
+            elif deploy_status == 'validated':
+                log.info('Tier "%s" has a current deployment that is '
+                         'already validated, skipping...', tier_name)
+            elif deploy_status in ['complete', 'invalidated']:
+                self.perform_validation(app_deployment, package, params)
+                log.info('Application "%s", version "%s" has been '
+                         'validated on tier "%s"', application.name,
+                         package.version, tier_name)
+            elif deploy_status == 'incomplete':
+                if params['force']:
+                    self.perform_validation(app_deployment, package, params)
+                    log.info('Application "%s", version "%s" has been '
+                            'validated on tier "%s"', application.name,
+                            package.version, tier_name)
+                else:
+                    log.info('Tier "%s" has a current deployment that is '
+                             'incomplete, please use "--force" option to '
+                             'override', tier_name)
