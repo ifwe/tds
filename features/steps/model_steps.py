@@ -510,6 +510,12 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
     tagopsdb.Session.add(host_dep)
     tagopsdb.Session.commit()
 
+    given_the_package_has_status_set_with_properties(
+        context,
+        deployment.package.version,
+        context.tds_environment,
+        'incomplete'
+    )
 
 def set_status_for_package(package, status):
     for deployment in package.deployments:
