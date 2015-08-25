@@ -41,7 +41,7 @@ class DeployController(BaseController):
         'restart': 'environment',
     }
 
-    def find_app_deployments(self, package, apptypes, params):
+    def find_current_app_deployments(self, package, apptypes, params):
         """
         Given a specific package, determine current deployments of that
         package for a given set of apptypes in a given environment.
@@ -59,7 +59,7 @@ class DeployController(BaseController):
             for app_deployment in apptype.app_deployments:
                 if app_deployment.environment_obj != environment:
                     continue
-                if app_deployment.deployment.package != package:
+                if app_deployment.deployment.package != package.delegate:
                     break
 
                 app_deployments[apptype.id] = (apptype.name, app_deployment)
@@ -101,7 +101,25 @@ class DeployController(BaseController):
         # had been deployed at some point and is in the 'validated' state.
         # If so, update tier to 'invalidated', otherwise do nothing
         # (and mention nothing has been done).
-        pass
+        app_deployments = self.find_current_app_deployments(
+            package, apptypes, params
+        )
+
+        for apptype in apptypes:
+            tier_name, curr_app_dep = app_deployments[apptype.id]
+
+            if (curr_app_dep is not None and
+                curr_app_dep.deployment.package == package.delegate):
+                log.info('Application "%s", version "%s" is currently '
+                         'deployed on tier "%s", skipping...',
+                         application.name, package.version, tier_name)
+                continue
+
+            for app_deployment in package.app_deployments:
+                if app_deployment.target in [x.delegate for x in apptypes]:
+                    app_deployment.status = 'invalidated'
+
+            tagopsdb.Session.commit()
 
     @input_validate('package')
     @input_validate('targets')
@@ -155,7 +173,9 @@ class DeployController(BaseController):
         # If so, verify all the hosts have deployments in 'ok' state.
         # If so, update tier to 'validated' and remove host deployments.
         # Otherwise, throw appropriate error.
-        app_deployments = self.find_app_deployments(package, apptypes, params)
+        app_deployments = self.find_current_app_deployments(
+            package, apptypes, params
+        )
 
         for apptype_id in app_deployments:
             tier_name, app_deployment = app_deployments[apptype_id]

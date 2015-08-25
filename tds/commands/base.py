@@ -310,9 +310,20 @@ class BaseController(object):
             )
             if package is None:
                 raise Exception("Couldn't determine latest version")
+            else:
+                package = tds.model.Package.get(
+                    name=package.name,
+                    version=package.version,
+                    revision=package.revision,
+                )
         elif application is not None and len(application.packages) > 0:
             for package in application.packages:
                 if version == package.version:
+                    package = tds.model.Package.get(
+                        name=package.name,
+                        version=package.version,
+                        revision=package.revision,
+                    )
                     break
             else:
                 package = None
