@@ -5,7 +5,7 @@ Controller for 'deploy' commands.
 import logging
 
 import tagopsdb
-import tagopsdb.deploy.deploy
+import tagopsdb.deploy.deploy as tagopsdb_deploy
 
 from .base import BaseController, validate as input_validate
 
@@ -74,7 +74,7 @@ class DeployController(BaseController):
         app_deployment.status = 'validated'
         tagopsdb.Session.commit()
 
-        tagopsdb.deploy.deploy.delete_host_deployments(
+        tagopsdb_deploy.delete_host_deployments(
             package.name,
             app_deployment.app_id,
             self.envs[params['env']]
@@ -161,7 +161,49 @@ class DeployController(BaseController):
     def show(self, application, package, apptypes=None, **params):
         # For the given application/package and given apptypes,
         # return the current deployment information (if any).
-        pass
+        if not apptypes:
+            apptypes = application.targets
+
+        package_deployment_info = dict(
+            package=package,
+            environment=params['env'],
+            by_apptype=[],
+        )
+
+        for target in apptypes:
+            func_args = [
+                package.name,
+                self.envs[params['env']],
+                target,
+            ]
+
+            current_app_deployment = \
+                tagopsdb_deploy.find_specific_app_deployment(
+                    *func_args, version=package.version
+                )
+            previous_app_deployment = None
+            host_deployment_version = package.version
+
+            if params.get('version') is None:
+                previous_app_deployment = \
+                    tagopsdb_deploy.find_previous_app_deployment(*func_args)
+                host_deployment_version = None
+
+            host_deployments = \
+                tagopsdb_deploy.find_current_host_deployments(
+                    *func_args, version=host_deployment_version
+                )
+
+            package_deployment_info['by_apptype'].append(
+                dict(
+                    apptype=target,
+                    current_app_deployment=current_app_deployment,
+                    previous_app_deployment=previous_app_deployment,
+                    host_deployments=host_deployments,
+                )
+            )
+
+        return dict(result=[package_deployment_info])
 
     @input_validate('package')
     @input_validate('targets')
