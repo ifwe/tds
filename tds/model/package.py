@@ -22,3 +22,16 @@ class Package(Base):
             for dep in self.delegate.deployments
             for x in dep.app_deployments
         ]
+
+    # Note: this is currently not used but is left here for possible
+    # inclusion or future reference - KEL 20150825
+    def find_app_deployments(self, tier, environment):
+        """Find app deployments for a given tier and environment"""
+
+        from .deployment import AppDeployment
+
+        for dep in self.delegate.deployments:
+            for app_dep in dep.app_deployments:
+                if (app_dep.target == tier.delegate and
+                    app_dep.environment_obj == environment):
+                    yield AppDeployment(delegate=app_dep)
