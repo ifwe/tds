@@ -1222,6 +1222,17 @@ def then_the_package_is_invalidated(context):
     )
 
 
+@then(u'the package version "{version}" is invalidated')
+def then_the_package_version_is_invalidated(context, version):
+    package = check_if_package_exists(context, version)
+    assert check_package_validation(
+        context,
+        package,
+        package.deployments[-1].app_deployments,
+        'invalidated'
+    )
+
+
 @then(u'the package is validated for deploy target with {properties}')
 def then_the_package_is_validated_for_deploy_target(context, properties):
     attrs = parse_properties(properties)
@@ -1267,6 +1278,35 @@ def then_the_package_is_invalidated_for_deploy_target(context, properties):
     )
 
 
+def check_if_app_deployment_exists(context, package, app_deployments):
+    for app_deployment in app_deployments:
+        if app_deployment.deployment.package == package:
+            break
+    else:
+        app_deployment = None
+
+    assert app_deployment is not None
+    return app_deployment
+
+
+@then(u'the package version "{version}" is invalidated for deploy target with {properties}')
+def then_the_package_is_invalidated_for_deploy_target(context, version, properties):
+    package = check_if_package_exists(context, version)
+    attrs = parse_properties(properties)
+    target = tds.model.AppTarget.get(**attrs)
+    app_deployment = check_if_app_deployment_exists(
+        context, package, target.app_deployments
+    )
+
+    # TODO: get only target.app_deployments where package matches.
+    assert check_package_validation(
+        context,
+        package,
+        [app_deployment],
+        'invalidated'
+    )
+
+
 @then(u'there is no project with {properties}')
 def then_there_is_no_project_with_properties(context, properties):
     attrs = parse_properties(properties)
@@ -1292,8 +1332,22 @@ def then_the_package_is_invalidated_for_deploy_targets(context):
 
     for attr_set in attr_sets:
         context.execute_steps('''
-            Then the package is invalidated for deploy target with name="%(name)s"
-        ''' % attr_set)
+            Then the package is invalidated for deploy target with name="%s"
+        ''' % attr_set['name'])
+
+
+
+@then(u'the package version "{version}" is invalidated for deploy targets')
+def then_the_package_is_invalidated_for_deploy_targets(context, version):
+    attr_sets = [
+        dict(zip(context.table.headings, row))
+        for row in context.table
+    ]
+
+    for attr_set in attr_sets:
+        context.execute_steps('''
+            Then the package version "%s" is invalidated for deploy target with name="%s"
+        ''' % (version, attr_set['name']))
 
 
 @then(u'the output describes no deployments')
@@ -1503,6 +1557,7 @@ def the_package_with_name_is_removed_from_the_directory(context, properties, dir
     rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
         parse_properties(properties)
     )
+    file_name = os.path.join(dir_name, rpm_name)
     assert os.path.isdir(dir_name)
     assert not any(name == rpm_name for name in os.listdir(dir_name))
     assert not os.path.isfile(file_name) , "{file_name} should not exist".format(
