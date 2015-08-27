@@ -82,7 +82,6 @@ APP_DEPLOY_TEMPLATE = (
     'Realizing user: {app_dep.user}\n'
     'App type: {app_dep.application.name}\n'
     'Environment: {app_dep.environment}\n'
-    'Deploy state: {app_dep.deployment.dep_type}\n'
     'Install state: {app_dep.status}\n'
 )
 HOST_DEPLOY_HEADER_TEMPLATE = (
@@ -105,7 +104,6 @@ HOST_DEPLOY_TEMPLATE = (
     'Realized: {host_dep.realized}\n'
     'Realizing user: {host_dep.user}\n'
     'Hostname: {host_dep.host.name}\n'
-    'Deploy state: {host_dep.deployment.dep_type}\n'
     'Install state: {host_dep.status}\n'
 )
 
