@@ -144,18 +144,14 @@ class DeployController(BaseController):
                     prev_env, apptype.name
                 )
 
-            prev_app_dep, prev_app_type, prev_dep_type, \
-                prev_pkg = prev_deps[0]
+            prev_app_dep, prev_app_type, prev_pkg = prev_deps[0]
             log.log(5, 'Previous application deployment is: %r',
                     prev_app_dep)
             log.log(5, 'Previous application type is: %s',
                     prev_app_type)
-            log.log(5, 'Previous deployment type is: %s',
-                    prev_dep_type)
             log.log(5, 'Previous package is: %r', prev_pkg)
 
-            if (prev_dep_type != 'deploy' or
-                    prev_app_dep.status != 'validated'):
+            if prev_app_dep.status != 'validated':
                 log.info(
                     'Application %r with version %r not fully '
                     'deployed or validated to previous environment '
@@ -495,7 +491,7 @@ class DeployController(BaseController):
 
                 if redeploy:
                     dep_info = app_dep_map.get(apptype.id, None)
-                    app_dep, app_type, _dep_type, pkg = dep_info
+                    app_dep, app_type, pkg = dep_info
 
                     # Don't redeploy to a validated tier
                     if app_dep.status == 'validated':
@@ -586,10 +582,9 @@ class DeployController(BaseController):
 
             valid = True
 
-            app_dep, app_type, dep_type, pkg = app_dep_map[apptype.id]
+            app_dep, app_type, pkg = app_dep_map[apptype.id]
             log.log(5, 'Application deployment is: %r', app_dep)
             log.log(5, 'Application type is: %s', app_type)
-            log.log(5, 'Deployment type is: %s', dep_type)
             log.log(5, 'Package is: %r', pkg)
 
             # Ensure version to invalidate isn't the current
@@ -653,15 +648,13 @@ class DeployController(BaseController):
                     )
                     continue
 
-                app_dep, app_type, dep_type, pkg = app_dep_map[apptype.id]
+                app_dep, app_type, pkg = app_dep_map[apptype.id]
                 log.log(5, 'Application deployment is: %r', app_dep)
                 log.log(5, 'Application type is: %s', app_type)
-                log.log(5, 'Deployment type is: %s', dep_type)
                 log.log(5, 'Package is: %r', pkg)
 
                 if (app_dep.status in ('validated', 'complete')
-                        and dep_type == 'deploy'
-                        and pkg.version == params['version']):
+                    and pkg.version == params['version']):
                     log.info(
                         'Application "%s" with version "%s" '
                         'already deployed to this environment (%s) '
@@ -708,7 +701,7 @@ class DeployController(BaseController):
 
             valid = True
 
-            _app_dep, app_name, _dep_type, package = app_dep_map[apptype.id]
+            _app_dep, app_name, package = app_dep_map[apptype.id]
 
             pkg_def = package.package_definition
 
@@ -767,10 +760,9 @@ class DeployController(BaseController):
 
             valid = True
 
-            app_dep, app_type, dep_type, pkg = app_dep_map[apptype.id]
+            app_dep, app_type, pkg = app_dep_map[apptype.id]
             log.log(5, 'Application deployment is: %r', app_dep)
             log.log(5, 'Application type is: %s', app_type)
-            log.log(5, 'Deployment type is: %s', dep_type)
             log.log(5, 'Package is: %r', pkg)
 
             if app_dep.status == 'validated':
@@ -973,9 +965,8 @@ class DeployController(BaseController):
             last_pkg_dep = pkg_deps[0]
             log.log(5, 'Package deployment is: %r', last_pkg_dep)
 
-            if last_pkg_dep.dep_type == 'deploy':
-                dep = last_pkg_dep
-                log.log(5, 'Deployment is: %s', dep)
+            dep = last_pkg_dep
+            log.log(5, 'Deployment is: %s', dep)
 
         if dep is None:
             log.log(5, 'Creating new deployment')
@@ -983,7 +974,6 @@ class DeployController(BaseController):
             pkg_dep = tagopsdb.deploy.deploy.add_deployment(
                 package.id,
                 params['user'],
-                'deploy'
             )
             dep = pkg_dep
             log.log(5, 'Deployment is: %s', dep)
@@ -999,10 +989,9 @@ class DeployController(BaseController):
         log.debug('Performing invalidations to application tiers')
 
         for dep_info in app_dep_map.itervalues():
-            app_dep, app_type, dep_type, pkg = dep_info
+            app_dep, app_type, pkg = dep_info
             log.log(5, 'Application deployment is: %r', app_dep)
             log.log(5, 'Application type is: %s', app_type)
-            log.log(5, 'Deployment type is: %s', dep_type)
             log.log(5, 'Package is: %r', pkg)
 
             app_dep.status = 'invalidated'
@@ -1033,10 +1022,9 @@ class DeployController(BaseController):
         # each application tier, must do each tier (or host(s) in
         # tier) on its own
         for app_id, pkg_id in app_pkg_map.iteritems():
-            app_dep, app_type, dep_type, pkg = app_dep_map[app_id]
+            app_dep, app_type, pkg = app_dep_map[app_id]
             log.log(5, 'Application deployment is: %r', app_dep)
             log.log(5, 'Application type is: %s', app_type)
-            log.log(5, 'Deployment type is: %s', dep_type)
             log.log(5, 'Package is: %r', pkg)
 
             app_id = app_dep.app_id
@@ -1054,7 +1042,6 @@ class DeployController(BaseController):
                 pkg_dep = tagopsdb.deploy.deploy.add_deployment(
                     pkg_id,
                     params['user'],
-                    'deploy'
                 )
                 dep = pkg_dep
                 log.log(5, 'Deployment is: %s', dep)
@@ -1084,10 +1071,9 @@ class DeployController(BaseController):
         log.debug('Performing validations to application tiers')
 
         for dep_info in app_dep_map.itervalues():
-            app_dep, app_type, dep_type, pkg = dep_info
+            app_dep, app_type, pkg = dep_info
             log.log(5, 'Application deployment is: %r', app_dep)
             log.log(5, 'Application type is: %s', app_type)
-            log.log(5, 'Deployment type is: %s', dep_type)
             log.log(5, 'Package is: %r', pkg)
 
             # Commit to DB immediately
