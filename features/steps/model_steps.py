@@ -329,7 +329,6 @@ def deploy_package_to_target(package, target, env, status='complete'):
     dep_props = dict(
         package_id=package.id,
         user='test-user',
-        dep_type='deploy',
     )
     dep = tagopsdb.Deployment.get(**dep_props)
     if dep is None:
@@ -466,7 +465,6 @@ def given_the_package_is_deployed_on_host(context, properties):
     dep_props = dict(
         package_id=package.id,
         user='test-user',
-        dep_type='deploy',
     )
 
     deployment = tagopsdb.Deployment.get(**dep_props)
@@ -1440,7 +1438,6 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
     dep_props = dict(
         package_id=package_id,
         user='test-user',
-        dep_type='deploy',
     )
 
     deployment = tagopsdb.Deployment.get(**dep_props)
