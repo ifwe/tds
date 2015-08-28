@@ -845,14 +845,14 @@ class DeployController(BaseController):
         for app in apptypes:
             app_deployments[app.id] = None
 
-            for app_dep in reversed(app.app_deployments):
+            for app_dep in app.app_deployments:
                 if app_dep.environment_obj != environment:
                     continue
                 if app_dep.deployment.package != package:
                     continue
 
                 app_deployments[app.id] = (
-                    app_dep, app.name, app_dep.deployment.type, package
+                    app_dep, app.name, package
                 )
                 break
 
@@ -1146,7 +1146,6 @@ class DeployController(BaseController):
         """Invalidate a given version of a given application"""
 
         log.debug('Invalidating for given application')
-
         # Not a deployment
         params['deployment'] = False
 
