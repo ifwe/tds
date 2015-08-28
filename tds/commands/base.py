@@ -13,7 +13,7 @@ def latest_deployed_package_for_app_target(environment, app, app_target):
     if isinstance(app, tds.model.Application):
         app = app.delegate
 
-    for app_dep in reversed(app_target.app_deployments):
+    for app_dep in app_target.app_deployments:
         if app_dep.environment != environment.environment:
             continue
         if app_dep.status == 'invalidated':
