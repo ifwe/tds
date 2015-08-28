@@ -75,6 +75,11 @@ def when_i_start_to_run(context, command):
     context.process = proc
 
 
+@given(u'I wait {number} seconds')
+def given_i_wait_seconds(context, number):
+    time.sleep(int(number))
+
+
 @when(u'I wait {number} seconds')
 def when_i_wait_seconds(context, number):
     time.sleep(int(number))
