@@ -323,7 +323,7 @@ class CLI(Base):
         Dispatches on the various keys in 'tds_result' to provide
         user feedback.
         """
-        if tds_result is None: tds_result = dict()
+        tds_result = dict() if tds_result is None else tds_result
 
         handler = getattr(
             self,
