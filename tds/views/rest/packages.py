@@ -39,6 +39,11 @@ class PackageView(BaseView):
 
     required_post_fields = ('version', 'revision')
 
+    def validate_individual_package(self, request):
+        self.get_obj_by_name_or_id('application')
+        if 'application' in request.validated:
+            self.get_pkg_by_version_revision()
+
     def get_pkg_by_version_revision(self):
         """
         Validate that the package with the version, revision, and application
