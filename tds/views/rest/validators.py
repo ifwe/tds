@@ -314,33 +314,15 @@ class ValidatedView(JSONValidatedView):
         attach it to the request at request.validated[name].
         This validator can raise a "400 Bad Request" error.
         """
-        if self.name == 'package':
-            self.get_obj_by_name_or_id('application')
-            if 'application' in request.validated:
-                self.get_pkg_by_version_revision()
-        elif self.name == 'tier-hipchat':
-            self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')
-            if 'tier' in request.validated:
-                self.get_obj_by_name_or_id(
-                    obj_type="HipChat",
-                    param_name='hipchat_name_or_id',
-                    model=self.model,
-                )
-                if 'HipChat' not in request.validated:
-                    return
-                if request.validated['HipChat'] not in request.validated[
-                    'tier'
-                ].hipchats:
-                    request.errors.add(
-                        'path', 'hipchat_name_or_id',
-                        "This tier-HipChat association does not exist."
-                    )
-                    request.errors.status = 404
-                request.validated[self.name] = request.validated['HipChat']
-        elif self.name == 'package-by-id':
-            self.get_obj_by_name_or_id(obj_type='Package', model=self.model,
-                                       param_name='id', can_be_name=False,
-                                       dict_name=self.name)
+        validator = getattr(
+            self,
+            'validate_individual_{name}'.format(
+                name=self.name.replace('-', '_')
+            ),
+            None,
+        )
+        if validator:
+            validator(request)
         else:
             self.get_obj_by_name_or_id()
 

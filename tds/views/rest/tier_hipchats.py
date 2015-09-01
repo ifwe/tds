@@ -25,6 +25,26 @@ class TierHipchatView(BaseView):
         'name': 'room_name',
     }
 
+    def validate_individual_tier_hipchat(self, request):
+        self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')
+        if 'tier' in request.validated:
+            self.get_obj_by_name_or_id(
+                obj_type="HipChat",
+                param_name='hipchat_name_or_id',
+                model=self.model,
+            )
+            if 'HipChat' not in request.validated:
+                return
+            if request.validated['HipChat'] not in request.validated[
+                'tier'
+            ].hipchats:
+                request.errors.add(
+                    'path', 'hipchat_name_or_id',
+                    "This tier-HipChat association does not exist."
+                )
+                request.errors.status = 404
+            request.validated[self.name] = request.validated['HipChat']
+
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
         self.request.validated['tier'].hipchats.remove(self.request.validated[

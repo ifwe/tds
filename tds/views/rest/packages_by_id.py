@@ -32,6 +32,11 @@ class PackageByIDView(BaseView):
 
     required_post_fields = ('version', 'revision', 'name')
 
+    def validate_individual_package_by_id(self, request):
+        self.get_obj_by_name_or_id(obj_type='Package', model=self.model,
+                                   param_name='id', can_be_name=False,
+                                   dict_name=self.name)
+
     def validate_package_by_id_put(self):
         self._validate_id("PUT", "package")
 
