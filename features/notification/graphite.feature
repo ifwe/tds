@@ -44,4 +44,4 @@ Feature: Graphite notifications
         And I run "deploy promote myapp 124 --hosts sprojhost02"
         And I run "deploy promote myapp 124 --hosts sother01"
         Then there are 3 graphite notifications
-        And there is a graphite notification with "tagged.deploy.myapp"
+        And there is a graphite notification containing "tagged.deploy.myapp"
