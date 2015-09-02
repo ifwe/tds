@@ -1661,3 +1661,17 @@ def then_the_deploy_target_is_associated_with_the_hipchat(context, targ,
 def then_the_deploy_target_is_not_associated_with_the_hipchat(context, targ,
                                                               room):
     assert not targ_room_associated(targ, room)
+
+
+@given(u'there are deployments')
+def given_there_are_deployments(context):
+    deployments = getattr(context, 'deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        deployment = tagopsdb.Deployment(**attrs)
+        tagopsdb.Session.add(deployment)
+        deployments.append(deployment)
+    tagopsdb.Session.commit()
+    context.deployments = deployments

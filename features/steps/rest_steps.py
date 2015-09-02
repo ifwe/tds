@@ -83,8 +83,8 @@ def then_the_response_contains_a_list_of_items(context, num):
 @then(u'the response list contains an object with {properties}')
 def then_the_response_list_contains_an_object_with(context, properties):
     properties = parse_properties(properties)
-    assert any(all(properties[prop] == proj[prop] for prop in properties)
-               for proj in context.response.json())
+    assert any(all(properties[prop] == obj[prop] for prop in properties)
+               for obj in context.response.json())
 
 
 @then(u'the response list contains objects')
@@ -92,7 +92,7 @@ def then_the_response_list_contains_objects(context):
     assert all(any(all(row[heading] == obj[heading] for heading in
                        context.table.headings) for obj in
                    context.response.json()) for row in
-               context.table.rows), context.response.json()
+               context.table.rows), (context.response.json(), context.table.rows)
 
 
 @then(u'the response is an object with {properties}')
