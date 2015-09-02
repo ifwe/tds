@@ -27,7 +27,20 @@ class DeploymentView(BaseView):
         self.get_obj_by_name_or_id(param_name='id', can_be_name=False)
 
     def validate_deployment_post(self):
+        if 'status' in self.request.validated_params:
+            if self.request.validated_params['status'] != 'pending':
+                self.request.errors.add(
+                    'query', 'status',
+                    'Status must be "pending" for new deployments.'
+                )
+                self.request.errors.status = 403
         self._validate_id("POST")
 
     def validate_deployment_put(self):
         self._validate_id("PUT")
+
+    @view(validators=('validate_put_post', 'validate_post_required',
+                      'validate_cookie'))
+    def collection_post(self):
+        self.request.validated_params['user'] = self.request.validated['user']
+        return self._handle_collection_post()
