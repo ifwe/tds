@@ -1270,58 +1270,6 @@ def then_there_is_no_project_with_properties(context, properties):
         assert tagopsdb.PackageDefinition.get(name='%s-name' % attrs['name']) is None
 
 
-@then(u'there is no application with {properties}')
-def then_there_is_no_application_with_properties(context, properties):
-    attrs = parse_properties(properties)
-    returned = tds.model.Application.get(**attrs)
-    assert returned is None, returned
-
-
-@then(u'there is no package with {properties}')
-def then_there_is_no_package_with(context, properties):
-    tagopsdb.Session.close()
-    attrs = parse_properties(properties)
-    package = tds.model.Package.get(**attrs)
-
-    assert package is None, package
-
-
-@then(u'there is no deploy target with {properties}')
-def then_there_is_no_deploy_target_with(context, properties):
-    tagopsdb.Session.close()
-    attrs = parse_properties(properties)
-    target = tds.model.AppTarget.get(**attrs)
-
-    assert target is None, target
-
-
-@then(u'there is a deploy target with {properties}')
-def then_there_is_a_deploy_target_with(context, properties):
-    tagopsdb.Session.close()
-    attrs = parse_properties(properties)
-    target = tds.model.AppTarget.get(**attrs)
-
-    assert target is not None, tds.model.AppTarget.all()
-
-
-@then(u'there is no host with {properties}')
-def then_there_is_no_host_with(context, properties):
-    tagopsdb.Session.close()
-    attrs = parse_properties(properties)
-    host = tds.model.HostTarget.get(**attrs)
-
-    assert host is None, host
-
-
-@then(u'there is a host with {properties}')
-def then_there_is_a_host_with(context, properties):
-    tagopsdb.Session.close()
-    attrs = parse_properties(properties)
-    host = tds.model.HostTarget.get(**attrs)
-
-    assert host is not None, tds.model.HostTarget.all(0)
-
-
 @then(u'the package is invalidated for deploy targets')
 def then_the_package_is_invalidated_for_deploy_targets(context):
     attr_sets = [
@@ -1569,43 +1517,11 @@ def given_there_is_a_ganglia_with(context, properties):
     tagopsdb.Session.commit()
 
 
-@then(u'there is a Ganglia with {properties}')
-def then_there_is_a_ganglia_with(context, properties):
-    tagopsdb.Session.close()
-    properties = parse_properties(properties)
-    found = tagopsdb.model.Ganglia.get(**properties)
-    assert found is not None, (found, tagopsdb.model.Ganglia.all())
-
-
-@then(u'there is no Ganglia with {properties}')
-def then_there_is_no_ganglia_with(context, properties):
-    tagopsdb.Session.close()
-    properties = parse_properties(properties)
-    found = tagopsdb.model.Ganglia.get(**properties)
-    assert found is None, found
-
-
 @given(u'there is a HipChat with {properties}')
 def given_there_is_a_hipchat_with(context, properties):
     properties = parse_properties(properties)
     created = tagopsdb.model.Hipchat.update_or_create(properties)
     tagopsdb.Session.commit()
-
-
-@then(u'there is a HipChat with {properties}')
-def then_there_is_a_hipchat_with(context, properties):
-    tagopsdb.Session.close()
-    properties = parse_properties(properties)
-    found = tagopsdb.model.Hipchat.get(**properties)
-    assert found is not None, (found, tagopsdb.model.Hipchat.all())
-
-
-@then(u'there is no HipChat with {properties}')
-def then_there_is_no_hipchat_with(context, properties):
-    tagopsdb.Session.close()
-    properties = parse_properties(properties)
-    found = tagopsdb.model.Hipchat.get(**properties)
-    assert found is None, found
 
 
 @given(u'there are hipchat rooms')
@@ -1675,3 +1591,44 @@ def given_there_are_deployments(context):
         deployments.append(deployment)
     tagopsdb.Session.commit()
     context.deployments = deployments
+
+
+NAME_OBJ_MAPPINGS = {
+    'application': tds.model.Application,
+    'package': tds.model.Package,
+    'deploy target': tds.model.AppTarget,
+    'host': tds.model.HostTarget,
+    'tier': tds.model.AppTarget,
+    'deployment': tds.model.Deployment,
+    'host deployment': tds.model.HostDeployment,
+    'tier deployment': tds.model.AppDeployment,
+    'ganglia': tagopsdb.model.Ganglia,
+    'hipchat': tagopsdb.model.Hipchat,
+}
+
+
+@then(u'there is a {model} with {properties}')
+def then_there_is_a_model_with(context, model, properties):
+    model = NAME_OBJ_MAPPINGS[model.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is not None, (found, model.all())
+
+
+@then(u'there is an {obj_type} with {properties}')
+def then_there_is_an_obj_type_with(context, obj_type, properties):
+    model = NAME_OBJ_MAPPINGS[obj_type.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is not None, (found, model.all())
+
+
+@then(u'there is no {model} with {properties}')
+def then_there_is_no_model_with(context, model, properties):
+    model = NAME_OBJ_MAPPINGS[model.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is None, found
