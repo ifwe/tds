@@ -10,13 +10,6 @@ Feature: POST deployment(s) from the REST API
             | version   | revision  |
             | 1         | 1         |
             | 1         | 2         |
-            | 2         | 3         |
-            | 2         | 4         |
-        And there is an application with pkg_name="app2"
-        And there are packages:
-            | version   | revision  |
-            | 3         | 5         |
-            | 3         | 6         |
 
     @rest
     Scenario: post a deployment
