@@ -61,7 +61,7 @@ class DeploymentView(BaseView):
             self.request.errors.add(
                 'query', 'status',
                 'Cannot change status to queued from {status}.'.format(
-                    status=self.reqeust.validated[self.name].status
+                    status=self.request.validated[self.name].status
                 )
             )
             self.request.errors.status = 403
@@ -105,8 +105,8 @@ class DeploymentView(BaseView):
 
     def _validate_put_status_default(self):
         """
-        Case status is being updated to something other than canceled or
-        queued.
+        Case status is being updated to something other than canceled, pending,
+        or queued.
         """
         self.request.errors.add(
             'query', 'status',
