@@ -232,22 +232,6 @@ class ValidatedView(JSONValidatedView):
         self._validate_params(self.valid_attrs)
         self._validate_model_params()
         self._add_post_defaults()
-        if not getattr(self, 'name', None):
-            return
-        func_name = 'validate_{name}_post'.format(
-            name=self.name.replace('-', '_')
-        )
-        if getattr(self, func_name, None):
-            getattr(self, func_name)()
-        else:
-            try:
-                self._validate_id("POST")
-                self._validate_name("POST")
-            except:
-                raise NotImplementedError(
-                    'A collision validator for this view has not been '
-                    'implemented.'
-                )
 
     def validate_post_required(self, request):
         """
@@ -275,6 +259,27 @@ class ValidatedView(JSONValidatedView):
             try:
                 self._validate_id("PUT")
                 self._validate_name("PUT")
+            except:
+                raise NotImplementedError(
+                    'A collision validator for this view has not been '
+                    'implemented.'
+                )
+
+    def validate_obj_post(self, _request):
+        """
+        Validate a POST request by preventing collisions over unique fields.
+        """
+        if not getattr(self, 'name', None):
+            return
+        func_name = 'validate_{name}_post'.format(
+            name=self.name.replace('-', '_')
+        )
+        if getattr(self, func_name, None):
+            getattr(self, func_name)()
+        else:
+            try:
+                self._validate_id("POST")
+                self._validate_name("POST")
             except:
                 raise NotImplementedError(
                     'A collision validator for this view has not been '

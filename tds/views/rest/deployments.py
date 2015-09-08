@@ -76,7 +76,7 @@ class DeploymentView(BaseView):
         else:
             for dep in host_deployments:
                 conflicting_deps = [host_dep for host_dep in
-                    tds.model.HostDeployment.get(
+                    tds.model.HostDeployment.find(
                         host_id=dep.host_id,
                     ) if host_dep.id != dep.id and host_dep.deployment.status
                     in ('queued', 'inprogress')
@@ -122,6 +122,7 @@ class DeploymentView(BaseView):
                 status=self.request.validated_params['status']
             ), self._validate_put_status_default)
             validator()
+        # If the package_id is being changed and the deployment isn't pending:
         if 'package_id' in self.request.validated_params and \
                 self.request.validated_params['package_id'] != \
                 self.request.validated[self.name].package_id and \
@@ -133,7 +134,7 @@ class DeploymentView(BaseView):
         self._validate_id("PUT")
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_cookie'))
+                      'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()

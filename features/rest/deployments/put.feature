@@ -91,3 +91,49 @@ Feature: PUT deployment(s) from the REST API
             | failed        | canceled  |
             | complete      | canceled  |
             | stopped       | canceled  |
+
+    @rest
+    Scenario Outline: attempt to queue a deployment for a host that has an ongoing deployment
+        Given there are deployments:
+            | id    | user  | package_id    | status        |
+            | 4     | foo   | 4             | <dep_stat>    |
+        And there is an environment with name="dev"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+            | host2 | dev   |
+        And there are host deployments:
+            | id    | deployment_id | host_id   | status        | user  |
+            | 1     | 4             | 1         | <host_stat>   | foo   |
+            | 2     | 3             | 1         | pending       | foo   |
+        When I query PUT "/deployments/3?status=queued"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                                                                           |
+            | query     | status    | Cannot queue deployment. There are currently other queued or in progress deployments for host host1.  |
+        And there is a deployment with id=3,status="pending"
+        And there is no deployment with id=3,status="queued"
+
+        Examples:
+            | dep_stat      | host_stat     |
+            | queued        | pending       |
+            | inprogress    | pending       |
+            | inprogress    | inprogress    |
+            | inprogress    | ok            |
+            | inprogress    | failed        |
+
+    @rest
+    Scenario: queue a deployment
+        Given there is an environment with name="dev"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+            | host2 | dev   |
+        And there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  |
+            | 1     | 3             | 1         | pending   | foo   |
+            | 2     | 3             | 1         | pending   | foo   |
+        When I query PUT "/deployments/3?status=queued"
+        Then the response code is 200
+        And the response is an object with id=3,status="queued"
+        And there is a deployment with id=3,status="queued"
