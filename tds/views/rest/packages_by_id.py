@@ -102,7 +102,7 @@ class PackageByIDView(BaseView):
             self.request.errors.status = 409
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_cookie'))
+                      'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
         self.request.validated_params['creator'] = self.request.validated[
             'user'

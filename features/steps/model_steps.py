@@ -1632,3 +1632,17 @@ def then_there_is_no_model_with(context, model, properties):
     properties = parse_properties(properties)
     found = model.get(**properties)
     assert found is None, found
+
+
+@given(u'there are host deployments')
+def given_there_are_host_deployments(context):
+    host_deps = getattr(context, 'host_deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        dep = tagopsdb.HostDeployment(**attrs)
+        tagopsdb.Session.add(dep)
+        host_deps.append(dep)
+    tagopsdb.Session.commit()
+    context.host_deployments = host_deps

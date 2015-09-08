@@ -203,7 +203,7 @@ class BaseView(ValidatedView):
         )
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_cookie'))
+                      'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
         """
         Handle a POST request after the parameters are marked valid JSON.
