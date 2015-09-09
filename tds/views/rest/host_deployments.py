@@ -20,7 +20,9 @@ class HostDeploymentView(BaseView):
 
     param_routes = {}
 
-    defaults = {}
+    defaults = {
+        'status': 'pending',
+    }
 
     required_post_fields = ('deployment_id', 'host_id',)
 
@@ -42,6 +44,13 @@ class HostDeploymentView(BaseView):
         self._validate_id("PUT", "host deployment")
 
     def validate_host_deployment_post(self):
+        if 'status' in self.request.validated_params:
+            if self.request.validated_params['status'] != 'pending':
+                self.request.errors.add(
+                    'query', 'status',
+                    'Status must be pending for new host deployments.'
+                )
+                self.request.errors.status = 403
         self._validate_id("POST", "host deployment")
 
     @view(validators=('validate_put_post', 'validate_post_required',

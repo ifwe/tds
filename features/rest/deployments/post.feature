@@ -1,7 +1,7 @@
 Feature: POST deployment(s) from the REST API
     As a developer
     I want to add deployments
-    So that I can put my software on tiers
+    So that I can deploy my software to the environment
 
     Background:
         Given I have a cookie with user permissions
@@ -33,7 +33,7 @@ Feature: POST deployment(s) from the REST API
         Then the response code is 403
         And the response contains errors:
             | location  | name      | description                                   |
-            | query     | status    | Status must be "pending" for new deployments. |
+            | query     | status    | Status must be pending for new deployments.   |
         And there is no deployment with package_id=1
         And there is no deployment with status="queued"
 
