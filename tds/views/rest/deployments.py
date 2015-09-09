@@ -26,6 +26,43 @@ class DeploymentView(BaseView):
     def validate_individual_deployment(self, request):
         self.get_obj_by_name_or_id(param_name='id', can_be_name=False)
 
+    def validate_deployment_delete(self):
+        # No deployment validated, can't do any further checks.
+        # Should already be a 4xx error response.
+        if self.name not in self.request.validated:
+            return
+        if self.request.validated[self.name].status != 'pending':
+            self.request.errors.add(
+                'url', 'id',
+                "Cannot delete a non-pending deployment. This deployment is "
+                "currently in {status} status.".format(
+                    status=self.request.validated[self.name].status
+                )
+            )
+            self.request.errors.status = 403
+        tier_deps = self.request.validated[self.name].app_deployments
+        host_deps = self.request.validated[self.name].host_deployments
+        if (tier_deps or host_deps) and not self.request.validated['cascade']:
+            self.request.errors.add(
+                'url', 'id',
+                "Cannot delete deployment with host or tier deployments. "
+                "Please use the cascade=true parameter to cascade."
+            )
+            self.request.errors.add(
+                'url', 'to_delete',
+                str(dict(
+                    host_deployments=[int(x.id) for x in host_deps],
+                    tier_deployments=[int(y.id) for y in tier_deps],
+                ))
+            )
+            self.request.errors.status = 403
+        if str(self.request.errors.status) == '4':
+            self.request.validated['delete_cascade'] = []
+        else:
+            self.request.validated['delete_cascade'] = \
+                self.request.validated[self.name].host_deployments + \
+                    self.request.validated[self.name].app_deployments
+
     def validate_deployment_post(self):
         if 'status' in self.request.validated_params:
             if self.request.validated_params['status'] != 'pending':

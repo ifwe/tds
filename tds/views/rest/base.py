@@ -210,12 +210,17 @@ class BaseView(ValidatedView):
         """
         return self._handle_collection_post()
 
-    @view(validators=('validate_individual', 'validate_cookie'))
+    @view(validators=('validate_individual', 'validate_obj_delete',
+                      'validate_cookie'))
     def delete(self):
         """
         Delete an individual resource.
         """
-        #TODO Implement the delete part.
+        for obj in self.request.validated['delete_cascade']:
+            tagopsdb.Session.delete(obj)
+        tagopsdb.Session.commit()
+        tagopsdb.Session.delete(self.request.validated[self.name])
+        tagopsdb.Session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

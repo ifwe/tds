@@ -13,16 +13,18 @@ class JSONValidatedView(object):
     This class implements JSON validators for parameters given in requests.
     """
 
-    def _validate_model_params(self):
+    def _validate_json_params(self, types=None):
         """
         Validate all params in self.request.validated_params against each
         validator for that parameter given in the child class's
-        types dict (self.types[param_name]).
+        types dict (self.types[param_name]) or with types if given.
         """
+        if types is None:
+            types = self.types
         for param in self.request.validated_params:
-            if not param in self.types:
+            if not param in types:
                 continue
-            validator_name = '_validate_' + self.types[param]
+            validator_name = '_validate_' + types[param]
             validator = getattr(self, validator_name, None)
             if not validator:
                 raise tds.exceptions.ProgrammingError(
@@ -38,6 +40,7 @@ class JSONValidatedView(object):
                         msg=message
                     )
                 )
+                self.request.errors.status = 400
 
     def _validate_number(self, param_name):
         """

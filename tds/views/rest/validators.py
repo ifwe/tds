@@ -230,7 +230,7 @@ class ValidatedView(JSONValidatedView):
         against the list of valid attributes for this view's associated model.
         """
         self._validate_params(self.valid_attrs)
-        self._validate_model_params()
+        self._validate_json_params()
         self._add_post_defaults()
 
     def validate_post_required(self, request):
@@ -346,6 +346,25 @@ class ValidatedView(JSONValidatedView):
                     " name already exists.".format(type=obj_type)
                 )
             self.request.errors.status = 409
+
+    def validate_obj_delete(self, request):
+        """
+        Validate that the object can be deleted.
+        """
+        if not getattr(self, 'name', None):
+            return self.method_not_allowed(request)
+        func_name = 'validate_{name}_delete'.format(
+            name=self.name.replace('-', '_')
+        )
+        if getattr(self, func_name, None):
+            self._validate_params(['cascade'])
+            self._validate_json_params({'cascade': 'boolean'})
+            self.request.validated['cascade'] = 'cascade' in \
+                self.request.validated_params and \
+                self.request.validated_params['cascade']
+            getattr(self, func_name)()
+        else:
+            return self.method_not_allowed(request)
 
     def validate_cookie(self, request):
         """
