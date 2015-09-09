@@ -68,7 +68,7 @@ class DeploymentView(BaseView):
             if self.request.validated_params['status'] != 'pending':
                 self.request.errors.add(
                     'query', 'status',
-                    'Status must be "pending" for new deployments.'
+                    'Status must be pending for new deployments.'
                 )
                 self.request.errors.status = 403
         self._validate_id("POST")
