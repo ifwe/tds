@@ -65,7 +65,7 @@ class ValidatedView(JSONValidatedView):
             self.request.errors.add(
                 'path', param_name,
                 "{obj_type} with {prop} {val} does not exist.".format(
-                    obj_type=obj_type.title(),
+                    obj_type=obj_type.capitalize(),
                     prop="ID" if obj_id else "name",
                     val=obj_id if obj_id else name,
                 )
