@@ -1646,3 +1646,17 @@ def given_there_are_host_deployments(context):
         host_deps.append(dep)
     tagopsdb.Session.commit()
     context.host_deployments = host_deps
+
+
+@given(u'there are tier deployments')
+def given_there_are_tier_deployments(context):
+    tier_deps = getattr(context, 'host_deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        dep = tagopsdb.AppDeployment(**attrs)
+        tagopsdb.Session.add(dep)
+        tier_deps.append(dep)
+    tagopsdb.Session.commit()
+    context.host_deployments = tier_deps

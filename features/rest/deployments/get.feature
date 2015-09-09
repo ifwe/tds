@@ -72,12 +72,10 @@ Feature: GET deployment(s) from the REST API
         And the response list contains id range <min> to <max>
 
         Examples:
-            | select    | limit | start | num   | min   | max   |
-            | app2      |       |       | 5     | 1     | 5     |
-            | app2      |       | 1     | 5     | 1     | 5     |
-            | app2      | 10    |       | 5     | 1     | 5     |
-            | app2      | 4     | 1     | 4     | 1     | 4     |
-            | 3         |       |       | 5     | 1     | 5     |
-            | 3         |       | 2     | 4     | 2     | 5     |
-            | 3         | 10    |       | 5     | 1     | 5     |
-            | 3         | 4     | 1     | 4     | 1     | 4     |
+            | limit | start | num   | min   | max   |
+            |       |       | 5     | 1     | 5     |
+            |       | 1     | 5     | 1     | 5     |
+            | 10    |       | 5     | 1     | 5     |
+            | 4     | 1     | 4     | 1     | 4     |
+            |       |       | 5     | 1     | 5     |
+            |       | 2     | 4     | 2     | 5     |
