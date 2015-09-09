@@ -23,7 +23,7 @@ class DeploymentView(BaseView):
 
     required_post_fields = ('package_id',)
 
-    def validate_individual_deployment(self, request):
+    def validate_individual_deployment(self, _request):
         self.get_obj_by_name_or_id(param_name='id', can_be_name=False)
 
     def validate_deployment_delete(self):
