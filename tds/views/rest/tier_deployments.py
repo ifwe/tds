@@ -1,58 +1,62 @@
 """
-REST API view for host deployments.
+REST API view for tier deployments.
 """
 
 from cornice.resource import resource, view
 
 import tds.model
+import tagopsdb.model
 from .base import BaseView, init_view
 
-@resource(collection_path="/host_deployments", path="/host_deployments/{id}")
-@init_view(name="host-deployment", model=tds.model.HostDeployment)
-class HostDeploymentView(BaseView):
+@resource(collection_path="/tier_deployments", path="/tier_deployments/{id}")
+@init_view(name="tier-deployment", model=tds.model.AppDeployment)
+class TierDeploymentView(BaseView):
 
     types = {
         'id': 'integer',
         'deployment_id': 'integer',
-        'host_id': 'integer',
+        'tier_id': 'integer',
         'status': 'choice',
+        'environment_id': 'integer',
     }
 
-    param_routes = {}
+    param_routes = {
+        'tier_id': 'app_id',
+    }
 
     defaults = {
         'status': 'pending',
     }
 
-    required_post_fields = ('deployment_id', 'host_id',)
+    required_post_fields = ('deployment_id', 'tier_id',)
 
     unique_together = (
-        ('deployment_id', 'host_id'),
+        ('deployment_id', 'tier_id'),
     )
 
-    def validate_host_deployment_delete(self):
+    def validate_tier_deployment_delete(self):
         if self.name not in self.request.validated:
             return
         if self.request.validated[self.name].deployment.status != 'pending':
             self.request.errors.add(
                 'path', 'id',
-                'Cannot delete host deployment whose deployment is no longer '
+                'Cannot delete tier deployment whose deployment is no longer '
                 'pending.'
             )
             self.request.errors.status = 403
 
-    def validate_individual_host_deployment(self, request):
-        self.get_obj_by_name_or_id(obj_type='Host deployment',
+    def validate_individual_tier_deployment(self, request):
+        self.get_obj_by_name_or_id(obj_type='Tier deployment',
                                    model=self.model, param_name='id',
                                    can_be_name=False, dict_name=self.name)
 
-    def validate_host_deployment_put(self):
+    def validated_tier_deployment_put(self):
         if self.name not in self.request.validated:
             return
         if self.request.validated[self.name].deployment.status != 'pending':
             self.request.errors.add(
                 'path', 'id',
-                'Users cannot modify host deployments whose deployments are no'
+                'Users cannot modify tier deployments whose deployments are no'
                 ' longer pending.'
             )
             self.request.errors.status = 403
@@ -60,24 +64,28 @@ class HostDeploymentView(BaseView):
         if 'status' in self.request.validated_params:
             self.request.errors.add(
                 'query', 'status',
-                "Users cannot change the status of host deployments."
+                "Users cannot change the status of tier deployments."
             )
             self.request.errors.status = 403
-        self._validate_id("PUT", "host deployment")
-        self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
-        self._validate_unique_together("PUT", "host deployment")
+        self.validate_id("PUT", "tier deployment")
+        self._validate_foreign_key('tier_id', 'tier', tds.model.AppTarget)
+        self._validate_foreign_key('environment_id', 'environment',
+                                   tagopsdb.model.Environment)
+        self._validate_unique_together("PUT", "tier deployment")
 
-    def validate_host_deployment_post(self):
+    def validate_tier_deployment_post(self):
         if 'status' in self.request.validated_params:
             if self.request.validated_params['status'] != 'pending':
                 self.request.errors.add(
                     'query', 'status',
-                    'Status must be pending for new host deployments.'
+                    'Status must be pending for new tier deployments.'
                 )
                 self.request.errors.status = 403
-        self._validate_id("POST", "host deployment")
-        self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
-        self._validate_unique_together("POST", "host deployment")
+        self._validate_id("POST", "tier deployment")
+        self._validate_foreign_key('tier_id', 'tier', tds.model.AppTarget)
+        self._validate_foreign_key('environment_id', 'environment',
+                                   tagopsdb.model.Environment)
+        self._validate_unique_together("POST", "tier deployment")
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
