@@ -56,9 +56,7 @@ class DeploymentView(BaseView):
                 ))
             )
             self.request.errors.status = 403
-        if str(self.request.errors.status) == '4':
-            self.request.validated['delete_cascade'] = []
-        else:
+        if str(self.request.errors.status) != '4':
             self.request.validated['delete_cascade'] = \
                 self.request.validated[self.name].host_deployments + \
                     self.request.validated[self.name].app_deployments

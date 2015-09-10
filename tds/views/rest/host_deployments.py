@@ -35,7 +35,7 @@ class HostDeploymentView(BaseView):
             return
         if self.request.validated[self.name].deployment.status != 'pending':
             self.request.errors.add(
-                'url', 'id',
+                'path', 'id',
                 'Cannot delete host deployment whose deployment is no longer '
                 'pending.'
             )
