@@ -216,9 +216,10 @@ class BaseView(ValidatedView):
         """
         Delete an individual resource.
         """
-        for obj in self.request.validated['delete_cascade']:
-            tagopsdb.Session.delete(obj)
-        tagopsdb.Session.commit()
+        if 'delete_cascade' in self.request.validated:
+            for obj in self.request.validated['delete_cascade']:
+                tagopsdb.Session.delete(obj)
+            tagopsdb.Session.commit()
         tagopsdb.Session.delete(self.request.validated[self.name])
         tagopsdb.Session.commit()
         return self.make_response(
