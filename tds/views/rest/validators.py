@@ -258,6 +258,7 @@ class ValidatedView(JSONValidatedView):
             try:
                 self._validate_id("PUT")
                 self._validate_name("PUT")
+                self._validate_unique_together("PUT")
             except:
                 raise NotImplementedError(
                     'A collision validator for this view has not been '
@@ -280,11 +281,55 @@ class ValidatedView(JSONValidatedView):
             try:
                 self._validate_id("POST")
                 self._validate_name("POST")
+                self._validate_unique_together("POST")
             except:
                 raise NotImplementedError(
                     'A collision validator for this view has not been '
                     'implemented.'
                 )
+
+    def _validate_unique_together(self, request_type, obj_type=None):
+        """
+        Validate that any unique together constraints aren't violated.
+        """
+        if getattr(self, 'unique_together', None) is None:
+            return
+        if not obj_type:
+            obj_type = self.name
+        for tup in self.unique_together:
+            tup_dict = dict([
+                (
+                    item,
+                    self.request.validated_params[item] if item in
+                    self.request.validated_params else
+                    getattr(self.request.validated[self.name], item)
+                ) for item in tup
+            ])
+            found = self.model.get(**tup_dict)
+            if found is not None:
+                if request_type == "POST":
+                    self.request.errors.add(
+                        'query', tup[-1],
+                        "{tup} are unique together. A{mult} {obj_type} with "
+                        "these attributes already exists.".format(
+                            tup=tup,
+                            mult='n' if obj_type[0] in 'aeiou' else '',
+                            obj_type=obj_type,
+                        )
+                    )
+                    self.request.errors.status = 409
+                elif request_type == "PUT" and found != self.request.validated[
+                    self.name
+                ]:
+                    self.request.errors.add(
+                        'query', tup[-1],
+                        "{tup} are unique together. Another {obj_type} with "
+                        "these attributes already exists.".format(
+                            tup=tup,
+                            obj_type=obj_type,
+                        )
+                    )
+                    self.request.errors.status = 409
 
     def _validate_id(self, request_type, obj_type=None):
         """

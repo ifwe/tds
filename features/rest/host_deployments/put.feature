@@ -87,5 +87,15 @@ Feature: PUT host deployment(s) from the REST API
             | location  | name      | description                                           |
             | query     | status    | Users cannot change the status of host deployments.   |
 
-    #TODO: Add a test for updating host_id to be the same as another host
-    # deployment associated with the same deployment
+    @rest
+    Scenario: attempt to violate (deployment_id, host_id) unique together constraint
+        Given there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  |
+            | 2     | 1             | 2         | pending   | foo   |
+        When I query PUT "/host_deployments/2?host_id=1"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name      | description                                                                                                       |
+            | query     | host_id   | ('deployment_id', 'host_id') are unique together. Another host deployment with these attributes already exists.   |
+        And there is no host deployment with id=2,deployment_id=1,host_id=1
+        And there is a host deployment with id=2,deployment_id=1,host_id=2
