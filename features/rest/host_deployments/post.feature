@@ -60,3 +60,15 @@ Feature: POST host deployment(s) from the REST API
         And the response contains errors:
             | location  | name  | description                                                                   |
             | query     | id    | Unique constraint violated. A host deployment with this ID already exists.    |
+
+    @rest
+    Scenario: pass a host_id for a host that doesn't exist
+        When I query POST "/host_deployments?deployment_id=1&host_id=500"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name      | description                   |
+            | query     | host_id   | No host with ID 500 exists.   |
+        And there is no host deployment with deployment_id=1,host_id=500
+
+    #TODO: Add a test for adding a host deployment with the same host_id as
+    # another host deployment associated with the same deployment

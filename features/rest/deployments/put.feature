@@ -137,3 +137,13 @@ Feature: PUT deployment(s) from the REST API
         Then the response code is 200
         And the response is an object with id=3,status="queued"
         And there is a deployment with id=3,status="queued"
+
+    @rest
+    Scenario: pass a package_id for a package that doesn't exist
+        When I query PUT "/deployments/3?package_id=500"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name          | description                       |
+            | query     | package_id    | No package with ID 500 exists.    |
+        And there is no deployment with package_id=500
+        And there is a deployment with id=3,package_id=3
