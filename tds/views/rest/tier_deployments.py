@@ -28,7 +28,7 @@ class TierDeploymentView(BaseView):
         'status': 'pending',
     }
 
-    required_post_fields = ('deployment_id', 'tier_id',)
+    required_post_fields = ('deployment_id', 'tier_id', 'environment_id',)
 
     unique_together = (
         ('deployment_id', 'tier_id'),
