@@ -50,7 +50,7 @@ class TierDeploymentView(BaseView):
                                    model=self.model, param_name='id',
                                    can_be_name=False, dict_name=self.name)
 
-    def validated_tier_deployment_put(self):
+    def validate_tier_deployment_put(self):
         if self.name not in self.request.validated:
             return
         if self.request.validated[self.name].deployment.status != 'pending':
@@ -67,7 +67,7 @@ class TierDeploymentView(BaseView):
                 "Users cannot change the status of tier deployments."
             )
             self.request.errors.status = 403
-        self.validate_id("PUT", "tier deployment")
+        self._validate_id("PUT", "tier deployment")
         self._validate_foreign_key('tier_id', 'tier', tds.model.AppTarget)
         self._validate_foreign_key('environment_id', 'environment',
                                    tagopsdb.model.Environment)
