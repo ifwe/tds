@@ -294,17 +294,21 @@ class ValidatedView(JSONValidatedView):
         """
         if getattr(self, 'unique_together', None) is None:
             return
+        if request_type == "PUT" and self.name not in self.request.validated:
+            return
         if not obj_type:
             obj_type = self.name
         for tup in self.unique_together:
-            tup_dict = dict([
-                (
-                    item,
-                    self.request.validated_params[item] if item in
-                    self.request.validated_params else
-                    getattr(self.request.validated[self.name], item)
-                ) for item in tup
-            ])
+            tup_dict = dict()
+            for item in tup:
+                key = self.param_routes[item] if item in self.param_routes \
+                    else item
+                if request_type == "POST" and item not in \
+                        self.request.validated_params:
+                    continue
+                tup_dict[key] = self.request.validated_params[item] if item \
+                    in self.request.validated_params else \
+                    getattr(self.request.validated[self.name], key)
             found = self.model.get(**tup_dict)
             if found is not None:
                 if request_type == "POST":
