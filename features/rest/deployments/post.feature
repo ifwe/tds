@@ -48,3 +48,12 @@ Feature: POST deployment(s) from the REST API
         And the response contains errors:
             | location  | name  | description                                                           |
             | query     | id    | Unique constraint violated. A deployment with this ID already exists. |
+
+    @rest
+    Scenario: pass a package_id for a package that doesn't exist
+        When I query POST "/deployments?package_id=500"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name          | description                       |
+            | query     | package_id    | No package with ID 500 exists.    |
+        And there is no deployment with package_id=500

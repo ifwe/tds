@@ -27,7 +27,7 @@ class HostDeploymentView(BaseView):
     required_post_fields = ('deployment_id', 'host_id',)
 
     def validate_host_deployment_delete(self):
-        if self.validated[self.name].deployment.status != 'pending':
+        if self.request.validated[self.name].deployment.status != 'pending':
             self.request.errors.add(
                 'url', 'id',
                 'Cannot delete host deployment whose deployment is no longer '
@@ -41,7 +41,24 @@ class HostDeploymentView(BaseView):
                                    can_be_name=False, dict_name=self.name)
 
     def validate_host_deployment_put(self):
+        if self.name not in self.request.validated:
+            return
+        if self.request.validated[self.name].deployment.status != 'pending':
+            self.request.errors.add(
+                'path', 'id',
+                'Users cannot modify host deployments whose deployments are no '
+                'longer pending.'
+            )
+            self.request.errors.status = 403
+            return
+        if 'status' in self.request.validated_params:
+            self.request.errors.add(
+                'query', 'status',
+                "Users cannot change the status of host deployments."
+            )
+            self.request.errors.status = 403
         self._validate_id("PUT", "host deployment")
+        self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
 
     def validate_host_deployment_post(self):
         if 'status' in self.request.validated_params:
@@ -52,6 +69,7 @@ class HostDeploymentView(BaseView):
                 )
                 self.request.errors.status = 403
         self._validate_id("POST", "host deployment")
+        self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))

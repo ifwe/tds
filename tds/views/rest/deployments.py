@@ -72,6 +72,7 @@ class DeploymentView(BaseView):
                 )
                 self.request.errors.status = 403
         self._validate_id("POST")
+        self._validate_foreign_key('package_id', 'package', tds.model.Package)
 
     def _validate_put_status_canceled(self):
         """
@@ -169,6 +170,7 @@ class DeploymentView(BaseView):
                 'Cannot change package_id for a non-pending deployment.'
             )
         self._validate_id("PUT")
+        self._validate_foreign_key('package_id', 'package', tds.model.Package)
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))

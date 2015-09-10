@@ -231,7 +231,6 @@ class ValidatedView(JSONValidatedView):
         """
         self._validate_params(self.valid_attrs)
         self._validate_json_params()
-        self._add_post_defaults()
 
     def validate_post_required(self, request):
         """
@@ -269,6 +268,7 @@ class ValidatedView(JSONValidatedView):
         """
         Validate a POST request by preventing collisions over unique fields.
         """
+        self._add_post_defaults()
         if not getattr(self, 'name', None):
             return
         func_name = 'validate_{name}_post'.format(
@@ -306,7 +306,7 @@ class ValidatedView(JSONValidatedView):
                         type=obj_type
                     )
                 )
-            elif found_obj != self.request.validated[obj_type]:
+            elif found_obj != self.request.validated[self.name]:
                 self.request.errors.add(
                     'query', 'id',
                     "Unique constraint violated. Another {type} with this"
