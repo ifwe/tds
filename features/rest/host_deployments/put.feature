@@ -78,6 +78,8 @@ Feature: PUT host deployment(s) from the REST API
         And the response contains errors:
             | location  | name  | description                                                                       |
             | query     | id    | Unique constraint violated. Another host deployment with this ID already exists.  |
+        And there is no host deployment with id=1,deployment_id=2
+        And there is a host deployment with id=2,deployment_id=2
 
     @rest
     Scenario: attempt to modify status
@@ -86,6 +88,8 @@ Feature: PUT host deployment(s) from the REST API
         And the response contains errors:
             | location  | name      | description                                           |
             | query     | status    | Users cannot change the status of host deployments.   |
+        And there is no host deployment with id=1,status="inprogress"
+        And there is a host deployment with id=1,status="pending"
 
     @rest
     Scenario: attempt to violate (deployment_id, host_id) unique together constraint
