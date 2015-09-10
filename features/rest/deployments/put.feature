@@ -147,3 +147,11 @@ Feature: PUT deployment(s) from the REST API
             | query     | package_id    | No package with ID 500 exists.    |
         And there is no deployment with package_id=500
         And there is a deployment with id=3,package_id=3
+
+    @rest
+    Scenario: attempt to modify a deployment that doesn't exist
+        When I query PUT "/deployments/500?status=queued"
+        Then the response code is 404
+        And the response contains errors:
+            | location  | name  | description                               |
+            | path      | id    | Deployment with ID 500 does not exist.    |

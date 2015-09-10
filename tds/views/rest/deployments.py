@@ -93,6 +93,8 @@ class DeploymentView(BaseView):
         """
         Case status is being updated to queued.
         """
+        if self.name not in self.request.validated:
+            return
         if self.request.validated[self.name].status in (
             'canceled', 'inprogress', 'complete'
         ):
