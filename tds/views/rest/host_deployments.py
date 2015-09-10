@@ -31,6 +31,8 @@ class HostDeploymentView(BaseView):
     )
 
     def validate_host_deployment_delete(self):
+        if self.name not in self.request.validated:
+            return
         if self.request.validated[self.name].deployment.status != 'pending':
             self.request.errors.add(
                 'url', 'id',

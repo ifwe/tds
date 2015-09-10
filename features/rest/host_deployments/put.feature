@@ -99,3 +99,11 @@ Feature: PUT host deployment(s) from the REST API
             | query     | host_id   | ('deployment_id', 'host_id') are unique together. Another host deployment with these attributes already exists.   |
         And there is no host deployment with id=2,deployment_id=1,host_id=1
         And there is a host deployment with id=2,deployment_id=1,host_id=2
+
+    @rest
+    Scenario: attempt to modify a host deployment that doesn't exist
+        When I query PUT "/host_deployments/500?host_id=2"
+        Then the response code is 404
+        And the response contains errors:
+            | location  | name  | description                                   |
+            | path      | id    | Host deployment with ID 500 does not exist.   |
