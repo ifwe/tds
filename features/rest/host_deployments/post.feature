@@ -53,8 +53,8 @@ Feature: POST host deployment(s) from the REST API
     @rest
     Scenario: attempt to violate a unique constraint
         Given there are host deployments:
-            | id    | deployment_id | host_id   | status        | user  |
-            | 1     | 1             | 1         | pending       | foo   |
+            | id    | deployment_id | host_id   | status    | user  |
+            | 1     | 1             | 1         | pending   | foo   |
         When I query POST "/host_deployments?id=1&deployment_id=1&host_id=1"
         Then the response code is 409
         And the response contains errors:
@@ -70,5 +70,14 @@ Feature: POST host deployment(s) from the REST API
             | query     | host_id   | No host with ID 500 exists.   |
         And there is no host deployment with deployment_id=1,host_id=500
 
-    #TODO: Add a test for adding a host deployment with the same host_id as
-    # another host deployment associated with the same deployment
+    @rest
+    Scenario: attempt to violate (deployment_id, host_id) unique together constraint
+        Given there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  |
+            | 1     | 1             | 1         | pending   | foo   |
+        When I query POST "/host_deployments?deployment_id=1&host_id=1"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name      | description                                                                                               |
+            | query     | host_id   | ('deployment_id', 'host_id') are unique together. A host deployment with these attributes already exists. |
+        And there is no host deployment with id=2

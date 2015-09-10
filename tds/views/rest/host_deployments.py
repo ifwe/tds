@@ -26,6 +26,10 @@ class HostDeploymentView(BaseView):
 
     required_post_fields = ('deployment_id', 'host_id',)
 
+    unique_together = (
+        ('deployment_id', 'host_id'),
+    )
+
     def validate_host_deployment_delete(self):
         if self.request.validated[self.name].deployment.status != 'pending':
             self.request.errors.add(
@@ -59,6 +63,7 @@ class HostDeploymentView(BaseView):
             self.request.errors.status = 403
         self._validate_id("PUT", "host deployment")
         self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
+        self._validate_unique_together("PUT", "host deployment")
 
     def validate_host_deployment_post(self):
         if 'status' in self.request.validated_params:
@@ -70,6 +75,7 @@ class HostDeploymentView(BaseView):
                 self.request.errors.status = 403
         self._validate_id("POST", "host deployment")
         self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
+        self._validate_unique_together("POST", "host deployment")
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
