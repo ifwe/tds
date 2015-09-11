@@ -107,3 +107,72 @@ Feature: PUT tier deployment(s) from the REST API
         And the response contains errors:
             | location  | name  | description                                   |
             | path      | id    | Tier deployment with ID 500 does not exist.   |
+
+    @rest
+    Scenario: attempt to modify environment_id to one that conflicts with the deployment's environment
+        Given there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    |
+            | 2     | 1             | 2         | pending   | foo   | 1                 |
+        And there is an environment with name="staging"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  |
+            | 1     | 1             | 1         | pending   | foo   |
+        When I query PUT "/tier_deployments/2?environment_id=2"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name              | description                                                                                                                                                       |
+            | query     | environment_id    | Cannot deploy to different environments with same deployment. There is a tier deployment associated with this deployment with ID 1 and environment development.   |
+            | query     | environment_id    | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 1 and environment development.   |
+        And there is no tier deployment with id=2,environment_id=2
+        And there is a tier deployment with id=2,environment_id=1
+
+    @rest
+    Scenario: attempt to modify deployment_id s.t. environments conflict
+        Given there is an environment with name="staging"
+        And there are deployments:
+            | id    | user  | package_id    | status    |
+            | 2     | foo   | 1             | pending   |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    |
+            | 2     | 2             | 2         | pending   | foo   | 2                 |
+        And there are hosts:
+            | name  | env       |
+            | host1 | staging   |
+        And there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  |
+            | 1     | 2             | 1         | pending   | foo   |
+        When I query PUT "/tier_deployments/1?deployment_id=2"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name          | description                                                                                                                                                   |
+            | query     | deployment_id | Cannot deploy to different environments with same deployment. There is a tier deployment associated with this deployment with ID 2 and environment staging.   |
+            | query     | deployment_id | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 1 and environment staging.   |
+        And there is no tier deployment with id=1,deployment_id=2
+        And there is a tier deployment with id=1,deployment_id=1
+
+    @rest
+    Scenario: attempt to modify deployment_id and environment_id s.t. environments conflict
+        Given there is an environment with name="staging"
+        And there are deployments:
+            | id    | user  | package_id    | status    |
+            | 2     | foo   | 1             | pending   |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    |
+            | 2     | 2             | 2         | pending   | foo   | 1                 |
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  |
+            | 1     | 2             | 1         | pending   | foo   |
+        When I query PUT "/tier_deployments/1?deployment_id=2&environment_id=2"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name              | description                                                                                                                                                       |
+            | query     | environment_id    | Cannot deploy to different environments with same deployment. There is a tier deployment associated with this deployment with ID 2 and environment development.   |
+            | query     | environment_id    | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 1 and environment development.   |
+        And there is no tier deployment with id=1,deployment_id=2,environment_id=2
+        And there is a tier deployment with id=1,deployment_id=1,environment_id=1
