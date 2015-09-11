@@ -81,3 +81,24 @@ Feature: POST host deployment(s) from the REST API
             | location  | name      | description                                                                                               |
             | query     | host_id   | ('deployment_id', 'host_id') are unique together. A host deployment with these attributes already exists. |
         And there is no host deployment with id=2
+
+    @rest
+    Scenario: attempt to add a host deployment with a different env from that of the deployment
+        Given there is an environment with name="staging"
+        And there are hosts:
+            | name  | env       |
+            | host3 | staging   |
+        And there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  |
+            | 1     | 1             | 3         | pending   | foo   |
+        And there is a deploy target with name="tier1"
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    |
+            | 1     | 1             | 1         | pending   | foo   | 2                 |
+        When I query POST "/host_deployments?deployment_id=1&host_id=2"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name      | description                                                                                                                                                   |
+            | query     | host_id   | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 1 and environment staging.   |
+            | query     | host_id   | Cannot deploy to different environments with same deployment. There is a tier deployment associated with this deployment with ID 1 and environment staging.   |
+        And there is no host deployment with deployment_id=1,host_id=2

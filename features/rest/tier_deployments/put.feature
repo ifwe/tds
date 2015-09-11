@@ -28,7 +28,7 @@ Feature: PUT tier deployment(s) from the REST API
         And there is a tier deployment with id=1,app_id=2
         And there is no tier deployment with id=1,deployment_id=1,app_id=1,status="pending",user="foo"
 
-    @rest @wip
+    @rest
     Scenario: pass a tier_id for a tier that doesn't exist
         When I query PUT "/tier_deployments/1?tier_id=500"
         Then the response code is 400
