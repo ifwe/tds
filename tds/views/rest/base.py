@@ -66,8 +66,6 @@ class BaseView(ValidatedView):
     It also handles validation for requests and parameters in requests.
     """
 
-    #TODO: Add permissions system
-
     def __init__(self, request, *args, **kwargs):
         """
         Set params for this request.
