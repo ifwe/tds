@@ -89,3 +89,24 @@ Feature: POST tier deployment(s) from the REST API
             | location  | name      | description                                                                                               |
             | query     | tier_id   | ('deployment_id', 'tier_id') are unique together. A tier deployment with these attributes already exists. |
         And there is no tier deployment with id=2
+
+    @rest
+    Scenario: attempt to add a tier deployment such that its environment conflicts with that of the deployment
+        Given there is an environment with name="staging"
+        And there are hosts:
+            | name  | env       |
+            | host1 | staging   |
+        And there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  |
+            | 1     | 1             | 1         | pending   | foo   |
+        And there is a deploy target with name="tier1"
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    |
+            | 1     | 1             | 1         | pending   | foo   | 2                 |
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=2&environment_id=1"
+        Then the response code is 409
+        And the response contains errors:
+            | location  | name              | description                                                                                                                                                   |
+            | query     | environment_id    | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 1 and environment staging.   |
+            | query     | environment_id    | Cannot deploy to different environments with same deployment. There is a tier deployment associated with this deployment with ID 1 and environment staging.   |
+        And there is no tier deployment with deployment_id=1,app_id=2,environment_id=1

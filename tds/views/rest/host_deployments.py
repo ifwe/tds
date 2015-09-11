@@ -102,6 +102,9 @@ class HostDeploymentView(BaseView):
                 )
                 self.request.errors.status = 409
         for host_dep in deployment.host_deployments:
+            if self.name in self.request.validated and host_dep.id == \
+                    self.request.validated[self.name].id:
+                continue
             if host_dep.host.environment_id != own_host.environment_id:
                 self.request.errors.add(
                     'query', name,

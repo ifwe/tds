@@ -50,6 +50,75 @@ class TierDeploymentView(BaseView):
                                    model=self.model, param_name='id',
                                    can_be_name=False, dict_name=self.name)
 
+    def validate_conflicting_env(self, request_type):
+        """
+        Validate that the user isn't attempting to add or update a tier
+        deployment s.t. the associated or attempted to be associated deployment
+        has another host or tier deployment in a different environment from
+        that of this tier deployment.
+        """
+        if request_type == 'POST':
+            if 'environment_id' not in self.request.validated_params or \
+                    'deployment_id' not in self.request.validated_params:
+                return
+            own_environment = tagopsdb.model.Environment.get(
+                id=self.request.validated_params['environment_id']
+            )
+            deployment = tds.model.Deployment.get(
+                id=self.request.validated_params['deployment_id']
+            )
+            name = 'environment_id'
+        elif 'environment_id' not in self.request.validated_params and \
+                'deployment_id' not in self.request.validated_params:
+            return
+        elif self.name not in self.request.validated:
+            return
+        elif 'environment_id' not in self.request.validated_params:
+            own_environment = self.request.validated[self.name].environment_obj
+            deployment = tds.model.Deployment.get(
+                id=self.request.validated_params['deployment_id']
+            )
+            name = 'deployment_id'
+        elif 'deployment_id' not in self.request.validated_params:
+            own_environment = tagopsdb.model.Environment.get(
+                id=self.request.validated_params['environment_id']
+            )
+            deployment = self.request.validated[self.name].deployment
+            name = 'environment_id'
+        else:
+            own_environment = tagopsdb.model.Environment.get(
+                id=self.request.validated_params['environment_id']
+            )
+            deployment = tds.model.Deployment.get(
+                id=self.request.validated_params['deployment_id']
+            )
+            name = 'environment_id'
+        if None in (own_environment, deployment):
+            return
+        for app_dep in deployment.app_deployments:
+            if self.name in self.request.validated and app_dep.id == \
+                    self.request.validated[self.name].id:
+                continue
+            if app_dep.environment_id != own_environment.id:
+                self.request.errors.add(
+                    'query', name,
+                    'Cannot deploy to different environments with same '
+                    'deployment. There is a tier deployment associated with '
+                    'this deployment with ID {app_id} and environment {env}.'
+                    .format(app_id=app_dep.id, env=app_dep.environment)
+                )
+                self.request.errors.status = 409
+        for host_dep in deployment.host_deployments:
+            if host_dep.host.environment_id != own_environment.id:
+                self.request.errors.add(
+                    'query', name,
+                    'Cannot deploy to different environments with same '
+                    'deployment. There is a host deployment associated with '
+                    'this deployment with ID {tier_id} and environment {env}.'
+                    .format(tier_id=host_dep.id, env=host_dep.host.environment)
+                )
+                self.request.errors.status = 409
+
     def validate_tier_deployment_put(self):
         if self.name not in self.request.validated:
             return
@@ -67,6 +136,7 @@ class TierDeploymentView(BaseView):
                 "Users cannot change the status of tier deployments."
             )
             self.request.errors.status = 403
+        self.validate_conflicting_env('PUT')
         self._validate_id("PUT", "tier deployment")
         self._validate_foreign_key('tier_id', 'tier', tds.model.AppTarget)
         self._validate_foreign_key('environment_id', 'environment',
@@ -81,6 +151,7 @@ class TierDeploymentView(BaseView):
                     'Status must be pending for new tier deployments.'
                 )
                 self.request.errors.status = 403
+        self.validate_conflicting_env('POST')
         self._validate_id("POST", "tier deployment")
         self._validate_foreign_key('tier_id', 'tier', tds.model.AppTarget)
         self._validate_foreign_key('environment_id', 'environment',
