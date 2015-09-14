@@ -52,7 +52,7 @@ def rpm_factory(context, **kwargs):
         f.write(yaml.dump(kwargs))
 
 
-def host_factory(context, name, env=None, **_kwargs):
+def host_factory(context, name, env=None, **kwargs):
     env = env or context.tds_env
     env_obj = tagopsdb.Environment.get(env=env)
     assert env_obj is not None
@@ -65,7 +65,8 @@ def host_factory(context, name, env=None, **_kwargs):
         kernel_version='2.6.2',
         distribution='Centos 6.4',
         timezone='UTC',
-        app_id=tagopsdb.Application.get(name=tagopsdb.Application.dummy).id,
+        app_id=kwargs['app_id'] if 'app_id' in kwargs else
+            tagopsdb.Application.get(name=tagopsdb.Application.dummy).id,
         cage_location=len(tagopsdb.Host.all()),
         cab_location=name[:10],
         rack_location=1,

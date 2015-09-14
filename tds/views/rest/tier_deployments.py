@@ -161,5 +161,15 @@ class TierDeploymentView(BaseView):
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
+        for host in tds.model.HostTarget.find(
+            app_id=self.request.validated_params['tier_id'],
+            environment_id=self.request.validated_params['environment_id']
+        ):
+            host_dep = tds.model.HostDeployment.create(
+                host_id=host.id,
+                deployment_id=self.request.validated_params['deployment_id'],
+                user=self.request.validated['user'],
+                status='pending',
+            )
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()

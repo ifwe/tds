@@ -25,6 +25,23 @@ Feature: POST tier deployment(s) from the REST API
         And there is a tier deployment with deployment_id=1,app_id=1,id=1,user="testuser",environment_id=1
 
     @rest
+    Scenario: post a tier deployment for a tier with hosts
+        Given there is an environment with name="staging"
+        And there are hosts:
+            | name  | env       | app_id    |
+            | host1 | dev       | 1         |
+            | host2 | dev       | 1         |
+            | host3 | staging   | 1         |
+            | host4 | dev       | 2         |
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1"
+        Then the response is an object with deployment_id=1,tier_id=1,id=1,user="testuser",environment_id=1
+        And there is a tier deployment with deployment_id=1,app_id=1,id=1,user="testuser",environment_id=1
+        And there is a host deployment with deployment_id=1,host_id=1,user="testuser"
+        And there is a host deployment with deployment_id=1,host_id=2,user="testuser"
+        And there is no host deployment with deployment_id=1,host_id=3,user="testuser"
+        And there is no host deployment with deployment_id=1,host_id=4,user="testuser"
+
+    @rest
     Scenario: omit required field
         When I query POST "/tier_deployments?deployment_id=1"
         Then the response code is 400
