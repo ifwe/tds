@@ -40,6 +40,25 @@ class HostDeploymentView(BaseView):
                 'pending.'
             )
             self.request.errors.status = 403
+            return
+        found_app_dep = tds.model.AppDeployment.get(
+            deployment_id=self.request.validated[self.name].deployment_id,
+            app_id=self.request.validated[self.name].host.app_id,
+        )
+        if found_app_dep is not None and not self.request.validated['cascade']:
+            self.request.errors.add(
+                'query', '',
+                'Cannot delete a host deployment that is part of a tier '
+                'deployment. Please use cascade=true to delete this host '
+                'deployment and its associated tier deployment.'
+            )
+            self.request.errors.add(
+                'url', 'to_delete',
+                str(dict(tier_deployment=int(found_app_dep.id)))
+            )
+            self.request.errors.status = 403
+        elif found_app_dep is not None:
+            self.request.validated['delete_cascade'] = [found_app_dep]
 
     def validate_individual_host_deployment(self, request):
         self.get_obj_by_name_or_id(obj_type='Host deployment',
