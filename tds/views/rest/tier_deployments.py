@@ -109,6 +109,12 @@ class TierDeploymentView(BaseView):
                 )
                 self.request.errors.status = 409
         for host_dep in deployment.host_deployments:
+            # Ignore host deployments for this tier deployment since they will
+            # be changed anyway if the put request is otherwise valid.
+            if self.name in self.request.validated and \
+                    host_dep.host.app_id == \
+                    self.request.validated[self.name].id:
+                continue
             if host_dep.host.environment_id != own_environment.id:
                 self.request.errors.add(
                     'query', name,
@@ -173,3 +179,51 @@ class TierDeploymentView(BaseView):
             )
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
+
+    @view(validators=('validate_individual', 'validate_put_post',
+                      'validate_obj_put', 'validate_cookie'))
+    def put(self):
+        curr_dep = self.request.validated[self.name]
+        if 'tier_id' in self.request.validated_params:
+            new_tier_id = self.request.validated_params['tier_id']
+            tier_id_different = new_tier_id != curr_dep.app_id
+        else:
+            new_tier_id = curr_dep.app_id
+            tier_id_different = False
+        if 'environment_id' in self.request.validated_params:
+            new_env_id = self.request.validated_params['environment_id']
+            env_id_different = new_env_id != curr_dep.environment_id
+        else:
+            new_env_id = curr_dep.environment_id
+            env_id_different = False
+        if 'deployment_id' in self.request.validated_params:
+            new_dep_id = self.request.validated_params['deployment_id']
+        else:
+            new_dep_id = curr_dep.deployment_id
+        # If environment ID or tier ID is being changed, delete all the current
+        # host deployments associated with this tier deployment and create new
+        # ones based on the new state of this tier deployment.
+        if env_id_different or tier_id_different:
+            for host_dep in curr_dep.deployment.host_deployments:
+                if host_dep.host.app_id == curr_dep.app_id:
+                    tagopsdb.Session.delete(host_dep)
+            for host in tds.model.HostTarget.find(
+                app_id=new_tier_id,
+                environment_id=new_env_id,
+            ):
+                host_dep = tds.model.HostDeployment.create(
+                    host_id=host.id,
+                    deployment_id=new_dep_id,
+                    user=self.request.validated['user'],
+                    status='pending',
+                )
+        for attr in self.request.validated_params:
+            setattr(
+                curr_dep,
+                self.param_routes[attr] if attr in self.param_routes else attr,
+                self.request.validated_params[attr],
+            )
+        tagopsdb.Session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )
