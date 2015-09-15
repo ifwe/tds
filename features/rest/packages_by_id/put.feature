@@ -65,3 +65,33 @@ Feature: Update (PUT) package on REST API by ID
             |                       | revision      |
             | version=2             | version       |
             | name=app3&version=2   | name          |
+
+    @rest
+    Scenario Outline: attempt to set status to pending from something other than failed
+        Given there are packages:
+            | version   | revision  | status    |
+            | 3         | 2         | <status>  |
+        When I query PUT "/packages/6?status=pending"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                       |
+            | query     | status    | Cannot change status to pending from <status>.    |
+        And there is no package with version=3,revision=2,status="pending"
+        And there is a package with version=3,revision=2,status="<status>"
+
+        Examples:
+            | status        |
+            | processing    |
+            | completed     |
+            | removed       |
+
+    @rest
+    Scenario: change status back to pending from failed
+        Given there are packages:
+            | version   | revision  | status    |
+            | 3         | 2         | failed    |
+        When I query PUT "/packages/6?status=pending"
+        Then the response code is 200
+        And the response is an object with version="3",revision="2",status="pending"
+        And there is no package with version=3,revision=2,status="failed"
+        And there is a package with version=3,revision=2,status="pending"

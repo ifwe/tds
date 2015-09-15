@@ -67,3 +67,19 @@ Feature: Add (POST) package on REST API
             | version=1&revision=1      | version   | for this application with this version and revision   |
             | version=1&revision=1&id=3 | version   | for this application with this version and revision   |
             | version=2&revision=2&id=1 | id        | with this ID                                          |
+
+    @rest
+    Scenario Outline: attempt to set status to something other than pending
+        When I query POST "/applications/app3/packages?version=2&revision=2&status=<status>"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                               |
+            | query     | status    | Status must be pending for new packages.  |
+        And there is no package with version="2",revision="2",creator="testuser"
+
+        Examples:
+            | status        |
+            | processing    |
+            | failed        |
+            | completed     |
+            | removed       |
