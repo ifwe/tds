@@ -66,6 +66,22 @@ class PackageByIDView(BaseView):
                 )
                 self.request.errors.status = 409
 
+        if self.name not in self.request.validated:
+            return
+        if 'status' in self.request.validated_params and \
+                self.request.validated_params['status'] != \
+                self.request.validated[self.name].status:
+            if not (self.request.validated[self.name].status == 'failed' and
+                    self.request.validated_params['status'] == 'pending'):
+                self.request.errors.add(
+                    'query', 'status',
+                    "Cannot change status to {new} from {current}.".format(
+                        new=self.request.validated_params['status'],
+                        current=self.request.validated[self.name].status,
+                    )
+                )
+                self.request.errors.status = 403
+
     def validate_package_by_id_post(self):
         self._validate_id("POST", "package")
         if 'name' not in self.request.validated_params:
@@ -100,6 +116,13 @@ class PackageByIDView(BaseView):
                 " with this version and revision already exists."
             )
             self.request.errors.status = 409
+        if 'status' in self.request.validated_params and \
+                self.request.validated_params['status'] != 'pending':
+            self.request.errors.add(
+                'query', 'status',
+                "Status must be pending for new packages."
+            )
+            self.request.errors.status = 403
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
