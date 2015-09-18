@@ -5,9 +5,9 @@ Feature: Update (PUT) package on REST API
 
     Background:
         Given there are applications:
-            | name  |
-            | app1  |
-            | app2  |
+            | name  | path  |
+            | app1  | myjob |
+            | app2  | myjob |
         And there are packages:
             | version   | revision  |
             | 1         | 2         |
@@ -17,8 +17,10 @@ Feature: Update (PUT) package on REST API
             | 3         | 1         |
         And I have a cookie with user permissions
 
-    @rest
+    @rest @jenkins_server
     Scenario Outline: update a package for an application that doesn't exist
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="1"
         When I query PUT "/applications/<select>/packages/1/2"
         Then the response code is 404
         And the response contains errors:
@@ -30,8 +32,10 @@ Feature: Update (PUT) package on REST API
             | noexist   | name noexist  |
             | 500       | ID 500        |
 
-    @rest
+    @rest @jenkins_server
     Scenario Outline: update a package that doesn't exist for an application that does
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="1"
         When I query PUT "/applications/<select>/packages/<ver>/<rev>"
         Then the response code is 404
         And the response contains errors:
@@ -45,8 +49,10 @@ Feature: Update (PUT) package on REST API
             | app1      | 500   | 1     |
             | 2         | 500   | 1     |
 
-    @rest
+    @rest @jenkins_server
     Scenario Outline: pass an invalid parameter
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
         When I query PUT "/applications/<select>/packages/2/3?<query>"
         Then the response code is 422
         And the response contains errors:
@@ -58,13 +64,15 @@ Feature: Update (PUT) package on REST API
             | select    | query                 |
             | app2      | foo=bar               |
             | 3         | foo=bar               |
-            | app2      | version=10&foo=bar    |
-            | 3         | version=10&foo=bar    |
-            | app2      | foo=bar&version=10    |
-            | 3         | foo=bar&version=10    |
+            | app2      | version=2&foo=bar     |
+            | 3         | version=2&foo=bar     |
+            | app2      | foo=bar&version=2     |
+            | 3         | foo=bar&version=2     |
 
-    @rest
+    @rest @jenkins_server
     Scenario Outline: update a package
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="10"
         When I query PUT "/applications/<select>/packages/2/3?version=10&revision=50"
         Then the response code is 200
         And the response is an object with version="10",revision="50"
@@ -75,8 +83,10 @@ Feature: Update (PUT) package on REST API
             | app2      |
             | 3         |
 
-    @rest
+    @rest @jenkins_server
     Scenario Outline: attempt to violate a unique constraint
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
         When I query PUT "/applications/<select>/packages/2/3?<query>"
         Then the response code is 409
         And the response contains errors:
@@ -91,9 +101,11 @@ Feature: Update (PUT) package on REST API
             | app2      | version   | version=2&revision=2  |
             | 3         | version   | version=2&revision=2  |
 
-    @rest
+    @rest @jenkins_server
     Scenario Outline: attempt to set status to pending from something other than failed
-        Given there are packages:
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="3"
+        And there are packages:
             | version   | revision  | status    |
             | 3         | 2         | <status>  |
         When I query PUT "/applications/app2/packages/3/2?status=pending"
@@ -110,9 +122,11 @@ Feature: Update (PUT) package on REST API
             | completed     |
             | removed       |
 
-    @rest
+    @rest @jenkins_server
     Scenario: change status back to pending from failed
-        Given there are packages:
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="3"
+        And there are packages:
             | version   | revision  | status    |
             | 3         | 2         | failed    |
         When I query PUT "/applications/app2/packages/3/2?status=pending"
@@ -120,3 +134,35 @@ Feature: Update (PUT) package on REST API
         And the response is an object with version="3",revision="2",status="pending"
         And there is no package with version=3,revision=2,status="failed"
         And there is a package with version=3,revision=2,status="pending"
+
+    @rest
+    Scenario: Jenkins unreachable
+        When I query PUT "/applications/app2/packages/3/1?revision=500"
+        Then the response code is 500
+        And the response contains errors:
+            | location  | name          | description                                                                           |
+            | path      | name_or_id    | Unable to connect to Jenkins server at https://example.org:8080 to check for package. |
+        And there is no package with version="3",revision="500"
+        And there is a package with version="3",revision="1"
+
+    @rest @jenkins_server
+    Scenario: no matching Jenkins job
+        Given there is a jenkins job with name="myjob"
+        When I query PUT "/applications/app2/packages/3/1?revision=500&job=somejob"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name  | description                           |
+            | query     | job   | Jenkins job somejob does not exist.   |
+        And there is no package with version="3",revision="500"
+        And there is a package with version="3",revision="1"
+
+    @rest @jenkins_server
+    Scenario: no matching Jenkins build
+        Given there is a jenkins job with name="myjob"
+        When I query PUT "/applications/app2/packages/3/1?revision=500"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name          | description                                                           |
+            | path      | name_or_id    | Build with version 3 for job myjob does not exist on Jenkins server.  |
+        And there is no package with version="3",revision="500"
+        And there is a package with version="3",revision="1"

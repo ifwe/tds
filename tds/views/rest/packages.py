@@ -3,6 +3,11 @@ REST API view for packages.
 """
 
 from cornice.resource import resource, view
+import jenkinsapi.jenkins
+try:
+    from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
+except ImportError:
+    from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
 import tds.model
 from .base import BaseView, init_view
@@ -29,9 +34,7 @@ class PackageView(BaseView):
         'job': 'string',
     }
 
-    param_routes = {
-        'job': 'path'
-    }
+    param_routes = {}
 
     defaults = {
         'status': 'pending',
@@ -118,6 +121,8 @@ class PackageView(BaseView):
         packages.
         """
         self._validate_id("PUT")
+        if self.name not in self.request.validated:
+            return
         if 'version' in self.request.validated_params or 'revision' in \
                 self.request.validated_params:
             found_pkg = self.model.get(
@@ -139,6 +144,7 @@ class PackageView(BaseView):
                     " exists."
                 )
                 self.request.errors.status = 409
+            self._validate_jenkins_build()
         if self.name not in self.request.validated:
             return
         if 'status' in self.request.validated_params and \
@@ -185,6 +191,87 @@ class PackageView(BaseView):
                 "Status must be pending for new packages."
             )
             self.request.errors.status = 403
+
+        self._validate_jenkins_build()
+
+    def _add_jenkins_error(self, message):
+        if 'job' in self.request.validated_params:
+            self.request.errors.add('query', 'job', message)
+        else:
+            self.request.errors.add('path', 'name_or_id', message)
+
+    def _validate_jenkins_build(self):
+        try:
+            jenkins = jenkinsapi.jenkins.Jenkins(self.settings['jenkins_url'])
+        except KeyError:
+            raise tds.exceptions.ConfigurationError(
+                'Could not found jenkins_url in settings file.'
+            )
+        except Exception:
+            self._add_jenkins_error(
+                "Unable to connect to Jenkins server at {addr} to check for "
+                "package.".format(addr=self.settings['jenkins_url'])
+            )
+            self.request.errors.status = 500
+            return
+
+        if 'job' in self.request.validated_params:
+            job_name = self.request.validated_params['job']
+        elif self.name in self.request.validated and getattr(
+            self.request.validated[self.name], 'job', None
+        ):
+            job_name = self.request.validated[self.name].job
+        elif 'application' in self.request.validated:
+            job_name = self.request.validated['application'].path
+        else:
+            # Unexpected, but if it happens, bail out.
+            return
+
+        if 'version' in self.request.validated_params:
+            version = self.request.validated_params['version']
+        elif self.name in self.request.validated:
+            version = self.request.validated[self.name].version
+        else:
+            # Also unexpected. Bail out.
+            return
+
+        matrix_name = None
+        if '/' in job_name:
+            job_name, matrix_name = job_name.split('/', 1)
+
+        try:
+            job = jenkins[job_name]
+        except KeyError:
+            self._add_jenkins_error("Jenkins job {job} does not exist.".format(
+                    job=job_name,
+            ))
+            self.request.errors.status = 400
+            return
+
+        try:
+            int(version)
+        except:
+            return
+
+        try:
+            build = job.get_build(int(version))
+        except (KeyError, JenkinsAPIException, NotFound) as exc:
+            self._add_jenkins_error(
+                "Build with version {vers} for job {job} does not exist on "
+                "Jenkins server.".format(vers=version, job=job_name,)
+            )
+            self.request.errors.status = 400
+        if matrix_name is not None:
+            for run in build.get_matrix_runs():
+                if matrix_name in run.baseurl:
+                    build = run
+                    break
+            else:
+                self._add_jenkins_error(
+                    "No matrix run matching {matrix} for job {job} found."
+                    .format(matrix=matrix_name, job=job_name)
+                )
+                self.request.errors.status = 400
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))

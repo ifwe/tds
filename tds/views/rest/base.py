@@ -88,7 +88,11 @@ class BaseView(ValidatedView):
                           'settings.yml')) as f:
                 self.settings = yaml.load(f.read())
         except:
-            pass
+            raise tds.exceptions.ConfigurationError(
+                "REST settings file does not exist. Expecting file {path}."
+                .format(path=opj(os.path.dirname(os.path.realpath(__file__)),
+                                 'settings.yml'))
+            )
         if self.valid_attrs and len(self.types) > 0:
             for y in [x for x in self.types if self.types[x] == 'choice']:
                 choices = getattr(
