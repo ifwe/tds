@@ -111,6 +111,7 @@ def package_factory(context, **kwargs):
         status=kwargs.get('status', 'completed'),
         creator='test-user',
         builder='jenkins',
+        job=kwargs.get('job', 'job'),
     )
 
     tagopsdb.Session.add(package)
@@ -267,21 +268,6 @@ model_builder(
     'application'
 )
 
-
-@then(u'there is a project with {properties}')
-def then_there_is_a_project(context, properties):
-    attrs = parse_properties(properties)
-    proj = tds.model.Project.get(**attrs)
-
-    assert proj is not None
-
-@then(u'there is a package with {properties}')
-def then_there_is_a_package(context, properties):
-    tagopsdb.Session.close()
-    attrs = parse_properties(properties)
-    package = tds.model.Package.get(**attrs)
-
-    assert package is not None
 
 def add_target_to_proj_app(project, application, target):
     tagopsdb.Session.add(tagopsdb.ProjectPackage(
