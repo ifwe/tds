@@ -247,10 +247,17 @@ def setup_rest_server(context):
     context.rest_process.start()
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
                   'settings.yml'), 'w') as f:
+        jenkins_url = 'http://example.org'
+        if getattr(context, 'TDS_CONFIG_FILE', None):
+            with open(context.TDS_CONFIG_FILE) as conf_file:
+                conf = yaml.load(conf_file)
+                if 'jenkins' in conf and 'url' in conf['jenkins']:
+                    jenkins_url = conf['jenkins']['url']
         context.rest_settings = {
             'cookie_life': 1296000,
             'ldap_server': 'ldaps://ldap.tag-dev.com',
             'secret_key': 'super secret',
+            'jenkins_url': jenkins_url,
         }
         f.write(
             yaml.dump(context.rest_settings, default_flow_style=False)
