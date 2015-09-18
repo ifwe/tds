@@ -123,6 +123,7 @@ class PackageView(BaseView):
         self._validate_id("PUT")
         if self.name not in self.request.validated:
             return
+
         if 'version' in self.request.validated_params or 'revision' in \
                 self.request.validated_params:
             found_pkg = self.model.get(
@@ -145,8 +146,7 @@ class PackageView(BaseView):
                 )
                 self.request.errors.status = 409
             self._validate_jenkins_build()
-        if self.name not in self.request.validated:
-            return
+
         if 'status' in self.request.validated_params and \
                 self.request.validated_params['status'] != \
                 self.request.validated[self.name].status:
@@ -177,6 +177,7 @@ class PackageView(BaseView):
             version=self.request.validated_params['version'],
             revision=self.request.validated_params['revision'],
         )
+
         if found_pkg:
             self.request.errors.add(
                 'query', 'version',
@@ -184,6 +185,7 @@ class PackageView(BaseView):
                 " with this version and revision already exists."
             )
             self.request.errors.status = 409
+
         if 'status' in self.request.validated_params and \
                 self.request.validated_params['status'] != 'pending':
             self.request.errors.add(
@@ -205,7 +207,7 @@ class PackageView(BaseView):
             jenkins = jenkinsapi.jenkins.Jenkins(self.settings['jenkins_url'])
         except KeyError:
             raise tds.exceptions.ConfigurationError(
-                'Could not found jenkins_url in settings file.'
+                'Could not find jenkins_url in settings file.'
             )
         except Exception:
             self._add_jenkins_error(
@@ -258,9 +260,10 @@ class PackageView(BaseView):
         except (KeyError, JenkinsAPIException, NotFound) as exc:
             self._add_jenkins_error(
                 "Build with version {vers} for job {job} does not exist on "
-                "Jenkins server.".format(vers=version, job=job_name,)
+                "Jenkins server.".format(vers=version, job=job_name)
             )
             self.request.errors.status = 400
+
         if matrix_name is not None:
             for run in build.get_matrix_runs():
                 if matrix_name in run.baseurl:

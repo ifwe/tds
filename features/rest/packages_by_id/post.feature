@@ -6,21 +6,25 @@ Feature: POST package(s) from the REST API by ID
     Background:
         Given I have a cookie with user permissions
         And there are applications:
-            | name  |
-            | app1  |
-            | app2  |
-            | app3  |
+            | name  | path  |
+            | app1  | myjob |
+            | app2  | myjob |
+            | app3  | myjob |
         And there is a package with version=1,revision=1
 
-    @rest
+    @rest @jenkins_server
     Scenario: add a new package
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
         When I query POST "/packages?name=app3&version=2&revision=2"
         Then the response code is 201
         And the response is an object with version="2",revision="2",creator="testuser"
         And there is a package with version="2",revision="2",creator="testuser"
 
-    @rest
+    @rest @jenkins_server
     Scenario: omit required field
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
         When I query POST "/packages?version=2&revision=2"
         Then the response code is 400
         And the response contains errors:
@@ -28,17 +32,21 @@ Feature: POST package(s) from the REST API by ID
             | query     |       | name is a required field. |
         And there is no package with version="2",revision="2",creator="testuser"
 
-    @rest
+    @rest @jenkins_server
     Scenario: pass an name for an application that doesn't exist
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
         When I query POST "/packages?name=noexist&version=2&revision=2"
         Then the response code is 400
         And the response contains errors:
-            | location  | name      | description                                   |
+            | location  | name  | description                                   |
             | query     | name  | Application with name noexist does not exist. |
         And there is no package with version="2",revision="2",creator="testuser"
 
-    @rest
+    @rest @jenkins_server
     Scenario: pass an invalid parameter
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
         When I query POST "/packages?name=app3&version=2&revision=2&foo=bar"
         Then the response code is 422
         And the response contains errors:
@@ -46,8 +54,10 @@ Feature: POST package(s) from the REST API by ID
             | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'name', 'builder', 'job', 'version', 'id', 'revision'].  |
         And there is no package with version="2",revision="2",creator="testuser"
 
-    @rest
+    @rest @jenkins_server
     Scenario Outline: attempt to violate a unique constraint
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="1"
         When I query POST "/packages?name=app3&<query>"
         Then the response code is 409
         And the response contains errors:
@@ -60,8 +70,10 @@ Feature: POST package(s) from the REST API by ID
             | version=1&revision=1&id=3 | version   | for this application with this version and revision   |
             | version=1&revision=1&id=1 | id        | with this ID                                          |
 
-    @rest
+    @rest @jenkins_server
     Scenario Outline: attempt to set status to something other than pending
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
         When I query POST "/packages?name=app3&version=2&revision=2&status=<status>"
         Then the response code is 403
         And the response contains errors:
@@ -75,3 +87,36 @@ Feature: POST package(s) from the REST API by ID
             | failed        |
             | completed     |
             | removed       |
+
+    @rest
+    Scenario: Jenkins unreachable
+        When I query POST "/packages?name=app3&version=2&revision=2"
+        Then the response code is 500
+        And the response contains errors:
+            | location  | name  | description                                                                           |
+            | query     | name  | Unable to connect to Jenkins server at https://example.org:8080 to check for package. |
+        And there is no package with version="2",revision="2",creator="testuser"
+
+    @rest @jenkins_server
+    Scenario Outline: no matching Jenkins job
+        When I query POST "/packages?name=app3&version=2&revision=2&<query>"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name      | description                       |
+            | <loc>     | <name>    | Jenkins job <job> does not exist. |
+        And there is no package with version="2",revision="2",creator="testuser"
+
+        Examples:
+            | query         | loc   | name  | job       |
+            |               | query | name  | myjob     |
+            | job=somejob   | query | job   | somejob   |
+
+    @rest @jenkins_server
+    Scenario: no matching Jenkins build
+        Given there is a jenkins job with name="myjob"
+        When I query POST "/packages?name=app3&version=2&revision=2"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name  | description                                                           |
+            | query     | name  | Build with version 2 for job myjob does not exist on Jenkins server.  |
+        And there is no package with version="2",revision="2",creator="testuser"

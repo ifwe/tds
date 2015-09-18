@@ -3,6 +3,11 @@ REST API view for packages retrieved by ID.
 """
 
 from cornice.resource import resource, view
+import jenkinsapi.jenkins
+try:
+    from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
+except ImportError:
+    from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
 import tds.model
 from .base import BaseView, init_view
@@ -22,7 +27,6 @@ class PackageByIDView(BaseView):
     }
 
     param_routes = {
-        'job': 'path',
         'name': 'pkg_name',
     }
 
@@ -39,6 +43,8 @@ class PackageByIDView(BaseView):
 
     def validate_package_by_id_put(self):
         self._validate_id("PUT", "package")
+        if self.name not in self.request.validated:
+            return
 
         if any(x in self.request.validated_params for x in
                ('version', 'revision', 'name')):
@@ -66,6 +72,10 @@ class PackageByIDView(BaseView):
                 )
                 self.request.errors.status = 409
 
+        if any(x in self.request.validated_params for x in
+               ('version', 'revision', 'job')):
+            self._validate_jenkins_build()
+
         if self.name not in self.request.validated:
             return
         if 'status' in self.request.validated_params and \
@@ -91,6 +101,7 @@ class PackageByIDView(BaseView):
         )
         ver_check = 'version' in self.request.validated_params
         rev_check = 'revision' in self.request.validated_params
+
         if not found_app:
             self.request.errors.add(
                 'query', 'name',
@@ -109,6 +120,7 @@ class PackageByIDView(BaseView):
             version=self.request.validated_params['version'],
             revision=self.request.validated_params['revision'],
         )
+
         if found_pkg:
             self.request.errors.add(
                 'query', 'version',
@@ -123,6 +135,99 @@ class PackageByIDView(BaseView):
                 "Status must be pending for new packages."
             )
             self.request.errors.status = 403
+
+        self._validate_jenkins_build()
+
+    def _add_jenkins_error(self, message):
+        if 'job' in self.request.validated_params:
+            self.request.errors.add('query', 'job', message)
+        elif 'version' in self.request.validated_params:
+            self.request.errors.add('query', 'version', message)
+        elif 'name' in self.request.validated_params:
+            self.request.errors.add('query', 'name', message)
+        elif self.name in self.request.validated:
+            self.request.errors.add('path', 'id', message)
+
+    def _validate_jenkins_build(self):
+        try:
+            jenkins = jenkinsapi.jenkins.Jenkins(self.settings['jenkins_url'])
+        except KeyError:
+            raise tds.exceptions.ConfigurationError(
+                'Could not find jenkins_url in settings file.'
+            )
+        except Exception:
+            self._add_jenkins_error(
+                "Unable to connect to Jenkins server at {addr} to check for "
+                "package.".format(addr=self.settings['jenkins_url'])
+            )
+            self.request.errors.status = 500
+            return
+
+        application = None
+        if 'name' in self.request.validated_params:
+            app = tds.model.Application.get(
+                pkg_name=self.request.validated_params['name']
+            )
+            if app is None:
+                return
+            application = app
+
+        if 'job' in self.request.validated_params:
+            job_name = self.request.validated_params['job']
+        elif self.name in self.request.validated and getattr(
+            self.request.validated[self.name], 'job', None
+        ):
+            job_name = self.request.validated[self.name].job
+        elif application is not None:
+            job_name = application.path
+        else:
+            return
+
+        if 'version' in self.request.validated_params:
+            version = self.request.validated_params['version']
+        elif self.name in self.request.validated:
+            version = self.request.validated[self.name].version
+        else:
+            return
+
+        matrix_name = None
+        if '/' in job_name:
+            job_name, matrix_name = job_name.split('/', 1)
+
+        try:
+            job = jenkins[job_name]
+        except KeyError:
+            self._add_jenkins_error("Jenkins job {job} does not exist.".format(
+                job=job_name,
+            ))
+            self.request.errors.status = 400
+            return
+
+        try:
+            int(version)
+        except:
+            return
+
+        try:
+            build = job.get_build(int(version))
+        except (KeyError, JenkinsAPIException, NotFound) as exc:
+            self._add_jenkins_error(
+                "Build with version {vers} for job {job} does not exist on "
+                "Jenkins server.".format(vers=version, job=job_name)
+            )
+            self.request.errors.status = 400
+
+        if matrix_name is not None:
+            for run in build.get_matrix_runs():
+                if matrix_name in run.baseurl:
+                    build = run
+                    break
+            else:
+                self._add_jenkins_error(
+                    "No matrix run matching {matrix} for job {job} found."
+                    .format(matrix=matrix_name, job=job_name)
+                )
+                self.request.errors.status = 400
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
