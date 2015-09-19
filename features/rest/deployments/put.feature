@@ -7,16 +7,16 @@ Feature: PUT deployment(s) from the REST API
         Given I have a cookie with user permissions
         And there is an application with pkg_name="app1"
         And there are packages:
-            | version   | revision  |
-            | 1         | 1         |
-            | 1         | 2         |
-            | 2         | 3         |
-            | 2         | 4         |
+            | version   | revision  | status    |
+            | 1         | 1         | completed |
+            | 1         | 2         | completed |
+            | 2         | 3         | completed |
+            | 2         | 4         | completed |
         And there is an application with pkg_name="app2"
         And there are packages:
-            | version   | revision  |
-            | 3         | 5         |
-            | 3         | 6         |
+            | version   | revision  | status    |
+            | 3         | 5         | completed |
+            | 3         | 6         | completed |
         And there are deployments:
             | id    | user  | package_id    | status    |
             | 1     | foo   | 1             | pending   |
@@ -155,3 +155,26 @@ Feature: PUT deployment(s) from the REST API
         And the response contains errors:
             | location  | name  | description                               |
             | path      | id    | Deployment with ID 500 does not exist.    |
+
+    @rest
+    Scenario Outline: attempt to queue a deployment whose package isn't complete
+        Given there are packages:
+            | version   | revision  | status    |
+            | 4         | 1         | <status>  |
+        And there are deployments:
+            | id    | user  | package_id    | status    |
+            | 4     | foo   | 7             | pending   |
+        When I query PUT "/deployments/4?status=queued"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                               |
+            | query     | status    | Cannot queue deployment whose package is not completed.   |
+        And there is no deployment with id=4,status="queued"
+        And there is a deployment with id=4,status="pending"
+
+        Examples:
+            | status        |
+            | pending       |
+            | processing    |
+            | failed        |
+            | removed       |
