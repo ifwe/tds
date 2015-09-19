@@ -126,6 +126,12 @@ class DeploymentView(BaseView):
                         '{host_name}.'.format(host_name=dep.host.name)
                     )
                     self.request.errors.status = 403
+        if self.request.validated[self.name].package.status != 'completed':
+            self.request.errors.add(
+                'query', 'status',
+                'Cannot queue deployment whose package is not completed.'
+            )
+            self.request.errors.status = 403
 
     def _validate_put_status_pending(self):
         """
