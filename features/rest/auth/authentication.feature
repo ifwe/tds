@@ -59,27 +59,6 @@ Feature: Authentication required messages
             | header    | cookie    | Authentication required. Please login.    |
 
     @rest
-    Scenario: unauthenticated attempt to post a package for an application
-        Given there is an application with name="app1"
-        When I query POST "/applications/app1/packages?version=1&revision=1"
-        Then the response code is 401
-        And the response contains errors:
-            | location  | name      | description                               |
-            | header    | cookie    | Authentication required. Please login.    |
-        And there is no package with version="1",revision="1"
-
-    @rest
-    Scenario: unauthenticated attempt to update a package for an application
-        Given there is an application with name="app1"
-        And there is a package with version="1",revision="1"
-        When I query PUT "/applications/app1/packages/1/1?revision=2"
-        Then the response code is 401
-        And the response contains errors:
-            | location  | name      | description                               |
-            | header    | cookie    | Authentication required. Please login.    |
-        And there is no package with version="1",revision="2"
-
-    @rest
     Scenario: unauthenticated attempt to get all projects
         When I query GET "/projects"
         Then the response code is 401

@@ -1591,6 +1591,7 @@ NAME_OBJ_MAPPINGS = {
     'tier deployment': tds.model.AppDeployment,
     'ganglia': tagopsdb.model.Ganglia,
     'hipchat': tagopsdb.model.Hipchat,
+    'project': tds.model.Project,
 }
 
 
