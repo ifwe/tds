@@ -9,12 +9,12 @@ Feature: Update (PUT) package on REST API
             | app1  | myjob |
             | app2  | myjob |
         And there are packages:
-            | version   | revision  |
-            | 1         | 2         |
-            | 2         | 1         |
-            | 2         | 2         |
-            | 2         | 3         |
-            | 3         | 1         |
+            | version   | revision  | job   |
+            | 1         | 2         | myjob |
+            | 2         | 1         | myjob |
+            | 2         | 2         | myjob |
+            | 2         | 3         | myjob |
+            | 3         | 1         | myjob |
         And I have a cookie with user permissions
 
     @rest @jenkins_server

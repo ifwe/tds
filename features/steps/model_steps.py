@@ -65,8 +65,10 @@ def host_factory(context, name, env=None, **kwargs):
         kernel_version='2.6.2',
         distribution='Centos 6.4',
         timezone='UTC',
-        app_id=kwargs['app_id'] if 'app_id' in kwargs else
-            tagopsdb.Application.get(name=tagopsdb.Application.dummy).id,
+        app_id=kwargs.get(
+            'app_id',
+            tagopsdb.Application.get(name=tagopsdb.Application.dummy).id
+        ),
         cage_location=len(tagopsdb.Host.all()),
         cab_location=name[:10],
         rack_location=1,
@@ -111,7 +113,7 @@ def package_factory(context, **kwargs):
         status=kwargs.get('status', 'completed'),
         creator='test-user',
         builder='jenkins',
-        job=kwargs.get('job', 'job'),
+        job=kwargs.get('job', application.path),
     )
 
     tagopsdb.Session.add(package)
@@ -126,7 +128,7 @@ def application_factory(context, **kwargs):
     fields = dict(
         deploy_type='rpm',
         validation_type='matching',
-        path='job',
+        path=kwargs.get('job', 'job'),
         arch='noarch',
         build_type='jenkins',
         build_host='fakeci.example.org',
