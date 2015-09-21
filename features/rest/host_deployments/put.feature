@@ -130,7 +130,7 @@ Feature: PUT host deployment(s) from the REST API
         And the response contains errors:
             | location  | name      | description                                                                                                                                                       |
             | query     | host_id   | Cannot deploy to different environments with same deployment. There is a tier deployment associated with this deployment with ID 1 and environment development.   |
-            | query     | host_id   | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 1 and environment development.   |
+            | query     | host_id   | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 2 and environment development.   |
         And there is no host deployment with id=1,host_id=3
         And there is a host deployment with id=1,host_id=1
 
