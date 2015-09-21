@@ -93,8 +93,8 @@ Feature: POST package(s) from the REST API by ID
         When I query POST "/packages?name=app3&version=2&revision=2"
         Then the response code is 500
         And the response contains errors:
-            | location  | name  | description                                                                           |
-            | query     | name  | Unable to connect to Jenkins server at https://example.org:8080 to check for package. |
+            | location  | name      | description                                                                           |
+            | query     | version   | Unable to connect to Jenkins server at https://example.org:8080 to check for package. |
         And there is no package with version="2",revision="2",creator="testuser"
 
     @rest @jenkins_server
@@ -107,9 +107,9 @@ Feature: POST package(s) from the REST API by ID
         And there is no package with version="2",revision="2",creator="testuser"
 
         Examples:
-            | query         | loc   | name  | job       |
-            |               | query | name  | myjob     |
-            | job=somejob   | query | job   | somejob   |
+            | query         | loc   | name      | job       |
+            |               | query | version   | myjob     |
+            | job=somejob   | query | job       | somejob   |
 
     @rest @jenkins_server
     Scenario: no matching Jenkins build
@@ -117,6 +117,6 @@ Feature: POST package(s) from the REST API by ID
         When I query POST "/packages?name=app3&version=2&revision=2"
         Then the response code is 400
         And the response contains errors:
-            | location  | name  | description                                                           |
-            | query     | name  | Build with version 2 for job myjob does not exist on Jenkins server.  |
+            | location  | name      | description                                                           |
+            | query     | version   | Build with version 2 for job myjob does not exist on Jenkins server.  |
         And there is no package with version="2",revision="2",creator="testuser"

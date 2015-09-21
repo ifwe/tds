@@ -196,6 +196,11 @@ class PackageView(BaseView):
 
         self._validate_jenkins_build()
 
+        if 'job' not in self.request.validated_params:
+            self.request.validated_params['job'] = self.request.validated[
+                'application'
+            ].path
+
     def _add_jenkins_error(self, message):
         if 'job' in self.request.validated_params:
             self.request.errors.add('query', 'job', message)
