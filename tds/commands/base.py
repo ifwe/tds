@@ -276,6 +276,8 @@ class BaseController(object):
                     bad_hosts.append(host.name)
                 else:
                     host_targets.append(host)
+                    if host.application not in app_targets:
+                        app_targets.append(host.application)
 
             if no_exist_hosts:
                 raise tds.exceptions.NotFoundError("Host",
@@ -295,7 +297,7 @@ class BaseController(object):
                             app.name, host_target.name
                         )
 
-            return dict(hosts=host_targets, apptypes=None)
+            return dict(apptypes=app_targets, hosts=host_targets)
 
         raise NotImplementedError
 

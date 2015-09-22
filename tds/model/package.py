@@ -23,6 +23,21 @@ class Package(Base):
             for x in dep.app_deployments
         ]
 
+    def check_app_deployments(self, tier, environment):
+        """
+        Check for an existing validated deployment for a given tier
+        and environment; this is just a boolean check
+        """
+
+        for dep in self.delegate.deployments:
+            for app_dep in dep.app_deployments:
+                if (app_dep.target == tier.delegate and
+                    app_dep.environment_obj == environment and
+                    app_dep.status == 'validated'):
+                    return True
+
+        return False
+
     # Note: this is currently not used but is left here for possible
     # inclusion or future reference - KEL 20150825
     def find_app_deployments(self, tier, environment):
