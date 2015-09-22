@@ -12,11 +12,14 @@ import os
 import os.path
 from os.path import dirname, join as opj
 
+from wsgiref.simple_server import make_server
 from subprocess import CalledProcessError
+from multiprocessing import Process
 
 import tds.authorize
 import tds.utils.processes as processes
 import tds.utils.merge as merge
+import tds.views.rest as rest
 
 sys.path.insert(
     0, opj(os.path.dirname(os.path.realpath(__file__)), 'helpers', 'lib')
@@ -230,6 +233,60 @@ def teardown_graphite_server(context):
         print 'graphite notifications:', notifications
 
 
+def rest_server(context):
+    context.rest_server.serve_forever()
+
+
+def setup_rest_server(context):
+    """
+    Set up and run the REST API server.
+    """
+    app = rest.config.make_wsgi_app()
+    context.rest_server = make_server('0.0.0.0', 0, app)
+    context.rest_process = Process(target=rest_server, args=(context,))
+    context.rest_process.start()
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'), 'w') as f:
+        jenkins_url = 'http://example.org'
+        if getattr(context, 'TDS_CONFIG_FILE', None):
+            with open(context.TDS_CONFIG_FILE) as conf_file:
+                conf = yaml.load(conf_file)
+                if 'jenkins' in conf and 'url' in conf['jenkins']:
+                    jenkins_url = conf['jenkins']['url']
+        context.rest_settings = {
+            'cookie_life': 1296000,
+            'ldap_server': 'ldaps://ldap.tag-dev.com',
+            'secret_key': 'super secret',
+            'jenkins_url': jenkins_url,
+        }
+        f.write(
+            yaml.dump(context.rest_settings, default_flow_style=False)
+        )
+
+
+def teardown_rest_server(context):
+    """
+    Tear down the REST API server.
+    """
+    context.rest_process.terminate()
+    context.rest_process.join()
+    os.remove(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'))
+
+
+def disable_ldap_server(context):
+    """
+    Change the LDAP server URI to something that won't work.
+    """
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'), 'r+') as f:
+        context.rest_settings['ldap_server'] = 'ldaps://ldap.example.com'
+        f.truncate()
+        f.write(
+            yaml.dump(context.rest_settings, default_flow_style=False)
+        )
+
+
 def setup_conf_file(context):
     shutil.copyfile(
         opj(context.PROJECT_ROOT, 'tests',
@@ -328,6 +385,12 @@ def before_scenario(context, scenario):
 
     setup_temp_db(context)
 
+    if 'rest' in context.tags:
+        setup_rest_server(context)
+
+    if 'ldap_off' in context.tags:
+        disable_ldap_server(context)
+
 
 def after_scenario(context, scenario):
     import tagopsdb
@@ -368,6 +431,9 @@ def after_scenario(context, scenario):
 
     if 'graphite_server' in context.tags:
         teardown_graphite_server(context)
+
+    if 'rest' in context.tags:
+        teardown_rest_server(context)
 
     teardown_workspace(context)
 

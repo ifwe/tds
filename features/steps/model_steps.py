@@ -52,7 +52,7 @@ def rpm_factory(context, **kwargs):
         f.write(yaml.dump(kwargs))
 
 
-def host_factory(context, name, env=None, **_kwargs):
+def host_factory(context, name, env=None, **kwargs):
     env = env or context.tds_env
     env_obj = tagopsdb.Environment.get(env=env)
     assert env_obj is not None
@@ -65,7 +65,10 @@ def host_factory(context, name, env=None, **_kwargs):
         kernel_version='2.6.2',
         distribution='Centos 6.4',
         timezone='UTC',
-        app_id=tagopsdb.Application.get(name=tagopsdb.Application.dummy).id,
+        app_id=kwargs.get(
+            'app_id',
+            tagopsdb.Application.get(name=tagopsdb.Application.dummy).id
+        ),
         cage_location=len(tagopsdb.Host.all()),
         cab_location=name[:10],
         rack_location=1,
@@ -110,6 +113,7 @@ def package_factory(context, **kwargs):
         status=kwargs.get('status', 'completed'),
         creator='test-user',
         builder='jenkins',
+        job=kwargs.get('job', application.path),
     )
 
     tagopsdb.Session.add(package)
@@ -124,7 +128,7 @@ def application_factory(context, **kwargs):
     fields = dict(
         deploy_type='rpm',
         validation_type='matching',
-        path='job',
+        path=kwargs.get('job', 'job'),
         arch='noarch',
         build_type='jenkins',
         build_host='fakeci.example.org',
@@ -266,21 +270,6 @@ model_builder(
     'application'
 )
 
-
-@then(u'there is a project with {properties}')
-def then_there_is_a_project(context, properties):
-    attrs = parse_properties(properties)
-    proj = tds.model.Project.get(**attrs)
-
-    assert proj is not None
-
-@then(u'there is a package with {properties}')
-def then_there_is_a_package(context, properties):
-    tagopsdb.Session.close()
-    attrs = parse_properties(properties)
-    package = tds.model.Package.get(**attrs)
-
-    assert package is not None
 
 def add_target_to_proj_app(project, application, target):
     tagopsdb.Session.add(tagopsdb.ProjectPackage(
@@ -1316,13 +1305,6 @@ def then_there_is_no_project_with_properties(context, properties):
         assert tagopsdb.PackageDefinition.get(name='%s-name' % attrs['name']) is None
 
 
-@then(u'there is no application with {properties}')
-def then_there_is_no_application_with_properties(context, properties):
-    attrs = parse_properties(properties)
-    returned = tds.model.Application.get(**attrs)
-    assert returned is None, returned
-
-
 @then(u'the package is invalidated for deploy targets')
 def then_the_package_is_invalidated_for_deploy_targets(context):
     attr_sets = [
@@ -1576,3 +1558,156 @@ def then_update_repo_log_file_has(context, text):
     with open(os.path.join(context.WORK_DIR, 'update_deploy_repo.log')) as fh:
         actual = fh.read()
         assert text in actual, (text, actual)
+
+
+@given(u'there is a Ganglia with {properties}')
+def given_there_is_a_ganglia_with(context, properties):
+    properties = parse_properties(properties)
+    created = tagopsdb.model.Ganglia.update_or_create(properties)
+    tagopsdb.Session.commit()
+
+
+@given(u'there is a HipChat with {properties}')
+def given_there_is_a_hipchat_with(context, properties):
+    properties = parse_properties(properties)
+    created = tagopsdb.model.Hipchat.update_or_create(properties)
+    tagopsdb.Session.commit()
+
+
+@given(u'there are hipchat rooms')
+def given_there_are_hipchat_rooms(context):
+    hipchats = getattr(context, 'hipchats', list())
+    for row in context.table:
+        hipchat = tagopsdb.Hipchat(
+            room_name=row['room_name'],
+        )
+        hipchats.append(hipchat)
+        tagopsdb.Session.add(hipchat)
+    tagopsdb.Session.commit()
+    context.hipchats = hipchats
+
+
+@given(u'the deploy target "{targ}" is associated with the hipchat "{room}"')
+def given_the_deploy_target_is_associated_with_the_hipchat(context, targ,
+                                                           room):
+    hipchat = tagopsdb.Hipchat.get(room_name=room)
+    target = tagopsdb.AppDefinition.get(name=targ)
+    if hipchat is None:
+        assert False, "HipChat %s doesn't exist" % room
+    if target is None:
+        assert False, "Target %s doesn't exist" % targ
+    if target not in hipchat.app_definitions:
+        hipchat.app_definitions.append(target)
+    tagopsdb.Session.commit()
+
+
+def targ_room_associated(targ, room):
+    """
+    Return true if the application type with name targ is associated with the
+    HipChat room with name room, false otherwise.
+    Raise exception if either targ or room doesn't resolve to a tier or
+    HipChat room, respectively
+    """
+    hipchat = tagopsdb.Hipchat.get(room_name=room)
+    target = tagopsdb.AppDefinition.get(name=targ)
+    if hipchat is None:
+        assert False, "HipChat %s doesn't exist" % room
+    if target is None:
+        assert False, "Target %s doesn't exist" % targ
+    return target in hipchat.app_definitions
+
+
+@then(u'the deploy target "{targ}" is associated with the hipchat "{room}"')
+def then_the_deploy_target_is_associated_with_the_hipchat(context, targ,
+                                                          room):
+    assert targ_room_associated(targ, room)
+
+
+@then(u'the deploy target "{targ}" is not associated with the hipchat "{room}"')
+def then_the_deploy_target_is_not_associated_with_the_hipchat(context, targ,
+                                                              room):
+    assert not targ_room_associated(targ, room)
+
+
+@given(u'there are deployments')
+def given_there_are_deployments(context):
+    deployments = getattr(context, 'deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        deployment = tagopsdb.Deployment(**attrs)
+        tagopsdb.Session.add(deployment)
+        deployments.append(deployment)
+    tagopsdb.Session.commit()
+    context.deployments = deployments
+
+
+NAME_OBJ_MAPPINGS = {
+    'application': tds.model.Application,
+    'package': tds.model.Package,
+    'deploy target': tds.model.AppTarget,
+    'host': tds.model.HostTarget,
+    'tier': tds.model.AppTarget,
+    'deployment': tds.model.Deployment,
+    'host deployment': tds.model.HostDeployment,
+    'tier deployment': tds.model.AppDeployment,
+    'ganglia': tagopsdb.model.Ganglia,
+    'hipchat': tagopsdb.model.Hipchat,
+    'project': tds.model.Project,
+}
+
+
+@then(u'there is a {model} with {properties}')
+def then_there_is_a_model_with(context, model, properties):
+    model = NAME_OBJ_MAPPINGS[model.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is not None, (found, model.all())
+
+
+@then(u'there is an {obj_type} with {properties}')
+def then_there_is_an_obj_type_with(context, obj_type, properties):
+    model = NAME_OBJ_MAPPINGS[obj_type.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is not None, (found, model.all())
+
+
+@then(u'there is no {model} with {properties}')
+def then_there_is_no_model_with(context, model, properties):
+    model = NAME_OBJ_MAPPINGS[model.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is None, found
+
+
+@given(u'there are host deployments')
+def given_there_are_host_deployments(context):
+    host_deps = getattr(context, 'host_deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        dep = tagopsdb.HostDeployment(**attrs)
+        tagopsdb.Session.add(dep)
+        host_deps.append(dep)
+    tagopsdb.Session.commit()
+    context.host_deployments = host_deps
+
+
+@given(u'there are tier deployments')
+def given_there_are_tier_deployments(context):
+    tier_deps = getattr(context, 'host_deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        dep = tagopsdb.AppDeployment(**attrs)
+        tagopsdb.Session.add(dep)
+        tier_deps.append(dep)
+    tagopsdb.Session.commit()
+    context.host_deployments = tier_deps
