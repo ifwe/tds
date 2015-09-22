@@ -82,7 +82,7 @@ class Installer(TDSProgramBase):
         otherwise.
         """
 
-        deps = tds.model.Deployment.find(started=False)
+        deps = tds.model.Deployment.find(status='queued')
 
         if deps:
             deployment = deps[0]

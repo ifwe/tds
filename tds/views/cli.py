@@ -12,7 +12,7 @@ from .json_encoder import TDSEncoder
 
 def silence(*exc_classes):
     """
-    Create a function to silence given exception classes when excecuting
+    Create a function to silence given exception classes when executing
     a function.
     """
     def wrap_func(func):

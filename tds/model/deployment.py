@@ -10,6 +10,8 @@ from .deploy_target import AppTarget
 class Deployment(Base):
     """Model class for deployment object."""
 
+    delegate = tagopsdb.Deployment
+
     @property
     def application(self):
         return Application(
