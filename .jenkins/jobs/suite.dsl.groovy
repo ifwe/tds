@@ -102,7 +102,7 @@ def (tds, branches) = project.branchBuilders(gauntlet.name)
 jobFactory.referencedJobs.each {
     it.with {
         wrappers {
-            timeout(60, false)
+            timeout(120, false)
         }
     }
 }
