@@ -250,7 +250,7 @@ class PackageView(BaseView):
             job = jenkins[job_name]
         except KeyError:
             self._add_jenkins_error("Jenkins job {job} does not exist.".format(
-                    job=job_name,
+                job=job_name,
             ))
             self.request.errors.status = 400
             return
