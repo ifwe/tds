@@ -115,23 +115,25 @@ class BaseView(ValidatedView):
                     except Exception as exc:
                         raise tds.exceptions.ProgrammingError(
                             "No choices set for param {param}. "
-                            "Got exception {e}".format(param=y, e=exc)
+                            "Got exception {e}.".format(param=y, e=exc)
                         )
 
         super(BaseView, self).__init__(*args, **kwargs)
 
-    def to_json_obj(self, obj):
+    def to_json_obj(self, obj, param_routes=None):
         """
         Return a JSON object representation of this object.
         """
+        if param_routes is None:
+            param_routes = self.param_routes
         d = obj.to_dict()
-        if not self.param_routes:
+        if not param_routes:
             return d
 
-        for k in self.param_routes:
-            if self.param_routes[k] in d:
-                d[k] = d[self.param_routes[k]]
-                del d[self.param_routes[k]]
+        for k in param_routes:
+            if param_routes[k] in d:
+                d[k] = d[param_routes[k]]
+                del d[param_routes[k]]
         return d
 
     @staticmethod
@@ -152,14 +154,16 @@ class BaseView(ValidatedView):
                 )
             )
 
-    def _route_params(self):
+    def _route_params(self, routes=None):
         """
         Map params from their front-end names to their backend names in the
         self.request.validated_params dictionary.
         """
-        for attr in self.param_routes:
+        if routes is None:
+            routes = self.param_routes
+        for attr in routes:
             if attr in self.request.validated_params:
-                self.request.validated_params[self.param_routes[attr]] = \
+                self.request.validated_params[routes[attr]] = \
                     self.request.validated_params[attr]
                 del self.request.validated_params[attr]
         if self.name == 'package':

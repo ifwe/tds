@@ -103,6 +103,7 @@ class ValidatedView(JSONValidatedView):
             raise tds.exceptions.NotFoundError('Model', [obj_type])
 
         self._validate_params(('limit', 'start'))
+        self._validate_json_params({'limit': 'integer', 'start': 'integer'})
 
         if plural not in self.request.validated:
             self.request.validated[plural] = obj_cls.query().order_by(
@@ -441,11 +442,14 @@ class ValidatedView(JSONValidatedView):
         else:
             request.validated['user'] = username
             request.is_admin = is_admin
-            collection_path = self._services[
-                'collection_{name}'.format(
-                    name=self.__class__.__name__.lower()
-                )
-            ].path
+            try:
+                collection_path = self._services[
+                    'collection_{name}'.format(
+                        name=self.__class__.__name__.lower()
+                    )
+                ].path
+            except KeyError:
+                collection_path = None
             prefix = "collection_" if request.path == collection_path else ''
             if not getattr(self, 'permissions', None):
                 return
