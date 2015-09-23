@@ -169,27 +169,98 @@ class SearchView(base.BaseView):
     }
 
     TYPES = {
-        'application': APPLICATION_DICT,
-        'deployment': DEPLOYMENT_DICT,
-        'ganglia': GANGLIA_DICT,
-        'hipchat': HIPCHAT_DICT,
-        'host': HOST_DICT,
-        'host_deployment': HOST_DEPLOYMENT_DICT,
-        'package': PACKAGE_DICT,
-        'project': PROJECT_DICT,
-        'tier': TIER_DICT,
-        'tier_deployment': TIER_DEPLOYMENT_DICT,
+        'applications': APPLICATION_DICT,
+        'deployments': DEPLOYMENT_DICT,
+        'ganglias': GANGLIA_DICT,
+        'hipchats': HIPCHAT_DICT,
+        'hosts': HOST_DICT,
+        'host_deployments': HOST_DEPLOYMENT_DICT,
+        'packages': PACKAGE_DICT,
+        'projects': PROJECT_DICT,
+        'tiers': TIER_DICT,
+        'tier_deployments': TIER_DEPLOYMENT_DICT,
     }
 
+    def _get_results(self):
+        if not self.request.validated_params:
+            self.results = self.model.all()
+            return
+
+        self.results = self.model.query().filter_by(
+            **self.request.validated_params
+        )
+
+        if self.start is not None:
+            self.results = self.results.filter(
+                self.model.id >= self.start
+            )
+
+        if self.limit is not None:
+            self.results = self.results.limit(self.limit)
+
     def validate_search_get(self, request):
-        pass
+        self.name = 'search'
+        if self.request.matchdict['obj_type'] not in self.TYPES:
+            self.request.errors.add(
+                'path', 'obj_type',
+                "Unknown object type {obj_type}. Supported object types are: "
+                "{types}.".format(
+                    obj_type=self.request.matchdict['obj_type'],
+                    types=self.TYPES.keys(),
+                )
+            )
+            self.request.errors.status = 404
+            return
+
+        self.obj_dict = self.TYPES[self.request.matchdict['obj_type']]
+        self.model = self.obj_dict['model']
+        self._validate_params(
+            self.obj_dict['params'].keys() + ['limit', 'start']
+        )
+
+        for param in self.request.validated_params:
+            if param not in self.obj_dict['params']:
+                continue
+            if self.obj_dict['params'][param] == 'choice':
+                choice_param = '{param}_choices'.format(param=param)
+                if choice_param in self.obj_dict:
+                    setattr(self, choice_param, self.obj_dict[choice_param])
+                else:
+                    try:
+                        if getattr(self.model, 'delegate', None):
+                            table = self.model.delegate.__table__
+                        else:
+                            table = self.model.__table__
+                        col_name = param
+                        if param in self.obj_dict['param_routes']:
+                            col_name = self.obj_dict['param_routes'][param]
+                        setattr(self, choice_param,
+                                table.columns[col_name].type.enums)
+                    except Exception as exc:
+                        raise tds.exception.ProgrammingError(
+                            "No choices set for param {param}. "
+                            "Got exception {e}.".format(param=param, e=exc)
+                        )
+
+        self._validate_json_params(self.obj_dict['params'])
+        self._validate_json_params({'limit': 'integer', 'start': 'integer'})
+        self.limit = self.start = None
+        if 'limit' in self.request.validated_params:
+            self.limit = self.request.validated_params.pop('limit')
+        if 'start' in self.request.validated_params:
+            self.start = self.request.validated_params.pop('start')
+        self._route_params(self.obj_dict['param_routes'])
+        self._get_results()
 
     @view(validators=('validate_search_get', 'validate_cookie'))
     def get(self):
-        return self.make_response(self.plural)
+        return self.make_response([
+            self.to_json_obj(x, self.obj_dict['param_routes']) for x in
+            self.results
+        ])
 
     @view(validators=('method_not_allowed'))
-    def post(self):
+    def delete(self):
         return self.make_response({})
 
     @view(validators=('method_not_allowed'))

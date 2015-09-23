@@ -59,9 +59,9 @@ def host_factory(context, name, env=None, **kwargs):
     env_id = env_obj.id
 
     host = tagopsdb.Host(
-        state='operational',
+        state=kwargs.get('state', 'operational'),
         hostname=name,
-        arch='x64',
+        arch=kwargs.get('arch', 'x64'),
         kernel_version='2.6.2',
         distribution='Centos 6.4',
         timezone='UTC',
