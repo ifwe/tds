@@ -137,15 +137,19 @@ class BaseView(ValidatedView):
         return d
 
     @staticmethod
-    def make_response(body, status="200 OK", renderer="json"):
+    def make_response(body, status="200 OK", renderer="json", headers=None):
         """
         Make and return a Response with the given body and HTTP status code.
         """
+        if headers is None:
+            headers = dict()
+
         if renderer == "json":
             return Response(
-                body=json.dumps(body, cls=TDSEncoder),
+                body=json.dumps(body, cls=TDSEncoder) if body else body,
                 content_type="text/json",
                 status=status,
+                headers=headers,
             )
         else:
             raise NotImplementedError(

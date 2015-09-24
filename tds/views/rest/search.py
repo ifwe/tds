@@ -254,6 +254,31 @@ class SearchView(base.BaseView):
 
     @view(validators=('validate_search_get', 'validate_cookie'))
     def get(self):
+        if 'Expect' in self.request.headers:
+            if self.request.headers['Expect'] in ("302 Found",
+                                                  "303 See Other"):
+                if len(self.results.all()) == 1:
+                    return self.make_response(
+                        body='',
+                        status=self.request.headers['Expect'],
+                        headers=dict(
+                            Location="{app_path}/{obj_type}/{obj_id}".format(
+                                app_path=self.request.application_url,
+                                obj_type=self.request.matchdict['obj_type'],
+                                obj_id=self.results[0].id,
+                            )
+                        )
+                    )
+                else:
+                    return self.make_response(
+                        body='',
+                        status="417 Expectation Failed",
+                    )
+            elif self.request.headers['Expect'] != 200:
+                return self.make_response(
+                    body='',
+                    status="417 Expectation Failed",
+                )
         return self.make_response([
             self.to_json_obj(x, self.obj_dict['param_routes']) for x in
             self.results
