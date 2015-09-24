@@ -67,6 +67,13 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         When I run "deploy promote myapp 124"
         Then the output has "Package "myapp@124" never validated in "dev" environment for target "the-apptype""
 
+    Scenario: promote version to hosts
+        Given the deploy strategy is "salt"
+        When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
+        Then there is a deployment with status="queued",package_id=3
+        And there is a host deployment with status="pending",deployment_id=4,host_id=3
+        And there is a host deployment with status="pending",deployment_id=4,host_id=4
+
     Scenario Outline: promote version to hosts
         Given the deploy strategy is "<strategy>"
         When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
@@ -94,6 +101,14 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | strategy |
             | mco      |
             | salt     |
+
+    Scenario: promote version to apptype
+        Given the deploy strategy is "salt"
+        When I run "deploy promote myapp 123 --apptype the-apptype"
+        Then there is a deployment with status="queued",package_id=3
+        And there is a tier deployment with status="pending",deployment_id=4,app_id=2
+        And there is a host deployment with status="pending",deployment_id=4,host_id=3
+        And there is a host deployment with status="pending",deployment_id=4,host_id=4
 
     Scenario Outline: promote version to apptype
         Given the deploy strategy is "<strategy>"
@@ -129,6 +144,11 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "123" was deployed to the deploy targets
+
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
 
     Scenario Outline: promote older version to all apptypes
         Given the deploy strategy is "<strategy>"
