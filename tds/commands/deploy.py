@@ -87,11 +87,10 @@ class DeployController(BaseController):
     def determine_availability(self, host):
         """"""
 
-        host_deps = tagopsdb.HostDeployment.get(hostname=host.name)
+        host_deps = tagopsdb.HostDeployment.find(host_id=host.id)
 
         return all(
-            dep.status != 'inprogress' or
-            (dep.status == 'pending' and dep.deployment.status != 'queued')
+            dep.deployment.status not in ['inprogress', 'queued']
             for dep in host_deps
         )
 

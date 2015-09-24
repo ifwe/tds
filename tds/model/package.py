@@ -32,7 +32,7 @@ class Package(Base):
         for dep in self.delegate.deployments:
             for app_dep in dep.app_deployments:
                 if (app_dep.target == tier.delegate and
-                    app_dep.environment_obj == environment and
+                    app_dep.environment_obj.env == environment and
                     app_dep.status == 'validated'):
                     return True
 
