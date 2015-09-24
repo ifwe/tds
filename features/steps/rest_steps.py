@@ -39,6 +39,17 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
                        "Valid options: user, admin.".format(p=perm_type))
 
 
+@given(u'I have set the request headers {properties}')
+def given_i_have_set_the_request_headers(context, properties):
+    properties = parse_properties(properties)
+    context.request_headers = properties
+
+
+@given(u'I have disabled redirect following')
+def given_i_have_disabled_redirect_following(context):
+    context.follow_redirects = False
+
+
 @when(u'I query {method} "{path}"')
 def when_i_query(context, method, path):
     """
@@ -48,6 +59,12 @@ def when_i_query(context, method, path):
     if http_method is None:
         assert False, "Unkown method: {method}".format(method=method)
 
+    if not getattr(context, 'request_headers', None):
+        context.request_headers = dict()
+
+    if getattr(context, 'follow_redirects', None) is None:
+        context.follow_redirects = True
+
     if getattr(context, 'cookie', None):
         context.response = http_method(
             "http://{addr}:{port}{path}".format(
@@ -55,14 +72,20 @@ def when_i_query(context, method, path):
                 port=context.rest_server.server_port,
                 path=path,
             ),
+            allow_redirects=context.follow_redirects,
+            headers=context.request_headers,
             cookies=dict(session=context.cookie),
         )
     else:
-        context.response = http_method("http://{addr}:{port}{path}".format(
-            addr=context.rest_server.server_name,
-            port=context.rest_server.server_port,
-            path=path,
-        ))
+        context.response = http_method(
+            "http://{addr}:{port}{path}".format(
+                addr=context.rest_server.server_name,
+                port=context.rest_server.server_port,
+                path=path,
+            ),
+            allow_redirects=context.follow_redirects,
+            headers=context.request_headers,
+        )
 
 
 @then(u'the response code is {code}')
@@ -141,3 +164,10 @@ def then_the_response_contains_a_cookie(context):
 @then(u'the response does not contain a cookie')
 def then_the_response_does_not_contain_a_cookie(context):
     assert len(context.response.cookies) == 0, context.response.cookies
+
+
+@then(u'the response header contains a location with "{snippet}"')
+def then_the_response_header_contains_a_location_with(context, snippet):
+    assert snippet in context.response.headers['location'], (
+        context.response.headers['location']
+    )

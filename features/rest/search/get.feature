@@ -188,6 +188,46 @@ Feature: REST API search
             | host1 | i386      | dev   |
 
     @rest
+    Scenario Outline: expect a redirect
+        Given there is a deploy target with name="tier1"
+        And there is an environment with name="dev"
+        And there are hosts:
+            | name  | arch      | env   |
+            | host1 | i386      | dev   |
+            | host2 | noarch    | dev   |
+            | host3 | x86_64    | dev   |
+            | host4 | i386      | dev   |
+            | host5 | noarch    | dev   |
+            | host6 | x86_64    | dev   |
+        And I have set the request headers Expect="<expectation>"
+        And I have disabled redirect following
+        When I query GET "/search/hosts?name=host1"
+        Then the response code is <code>
+        And the response header contains a location with "/hosts/1"
+
+        Examples:
+            | expectation   | code      |
+            | 302 Found     | 302       |
+            | 303 See Other | 303       |
+
+    @rest
+    Scenario: expect a redirect with multiple results
+        Given there is a deploy target with name="tier1"
+        And there is an environment with name="dev"
+        And there are hosts:
+            | name  | arch      | env   |
+            | host1 | i386      | dev   |
+            | host2 | noarch    | dev   |
+            | host3 | x86_64    | dev   |
+            | host4 | i386      | dev   |
+            | host5 | noarch    | dev   |
+            | host6 | x86_64    | dev   |
+        And I have set the request headers Expect="<expectation>"
+        And I have disabled redirect following
+        When I query GET "/search/hosts?arch=i386"
+        Then the response code is 417
+
+    @rest
     Scenario Outline: specify limit and/or start queries
         Given there is a deploy target with name="tier1"
         And there is an environment with name="dev"
