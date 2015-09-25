@@ -274,7 +274,7 @@ class SearchView(base.BaseView):
                         body='',
                         status="417 Expectation Failed",
                     )
-            elif self.request.headers['Expect'] != 200:
+            elif self.request.headers['Expect'] != "200 OK":
                 return self.make_response(
                     body='',
                     status="417 Expectation Failed",
