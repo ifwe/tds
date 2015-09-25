@@ -45,7 +45,8 @@ As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 
 ## Routing
 The URLs and methods will be the same for `/projects`, `/ganglias`, `/hipchats`,
-`/hosts`, and `/tiers` as for `/applications` below.
+`/hosts`, `/tiers`, `/deployments`, `/host_deployments`, and `tier_deployments`
+as for `/applications` below.
 URLs and methods will also be the same for `/projects/NAME` as for
 `/applications/NAME` below.
 URLs and methods for deploying have yet to be determined.
@@ -111,6 +112,7 @@ URLs and methods for deploying have yet to be determined.
             <b>404</b>: Not found.<br />
         </td>
     </tr>
+    <tr>
         <td>GET</td>
         <td>Retrieve the application with the name or ID NAME_OR_ID.</td>
         <td><em>None</em></td>
@@ -260,7 +262,7 @@ URLs and methods for deploying have yet to be determined.
         </td>
         <td>
             <b>200</b>: OK. The HipChat was already associated with the tier.<br />
-            <b>201</b>: Create. The HipChat was successfully associated with
+            <b>201</b>: Created. The HipChat was successfully associated with
                 the tier.<br />
             <b>400</b>: Either 'name' or 'id' must be provided in the query.<br />
             <b>404</b>: Either the tier or the HipChat does not exist.<br />
@@ -276,6 +278,7 @@ URLs and methods for deploying have yet to be determined.
             <b>404</b>: Tier or tier-HipChat association does not exist.
         </td>
     </tr>
+    <tr>
         <td>GET</td>
         <td>Get a HipChat that is associated with the given tier.</td>
         <td><em>None</em></td>
@@ -283,6 +286,7 @@ URLs and methods for deploying have yet to be determined.
             <b>200</b>: OK. HipChat returned.<br />
             <b>404</b>: Tier or tier-HipChat association does not exist.
         </td>
+    </tr>
 </tbody>
 </table>
 
@@ -568,20 +572,20 @@ objects in Python.
         <td rowspan="2">Project</td>
         <td>'id'</td>
         <td>Integer</td>
-        <td>Unique integer ID for this project.</td>
+        <td>Unique integer ID for this project</td>
         <td>18</td>
     </tr>
         <tr>
             <td>'name'</td>
             <td>String</td>
-            <td>Unique name for this project.</td>
+            <td>Unique name for this project</td>
             <td>'tds'</td>
         </tr>
     <tr>
         <td rowspan="8">Tier</td>
         <td>'id'</td>
         <td>Integer</td>
-        <td>Unique integer ID for this tier.</td>
+        <td>Unique integer ID for this tier</td>
         <td>23</td>
     </tr>
         <tr>
@@ -626,6 +630,83 @@ objects in Python.
             <td>'hipchats'</td>
             <td>Integers</td>
             <td>Array of HipChat IDs for this tier</td>
+            <td>1</td>
+        </tr>
+    <tr>
+        <td rowspan="3">Deployment</td>
+        <td>'id'</td>
+        <td>Integer</td>
+        <td>Unique integer ID for this deployment</td>
+        <td>46</td>
+    </tr>
+        <tr>
+            <td>'package_id'</td>
+            <td>Integer</td>
+            <td>Package being deployment with this deployment</td>
+            <td>23</td>
+        </tr>
+        <tr>
+            <td>'status'</td>
+            <td>String</td>
+            <td>Choice with only 'pending', 'queued', 'canceled' available to
+                clients</td>
+            <td>'queued'</td>
+        </tr>
+    <tr>
+        <td rowspan="4">Host Deployment</td>
+        <td>'id'</td>
+        <td>Integer</td>
+        <td>Unique integer ID for this host deployment</td>
+        <td>23</td>
+    </tr>
+        <tr>
+            <td>'deployment_id'</td>
+            <td>Integer</td>
+            <td>ID of the deployment to which this host deployment belongs</td>
+            <td>46</td>
+        </tr>
+        <tr>
+            <td>'host_id'</td>
+            <td>Integer</td>
+            <td>ID of the host target for this host deployment</td>
+            <td>23</td>
+        </tr>
+        <tr>
+            <td>'status'</td>
+            <td>String</td>
+            <td>Choice with only 'pending' available to clients</td>
+            <td>'pending'</td>
+        </tr>
+    <tr>
+        <td rowspan="5">Tier Deployment</td>
+        <td>'id'</td>
+        <td>Integer</td>
+        <td>Unique integer ID for this tier deployment</td>
+        <td>23</td>
+    </tr>
+        <tr>
+            <td>'deployment_id'</td>
+            <td>Integer</td>
+            <td>ID of the deployment to which this tier deployment belongs</td>
+            <td>24</td>
+        </tr>
+        <tr>
+            <td>'tier_id'</td>
+            <td>Integer</td>
+            <td>ID of the tier target for this tier deployment</td>
+            <td>23</td>
+        </tr>
+        <tr>
+            <td>'status'</td>
+            <td>String</td>
+            <td>Choice with only 'pending' available to clients</td>
+            <td>'pending'</td>
+        </tr>
+        <tr>
+            <td>'environment_id'</td>
+            <td>Integer</td>
+            <td>ID of the environment in which the host targets of this tier
+                reside</td>
             <td>1</td>
         </tr>
 </tbody>

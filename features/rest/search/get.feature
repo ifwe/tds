@@ -124,14 +124,14 @@ Feature: REST API search
         Then the response code is 400
         And the response contains errors:
             | location  | name      | description                                                               |
-            | query     | <param>   | Validation failed: Value <val> for argument <param> is not an integer.    |
+            | query     | <param>   | Validation failed: Value 2.3 for argument <param> is not an integer.    |
 
         Examples:
-            | limit | start | val   | param |
-            | 2     | 2.3   | 2.3   | start |
-            | 2.3   | 2     | 2.3   | limit |
-            | 2.3   | 2.3   | 2.3   | limit |
-            | 2.3   | 2.3   | 2.3   | start |
+            | limit | start | param |
+            | 2     | 2.3   | start |
+            | 2.3   | 2     | limit |
+            | 2.3   | 2.3   | limit |
+            | 2.3   | 2.3   | start |
 
     @rest
     Scenario: pass invalid choice for choice param
