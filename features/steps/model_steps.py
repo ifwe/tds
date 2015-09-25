@@ -1594,6 +1594,7 @@ NAME_OBJ_MAPPINGS = {
     'ganglia': tagopsdb.model.Ganglia,
     'hipchat': tagopsdb.model.Hipchat,
     'project': tds.model.Project,
+    'environment': tagopsdb.model.Environment,
 }
 
 

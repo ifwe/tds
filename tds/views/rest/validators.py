@@ -260,6 +260,7 @@ class ValidatedView(JSONValidatedView):
                 self._validate_id("PUT")
                 self._validate_name("PUT")
                 self._validate_unique_together("PUT")
+                self._validate_all_unique_params("PUT")
             except:
                 raise NotImplementedError(
                     'A collision validator for this view has not been '
@@ -283,6 +284,7 @@ class ValidatedView(JSONValidatedView):
                 self._validate_id("POST")
                 self._validate_name("POST")
                 self._validate_unique_together("POST")
+                self._validate_all_unique_params("POST")
             except:
                 raise NotImplementedError(
                     'A collision validator for this view has not been '
@@ -336,64 +338,60 @@ class ValidatedView(JSONValidatedView):
                     )
                     self.request.errors.status = 409
 
+    def _validate_all_unique_params(self, request_type):
+        if getattr(self, 'unique', None) is None:
+            return
+        for param in self.unique:
+            self._validate_unique_param(request_type, param)
+
     def _validate_id(self, request_type, obj_type=None):
         """
         Validate that the ID unique constraint isn't violated for a request
         with either POST or PUT request_type.
         """
-        if not obj_type:
-            obj_type = self.name
-        if 'id' in self.request.validated_params:
-            found_obj = self.model.get(id=self.request.validated_params['id'])
-            if not found_obj:
-                return
-            elif request_type == 'POST':
-                self.request.errors.add(
-                    'query', 'id',
-                    "Unique constraint violated. A{n} {type} with this ID"
-                    " already exists.".format(
-                        n='n' if obj_type[0] in 'aeiou' else '',
-                        type=obj_type
-                    )
-                )
-            elif found_obj != self.request.validated[self.name]:
-                self.request.errors.add(
-                    'query', 'id',
-                    "Unique constraint violated. Another {type} with this"
-                    " ID already exists.".format(type=obj_type),
-                )
-            self.request.errors.status = 409
+        self._validate_unique_param(request_type, "id", obj_type, "ID")
 
     def _validate_name(self, request_type, obj_type=None):
         """
         Validate that the name unique constraint isn't violated for a request
         with either POST or PUT request_type.
         """
+        self._validate_unique_param(request_type, "name", obj_type)
+
+    def _validate_unique_param(self, request_type, param_name, obj_type=None,
+                               msg_param_name=None):
         if not obj_type:
             obj_type = self.name
-        if 'name' in self.request.validated_params:
-            dict_key = 'name'
-            if 'name' in self.param_routes:
-                dict_key = self.param_routes['name']
+        if not msg_param_name:
+            msg_param_name = param_name
+        if param_name in self.request.validated_params:
+            dict_key = self.param_routes[param_name] if param_name in \
+                self.param_routes else param_name
             found_obj = self.model.get(
-                **{dict_key: self.request.validated_params['name']}
+                **{dict_key: self.request.validated_params[param_name]}
             )
             if not found_obj:
                 return
             elif request_type == 'POST':
                 self.request.errors.add(
-                    'query', 'name',
-                    "Unique constraint violated. A{n} {type} with this name"
+                    'query', param_name,
+                    "Unique constraint violated. A{n} {type} with this {param}"
                     " already exists.".format(
                         n='n' if obj_type[0] in 'aeiou' else '',
                         type=obj_type,
+                        param=msg_param_name,
                     )
                 )
+            elif obj_type not in self.request.validated:
+                return
             elif found_obj != self.request.validated[obj_type]:
                 self.request.errors.add(
-                    'query', 'name',
-                    "Unique constraint violated. Another {type} with this"
-                    " name already exists.".format(type=obj_type)
+                    'query', param_name,
+                    "Unique constraint violated. Another {type} with this "
+                    "{param} already exists.".format(
+                        type=obj_type,
+                        param=msg_param_name,
+                    )
                 )
             self.request.errors.status = 409
 
