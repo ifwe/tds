@@ -4,6 +4,7 @@ REST API view for deployments.
 
 from cornice.resource import resource, view
 
+import tagopsdb.model
 import tds.model
 from .base import BaseView, init_view
 
@@ -22,6 +23,28 @@ class DeploymentView(BaseView):
     defaults = {}
 
     required_post_fields = ('package_id',)
+
+    def _handle_extra_params(self):
+        self.valid_attrs.append('force')
+        if 'force' in self.request.params:
+            if self.request.method != 'PUT':
+                self.request.errors.add(
+                    'query', 'force',
+                    'Force query is only supported for PUT requests.'
+                )
+                self.request.errors.status = 403
+                return
+            self.request.validated_params = dict(
+                force=self.request.params['force']
+            )
+            msg = self._validate_boolean('force')
+            if msg:
+                self.request.errors.add('query', 'force', msg)
+                self.request.errors.status = 400
+                del self.request.validated_params['force']
+                return
+            self.forced_queue = self.request.validated_params['force']
+            del self.request.validated_params['force']
 
     def validate_individual_deployment(self, _request):
         self.get_obj_by_name_or_id(param_name='id', can_be_name=False)
@@ -132,6 +155,40 @@ class DeploymentView(BaseView):
                 'Cannot queue deployment whose package is not completed.'
             )
             self.request.errors.status = 403
+        if app_deployments:
+            env_map = {'dev': None, 'staging': 'dev', 'prod': 'staging'}
+            for app_dep in app_deployments:
+                previous_env_short = env_map[app_dep.environment_obj.env]
+                if previous_env_short is None:
+                    continue
+                previous_env = tagopsdb.Environment.get(env=previous_env_short)
+                if previous_env is None:
+                    raise tds.exceptions.ProgrammingError(
+                        "Could not find environment with short name {env}."
+                        .format(env=previous_env_short)
+                    )
+                previous_app_dep = tds.model.AppDeployment.find(
+                    environment_id=previous_env.id,
+                    app_id=app_dep.app_id,
+                    status="validated",
+                )
+                if not previous_app_dep and not getattr(self, 'forced_queue',
+                                                        False):
+                    self.request.errors.add(
+                        'query', 'status',
+                        'Package with ID {id} has not been validated in the '
+                        '{env} environment for tier {tier} with ID {tid}. '
+                        'Please use force=true to force deployment.'.format(
+                            id=self.request.validated_params['package_id'] if
+                                'package_id' in self.request.validated_params
+                                else self.request.validated[self.name]
+                                .package_id,
+                            env=previous_env_short,
+                            tier=app_dep.target.name,
+                            tid=app_dep.app_id,
+                        )
+                    )
+                    self.request.errors.status = 403
 
     def _validate_put_status_pending(self):
         """

@@ -18,125 +18,6 @@ class ValidatedView(JSONValidatedView):
     This class implements common non-JSON validators.
     """
 
-    def get_obj_by_name_or_id(self, obj_type=None, model=None, name_attr=None,
-                              param_name=None, can_be_name=True,
-                              dict_name=None):
-        """
-        Validate that an object of type self.name with the name_or_id given in
-        the request exists and attach it to the request at
-        request.validated[obj_type].
-        Otherwise, attach an error with location='path', name='name_or_id' and
-        a description.
-        This error will return a "400 Bad Request" response to this request.
-        """
-        if not obj_type:
-            obj_type = self.name
-            if getattr(self, 'model', None):
-                model = self.model
-        elif not model:
-            model = getattr(tds.model, obj_type.title(), None)
-            if model is None:
-                raise tds.exceptions.NotFoundError('Model', [obj_type])
-
-        if not param_name:
-            param_name = 'name_or_id'
-
-        try:
-            obj_id = int(self.request.matchdict[param_name])
-            obj = model.get(id=obj_id)
-            name = False
-        except ValueError:
-            if can_be_name:
-                obj_id = False
-                name = self.request.matchdict[param_name]
-                obj_dict = dict()
-                if name_attr:
-                    obj_dict[name_attr] = name
-                elif 'name' in self.param_routes:
-                    obj_dict[self.param_routes['name']] = name
-                else:
-                    obj_dict['name'] = name
-                obj = model.get(**obj_dict)
-            else:
-                obj_id = self.request.matchdict[param_name]
-                obj = None
-
-        if obj is None:
-            self.request.errors.add(
-                'path', param_name,
-                "{obj_type} with {prop} {val} does not exist.".format(
-                    obj_type=obj_type.capitalize(),
-                    prop="ID" if obj_id else "name",
-                    val=obj_id if obj_id else name,
-                )
-            )
-            self.request.errors.status = 404
-        elif dict_name:
-            self.request.validated[dict_name] = obj
-        else:
-            self.request.validated[obj_type] = obj
-
-    def get_collection_by_limit_start(self, obj_type=None, plural=None):
-        """
-        Make sure that the selection parameters are valid for collection GET.
-        If they are not, raise "400 Bad Request".
-        Else, set request.validated[plural] to objects matching query.
-        If obj_type is not provided, it is defaulted to self.name.
-        If plural is not provided, it is defaulted to obj_type + 's' if
-        obj_type is provided and to self.plural if obj_type is not provided.
-        """
-
-        if not plural and not obj_type:
-            plural = self.plural
-        elif obj_type:
-            plural = obj_type + 's'
-
-        if not obj_type:
-            obj_type = self.name
-
-        if getattr(self, 'model', None):
-            obj_cls = self.model
-        else:
-            obj_cls = getattr(tds.model, obj_type.title(), None)
-
-        if obj_cls is None:
-            raise tds.exceptions.NotFoundError('Model', [obj_type])
-
-        self._validate_params(('limit', 'start'))
-        self._validate_json_params({'limit': 'integer', 'start': 'integer'})
-
-        if plural not in self.request.validated:
-            self.request.validated[plural] = obj_cls.query().order_by(
-                obj_cls.id
-            )
-
-        if 'start' in self.request.validated_params:
-            self.request.validated[plural] = (
-                self.request.validated[plural].filter(
-                    obj_cls.id >= self.request.validated_params['start']
-                )
-            )
-
-        if obj_cls == tds.model.Application:
-            self.request.validated[plural] = (
-                self.request.validated[plural].filter(
-                    obj_cls.pkg_name != '__dummy__'
-                )
-            )
-        elif obj_cls == tds.model.AppTarget:
-            self.request.validated[plural] = (
-                self.request.validated[plural].filter(
-                    obj_cls.app_type != '__dummy__'
-                )
-            )
-
-        if 'limit' in self.request.validated_params:
-            self.request.validated[plural] = (
-                self.request.validated[plural].limit(
-                    self.request.validated_params['limit']
-                )
-            )
-
     def _validate_params(self, valid_params):
         """
         Validate all query parameters in self.request against valid_params and
@@ -230,6 +111,8 @@ class ValidatedView(JSONValidatedView):
         Validate a PUT or POST request by validating all given attributes
         against the list of valid attributes for this view's associated model.
         """
+        if getattr(self, '_handle_extra_params', None) is not None:
+            self._handle_extra_params()
         self._validate_params(self.valid_attrs)
         self._validate_json_params()
 

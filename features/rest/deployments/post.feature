@@ -38,6 +38,16 @@ Feature: POST deployment(s) from the REST API
         And there is no deployment with status="queued"
 
     @rest
+    Scenario: attempt to use force parameter
+        When I query POST "/deployments?package_id=1&force=1"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name  | description                                       |
+            | query     | force | Force query is only supported for PUT requests.   |
+        And there is no deployment with package_id=1
+        And there is no deployment with status="queued"
+
+    @rest
     Scenario: attempt to violate a unique constraint
         Given there are deployments:
             | id    | user  | package_id    | status    |
