@@ -123,6 +123,80 @@ Feature: PUT deployment(s) from the REST API
             | inprogress    | failed        |
 
     @rest
+    Scenario Outline: attempt to queue a deployment whose package hasn't been validated in the previous environment
+        Given there is an environment with name="dev"
+        And there is an environment with name="staging"
+        And there is a deploy target with name="tier1"
+        And there is a deploy target with name="tier2"
+        And there are deployments:
+            | id    | user  | package_id    | status    |
+            | 4     | foo   | 3             | pending   |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    |
+            | 1     | 3             | 2         | pending   | foo   | 1                 |
+            | 2     | 4             | 2         | pending   | foo   | 2                 |
+        When I query PUT "/deployments/4?status=queued&<query>"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                                                                                                           |
+            | query     | status    | Package with ID 3 has not been validated in the dev environment for tier tier1 with ID 2. Please use force=true to force deployment.  |
+        And there is a deployment with id=4,status="pending"
+        And there is no deployment with id=4,status="queued"
+
+        Examples:
+            | query         |
+            | force=0       |
+            | force=false   |
+            | force=False   |
+
+    @rest
+    Scenario Outline: force deployment with validation in previous environment
+        Given there is an environment with name="dev"
+        And there is an environment with name="staging"
+        And there is a deploy target with name="tier1"
+        And there is a deploy target with name="tier2"
+        And there are deployments:
+            | id    | user  | package_id    | status    |
+            | 4     | foo   | 3             | pending   |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    |
+            | 1     | 3             | 2         | pending   | foo   | 1                 |
+            | 2     | 4             | 2         | pending   | foo   | 2                 |
+        When I query PUT "/deployments/4?status=queued&force=<force>"
+        Then the response code is 200
+        And the response is an object with id=4,status="queued"
+        And there is a deployment with id=4,status="queued"
+        And there is no deployment with id=4,status="pending"
+
+        Examples:
+            | force |
+            | true  |
+            | 1     |
+            | True  |
+
+    @rest
+    Scenario Outline: pass a non-Boolean for force
+        Given there is an environment with name="dev"
+        And there is an environment with name="staging"
+        And there is a deploy target with name="tier1"
+        And there is a deploy target with name="tier2"
+        And there are deployments:
+            | id    | user  | package_id    | status    |
+            | 4     | foo   | 3             | pending   |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    |
+            | 1     | 3             | 2         | pending   | foo   | 1                 |
+            | 2     | 4             | 2         | pending   | foo   | 2                 |
+        When I query PUT "/deployments/4?status=queued&force=foo"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name  | description                                                                                                       |
+            | query     | force | Value foo for argument force is not a Boolean. Valid Boolean formats: (0, 1, 'true', 'false', 'True', 'False').   |
+        And there is a deployment with id=4,status="pending"
+        And there is no deployment with id=4,status="queued"
+
+
+    @rest
     Scenario: queue a deployment
         Given there is an environment with name="dev"
         And there are hosts:
