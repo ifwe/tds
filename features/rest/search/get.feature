@@ -11,8 +11,8 @@ Feature: REST API search
         When I query GET "/search/foo?"
         Then the response code is 404
         And the response contains errors:
-            | location  | name      | description                                                                                                                                                                                       |
-            | path      | obj_type  | Unknown object type foo. Supported object types are: ['applications', 'tiers', 'host_deployments', 'hosts', 'tier_deployments', 'hipchats', 'packages', 'ganglias', 'projects', 'deployments'].   |
+            | location  | name      | description                                                                                                                                                                                                       |
+            | path      | obj_type  | Unknown object type foo. Supported object types are: ['tier_deployments', 'ganglias', 'environments', 'applications', 'packages', 'projects', 'tiers', 'hipchats', 'deployments', 'host_deployments', 'hosts'].   |
 
     @rest
     Scenario: get all projects

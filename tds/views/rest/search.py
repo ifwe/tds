@@ -45,6 +45,22 @@ class SearchView(base.BaseView):
         'param_routes': {},
     }
 
+    ENVIRONMENT_DICT = {
+        'model': tagopsdb.model.Environment,
+        'params': {
+            'id': 'integer',
+            'name': 'string',
+            'short_name': 'string',
+            'domain': 'string',
+            'prefix': 'string',
+            'zone_id': 'integer',
+        },
+        'param_routes': {
+            'name': 'environment',
+            'short_name': 'env',
+        },
+    }
+
     GANGLIA_DICT = {
         'model': tagopsdb.model.Ganglia,
         'params': {
@@ -171,6 +187,7 @@ class SearchView(base.BaseView):
     TYPES = {
         'applications': APPLICATION_DICT,
         'deployments': DEPLOYMENT_DICT,
+        'environments': ENVIRONMENT_DICT,
         'ganglias': GANGLIA_DICT,
         'hipchats': HIPCHAT_DICT,
         'hosts': HOST_DICT,
