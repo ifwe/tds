@@ -145,6 +145,7 @@ Feature: PUT deployment(s) from the REST API
 
         Examples:
             | query         |
+            |               |
             | force=0       |
             | force=false   |
             | force=False   |
