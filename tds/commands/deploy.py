@@ -84,10 +84,13 @@ class DeployController(BaseController):
 
         super(DeployController, self).__init__(config)
 
-    def determine_availability(self, host):
+    def determine_availability(self, host, deployment=False):
         """"""
 
-        host_deps = tagopsdb.HostDeployment.find(host_id=host.id)
+        if deployment:
+            host_deps = tagopsdb.HostDeployment.find(host_id=host.host_id)
+        else:
+            host_deps = tagopsdb.HostDeployment.find(host_id=host.id)
 
         return all(
             dep.deployment.status not in ['inprogress', 'queued']
@@ -123,6 +126,88 @@ class DeployController(BaseController):
                 app_deployments[apptype.id] = (apptype.name, app_deployment)
 
         return app_deployments
+
+    def fix_deployments(self):
+        """"""
+
+        self.deployment.status = 'pending'
+        self.deployment_status['deployment'] = {
+            self.deployment.id, self.deployment.status
+        }
+
+        if not self.deployment.app_deployments:
+            self.deployment_status['type'] = 'host'
+            host_deps = self.fix_host_deployments()
+
+            if host_deps is None:
+                tagopsdb.Session.rollback()
+                # Log something, then return... something
+            else:
+                self.deployment_status['hosts'] = host_deps
+        else:
+            self.deployment_status['type'] = 'tier'
+            tier_deps = self.fix_tier_deployments()
+
+            if not tier_deps:
+                tagopsdb.Session.rollback()
+                # Log something, then return... something
+            else:
+                self.deployment_status['tiers'] = tier_deps
+
+        tagopsdb.Session.commit()
+
+    def fix_host_deployments(self, host_deps=None):
+        """"""
+
+        host_deps_to_do = []
+
+        if host_deps is None:
+            host_deps = self.deployment.host_deployments
+            in_tier = False
+        else:
+            in_tier = True
+
+        for host_dep in host_deps:
+            available = self.determine_availability(host_dep, deployment=True)
+
+            if not available:
+                if in_tier:
+                    return None
+                else:  # Just remove host
+                    continue
+            else:
+                if host_dep.status == 'failed':
+                    host_deps_to_do.append(host_dep)
+
+        if not host_deps_to_do:
+            return None
+
+        for host_dep in host_deps_to_do:
+            host_dep.status = 'pending'
+
+        return host_deps_to_do
+
+    def fix_tier_deployments(self):
+        """"""
+
+        tier_deps = []
+
+        self.deployment_status['hosts'] = []
+
+        for tier_dep in self.deployment.app_deployments:
+            host_deps = self.fix_host_deployments([
+                host_dep for host_dep in self.deployment.host_deployments
+                if host_dep.host.application == tier_dep.application
+            ])
+
+            if host_deps is None:
+                continue   # Just remove tier
+            else:
+                self.deployment_status['hosts'].extend(host_deps)
+                tier_dep.status = 'pending'
+                tier_deps.append(tier_dep)
+
+        return tier_deps
 
     def get_previous_env(self, env):
         """
@@ -294,17 +379,35 @@ class DeployController(BaseController):
         notification = tds.notifications.Notifications(self.app_config)
         notification.notify(deployment)
 
-    @input_validate('package_hostonly')
-    @input_validate('targets')
-    @input_validate('application')
-    def fix(self, application, package, hosts=None, apptypes=None,
-            **params):
+    @input_validate('deployment')
+    def fix(self, deployment=None, **params):
         # For the given hosts or tiers, determine if there are any failed
         # host deployments.  If so, re-attempt the deployments after ensuring
         # no other conflicting deployments are in progress; if they
         # succeed and it's a tier deployment, update the tier as 'complete'
         # as well, otherwise leave as 'incomplete'.
-        pass
+        self.deployment = deployment
+
+        if self.deployment.status not in ['failed', 'stopped']:
+            log.info('Deployment %s not in failed state, nothing '
+                     'to fix' % self.deployment.id)
+            return dict()
+
+        self.fix_deployments()
+        self.send_notifications(**params)
+
+        # Let installer daemon access deployment now
+        self.deployment.status = 'queued'
+        tagopsdb.Session.commit()
+
+        if params['detach']:
+            log.info('Deployment ready for installer daemon, disconnecting '
+                     'now.')
+            return dict()
+
+        log.info('Deployment now being run, press Ctrl-C at any time to '
+                 'cancel...')
+        self.manage_attached_session()
 
     @input_validate('package')
     @input_validate('targets')
@@ -421,7 +524,17 @@ class DeployController(BaseController):
         # set the status to 'invalidated' (nothing for hosts), else throw
         # appropriate error.  If no previous validated version, throw
         # appropriate error as well.
-        pass
+        app_deployments = self.find_current_app_deployments(
+            package, apptypes, params
+        )
+
+        for apptype in apptypes:
+            tier_name, curr_app_dep = app_deployments[apptype.id]
+
+            if hosts:
+                self.deploy_hosts.update(set(
+                    host for host in hosts if host.application == apptype
+                ))
 
     @input_validate('package_show')
     @input_validate('targets')

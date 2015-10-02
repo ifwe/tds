@@ -427,3 +427,13 @@ class BaseController(object):
             )
 
         return versions.values()[0]
+
+    def validate_deployment(self, deployment=None, **_params):
+        """"""
+
+        dep = tds.model.Deployment.get(id=deployment)
+
+        if dep is None:
+            raise tds.exceptions.NotFoundError('Deployment', dep)
+
+        return dict(deployment=dep)
