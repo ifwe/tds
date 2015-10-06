@@ -12,14 +12,6 @@ from .base import BaseView, init_view
 @init_view(name="tier-deployment", model=tds.model.AppDeployment)
 class TierDeploymentView(BaseView):
 
-    types = {
-        'id': 'integer',
-        'deployment_id': 'integer',
-        'tier_id': 'integer',
-        'status': 'choice',
-        'environment_id': 'integer',
-    }
-
     param_routes = {
         'tier_id': 'app_id',
     }

@@ -11,15 +11,6 @@ from .base import BaseView, init_view
 @init_view(name="environment", model=tagopsdb.model.Environment)
 class EnvironmentView(BaseView):
 
-    types = {
-        'id': 'integer',
-        'name': 'string',
-        'short_name': 'string',
-        'domain': 'string',
-        'prefix': 'string',
-        'zone_id': 'integer',
-    }
-
     param_routes = {
         'name': 'environment',
         'short_name': 'env',

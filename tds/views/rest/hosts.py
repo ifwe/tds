@@ -20,25 +20,6 @@ class HostView(BaseView):
     others correspond to the /hosts/{name_or_id} URL.
     """
 
-    # JSON types for params.
-    types = {
-        'id': 'integer',
-        'name': 'string',
-        'tier_id': 'integer',
-        'cage': 'integer',
-        'cab': 'string',
-        'rack': 'integer',
-        'kernel_version': 'string',
-        'console_port': 'string',
-        'power_port': 'string',
-        'power_circuit': 'string',
-        'state': 'choice',
-        'arch': 'choice',
-        'distribution': 'choice',
-        'timezone': 'string',
-        'environment_id': 'integer',
-    }
-
     # Remove these choice fields when they are defined in TagOpsDB.
     arch_choices = ('i386', 'noarch', 'x86_64',)
 

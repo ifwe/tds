@@ -10,7 +10,8 @@ from .base import BaseView, init_view
 
 @resource(collection_path="/tiers/{name_or_id}/hipchats",
           path="/tiers/{name_or_id}/hipchats/{hipchat_name_or_id}")
-@init_view(name="tier-hipchat", model=tagopsdb.model.Hipchat)
+@init_view(name="tier-hipchat", model=tagopsdb.model.Hipchat, set_types=False,
+           set_descriptions=False)
 class TierHipchatView(BaseView):
     """
     Tier-Hipchat relationship view.

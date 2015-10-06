@@ -25,15 +25,6 @@ class PackageView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
-    types = {
-        'id': 'integer',
-        'version': 'integer',
-        'revision': 'integer',
-        'status': 'choice',
-        'builder': 'choice',
-        'job': 'string',
-    }
-
     param_routes = {}
 
     defaults = {
