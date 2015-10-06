@@ -61,7 +61,7 @@ class TagopsdbDeploymentProvider(object):
     def get_all(environment):
         'Get all unvalidated deployments for `environment`'
         unvalidated_deps = tds.model.AppDeployment.find(
-            environment=environment,
+            env=environment,  # the config 'env.environment' is actually 'env'
             needs_validation=True,
             order_by=tds.model.AppDeployment.realized,
             desc=True,
@@ -81,6 +81,7 @@ class TagopsdbDeploymentProvider(object):
             latest_unvalidated_deps.append(unvalidated_dep)
 
         return latest_unvalidated_deps
+
 
 class ValidationMonitor(object):
     'Determine what deployments have been unvalidated for too long'
