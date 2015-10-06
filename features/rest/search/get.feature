@@ -1,4 +1,4 @@
-Feature: REST API search
+Feature: REST API search GET
     As a developer
     I want to find objects matching my specifications
     So that I can use that information to more easily interact with the API
@@ -211,7 +211,7 @@ Feature: REST API search
             | 303 See Other | 303       |
 
     @rest
-    Scenario: expect a redirect with multiple results
+    Scenario Outline: expect a redirect with multiple results
         Given there is a deploy target with name="tier1"
         And there is an environment with name="dev"
         And there are hosts:
@@ -226,6 +226,11 @@ Feature: REST API search
         And I have disabled redirect following
         When I query GET "/search/hosts?arch=i386"
         Then the response code is 417
+
+        Examples:
+            | expectation   |
+            | 302 Found     |
+            | 303 See Other |
 
     @rest
     Scenario Outline: specify limit and/or start queries

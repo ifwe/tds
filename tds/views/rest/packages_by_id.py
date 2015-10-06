@@ -13,7 +13,8 @@ import tds.model
 from .base import BaseView, init_view
 
 @resource(collection_path="/packages", path="/packages/{id}")
-@init_view(name='package-by-id', model=tds.model.Package)
+@init_view(name='package-by-id', model=tds.model.Package, set_types=False,
+           set_descriptions=False)
 class PackageByIDView(BaseView):
 
     types = {

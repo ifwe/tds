@@ -19,10 +19,11 @@ import tds.model
 import tds.exceptions
 
 from .validators import ValidatedView
-from . import utils
+from . import utils, types, descriptions
 
 
-def init_view(_view_cls=None, name=None, plural=None, model=None):
+def init_view(_view_cls=None, name=None, plural=None, model=None,
+              set_types=False, set_descriptions=False):
     """
     This is a decorator that will fill in some basic information for a class
     based on the information provided.
@@ -34,7 +35,9 @@ def init_view(_view_cls=None, name=None, plural=None, model=None):
     (name -> _view_cls.name).
     """
 
-    def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model):
+    def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model,
+                       set_json_types=set_types,
+                       set_descripts=set_descriptions):
         """
         Do the usual function-in-function decorator thing.
         """
@@ -55,6 +58,26 @@ def init_view(_view_cls=None, name=None, plural=None, model=None):
                 "No model named {name}.".format(name=cls.name.title())
             )
         cls.model = obj_model
+
+        if set_json_types:
+            json_types = getattr(
+                types, "{name}_TYPES".format(
+                    name=obj_name.upper().replace('-', '_')
+                )
+            )
+            if 'user' in json_types:
+                del json_types['user']
+            cls.types = json_types
+
+        if set_descripts:
+            param_descripts = getattr(
+                descriptions, "{name}_DESCRIPTIONS".format(
+                    name=obj_name.upper().replace('-', '_')
+                )
+            )
+            if 'user' in param_descripts:
+                del param_descripts['user']
+            cls.param_descriptions = param_descripts
 
         return cls
     return real_decorator
@@ -126,7 +149,10 @@ class BaseView(ValidatedView):
         """
         if param_routes is None:
             param_routes = self.param_routes
-        d = obj.to_dict()
+
+        d = obj
+        if getattr(obj, 'to_dict', None) is not None:
+            d = obj.to_dict()
         if not param_routes:
             return d
 
@@ -264,12 +290,13 @@ class BaseView(ValidatedView):
             headers = dict()
 
         if renderer == "json":
-            return Response(
-                body=json.dumps(body, cls=TDSEncoder) if body else body,
+            resp = Response(
+                body=json.dumps(body, cls=TDSEncoder),
                 content_type="text/json",
                 status=status,
                 headers=headers,
             )
+            return resp
         else:
             raise NotImplementedError(
                 "REST renderer not implemented: {r}.".format(

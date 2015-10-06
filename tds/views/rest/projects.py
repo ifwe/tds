@@ -18,11 +18,6 @@ class ProjectView(BaseView):
     correspond to the /projects/{name_or_id} URL.
     """
 
-    types = {
-        'id': 'number',
-        'name': 'string',
-    }
-
     required_post_fields = ('name',)
 
     permissions = {

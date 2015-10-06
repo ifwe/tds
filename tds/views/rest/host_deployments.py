@@ -11,13 +11,6 @@ from .base import BaseView, init_view
 @init_view(name="host-deployment", model=tds.model.HostDeployment)
 class HostDeploymentView(BaseView):
 
-    types = {
-        'id': 'integer',
-        'deployment_id': 'integer',
-        'host_id': 'integer',
-        'status': 'choice',
-    }
-
     param_routes = {}
 
     defaults = {

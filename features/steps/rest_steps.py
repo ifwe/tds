@@ -156,6 +156,12 @@ def then_the_response_body_contains(context, message):
     assert message in context.response.text, (message, context.response.text)
 
 
+@then(u'the response body does not contain "{message}"')
+def then_the_response_body_does_not_contain(context, message):
+    assert message not in context.response.text, (message,
+                                                  context.response.text)
+
+
 @then(u'the response contains a cookie')
 def then_the_response_contains_a_cookie(context):
     assert len(context.response.cookies) > 0, context.response.cookies
@@ -170,4 +176,11 @@ def then_the_response_does_not_contain_a_cookie(context):
 def then_the_response_header_contains_a_location_with(context, snippet):
     assert snippet in context.response.headers['location'], (
         context.response.headers['location']
+    )
+
+
+@then(u'the response header contains "{name}" set to "{value}"')
+def then_the_response_header_contains_name_set_to_value(context, name, value):
+    assert value == context.response.headers[name], (
+        context.response.headers[name]
     )

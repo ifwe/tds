@@ -18,12 +18,6 @@ class HipchatView(BaseView):
     correspond to the /hipchats/{name_or_id} URL.
     """
 
-    # JSON types for params.
-    types = {
-        'id': 'integer',
-        'name': 'string',
-    }
-
     # URL parameter routes to Python object fields.
     # Params not included are mapped to themselves.
     param_routes = {

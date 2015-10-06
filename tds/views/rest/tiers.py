@@ -20,17 +20,6 @@ class TierView(BaseView):
     others correspond to the /tiers/{name_or_id} URL.
     """
 
-    # JSON types for params.
-    types = {
-        'id': 'integer',
-        'name': 'string',
-        'distribution': 'choice',
-        'puppet_class': 'string',
-        'ganglia_id': 'integer',
-        'ganglia_name': 'string',
-        'status': 'choice',
-    }
-
     # URL parameter routes to Python object fields.
     # Params not included are mapped to themselves.
     param_routes = {

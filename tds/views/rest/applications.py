@@ -20,19 +20,6 @@ class ApplicationView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
-    # JSON types for params.
-    types = {
-        'id': 'integer',
-        'name': 'string',
-        'job': 'string',
-        'build_host': 'string',
-        'build_type': 'choice',
-        'deploy_type': 'string',
-        'arch': 'choice',
-        'validation_type': 'string',
-        'env_specific': 'boolean',
-    }
-
     # URL parameter routes to Python object fields.
     # Params not included are mapped to themselves.
     param_routes = {

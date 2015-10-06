@@ -12,12 +12,6 @@ from .base import BaseView, init_view
 @init_view(name="deployment")
 class DeploymentView(BaseView):
 
-    types = {
-        'id': 'integer',
-        'package_id': 'integer',
-        'status': 'choice',
-    }
-
     param_routes = {}
 
     defaults = {}
