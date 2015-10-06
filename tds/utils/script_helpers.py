@@ -28,8 +28,8 @@ class UnvalidatedDeploymentNotifier(tds.notifications.Notifications):
                 version=package.version,
             ),
             target=dict(
-                environment=app_deployment.deployment.environment,
-                apptypes=[app_deployment.application.app_type],
+                environment=app_deployment.environment,
+                apptypes=[app_deployment.target],
             )
         )
 
@@ -72,12 +72,12 @@ class TagopsdbDeploymentProvider(object):
 
         for unvalidated_dep in unvalidated_deps:
             tier = unvalidated_dep.target
-            package = unvalidated_dep.deployment.package
+            pkg_name = unvalidated_dep.deployment.package.pkg_name
 
-            if (tier, package) in seen:
+            if (tier, pkg_name) in seen:
                 continue
 
-            seen.add((tier, package))
+            seen.add((tier, pkg_name))
             latest_unvalidated_deps.append(unvalidated_dep)
 
         return latest_unvalidated_deps
