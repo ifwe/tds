@@ -10,7 +10,10 @@ from .deploy_target import AppTarget
 class Deployment(Base):
     """Model class for deployment object."""
 
-    delegate = tagopsdb.Deployment
+    # TO FIX: Can't use a delegate here right now due to
+    # the 'convert_deployment' method in tds/utils/script_helpers.py
+    # Once that's fixed, this can be enabled
+    #delegate = tagopsdb.Deployment
 
     @property
     def application(self):
