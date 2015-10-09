@@ -11,18 +11,18 @@ Feature: POST tier deployment(s) from the REST API
             | 1         | 1         |
             | 1         | 2         |
         And there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | foo   | 1             | pending   |
+            | id    | user  | status    |
+            | 1     | foo   | pending   |
         And there is an environment with name="dev"
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
 
     @rest
     Scenario: post a tier deployment
-        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1"
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1&package_id=1"
         Then the response code is 201
-        And the response is an object with deployment_id=1,tier_id=1,id=1,user="testuser",environment_id=1
-        And there is a tier deployment with deployment_id=1,app_id=1,id=1,user="testuser",environment_id=1
+        And the response is an object with deployment_id=1,tier_id=1,id=1,user="testuser",environment_id=1,package_id=1
+        And there is a tier deployment with deployment_id=1,app_id=1,id=1,user="testuser",environment_id=1,package_id=1
 
     @rest
     Scenario: post a tier deployment for a tier with hosts
@@ -33,13 +33,13 @@ Feature: POST tier deployment(s) from the REST API
             | host2 | dev       | 1         |
             | host3 | staging   | 1         |
             | host4 | dev       | 2         |
-        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1"
-        Then the response is an object with deployment_id=1,tier_id=1,id=1,user="testuser",environment_id=1
-        And there is a tier deployment with deployment_id=1,app_id=1,id=1,user="testuser",environment_id=1
-        And there is a host deployment with deployment_id=1,host_id=1,user="testuser"
-        And there is a host deployment with deployment_id=1,host_id=2,user="testuser"
-        And there is no host deployment with deployment_id=1,host_id=3,user="testuser"
-        And there is no host deployment with deployment_id=1,host_id=4,user="testuser"
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1&package_id=1"
+        Then the response is an object with deployment_id=1,tier_id=1,id=1,user="testuser",environment_id=1,package_id=1
+        And there is a tier deployment with deployment_id=1,app_id=1,id=1,user="testuser",environment_id=1,package_id=1
+        And there is a host deployment with deployment_id=1,host_id=1,user="testuser",package_id=1
+        And there is a host deployment with deployment_id=1,host_id=2,user="testuser",package_id=1
+        And there is no host deployment with deployment_id=1,host_id=3,user="testuser",package_id=1
+        And there is no host deployment with deployment_id=1,host_id=4,user="testuser",package_id=1
 
     @rest
     Scenario: omit required field
@@ -49,16 +49,19 @@ Feature: POST tier deployment(s) from the REST API
             | location  | name  | description                           |
             | query     |       | tier_id is a required field.          |
             | query     |       | environment_id is a required field.   |
-        And there is no tier deployment with deployment_id=1,id=1
+            | query     |       | package_id is a required field.       |
+        And there is no tier deployment with deployment_id=1
+        And there is no tier deployment with id=1
 
     @rest
     Scenario Outline: attempt to set the status to not pending
-        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1&status=<status>"
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1&package_id=1&status=<status>"
         Then the response code is 403
         And the response contains errors:
             | location  | name      | description                                       |
             | query     | status    | Status must be pending for new tier deployments.  |
-        And there is no tier deployment with deployment_id=1,app_id=1,status="<status>",environment_id=1
+        And there is no tier deployment with deployment_id=1,app_id=1,status="<status>",environment_id=1,package_id=1
+        And there is no tier deployment with id=1
 
         Examples:
             | status        |
@@ -67,44 +70,45 @@ Feature: POST tier deployment(s) from the REST API
             | ok            |
 
     @rest
-    Scenario: attempt to violate a unique constraint
-        Given there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
-        When I query POST "/tier_deployments?id=1&deployment_id=1&tier_id=1&environment_id=1"
-        Then the response code is 409
-        And the response contains errors:
-            | location  | name  | description                                                                   |
-            | query     | id    | Unique constraint violated. A tier deployment with this ID already exists.    |
-
-    @rest
     Scenario: pass a tier_id for a tier that doesn't exist
-        When I query POST "/tier_deployments?deployment_id=1&tier_id=500&environment_id=1"
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=500&environment_id=1&package_id=1"
         Then the response code is 400
         And the response contains errors:
             | location  | name      | description                   |
             | query     | tier_id   | No tier with ID 500 exists.   |
-        And there is no tier deployment with deployment_id=1,app_id=500,environment_id=1
+        And there is no tier deployment with deployment_id=1,app_id=500,environment_id=1,package_id=1
+        And there is no tier deployment with id=1
 
     @rest
     Scenario: pass an environment_id for an environment that doesn't exist
-        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=500"
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=500&package_id=1"
         Then the response code is 400
         And the response contains errors:
             | location  | name              | description                           |
             | query     | environment_id    | No environment with ID 500 exists.    |
-        And there is no tier deployment with deployment_id=1,app_id=1,environment_id=500
+        And there is no tier deployment with deployment_id=1,app_id=1,environment_id=500,package_id=1
+        And there is no tier deployment with id=1
 
     @rest
-    Scenario: attempt to violate (deployment_id, tier_id) unique together constraint
+    Scenario: pass a package_id for a package that doesn't exist
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1&package_id=500"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name          | description                       |
+            | query     | package_id    | No package with ID 500 exists.    |
+        And there is no tier deployment with deployment_id=1,app_id=1,environment_id=1,package_id=500
+        And there is no tier deployment with id=1
+
+    @rest
+    Scenario: attempt to violate (deployment_id, tier_id, package_id) unique together constraint
         Given there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
-        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1"
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=1&environment_id=1&package_id=1"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                                                               |
-            | query     | tier_id   | ('deployment_id', 'tier_id') are unique together. A tier deployment with these attributes already exists. |
+            | location  | name          | description                                                                                                               |
+            | query     | package_id    | ('deployment_id', 'tier_id', 'package_id') are unique together. A tier deployment with these attributes already exists.   |
         And there is no tier deployment with id=2
 
     @rest
@@ -114,13 +118,13 @@ Feature: POST tier deployment(s) from the REST API
             | name  | env       |
             | host1 | staging   |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 1     | 1             | 1         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1             |
         And there is a deploy target with name="tier1"
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 2                 |
-        When I query POST "/tier_deployments?deployment_id=1&tier_id=2&environment_id=1"
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 2                 | 1             |
+        When I query POST "/tier_deployments?deployment_id=1&tier_id=2&environment_id=1&package_id=1"
         Then the response code is 409
         And the response contains errors:
             | location  | name              | description                                                                                                                                                   |

@@ -34,9 +34,8 @@ Feature: POST environment(s) from the REST API
         And there is no environment with <props>
 
         Examples:
-            | name          | param         | props                     | query                                                                     |
-            | id            | ID            | environment="production"  | id=1&name=production&short_name=prod&domain=foobar.com&zone_id=1          |
-            | name          | name          | id=3,env="prod"           | name=development&short_name=prod&domain=foobar.com&zone_id=1              |
-            | short_name    | short_name    | id=3,env="prod"           | name=production&short_name=dev&domain=foobar.com&zone_id=1                |
-            | prefix        | prefix        | id=3,env="prod"           | name=production&short_name=dev&domain=foobar.com&zone_id=1&prefix=d       |
-            | domain        | domain        | id=3,env="prod"           | name=production&short_name=dev&domain=devexample.com&zone_id=1            |
+            | name          | param         | props                     | query                                                                 |
+            | name          | name          | id=3,env="prod"           | name=development&short_name=prod&domain=foobar.com&zone_id=1          |
+            | short_name    | short_name    | id=3,env="prod"           | name=production&short_name=dev&domain=foobar.com&zone_id=1            |
+            | prefix        | prefix        | id=3,env="prod"           | name=production&short_name=dev&domain=foobar.com&zone_id=1&prefix=d   |
+            | domain        | domain        | id=3,env="prod"           | name=production&short_name=dev&domain=devexample.com&zone_id=1        |

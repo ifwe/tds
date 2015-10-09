@@ -13,57 +13,27 @@ Feature: POST deployment(s) from the REST API
 
     @rest
     Scenario: post a deployment
-        When I query POST "/deployments?package_id=1"
+        When I query POST "/deployments"
         Then the response code is 201
-        And the response is an object with id=1,package_id=1,user="testuser"
-        And there is a deployment with id=1,package_id=1,status='pending',user="testuser"
-
-    @rest
-    Scenario: omit required field
-        When I query POST "/deployments?id=2"
-        Then the response code is 400
-        And the response contains errors:
-            | location  | name  | description                       |
-            | query     |       | package_id is a required field.   |
-        And there is no deployment with id=2
+        And the response is an object with id=1,status="pending",user="testuser"
+        And there is a deployment with id=1,status="pending",user="testuser"
 
     @rest
     Scenario: attempt to set the status while posting
-        When I query POST "/deployments?package_id=1&status=queued"
+        When I query POST "/deployments?status=queued"
         Then the response code is 403
         And the response contains errors:
             | location  | name      | description                                   |
             | query     | status    | Status must be pending for new deployments.   |
-        And there is no deployment with package_id=1
+        And there is no deployment with id=1
         And there is no deployment with status="queued"
 
     @rest
     Scenario: attempt to use force parameter
-        When I query POST "/deployments?package_id=1&force=1"
+        When I query POST "/deployments?status=queued&force=1"
         Then the response code is 403
         And the response contains errors:
             | location  | name  | description                                       |
             | query     | force | Force query is only supported for PUT requests.   |
-        And there is no deployment with package_id=1
+        And there is no deployment with id=1
         And there is no deployment with status="queued"
-
-    @rest
-    Scenario: attempt to violate a unique constraint
-        Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | foo   | 1             | pending   |
-            | 2     | bar   | 2             | queued    |
-        When I query POST "/deployments?package_id=1&id=1"
-        Then the response code is 409
-        And the response contains errors:
-            | location  | name  | description                                                           |
-            | query     | id    | Unique constraint violated. A deployment with this ID already exists. |
-
-    @rest
-    Scenario: pass a package_id for a package that doesn't exist
-        When I query POST "/deployments?package_id=500"
-        Then the response code is 400
-        And the response contains errors:
-            | location  | name          | description                       |
-            | query     | package_id    | No package with ID 500 exists.    |
-        And there is no deployment with package_id=500

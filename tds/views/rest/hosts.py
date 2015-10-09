@@ -56,7 +56,6 @@ class HostView(BaseView):
         Validate a POST request by preventing collisions over unique fields and
         validating that an app tier with the given tier_id exists.
         """
-        self._validate_id("POST")
         self._validate_name("POST")
         self._validate_foreign_key('tier_id', 'app tier', tds.model.AppTarget)
 
@@ -65,6 +64,5 @@ class HostView(BaseView):
         Validate a PUT request by preventing collisions over unique fields and
         validating that an app tier with the given tier_id exists.
         """
-        self._validate_id("PUT")
         self._validate_name("PUT")
         self._validate_foreign_key('tier_id', 'app tier', tds.model.AppTarget)

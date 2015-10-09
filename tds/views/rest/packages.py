@@ -111,7 +111,6 @@ class PackageView(BaseView):
         Validate a PUT request by preventing collisions over unique fields for
         packages.
         """
-        self._validate_id("PUT")
         if self.name not in self.request.validated:
             return
 
@@ -157,7 +156,6 @@ class PackageView(BaseView):
         Validate a POST request by preventing collisions over unique fields.
         """
         self.get_obj_by_name_or_id('application')
-        self._validate_id("POST")
         app_check = 'application' in self.request.validated
         ver_check = 'version' in self.request.validated_params
         rev_check = 'revision' in self.request.validated_params

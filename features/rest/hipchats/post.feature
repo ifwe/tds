@@ -9,33 +9,28 @@ Feature: POST HipChat(s) from the REST API
         And there is a HipChat with room_name="hipchat2"
 
     @rest
-    Scenario Outline: add a new Ganglia
-        When I query POST "/hipchats?name=hipchat3&<query>"
+    Scenario: add a new HipChat
+        When I query POST "/hipchats?name=hipchat3"
         Then the response code is 201
-        And the response is an object with name="hipchat3"<props>
-        And there is a HipChat with room_name="hipchat3"<props>
-
-        Examples:
-            | query | props     |
-            |       |           |
-            | id=20 | ,id=20    |
+        And the response is an object with name="hipchat3",id=3
+        And there is a HipChat with room_name="hipchat3",id=3
 
     @rest
     Scenario: omit required field
-        When I query POST "/hipchats?id=20"
+        When I query POST "/hipchats?"
         Then the response code is 400
         And the response contains errors:
             | location  | name  | description               |
             | query     |       | name is a required field. |
-        And there is no HipChat with id=20
+        And there is no HipChat with id=3
 
     @rest
     Scenario Outline: pass an invalid parameter
         When I query POST "/hipchats?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                               |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name']. |
+            | location  | name  | description                                           |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['name'].   |
         And there is no HipChat with room_name="hipchat3"
         And there is no HipChat with id=3
 

@@ -16,7 +16,6 @@ APPLICATION_TYPES = {
 
 DEPLOYMENT_TYPES = {
     'id': 'integer',
-    'package_id': 'integer',
     'user': 'string',
     'status': 'choice',
 }
@@ -63,6 +62,7 @@ HOST_DEPLOYMENT_TYPES = {
     'id': 'integer',
     'deployment_id': 'integer',
     'host_id': 'integer',
+    'package_id': 'integer',
     'status': 'choice',
     'user': 'string',
 }
@@ -95,6 +95,7 @@ TIER_DEPLOYMENT_TYPES = {
     'id': 'integer',
     'deployment_id': 'integer',
     'tier_id': 'integer',
+    'package_id': 'integer',
     'status': 'choice',
     'environment_id': 'integer',
     'user': 'string',

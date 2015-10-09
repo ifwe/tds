@@ -39,8 +39,8 @@ Feature: PUT Ganglia(s) from the REST API
         When I query PUT "/ganglias/<select>?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['port', 'id', 'name']. |
+            | location  | name  | description                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['port', 'name'].   |
         And there is a Ganglia with cluster_name="ganglia1",id=2
 
         Examples:
@@ -54,15 +54,13 @@ Feature: PUT Ganglia(s) from the REST API
 
     @rest
     Scenario Outline: attempt to violate a unique constraint
-        When I query PUT "/ganglias/<select>?<query>"
+        When I query PUT "/ganglias/<select>?name=ganglia2"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                                    |
-            | query     | <name>    | Unique constraint violated. Another ganglia with this <type> already exists.   |
+            | location  | name  | description                                                                   |
+            | query     | name  | Unique constraint violated. Another ganglia with this name already exists.    |
 
         Examples:
-            | select    | query                 | name  | type  |
-            | ganglia1  | name=ganglia2         | name  | name  |
-            | 2         | id=1                  | id    | ID    |
-            | ganglia1  | id=1&name=ganglia2    | id    | ID    |
-            | 2         | id=1&name=ganglia2    | name  | name  |
+            | select    |
+            | ganglia1  |
+            | 2         |

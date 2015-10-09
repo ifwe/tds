@@ -16,7 +16,6 @@ APPLICATION_DESCRIPTIONS = {
 
 DEPLOYMENT_DESCRIPTIONS = {
     'id': 'Unique integer identifier',
-    'package_id': 'ID of the package being deployed',
     'user': 'Username of creator',
     'status': 'Current status of the deployment',
 }
@@ -63,6 +62,7 @@ HOST_DEPLOYMENT_DESCRIPTIONS = {
     'id': 'Unique integer identifier',
     'deployment_id': 'ID of containing deployment',
     'host_id': 'ID of host target for deployment',
+    'package_id': 'ID of the package being deployed',
     'status': 'Current status',
     'user': 'Username of creator',
 }
@@ -95,6 +95,7 @@ TIER_DEPLOYMENT_DESCRIPTIONS = {
     'id': 'Unique integer identifier',
     'deployment_id': 'ID of containing deployment',
     'tier_id': 'ID of tier target for deployment',
+    'package_id': 'ID of the package being deployed',
     'status': 'Current status',
     'environment_id': 'ID of environment location for deployment',
     'user': 'Username of creator',

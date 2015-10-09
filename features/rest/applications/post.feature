@@ -56,8 +56,8 @@ Feature: Add (POST) application on REST API
         When I query POST "/applications?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                               |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['job', 'validation_type', 'env_specific', 'name', 'build_host', 'deploy_type', 'arch', 'id', 'build_type'].    |
+            | location  | name  | description                                                                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['job', 'validation_type', 'env_specific', 'name', 'build_host', 'deploy_type', 'arch', 'build_type'].  |
         And there is no application with pkg_name="app4"
         And there is no application with path="myjob"
 
@@ -67,18 +67,12 @@ Feature: Add (POST) application on REST API
             | foo=bar&name=app4&job=myjob   |
 
     @rest
-    Scenario Outline: attempt to violate a unique constraint
-        When I query POST "/applications?<query>"
+    Scenario: attempt to violate a unique constraint
+        When I query POST "/applications?name=app3&job=myjob"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                                   |
-            | query     | <name>    | Unique constraint violated. An application with this <type> already exists.   |
-
-        Examples:
-            | query                     | name  | type  |
-            | name=app3&job=myjob       | name  | name  |
-            | name=app3&id=2&job=myjob  | name  | name  |
-            | name=app3&id=2&job=myjob  | id    | ID    |
+            | location  | name  | description                                                               |
+            | query     | name  | Unique constraint violated. An application with this name already exists. |
 
     @rest
     Scenario Outline: attempt to violate choice field restrictions
