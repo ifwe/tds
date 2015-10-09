@@ -55,20 +55,14 @@ Feature: POST package(s) from the REST API by ID
         And there is no package with version="2",revision="2",creator="testuser"
 
     @rest @jenkins_server
-    Scenario Outline: attempt to violate a unique constraint
+    Scenario: attempt to violate a unique constraint
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="1"
-        When I query POST "/packages?name=app3&<query>"
+        When I query POST "/packages?name=app3&version=1&revision=1"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                   |
-            | query     | <name>    | Unique constraint violated. A package <type> already exists.  |
-
-        Examples:
-            | query                     | name      | type                                                  |
-            | version=1&revision=1&id=3 | version   | for this application with this version and revision   |
-            | version=1&revision=1&id=3 | version   | for this application with this version and revision   |
-            | version=1&revision=1&id=1 | id        | with this ID                                          |
+            | location  | name      | description                                                                                               |
+            | query     | version   | Unique constraint violated. A package for this application with this version and revision already exists. |
 
     @rest @jenkins_server
     Scenario Outline: attempt to set status to something other than pending

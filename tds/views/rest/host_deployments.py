@@ -17,10 +17,10 @@ class HostDeploymentView(BaseView):
         'status': 'pending',
     }
 
-    required_post_fields = ('deployment_id', 'host_id',)
+    required_post_fields = ('deployment_id', 'host_id', 'package_id')
 
     unique_together = (
-        ('deployment_id', 'host_id'),
+        ('deployment_id', 'host_id', 'package_id'),
     )
 
     def validate_host_deployment_delete(self):
@@ -145,9 +145,21 @@ class HostDeploymentView(BaseView):
             )
             self.request.errors.status = 403
         self.validate_conflicting_env('PUT')
-        self._validate_id("PUT", "host deployment")
         self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
+        self._validate_foreign_key('package_id', 'package', tds.model.Package)
         self._validate_unique_together("PUT", "host deployment")
+        # If the package_id is being changed and the deployment isn't pending:
+        if 'package_id' in self.request.validated_params and \
+                self.request.validated_params['package_id'] != \
+                self.request.validated[self.name].package_id and \
+                self.request.validated[self.name].deployment.status != \
+                'pending':
+            self.request.errors.add(
+                'query', 'package_id',
+                'Cannot change package_id for a host deployment with a '
+                'non-pending deployment.'
+            )
+            self.request.errors.status = 403
 
     def validate_host_deployment_post(self):
         if 'status' in self.request.validated_params:
@@ -158,8 +170,8 @@ class HostDeploymentView(BaseView):
                 )
                 self.request.errors.status = 403
         self.validate_conflicting_env('POST')
-        self._validate_id("POST", "host deployment")
         self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
+        self._validate_foreign_key('package_id', 'package', tds.model.Package)
         self._validate_unique_together("POST", "host deployment")
 
     @view(validators=('validate_put_post', 'validate_post_required',

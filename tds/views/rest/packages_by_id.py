@@ -13,8 +13,7 @@ import tds.model
 from .base import BaseView, init_view
 
 @resource(collection_path="/packages", path="/packages/{id}")
-@init_view(name='package-by-id', model=tds.model.Package, set_types=False,
-           set_descriptions=False)
+@init_view(name='package-by-id', model=tds.model.Package, set_params=False)
 class PackageByIDView(BaseView):
 
     types = {
@@ -43,7 +42,6 @@ class PackageByIDView(BaseView):
                                    dict_name=self.name)
 
     def validate_package_by_id_put(self):
-        self._validate_id("PUT", "package")
         if self.name not in self.request.validated:
             return
 
@@ -94,7 +92,6 @@ class PackageByIDView(BaseView):
                 self.request.errors.status = 403
 
     def validate_package_by_id_post(self):
-        self._validate_id("POST", "package")
         if 'name' not in self.request.validated_params:
             return
         found_app = tds.model.Application.get(

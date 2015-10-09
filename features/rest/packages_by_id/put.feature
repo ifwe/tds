@@ -40,17 +40,13 @@ Feature: Update (PUT) package on REST API by ID
         And there is no package with version="500"
 
     @rest @jenkins_server
-    Scenario Outline: update a package
+    Scenario: update a package
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="1"
-        When I query PUT "/packages/1?<query>"
+        When I query PUT "/packages/1?name=app1"
         Then the response code is 200
-        And the response is an object with <params>
-        And there is a package with <props>
-
-        Examples:
-            | query     | params        | props             |
-            | name=app1 | name="app1"   | pkg_name="app1"   |
+        And the response is an object with name="app1"
+        And there is a package with pkg_name="app1"
 
     @rest @jenkins_server
     Scenario Outline: attempt to violate a unique constraint
@@ -110,13 +106,13 @@ Feature: Update (PUT) package on REST API by ID
 
     @rest
     Scenario: Jenkins unreachable
-        When I query PUT "/packages/1?id=500&version=1"
+        When I query PUT "/packages/1?version=500"
         Then the response code is 500
         And the response contains errors:
             | location  | name      | description                                                                           |
             | query     | version   | Unable to connect to Jenkins server at https://example.org:8080 to check for package. |
-        And there is no package with id=500
-        And there is a package with id=1
+        And there is no package with version=500
+        And there is a package with version=1
 
     @rest @jenkins_server
     Scenario: no matching Jenkins job
@@ -132,10 +128,10 @@ Feature: Update (PUT) package on REST API by ID
     @rest @jenkins_server
     Scenario: no matching Jenkins build
         Given there is a jenkins job with name="myjob"
-        When I query PUT "/packages/2?id=500&revision=1"
+        When I query PUT "/packages/2?revision=500"
         Then the response code is 400
         And the response contains errors:
             | location  | name  | description                                                           |
             | path      | id    | Build with version 2 for job myjob does not exist on Jenkins server.  |
-        And there is no package with id=500
-        And there is a package with id=2
+        And there is no package with revision=200
+        And there is a package with revision=1

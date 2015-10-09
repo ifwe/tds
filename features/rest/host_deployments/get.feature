@@ -10,8 +10,8 @@ Feature: GET host deployment(s) from the REST API
             | version   | revision  |
             | 1         | 1         |
         And there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | foo   | 1             | pending   |
+            | id    | user  | status    |
+            | 1     | foo   | pending   |
         And there is an environment with name="dev"
         And there are hosts:
             | name  | env   |
@@ -35,24 +35,24 @@ Feature: GET host deployment(s) from the REST API
     @rest
     Scenario: get all host deployments
         Given there are host deployments:
-            | id    | deployment_id | host_id   | status        | user  |
-            | 1     | 1             | 1         | pending       | foo   |
-            | 2     | 1             | 2         | inprogress    | foo   |
+            | id    | deployment_id | host_id   | status        | user  | package_id    |
+            | 1     | 1             | 1         | pending       | foo   | 1             |
+            | 2     | 1             | 2         | inprogress    | foo   | 1             |
         When I query GET "/host_deployments"
         Then the response code is 200
         And the response is a list of 2 items
-        And the response list contains an object with id=1,deployment_id=1,host_id=1,status="pending",user="foo"
-        And the response list contains an object with id=2,deployment_id=1,host_id=2,status="inprogress",user="foo"
+        And the response list contains an object with id=1,deployment_id=1,host_id=1,status="pending",user="foo",package_id=1
+        And the response list contains an object with id=2,deployment_id=1,host_id=2,status="inprogress",user="foo",package_id=1
 
     @rest
     Scenario: get a specific host deployment
         Given there are host deployments:
-            | id    | deployment_id | host_id   | status        | user  |
-            | 1     | 1             | 1         | pending       | foo   |
-            | 2     | 1             | 2         | inprogress    | foo   |
+            | id    | deployment_id | host_id   | status        | user  | package_id    |
+            | 1     | 1             | 1         | pending       | foo   | 1             |
+            | 2     | 1             | 2         | inprogress    | foo   | 1             |
         When I query GET "/host_deployments/1"
         Then the response code is 200
-        And the response is an object with id=1,deployment_id=1,host_id=1,status="pending",user="foo"
+        And the response is an object with id=1,deployment_id=1,host_id=1,status="pending",user="foo",package_id=1
 
     @rest
     Scenario Outline: specify limit and/or last queries
@@ -62,12 +62,12 @@ Feature: GET host deployment(s) from the REST API
             | host4 | dev   |
             | host5 | dev   |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status        | user  |
-            | 1     | 1             | 1         | pending       | foo   |
-            | 2     | 1             | 2         | inprogress    | foo   |
-            | 3     | 1             | 3         | pending       | foo   |
-            | 4     | 1             | 4         | inprogress    | foo   |
-            | 5     | 1             | 5         | pending       | foo   |
+            | id    | deployment_id | host_id   | status        | user  | package_id    |
+            | 1     | 1             | 1         | pending       | foo   | 1             |
+            | 2     | 1             | 2         | inprogress    | foo   | 1             |
+            | 3     | 1             | 3         | pending       | foo   | 1             |
+            | 4     | 1             | 4         | inprogress    | foo   | 1             |
+            | 5     | 1             | 5         | pending       | foo   | 1             |
         When I query GET "/host_deployments?limit=<limit>&start=<start>"
         Then the response code is 200
         And the response is a list of <num> items

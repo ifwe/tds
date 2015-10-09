@@ -16,9 +16,9 @@ Feature: POST Ganglia(s) from the REST API
         And there is a Ganglia with cluster_name="ganglia3"<props>
 
         Examples:
-            | query             | props             |
-            |                   |                   |
-            | id=20&port=9876   | ,id=20,port=9876  |
+            | query     | props         |
+            |           |               |
+            | port=9876 | ,port=9876    |
 
     @rest
     Scenario: omit required field
@@ -34,8 +34,8 @@ Feature: POST Ganglia(s) from the REST API
         When I query POST "/ganglias?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['port', 'id', 'name']. |
+            | location  | name  | description                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['port', 'name'].   |
         And there is no Ganglia with cluster_name="ganglia3"
         And there is no Ganglia with id=4
 

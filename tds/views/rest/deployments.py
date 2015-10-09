@@ -16,8 +16,6 @@ class DeploymentView(BaseView):
 
     defaults = {}
 
-    required_post_fields = ('package_id',)
-
     def _handle_extra_params(self):
         self.valid_attrs.append('force')
         if 'force' in self.request.params:
@@ -85,8 +83,6 @@ class DeploymentView(BaseView):
                     'Status must be pending for new deployments.'
                 )
                 self.request.errors.status = 403
-        self._validate_id("POST")
-        self._validate_foreign_key('package_id', 'package', tds.model.Package)
 
     def _validate_put_status_canceled(self):
         """
@@ -119,9 +115,9 @@ class DeploymentView(BaseView):
                 )
             )
             self.request.errors.status = 403
-        app_deployments = self.request.validated[self.name].app_deployments
+        tier_deployments = self.request.validated[self.name].app_deployments
         host_deployments = self.request.validated[self.name].host_deployments
-        if not (app_deployments or host_deployments):
+        if not (tier_deployments or host_deployments):
             self.request.errors.add(
                 'query', 'status',
                 'Cannot queue deployment with no tier or host deployments.'
@@ -143,16 +139,40 @@ class DeploymentView(BaseView):
                         '{host_name}.'.format(host_name=dep.host.name)
                     )
                     self.request.errors.status = 403
-        if self.request.validated[self.name].package.status != 'completed':
-            self.request.errors.add(
-                'query', 'status',
-                'Cannot queue deployment whose package is not completed.'
-            )
-            self.request.errors.status = 403
-        if app_deployments:
+
+        for tier_dep in tier_deployments:
+            if tier_dep.package.status != 'completed':
+                self.request.errors.add(
+                    'query', 'status',
+                    'Package with ID {pid} for tier deployment with ID {did} '
+                    '(for tier with ID {tid}) is not completed. Please wait '
+                    'and verify that the package is completed before '
+                    're-attempting.'.format(
+                        pid=tier_dep.package_id,
+                        did=tier_dep.id,
+                        tid=tier_dep.app_id,
+                    )
+                )
+                self.request.errors.status = 403
+        for host_dep in host_deployments:
+            if host_dep.package.status != 'completed':
+                self.request.errors.add(
+                    'query', 'status',
+                    'Package with ID {pid} for host deployment with ID {did} '
+                    '(for host with ID {hid}) is not completed. Please wait '
+                    'and verify that the package is completed before '
+                    're-attempting.'.format(
+                        pid=host_dep.package_id,
+                        did=host_dep.id,
+                        hid=host_dep.id,
+                    )
+                )
+                self.request.errors.status = 403
+
+        if tier_deployments:
             env_map = {'dev': None, 'staging': 'dev', 'prod': 'staging'}
-            for app_dep in app_deployments:
-                previous_env_short = env_map[app_dep.environment_obj.env]
+            for tier_dep in tier_deployments:
+                previous_env_short = env_map[tier_dep.environment_obj.env]
                 if previous_env_short is None:
                     continue
                 previous_env = tagopsdb.Environment.get(env=previous_env_short)
@@ -161,25 +181,23 @@ class DeploymentView(BaseView):
                         "Could not find environment with short name {env}."
                         .format(env=previous_env_short)
                     )
-                previous_app_dep = tds.model.AppDeployment.find(
+                previous_tier_dep = tds.model.AppDeployment.find(
                     environment_id=previous_env.id,
-                    app_id=app_dep.app_id,
+                    app_id=tier_dep.app_id,
+                    package_id=tier_dep.package_id,
                     status="validated",
                 )
-                if not previous_app_dep and not getattr(self, 'forced_queue',
+                if not previous_tier_dep and not getattr(self, 'forced_queue',
                                                         False):
                     self.request.errors.add(
                         'query', 'status',
                         'Package with ID {id} has not been validated in the '
                         '{env} environment for tier {tier} with ID {tid}. '
                         'Please use force=true to force deployment.'.format(
-                            id=self.request.validated_params['package_id'] if
-                                'package_id' in self.request.validated_params
-                                else self.request.validated[self.name]
-                                .package_id,
+                            id=tier_dep.package_id,
                             env=previous_env_short,
-                            tier=app_dep.target.name,
-                            tid=app_dep.app_id,
+                            tier=tier_dep.target.name,
+                            tid=tier_dep.app_id,
                         )
                     )
                     self.request.errors.status = 403
@@ -212,21 +230,9 @@ class DeploymentView(BaseView):
 
     def validate_deployment_put(self):
         if 'status' in self.request.validated_params:
-            validator = getattr(self, '_validate_put_status_{status}'.format(
+            getattr(self, '_validate_put_status_{status}'.format(
                 status=self.request.validated_params['status']
-            ), self._validate_put_status_default)
-            validator()
-        # If the package_id is being changed and the deployment isn't pending:
-        if 'package_id' in self.request.validated_params and \
-                self.request.validated_params['package_id'] != \
-                self.request.validated[self.name].package_id and \
-                self.request.validated[self.name].status != 'pending':
-            self.request.errors.add(
-                'query', 'package_id',
-                'Cannot change package_id for a non-pending deployment.'
-            )
-        self._validate_id("PUT")
-        self._validate_foreign_key('package_id', 'package', tds.model.Package)
+            ), self._validate_put_status_default)()
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))

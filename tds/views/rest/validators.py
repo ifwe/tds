@@ -140,7 +140,6 @@ class ValidatedView(JSONValidatedView):
             getattr(self, func_name)()
         else:
             try:
-                self._validate_id("PUT")
                 self._validate_name("PUT")
                 self._validate_unique_together("PUT")
                 self._validate_all_unique_params("PUT")
@@ -164,7 +163,6 @@ class ValidatedView(JSONValidatedView):
             getattr(self, func_name)()
         else:
             try:
-                self._validate_id("POST")
                 self._validate_name("POST")
                 self._validate_unique_together("POST")
                 self._validate_all_unique_params("POST")
@@ -226,13 +224,6 @@ class ValidatedView(JSONValidatedView):
             return
         for param in self.unique:
             self._validate_unique_param(request_type, param)
-
-    def _validate_id(self, request_type, obj_type=None):
-        """
-        Validate that the ID unique constraint isn't violated for a request
-        with either POST or PUT request_type.
-        """
-        self._validate_unique_param(request_type, "id", obj_type, "ID")
 
     def _validate_name(self, request_type, obj_type=None):
         """

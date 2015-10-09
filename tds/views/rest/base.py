@@ -23,7 +23,7 @@ from . import utils, types, descriptions
 
 
 def init_view(_view_cls=None, name=None, plural=None, model=None,
-              set_types=False, set_descriptions=False):
+              set_params=True):
     """
     This is a decorator that will fill in some basic information for a class
     based on the information provided.
@@ -36,8 +36,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
     """
 
     def real_decorator(cls, obj_name=name, obj_plural=plural, obj_model=model,
-                       set_json_types=set_types,
-                       set_descripts=set_descriptions):
+                       set_obj_params=set_params):
         """
         Do the usual function-in-function decorator thing.
         """
@@ -59,7 +58,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
             )
         cls.model = obj_model
 
-        if set_json_types:
+        if set_obj_params:
             json_types = getattr(
                 types, "{name}_TYPES".format(
                     name=obj_name.upper().replace('-', '_')
@@ -67,9 +66,10 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
             )
             if 'user' in json_types:
                 del json_types['user']
+            if 'id' in json_types:
+                del json_types['id']
             cls.types = json_types
 
-        if set_descripts:
             param_descripts = getattr(
                 descriptions, "{name}_DESCRIPTIONS".format(
                     name=obj_name.upper().replace('-', '_')
@@ -77,6 +77,8 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
             )
             if 'user' in param_descripts:
                 del param_descripts['user']
+            if 'id' in param_descripts:
+                del param_descripts['id']
             cls.param_descriptions = param_descripts
 
         return cls

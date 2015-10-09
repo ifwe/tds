@@ -29,8 +29,8 @@ Feature: PUT host(s) from the REST API
             | 1         | rack=100&cage=20&environment_id=2 | name="host1",id=1,rack=100,cage=20,environment_id=2   |
             | host1     | tier_id=2&kernel_version=foo      | name="host1",id=1,tier_id=2,kernel_version="foo"      |
             | 1         | tier_id=2&kernel_version=foo      | name="host1",id=1,tier_id=2,kernel_version="foo"      |
-            | host1     | name=host3&id=20                  | name="host3",id=20                                    |
-            | host1     | name=host3&id=20                  | name="host3",id=20                                    |
+            | host1     | name=host3                        | name="host3",id=1                                     |
+            | 1         | name=host3                        | name="host3",id=1                                     |
 
     @rest
     Scenario Outline: attempt to update a host that doesn't exist
@@ -48,11 +48,11 @@ Feature: PUT host(s) from the REST API
 
     @rest
     Scenario Outline: pass an invalid parameter
-        When I query PUT "/hosts/<select>?name=host100&id=50&foo=bar"
+        When I query PUT "/hosts/<select>?name=host100&foo=bar"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['power_circuit', 'environment_id', 'console_port', 'timezone', 'cage', 'id', 'name', 'kernel_version', 'arch', 'state', 'power_port', 'cab', 'distribution', 'tier_id', 'rack'].   |
+            | location  | name  | description                                                                                                                                                                                                           |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['power_circuit', 'environment_id', 'console_port', 'timezone', 'cage', 'name', 'kernel_version', 'arch', 'state', 'power_port', 'cab', 'distribution', 'tier_id', 'rack']. |
 
         Examples:
             | select    |
