@@ -13,24 +13,24 @@ Feature: DELETE deployment(s) from the REST API
     @rest
     Scenario: delete a pending deployment with no app or tier deployments
         Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | baz   | 1             | pending   |
+            | id    | user  | status    |
+            | 1     | baz   | pending   |
         When I query DELETE "/deployments/1"
         Then the response code is 200
-        And the response is an object with id=1,user="baz",package_id=1,status="pending"
-        And there is no deployment with id=1,user="baz",package_id=1,status="pending"
+        And the response is an object with id=1,user="baz",status="pending"
+        And there is no deployment with id=1,user="baz",status="pending"
 
     @rest
     Scenario Outline: attempt to delete a non-pending deployment
         Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | baz   | 1             | <status>  |
+            | id    | user  | status    |
+            | 1     | baz   | <status>  |
         When I query DELETE "/deployments/1"
         Then the response code is 403
         And the response contains errors:
             | location  | name  | description                                                                               |
             | url       | id    | Cannot delete a non-pending deployment. This deployment is currently in <status> status.  |
-        And there is a deployment with id=1,user="baz",package_id=1,status="<status>"
+        And there is a deployment with id=1,user="baz",status="<status>"
 
         Examples:
             | status        |
@@ -44,8 +44,8 @@ Feature: DELETE deployment(s) from the REST API
     @rest
     Scenario Outline: attempt to delete a pending deployment with host and tier deployments without cascade
         Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | baz   | 1             | pending   |
+            | id    | user  | status    |
+            | 1     | baz   | pending   |
         And there is an environment with name="dev"
         And there are hosts:
             | name  | env   |
@@ -54,19 +54,19 @@ Feature: DELETE deployment(s) from the REST API
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 1     | 1             | 1         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1             |
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
-            | 2     | 1             | 2         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
+            | 2     | 1             | 2         | pending   | foo   | 1                 | 1             |
         When I query DELETE "/deployments/1?<query>"
         Then the response code is 403
         And the response contains errors:
             | location  | name      | description                                                                                               |
             | url       | id        | Cannot delete deployment with host or tier deployments. Please use the cascade=true parameter to cascade. |
             | url       | to_delete | {'tier_deployments': [1, 2], 'host_deployments': [1]}                                                     |
-        And there is a deployment with id=1,user="baz",package_id=1,status="pending"
+        And there is a deployment with id=1,user="baz",status="pending"
 
         Examples:
             | query         |
@@ -78,8 +78,8 @@ Feature: DELETE deployment(s) from the REST API
     @rest
     Scenario Outline: cascade deletes
         Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | baz   | 1             | pending   |
+            | id    | user  | status    |
+            | 1     | baz   | pending   |
         And there is an environment with name="dev"
         And there are hosts:
             | name  | env   |
@@ -88,16 +88,16 @@ Feature: DELETE deployment(s) from the REST API
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 1     | 1             | 1         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1             |
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
-            | 2     | 1             | 2         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
+            | 2     | 1             | 2         | pending   | foo   | 1                 | 1             |
         When I query DELETE "/deployments/1?cascade=<cascade>"
         Then the response code is 200
-        And the response is an object with id=1,user="baz",package_id=1,status="pending"
-        And there is no deployment with id=1,user="baz",package_id=1,status="pending"
+        And the response is an object with id=1,user="baz",status="pending"
+        And there is no deployment with id=1,user="baz",status="pending"
         And there is no host deployment with id=1
         And there is no tier deployment with id=1
         And there is no tier deployment with id=2
@@ -111,9 +111,9 @@ Feature: DELETE deployment(s) from the REST API
     @rest
     Scenario Outline: attempt to delete a deployment that doesn't exist
         Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | foo   | 1             | pending   |
-            | 2     | bar   | 1             | queued    |
+            | id    | user  | status    |
+            | 1     | foo   | pending   |
+            | 2     | bar   | queued    |
         When I query DELETE "/deployments/3?<query>"
         Then the response code is 404
         And the response contains errors:

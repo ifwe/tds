@@ -5,11 +5,6 @@ Feature: POST deployment(s) from the REST API
 
     Background:
         Given I have a cookie with user permissions
-        And there is an application with pkg_name="app1"
-        And there are packages:
-            | version   | revision  |
-            | 1         | 1         |
-            | 1         | 2         |
 
     @rest
     Scenario: post a deployment
