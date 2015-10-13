@@ -133,5 +133,5 @@ Feature: Update (PUT) package on REST API by ID
         And the response contains errors:
             | location  | name  | description                                                           |
             | path      | id    | Build with version 2 for job myjob does not exist on Jenkins server.  |
-        And there is no package with revision=200
-        And there is a package with revision=1
+        And there is no package with version=2,revision=500
+        And there is a package with version=2,revision=1

@@ -11,14 +11,14 @@ Feature: DELETE tier deployment(s) from the REST API
             | 1         | 1         |
             | 1         | 2         |
         And there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | foo   | 1             | pending   |
+            | id    | user  | status    |
+            | 1     | foo   | pending   |
         And there is an environment with name="dev"
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
 
     @rest
     Scenario: attempt to delete a tier deployment that doesn't exist
@@ -38,11 +38,11 @@ Feature: DELETE tier deployment(s) from the REST API
     @rest
     Scenario Outline: attempt to delete a tier deployment whose deployment is non-pending
         Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 2     | foo   | 1             | <status>  |
+            | id    | user  | status    |
+            | 2     | foo   | <status>  |
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 2     | 2             | 2         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 2     | 2             | 2         | pending   | foo   | 1                 | 1             |
         When I query DELETE "/tier_deployments/2"
         Then the response code is 403
         And the response contains errors:

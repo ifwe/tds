@@ -64,6 +64,8 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                     name=obj_name.upper().replace('-', '_')
                 )
             )
+            if 'user' in json_types or 'id' in json_types:
+                json_types = json_types.copy()
             if 'user' in json_types:
                 del json_types['user']
             if 'id' in json_types:
@@ -75,6 +77,8 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                     name=obj_name.upper().replace('-', '_')
                 )
             )
+            if 'user' in param_descripts or 'id' in param_descripts:
+                param_descripts = param_descripts.copy()
             if 'user' in param_descripts:
                 del param_descripts['user']
             if 'id' in param_descripts:
