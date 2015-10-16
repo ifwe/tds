@@ -96,3 +96,20 @@ Feature: GET application-tier association(s) from the REST API
         When I query GET "/projects/proj1/applications/app1/tiers/tier1"
         Then the response code is 200
         And the response is an object with project_id=1,application_id=2,tier_id=2
+
+    @rest
+    Scenario Outline: attempt to use start and/or limit queries
+        Given the tier "tier1" is associated with the application "app1" for the project "proj1"
+        And the tier "tier2" is associated with the application "app1" for the project "proj1"
+        When I query GET "/projects/proj1/applications/app1/tiers?<query>"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name      | description                                                               |
+            | query     | <name>    | Unsupported query: <name>. There are no valid parameters for this method. |
+
+        Examples:
+            | query             | name  |
+            | limit=10          | limit |
+            | limit=10&start=1  | limit |
+            | limit=10&start=1  | start |
+            | start=1           | start |
