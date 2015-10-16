@@ -13,20 +13,25 @@ Feature: PUT tier deployment(s) from the REST API
         And there are deployments:
             | id    | user  | status    |
             | 1     | foo   | pending   |
+        And there are projects:
+            | name  |
+            | proj1 |
         And there is an environment with name="dev"
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
         And there are tier deployments:
             | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
+            | 1     | 1             | 2         | pending   | foo   | 1                 | 1             |
+        And the tier "tier1" is associated with the application "app1" for the project "proj1"
+        And the tier "tier2" is associated with the application "app1" for the project "proj1"
 
     @rest
     Scenario: put a tier deployment
-        When I query PUT "/tier_deployments/1?tier_id=2"
+        When I query PUT "/tier_deployments/1?tier_id=3"
         Then the response code is 200
-        And the response is an object with id=1,tier_id=2
-        And there is a tier deployment with id=1,app_id=2
-        And there is no tier deployment with id=1,deployment_id=1,app_id=1,status="pending",user="foo"
+        And the response is an object with id=1,tier_id=3
+        And there is a tier deployment with id=1,app_id=3
+        And there is no tier deployment with id=1,deployment_id=1,app_id=2,status="pending",user="foo"
 
     @rest
     Scenario: pass a tier_id for a tier that doesn't exist
@@ -36,7 +41,7 @@ Feature: PUT tier deployment(s) from the REST API
             | location  | name      | description                   |
             | query     | tier_id   | No tier with ID 500 exists.   |
         And there is no tier deployment with id=1,app_id=500
-        And there is a tier deployment with id=1,app_id=1
+        And there is a tier deployment with id=1,app_id=2
 
     @rest
     Scenario: pass an environment_id for an environment that doesn't exist
@@ -53,11 +58,11 @@ Feature: PUT tier deployment(s) from the REST API
         Given there is an environment with name="staging"
         And there are hosts:
             | name  | env       | app_id    |
-            | host1 | dev       | 1         |
-            | host2 | dev       | 1         |
-            | host3 | dev       | 2         |
-            | host4 | staging   | 1         |
-            | host5 | staging   | 2         |
+            | host1 | dev       | 2         |
+            | host2 | dev       | 2         |
+            | host3 | dev       | 3         |
+            | host4 | staging   | 2         |
+            | host5 | staging   | 3         |
         And there are host deployments:
             | id    | deployment_id | host_id   | status    | user  | package_id    |
             | 1     | 1             | 1         | pending   | foo   | 1             |
@@ -77,11 +82,11 @@ Feature: PUT tier deployment(s) from the REST API
         Given there is an environment with name="staging"
         And there are hosts:
             | name  | env       | app_id    |
-            | host1 | dev       | 1         |
-            | host2 | dev       | 1         |
-            | host3 | dev       | 2         |
-            | host4 | staging   | 1         |
-            | host5 | staging   | 2         |
+            | host1 | dev       | 2         |
+            | host2 | dev       | 2         |
+            | host3 | dev       | 3         |
+            | host4 | staging   | 2         |
+            | host5 | staging   | 3         |
         And there are host deployments:
             | id    | deployment_id | host_id   | status    | user  | package_id    |
             | 1     | 1             | 1         | pending   | foo   | 1             |
@@ -97,40 +102,40 @@ Feature: PUT tier deployment(s) from the REST API
     Scenario: change tier_id from a tier with hosts to another with hosts
         Given there are hosts:
             | name  | env   | app_id    |
-            | host1 | dev   | 1         |
-            | host2 | dev   | 1         |
-            | host3 | dev   | 2         |
-            | host4 | dev   | 2         |
+            | host1 | dev   | 2         |
+            | host2 | dev   | 2         |
+            | host3 | dev   | 3         |
+            | host4 | dev   | 3         |
         And there are host deployments:
             | id    | deployment_id | host_id   | status    | user  | package_id    |
             | 1     | 1             | 1         | pending   | foo   | 1             |
             | 2     | 1             | 2         | pending   | foo   | 1             |
-        When I query PUT "/tier_deployments/1?tier_id=2"
+        When I query PUT "/tier_deployments/1?tier_id=3"
         Then the response code is 200
-        And the response is an object with id=1,tier_id=2,environment_id=1,deployment_id=1
-        And there is a tier deployment with id=1,app_id=2,environment_id=1,deployment_id=1
+        And the response is an object with id=1,tier_id=3,environment_id=1,deployment_id=1
+        And there is a tier deployment with id=1,app_id=3,environment_id=1,deployment_id=1
         And there is a host deployment with host_id=3,deployment_id=1
         And there is a host deployment with host_id=4,deployment_id=1
         And there is no host deployment with host_id=1,deployment_id=1
         And there is no host deployment with host_id=2,deployment_id=1
 
     @rest
-    Scenario: Change tier_id and environment_id s.t. host deps are deleted and created
+    Scenario: change tier_id and environment_id s.t. host deps are deleted and created
         Given there is an environment with name="staging"
         And there are hosts:
             | name  | env       | app_id    |
-            | host1 | dev       | 1         |
-            | host2 | dev       | 1         |
-            | host3 | staging   | 2         |
-            | host4 | staging   | 2         |
+            | host1 | dev       | 2         |
+            | host2 | dev       | 2         |
+            | host3 | staging   | 3         |
+            | host4 | staging   | 3         |
         And there are host deployments:
             | id    | deployment_id | host_id   | status    | user  | package_id    |
             | 1     | 1             | 1         | pending   | foo   | 1             |
             | 2     | 1             | 2         | pending   | foo   | 1             |
-        When I query PUT "/tier_deployments/1?tier_id=2&environment_id=2"
+        When I query PUT "/tier_deployments/1?tier_id=3&environment_id=2"
         Then the response code is 200
-        And the response is an object with id=1,tier_id=2,environment_id=2,deployment_id=1
-        And there is a tier deployment with id=1,app_id=2,environment_id=2,deployment_id=1
+        And the response is an object with id=1,tier_id=3,environment_id=2,deployment_id=1
+        And there is a tier deployment with id=1,app_id=3,environment_id=2,deployment_id=1
         And there is a host deployment with host_id=3,deployment_id=1
         And there is a host deployment with host_id=4,deployment_id=1
         And there is no host deployment with host_id=1,deployment_id=1
@@ -143,14 +148,14 @@ Feature: PUT tier deployment(s) from the REST API
             | 2     | foo   | <status>  |
         And there are tier deployments:
             | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
-            | 2     | 2             | 1         | pending   | foo   | 1                 | 1             |
+            | 2     | 2             | 3         | pending   | foo   | 1                 | 1             |
         When I query PUT "/tier_deployments/2?tier_id=2"
         Then the response code is 403
         And the response contains errors:
             | location  | name  | description                                                                   |
             | path      | id    | Users cannot modify tier deployments whose deployments are no longer pending. |
         And there is no tier deployment with id=2,app_id=2
-        And there is a tier deployment with id=2,app_id=1
+        And there is a tier deployment with id=2,app_id=3
 
         Examples:
             | status        |
@@ -173,14 +178,14 @@ Feature: PUT tier deployment(s) from the REST API
     Scenario: attempt to violate (deployment_id, tier_id, package_id) unique together constraint
         Given there are tier deployments:
             | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
-            | 2     | 1             | 2         | pending   | foo   | 1                 | 1             |
-        When I query PUT "/tier_deployments/2?tier_id=1"
+            | 2     | 1             | 3         | pending   | foo   | 1                 | 1             |
+        When I query PUT "/tier_deployments/2?tier_id=2"
         Then the response code is 409
         And the response contains errors:
             | location  | name          | description                                                                                                                   |
             | query     | package_id    | ('deployment_id', 'tier_id', 'package_id') are unique together. Another tier deployment with these attributes already exists. |
-        And there is no tier deployment with id=2,deployment_id=1,app_id=1,package_id=1
-        And there is a tier deployment with id=2,deployment_id=1,app_id=2,package_id=1
+        And there is no tier deployment with id=2,deployment_id=1,app_id=2,package_id=1
+        And there is a tier deployment with id=2,deployment_id=1,app_id=3,package_id=1
 
     @rest
     Scenario: attempt to modify a tier deployment that doesn't exist
@@ -194,7 +199,7 @@ Feature: PUT tier deployment(s) from the REST API
     Scenario: attempt to modify environment_id to one that conflicts with the deployment's environment
         Given there are tier deployments:
             | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
-            | 2     | 1             | 2         | pending   | foo   | 1                 | 1             |
+            | 2     | 1             | 3         | pending   | foo   | 1                 | 1             |
         And there is an environment with name="staging"
         And there are hosts:
             | name  | env   |
@@ -219,10 +224,10 @@ Feature: PUT tier deployment(s) from the REST API
             | 2     | foo   | pending   |
         And there are tier deployments:
             | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
-            | 2     | 2             | 2         | pending   | foo   | 2                 | 1             |
+            | 2     | 2             | 3         | pending   | foo   | 2                 | 1             |
         And there are hosts:
             | name  | env       | app_id    |
-            | host1 | staging   | 2         |
+            | host1 | staging   | 3         |
         And there are host deployments:
             | id    | deployment_id | host_id   | status    | user  | package_id    |
             | 1     | 2             | 1         | pending   | foo   | 1             |
@@ -243,10 +248,10 @@ Feature: PUT tier deployment(s) from the REST API
             | 2     | foo   | pending   |
         And there are tier deployments:
             | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
-            | 2     | 2             | 2         | pending   | foo   | 1                 | 1             |
+            | 2     | 2             | 3         | pending   | foo   | 1                 | 1             |
         And there are hosts:
             | name  | env   | app_id    |
-            | host1 | dev   | 2         |
+            | host1 | dev   | 3         |
         And there are host deployments:
             | id    | deployment_id | host_id   | status    | user  | package_id    |
             | 1     | 2             | 1         | pending   | foo   | 1             |
@@ -258,3 +263,22 @@ Feature: PUT tier deployment(s) from the REST API
             | query     | environment_id    | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 1 and environment development.   |
         And there is no tier deployment with id=1,deployment_id=2,environment_id=2
         And there is a tier deployment with id=1,deployment_id=1,environment_id=1
+
+    @rest
+    Scenario Outline: attempt to deploy to a tier that isn't associated with the package's application
+        Given there is an application with pkg_name="app2"
+        And there are packages:
+            | version   | revision  |
+            | 2         | 3         |
+        And there is a deploy target with name="tier3"
+        When I query PUT "/tier_deployments/1?<query>"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                                                   |
+            | query     | <name>    | Tier <tier> is not associated with the application <app> for any projects.    |
+
+        Examples:
+            | query                     | name          | tier  | app   |
+            | tier_id=4                 | tier_id       | tier3 | app1  |
+            | tier_id=4&package_id=2    | tier_id       | tier3 | app1  |
+            | package_id=3              | package_id    | tier1 | app2  |

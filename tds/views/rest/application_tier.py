@@ -114,7 +114,7 @@ class ApplicationTierView(BaseView):
                         request.validated_params['name'],
                 )
             )
-            request.errors.status = 404
+            request.errors.status = 400
             return
 
         already_exists = tagopsdb.model.ProjectPackage.get(

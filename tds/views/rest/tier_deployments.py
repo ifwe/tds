@@ -106,7 +106,7 @@ class TierDeploymentView(BaseView):
             # be changed anyway if the put request is otherwise valid.
             if self.name in self.request.validated and \
                     host_dep.host.app_id == \
-                    self.request.validated[self.name].id:
+                    self.request.validated[self.name].app_id:
                 continue
             if host_dep.host.environment_id != own_environment.id:
                 self.request.errors.add(
@@ -153,6 +153,38 @@ class TierDeploymentView(BaseView):
                 'non-pending deployment.'
             )
             self.request.errors.status = 403
+        if not any(
+            x in self.request.validated_params for x in ('tier_id', 'package_id')
+        ):
+            return
+        pkg_id = self.request.validated_params['package_id'] if 'package_id' \
+            in self.request.validated_params else \
+            self.request.validated[self.name].package_id
+        tier_id = self.request.validated_params['tier_id'] if 'tier_id' in \
+            self.request.validated_params else \
+            self.request.validated[self.name].app_id
+        self._validate_project_package(pkg_id, tier_id)
+
+    def _validate_project_package(self, pkg_id, tier_id):
+        found_pkg = tds.model.Package.get(id=pkg_id)
+        found_tier = tds.model.AppTarget.get(id=tier_id)
+        if not (found_pkg and found_tier):
+            return
+        found_project_pkg = tagopsdb.model.ProjectPackage.find(
+            pkg_def_id=found_pkg.pkg_def_id,
+            app_id=tier_id,
+        )
+        if not found_project_pkg:
+            self.request.errors.add(
+                'query', 'tier_id' if 'tier_id' in
+                self.request.validated_params else 'package_id',
+                'Tier {t_name} is not associated with the application {a_name}'
+                ' for any projects.'.format(
+                    t_name=found_tier.name,
+                    a_name=found_pkg.application.name,
+                )
+            )
+            self.request.errors.status = 403
 
     def validate_tier_deployment_post(self):
         if 'status' in self.request.validated_params:
@@ -168,6 +200,15 @@ class TierDeploymentView(BaseView):
                                    tagopsdb.model.Environment)
         self._validate_foreign_key('package_id', 'package', tds.model.Package)
         self._validate_unique_together("POST", "tier deployment")
+        if not all(
+            x in self.request.validated_params for x in ('package_id',
+                                                         'tier_id')
+        ):
+            return
+        self._validate_project_package(
+            self.request.validated_params['package_id'],
+            self.request.validated_params['tier_id'],
+        )
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
