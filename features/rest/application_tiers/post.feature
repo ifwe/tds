@@ -57,7 +57,7 @@ Feature: POST application-tier association(s) from the REST API
     @rest
     Scenario Outline: attempt to associate a tier that doesn't exist
         When I query POST "/projects/proj1/applications/app1/tiers?<query>"
-        Then the response code is 404
+        Then the response code is 400
         And the response contains errors:
             | location  | name      | description                           |
             | query     | <name>    | Tier with <descript> does not exist.  |
