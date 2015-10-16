@@ -141,3 +141,15 @@ class ApplicationTierView(BaseView):
             self.to_json_obj(self.request.validated[self.name]),
             self.response_code,
         )
+
+    @view(validators=('validate_individual', 'validate_cookie'))
+    def delete(self):
+        tagopsdb.Session.delete(self.request.validated[self.name])
+        tagopsdb.Session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )
+
+    @view(validators=('method_not_allowed'))
+    def put(self):
+        return self.make_response({})
