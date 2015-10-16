@@ -45,6 +45,22 @@ class TierHipchatView(BaseView):
                 request.errors.status = 404
             request.validated[self.name] = request.validated['HipChat']
 
+    def validate_tier_hipchat_collection(self, request):
+        if len(request.params) > 0:
+            for key in request.params:
+                request.errors.add(
+                    'query', key,
+                    "Unsupported query: {key}. There are no valid "
+                    "parameters for this method.".format(key=key),
+                )
+            request.errors.status = 422
+        self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
+                                   'app_type')
+        if 'tier' in request.validated:
+            request.validated[self.plural] = request.validated[
+                'tier'
+            ].hipchats
+
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
         self.request.validated['tier'].hipchats.remove(self.request.validated[
