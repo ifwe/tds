@@ -63,25 +63,15 @@ class ValidatedView(JSONValidatedView):
         If they are not, raise "400 Bad Request".
         Else, set request.validated[name] to resource matching query.
         """
-        if self.name == 'package':
-            self.get_obj_by_name_or_id('application')
-            if 'application' in request.validated:
-                self.get_pkgs_by_limit_start()
-        elif self.name == 'tier-hipchat':
-            if len(request.params) > 0:
-                for key in request.params:
-                    request.errors.add(
-                        'query', key,
-                        "Unsupported query: {key}. There are no valid "
-                        "parameters for this method.".format(key=key),
-                    )
-                request.errors.status = 422
-            self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
-                                       'app_type')
-            if 'tier' in request.validated:
-                request.validated[self.plural] = request.validated[
-                    'tier'
-                ].hipchats
+        getter = getattr(
+            self,
+            'validate_{name}_collection'.format(
+                name=self.name.replace('-', '_'),
+            ),
+            None
+        )
+        if getter is not None:
+            getter(request)
         else:
             self.get_collection_by_limit_start()
 

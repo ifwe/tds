@@ -1595,6 +1595,7 @@ NAME_OBJ_MAPPINGS = {
     'hipchat': tagopsdb.model.Hipchat,
     'project': tds.model.Project,
     'environment': tagopsdb.model.Environment,
+    'project-package': tagopsdb.model.ProjectPackage,
 }
 
 
@@ -1651,3 +1652,22 @@ def given_there_are_tier_deployments(context):
         tier_deps.append(dep)
     tagopsdb.Session.commit()
     context.host_deployments = tier_deps
+
+
+@given(u'the tier "{tier}" is associated with the application "{app}" for the project "{proj}"')
+def given_the_tier_is_associated_with_the_application_for_the_project(
+    context, tier, app, proj
+):
+    found_tier = tds.model.AppTarget.get(name=tier)
+    found_app = tds.model.Application.get(name=app)
+    found_proj = tds.model.Project.get(name=proj)
+    assert None not in (found_tier, found_app, found_proj), (
+        found_tier, found_app, found_proj,
+    )
+    proj_pkg = tagopsdb.model.ProjectPackage(
+        project_id=found_proj.id,
+        pkg_def_id=found_app.id,
+        app_id=found_tier.id,
+    )
+    tagopsdb.Session.add(proj_pkg)
+    tagopsdb.Session.commit()
