@@ -13,11 +13,16 @@ Feature: POST host deployment(s) from the REST API
         And there are deployments:
             | id    | user  | status    |
             | 1     | foo   | pending   |
+        And there are projects:
+            | name  |
+            | proj1 |
         And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And the tier "tier1" is associated with the application "app1" for the project "proj1"
         And there are hosts:
-            | name  | env   |
-            | host1 | dev   |
-            | host2 | dev   |
+            | name  | env   | app_id    |
+            | host1 | dev   | 2         |
+            | host2 | dev   | 2         |
 
     @rest
     Scenario: post a host deployment
@@ -106,3 +111,16 @@ Feature: POST host deployment(s) from the REST API
             | query     | host_id   | Cannot deploy to different environments with same deployment. There is a tier deployment associated with this deployment with ID 1 and environment staging.   |
         And there is no host deployment with deployment_id=1,host_id=2,package_id=1
         And there is no host deployment with id=2
+
+    @rest
+    Scenario: attempt to deploy to a host whose tier isn't associated with the package's application
+        Given there is an application with pkg_name="app2"
+        And there are packages:
+            | version   | revision  |
+            | 2         | 3         |
+        When I query POST "/host_deployments?deployment_id=1&host_id=2&package_id=3"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                                                               |
+            | query     | host_id   | Tier tier1 of host host2 is not associated with the application app2 for any projects.    |
+        And there is no host deployment with package_id=3

@@ -276,9 +276,10 @@ Feature: PUT tier deployment(s) from the REST API
         And the response contains errors:
             | location  | name      | description                                                                   |
             | query     | <name>    | Tier <tier> is not associated with the application <app> for any projects.    |
+        And there is no tier deployment with id=1,<props>
 
         Examples:
-            | query                     | name          | tier  | app   |
-            | tier_id=4                 | tier_id       | tier3 | app1  |
-            | tier_id=4&package_id=2    | tier_id       | tier3 | app1  |
-            | package_id=3              | package_id    | tier1 | app2  |
+            | query                     | name          | tier  | app   | props                 |
+            | tier_id=4                 | tier_id       | tier3 | app1  | app_id=4              |
+            | tier_id=4&package_id=3    | tier_id       | tier3 | app2  | app_id=4,package_id=2 |
+            | package_id=3              | package_id    | tier1 | app2  | package_id=3          |

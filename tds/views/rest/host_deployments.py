@@ -5,6 +5,7 @@ REST API view for host deployments.
 from cornice.resource import resource, view
 
 import tds.model
+import tagopsdb.model
 from .base import BaseView, init_view
 
 @resource(collection_path="/host_deployments", path="/host_deployments/{id}")
@@ -160,6 +161,40 @@ class HostDeploymentView(BaseView):
                 'non-pending deployment.'
             )
             self.request.errors.status = 403
+        if not any(
+            x in self.request.validated_params for x in ('host_id',
+                                                         'package_id')
+        ):
+            return
+        pkg_id = self.request.validated_params['package_id'] if 'package_id' \
+            in self.request.validated_params else \
+            self.request.validated[self.name].package_id
+        host_id = self.request.validated_params['host_id'] if 'host_id' in \
+            self.request.validated_params else \
+            self.request.validated[self.name].host_id
+        self._validate_project_package(pkg_id, host_id)
+
+    def _validate_project_package(self, pkg_id, host_id):
+        found_pkg = tds.model.Package.get(id=pkg_id)
+        found_host = tds.model.HostTarget.get(id=host_id)
+        if not (found_pkg and found_host):
+            return
+        found_project_pkg = tagopsdb.model.ProjectPackage.find(
+            pkg_def_id=found_pkg.pkg_def_id,
+            app_id=found_host.app_id,
+        )
+        if not found_project_pkg:
+            self.request.errors.add(
+                'query', 'host_id' if 'host_id' in self.request.validated_params
+                else 'package_id',
+                'Tier {t_name} of host {h_name} is not associated with the '
+                'application {a_name} for any projects.'.format(
+                    t_name=found_host.application.name,
+                    h_name=found_host.name,
+                    a_name=found_pkg.application.name,
+                )
+            )
+            self.request.errors.status = 403
 
     def validate_host_deployment_post(self):
         if 'status' in self.request.validated_params:
@@ -173,6 +208,15 @@ class HostDeploymentView(BaseView):
         self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
         self._validate_foreign_key('package_id', 'package', tds.model.Package)
         self._validate_unique_together("POST", "host deployment")
+        if not all(
+            x in self.request.validated_params for x in ('package_id',
+                                                         'host_id')
+        ):
+            return
+        self._validate_project_package(
+            self.request.validated_params['package_id'],
+            self.request.validated_params['host_id'],
+        )
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
