@@ -167,7 +167,7 @@ Feature: REST API search GET
         Then the response code is 422
         And the response contains errors:
             | location  | name      | description                                                                                                                                                                                                                                       |
-            | query     | status    | Unsupported query: status. Valid parameters: ['power_circuit', 'environment_id', 'console_port', 'timezone', 'cage', 'id', 'name', 'kernel_version', 'arch', 'state', 'power_port', 'cab', 'distribution', 'tier_id', 'rack', 'limit', 'start'].  |
+            | query     | status    | Unsupported query: status. Valid parameters: ['arch', 'cab', 'cage', 'console_port', 'distribution', 'environment_id', 'id', 'kernel_version', 'limit', 'name', 'power_circuit', 'power_port', 'rack', 'start', 'state', 'tier_id', 'timezone'].  |
 
     @rest
     Scenario: pass a param that is routed to the ORM name

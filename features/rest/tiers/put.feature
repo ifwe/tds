@@ -47,7 +47,7 @@ Feature: PUT app tier(s) from the REST API
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'puppet_class', 'ganglia_name', 'distribution', 'ganglia_id', 'name'].   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['distribution', 'ganglia_id', 'ganglia_name', 'name', 'puppet_class', 'status'].   |
         And there is no deploy target with name="tier100"
         And there is no deploy target with id=4
 

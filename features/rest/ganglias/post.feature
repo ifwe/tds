@@ -35,7 +35,7 @@ Feature: POST Ganglia(s) from the REST API
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['port', 'name'].   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['name', 'port'].   |
         And there is no Ganglia with cluster_name="ganglia3"
         And there is no Ganglia with id=4
 

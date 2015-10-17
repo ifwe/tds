@@ -48,7 +48,7 @@ Feature: POST host(s) from the REST API
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                                                                                                                                                                           |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['power_circuit', 'environment_id', 'console_port', 'timezone', 'cage', 'name', 'kernel_version', 'arch', 'state', 'power_port', 'cab', 'distribution', 'tier_id', 'rack']. |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'cab', 'cage', 'console_port', 'distribution', 'environment_id', 'kernel_version', 'name', 'power_circuit', 'power_port', 'rack', 'state', 'tier_id', 'timezone']. |
         And there is no host with name="host3"
         And there is no host with id=3
 
