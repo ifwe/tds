@@ -154,7 +154,8 @@ class TierDeploymentView(BaseView):
             )
             self.request.errors.status = 403
         if not any(
-            x in self.request.validated_params for x in ('tier_id', 'package_id')
+            x in self.request.validated_params for x in ('tier_id',
+                                                         'package_id')
         ):
             return
         pkg_id = self.request.validated_params['package_id'] if 'package_id' \
@@ -176,8 +177,8 @@ class TierDeploymentView(BaseView):
         )
         if not found_project_pkg:
             self.request.errors.add(
-                'query', 'tier_id' if 'tier_id' in
-                self.request.validated_params else 'package_id',
+                'query', 'tier_id' if 'tier_id' in self.request.validated_params
+                else 'package_id',
                 'Tier {t_name} is not associated with the application {a_name}'
                 ' for any projects.'.format(
                     t_name=found_tier.name,
