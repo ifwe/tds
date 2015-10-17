@@ -57,7 +57,7 @@ Feature: Update (PUT) package on REST API
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'builder', 'job', 'version', 'revision'].    |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
         And there is a package with version=2,revision=3
 
         Examples:

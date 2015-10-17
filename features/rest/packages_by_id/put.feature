@@ -35,8 +35,8 @@ Feature: Update (PUT) package on REST API by ID
         When I query PUT "/packages/1?foo=bar&version=500"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'name', 'builder', 'job', 'version', 'id', 'revision'].  |
+            | location  | name  | description                                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'id', 'job', 'name', 'revision', 'status', 'version'].  |
         And there is no package with version="500"
 
     @rest @jenkins_server

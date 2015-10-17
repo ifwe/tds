@@ -33,7 +33,7 @@ class ValidatedView(JSONValidatedView):
                 self.request.errors.add(
                     'query', key,
                     "Unsupported query: {param}. Valid parameters: "
-                    "{all}.".format(param=key, all=valid_params),
+                    "{all}.".format(param=key, all=sorted(valid_params)),
                 )
                 self.request.errors.status = 422
             elif self.request.params[key]:

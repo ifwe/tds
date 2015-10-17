@@ -43,7 +43,7 @@ Feature: Update (PUT) application on REST API
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['job', 'validation_type', 'env_specific', 'name', 'build_host', 'deploy_type', 'arch', 'build_type'].  |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'validation_type'].  |
         And there is an application with pkg_name="app1",id=2
 
         Examples:

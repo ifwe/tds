@@ -57,7 +57,7 @@ Feature: Add (POST) application on REST API
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['job', 'validation_type', 'env_specific', 'name', 'build_host', 'deploy_type', 'arch', 'build_type'].  |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'validation_type'].  |
         And there is no application with pkg_name="app4"
         And there is no application with path="myjob"
 
