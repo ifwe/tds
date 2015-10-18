@@ -37,8 +37,8 @@ class ApplicationTierView(BaseView):
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name',
                                    param_name='application_name_or_id')
-        self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
-                                   'app_type', param_name='tier_name_or_id')
+        self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type',
+                                   param_name='tier_name_or_id')
         if not all(
             x in request.validated for x in ('project', 'application', 'tier')
         ):
