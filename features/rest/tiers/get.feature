@@ -91,7 +91,7 @@ Feature: GET app tier(s) from the REST API
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['limit', 'start']. |
 
         Examples:
             | query             |
