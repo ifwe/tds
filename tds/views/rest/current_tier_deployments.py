@@ -1,6 +1,6 @@
 """
-REST view for currently deployed packages for a given application on a given
-tier.
+REST view for most recent deployment of an application to a tier in a given
+environment.
 """
 
 from cornice.resource import resource, view
@@ -11,19 +11,21 @@ from .base import BaseView, init_view
 
 @resource(path="/applications/{name_or_id}/tiers/{tier_name_or_id}/environments"
           "/{environment_name_or_id}")
-@init_view(name="current-tier-package", model=tds.model.Package,
+@init_view(name="current-tier-deployment", model=tds.model.AppDeployment,
            set_params=False)
-class CurrentPackage(BaseView):
+class CurrentTierDeployment(BaseView):
     """
-    REST view for currently deployed packages for a given application on a given
-    tier.
+    REST view for most recent deployment of an application to a tier in a given
+    environment.
     """
 
-    param_routes = {}
+    param_routes = {
+        'tier_id': 'app_id',
+    }
 
     defaults = {}
 
-    def validate_individual_current_tier_package(self, request):
+    def validate_individual_current_tier_deployment(self, request):
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name')
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type',

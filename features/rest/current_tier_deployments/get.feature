@@ -1,4 +1,4 @@
-Feature: GET current version of application on a given tier and environment
+Feature: GET most recent deployment of an application on a given tier and environment
     As a user
     I want to know what is currently deployed on a given tier in a given environment
     So that I can be informed
@@ -58,16 +58,28 @@ Feature: GET current version of application on a given tier and environment
             | 500       | ID 500        |
 
     @rest
-    Scenario: get for a tier that isn't associated with the application
-        When I query GET "/applications/app1/tiers/tier2/environments/1"
+    Scenario Outline: get for a tier that isn't associated with the application
+        When I query GET "/applications/<a_select>/tiers/<t_select>/environments/<e_select>"
         Then the response code is 403
         And the response contains errors:
             | location  | name              | description                                                                           |
             | path      | tier_name_or_id   | Association of tier tier2 with the application app1 does not exist for any projects.  |
 
+        Examples:
+            | a_select  | t_select  | e_select      |
+            | 2         | tier2     | 1             |
+            | app1      | 3         | 1             |
+            | app1      | tier2     | development   |
 
     @rest
     Scenario Outline: get for a tier that hasn't had any deployments of the application
+        Given there is an environment with name="stage"
+        And there are deployments:
+            | id    | user  | status    |
+            | 1     | foo   | complete  |
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
+            | 1     | 1             | 2                 | complete  | foo   | 2         | 1             |
         When I query GET "/applications/app1/tiers/tier1/environments/1?<query>"
         Then the response code is 404
         And the response contains errors:
@@ -109,11 +121,12 @@ Feature: GET current version of application on a given tier and environment
             | invalidated   | must_be_validated=False   | Validated or complete |
             | invalidated   | must_be_validated=True    | Validated             |
 
-    @rest @wip
+    @rest
     Scenario Outline: get the most recent tier deployment for a given tier, application, and environment
         Given there are deployments:
             | id    | user  | status    |
             | 1     | foo   | complete  |
+            | 2     | foo   | complete  |
         And there are tier deployments:
             | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
             | 1     | 1             | 1                 | validated | foo   | 2         | 1             |
@@ -121,10 +134,15 @@ Feature: GET current version of application on a given tier and environment
         And I wait 2 seconds
         And there are tier deployments:
             | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
-            | 3     | 1             | 1                 | complete  | foo   | 2         | 1             |
+            | 3     | 1             | 1                 | complete  | foo   | 2         | 2             |
+        And I wait 2 seconds
+        And there is an environment with name="stage"
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
+            | 4     | 2             | 2                 | validated | foo   | 2         | 1             |
         When I query GET "/applications/app1/tiers/tier1/environments/1?<query>"
         Then the response code is 200
-        And the response is an object with id=<id>,deployment_id=1,environment_id=1,status="<status>",user="foo",app_id=2,package_id=1
+        And the response is an object with id=<id>,deployment_id=1,environment_id=1,status="<status>",user="foo",tier_id=2,package_id=1
 
         Examples:
             | query                     | id    | status    |
