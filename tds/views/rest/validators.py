@@ -263,17 +263,14 @@ class ValidatedView(JSONValidatedView):
         """
         Validate that the object can be deleted.
         """
-        if not getattr(self, 'name', None):
-            return self.method_not_allowed(request)
         func_name = 'validate_{name}_delete'.format(
-            name=self.name.replace('-', '_')
+            name=getattr(self, 'name', '').replace('-', '_')
         )
-        if getattr(self, func_name, None):
+        if getattr(self, func_name, None) is not None:
             self._validate_params(['cascade'])
             self._validate_json_params({'cascade': 'boolean'})
-            self.request.validated['cascade'] = 'cascade' in \
-                self.request.validated_params and \
-                self.request.validated_params['cascade']
+            request.validated['cascade'] = 'cascade' in \
+                request.validated_params and request.validated_params['cascade']
             getattr(self, func_name)()
         else:
             return self.method_not_allowed(request)
