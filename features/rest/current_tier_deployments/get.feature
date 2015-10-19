@@ -129,7 +129,7 @@ Feature: GET most recent deployment of an application on a given tier and enviro
             | 2     | foo   | complete  |
         And there are tier deployments:
             | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
-            | 1     | 1             | 1                 | validated | foo   | 2         | 1             |
+            | 1     | 1             | 1                 | validated | foo   | 2         | 2             |
             | 2     | 1             | 1                 | validated | foo   | 3         | 1             |
         And I wait 2 seconds
         And there are tier deployments:
@@ -142,7 +142,7 @@ Feature: GET most recent deployment of an application on a given tier and enviro
             | 4     | 2             | 2                 | validated | foo   | 2         | 1             |
         When I query GET "/applications/app1/tiers/tier1/environments/1?<query>"
         Then the response code is 200
-        And the response is an object with id=<id>,deployment_id=1,environment_id=1,status="<status>",user="foo",tier_id=2,package_id=1
+        And the response is an object with id=<id>,deployment_id=1,environment_id=1,status="<status>",user="foo",tier_id=2,package_id=2
 
         Examples:
             | query                     | id    | status    |

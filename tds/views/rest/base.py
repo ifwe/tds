@@ -64,6 +64,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                     name=obj_name.upper().replace('-', '_')
                 )
             )
+            cls.full_types = json_types
             if 'user' in json_types or 'id' in json_types:
                 json_types = json_types.copy()
             if 'user' in json_types:
@@ -77,6 +78,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                     name=obj_name.upper().replace('-', '_')
                 )
             )
+            cls.full_descriptions = param_descripts
             if 'user' in param_descripts or 'id' in param_descripts:
                 param_descripts = param_descripts.copy()
             if 'user' in param_descripts:
@@ -412,4 +414,32 @@ class BaseView(ValidatedView):
         tagopsdb.Session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
+        )
+
+    @view(validators=('validate_individual_options', 'validate_cookie'))
+    def options(self):
+        """
+        Return method documentation for individual resources.
+        """
+        return self.make_response(
+            body=self.to_json_obj(self.result),
+            headers=dict(
+                Allows=", ".join(
+                    sorted(self.individual_allowed_methods.keys())
+                )
+            ),
+        )
+
+    @view(validators=('validate_collection_options', 'validate_cookie'))
+    def collection_options(self):
+        """
+        Return method documentation for collection of resources.
+        """
+        return self.make_response(
+            body=self.to_json_obj(self.result),
+            headers=dict(
+                Allows=", ".join(
+                    sorted(self.collection_allowed_methods.keys())
+                )
+            )
         )
