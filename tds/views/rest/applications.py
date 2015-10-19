@@ -27,6 +27,17 @@ class ApplicationView(BaseView):
         'job': 'path',
     }
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get application matching name or ID."),
+        PUT=dict(description="Update application matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of applications, optionally by limit "
+                 "and/or start"),
+        POST=dict(description="Add a new application"),
+    )
+
     defaults = {
         'arch': 'noarch',
         'build_type': 'jenkins',

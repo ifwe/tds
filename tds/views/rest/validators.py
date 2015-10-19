@@ -411,3 +411,109 @@ class ValidatedView(JSONValidatedView):
         """
         request.errors.add('url', 'method', "Method not allowed.")
         request.errors.status = 405
+
+    def _add_individual_options(self, request):
+        """
+        Add options to self.result.
+        """
+        self.result = self.individual_allowed_methods
+        self.result['OPTIONS'] = dict(
+            description="Get HTTP method options and parameters for this URL "
+                "endpoint.",
+        )
+
+        if 'GET' in self.result:
+            self.result['GET']['attributes'] = dict()
+            for attr in self.full_types:
+                self.result['GET']['attributes'][attr] = dict(
+                    type=self.full_types[attr],
+                    description=self.full_descriptions[attr],
+                )
+
+        if 'PUT' in self.result:
+            self.result['PUT']['parameters'] = dict()
+            for attr in self.types:
+                self.result['PUT']['parameters'][attr] = dict(
+                    type=self.types[attr],
+                    description=self.param_descriptions[attr],
+                )
+            if 'returns' not in self.result['PUT']:
+                self.result['PUT']['returns'] = "Updated {name}".format(
+                    name=self.name
+                )
+
+        if getattr(self, '_add_additional_individual_options', None) is not None:
+            getattr(self, '_add_additional_individual_options')(request)
+
+    def validate_individual_options(self, request):
+        """
+        If the subclass has the appropriate method, call it.
+        Otherwise, do some generic options information setup to be returned.
+        """
+        getattr(
+            self,
+            'validate_individual_{name}_options'.format(
+                name=self.name.replace('-', '_')
+            ),
+            self._add_individual_options,
+        )(request)
+
+    def _add_collection_options(self, request):
+        """
+        Add options to self.result.
+        """
+        self.result = self.collection_allowed_methods
+        self.result['OPTIONS'] = dict(
+            description="Get HTTP method options and parameters for this URL "
+                "endpoint.",
+        )
+
+        if 'GET' in self.result:
+            self.result['GET']['attributes'] = dict()
+            for attr in self.full_types:
+                self.result['GET']['attributes'][attr] = dict(
+                    type=self.full_types[attr],
+                    description=self.full_descriptions[attr],
+                )
+            self.result['GET']['parameters'] = dict(
+                limit=dict(
+                    type='integer',
+                    description='Maximum number of items to return',
+                ),
+                start=dict(
+                    type='integer',
+                    description='ID of where to start the list'
+                )
+            )
+
+        if 'POST' in self.result:
+            self.result['POST']['parameters'] = dict()
+            for attr in self.types:
+                self.result['POST']['parameters'][attr] = dict(
+                    types=self.types[attr],
+                    description=self.param_descriptions[attr],
+                )
+            if 'returns' not in self.result['POST']:
+                self.result['POST']['returns'] = "Newly created {name}".format(
+                    name=self.name
+                )
+
+        for attr in getattr(self, 'required_post_fields', list()):
+            self.result['POST']['parameters'][attr]['required'] = True
+
+        if getattr(self, '_add_additional_collection_options', None) is not \
+                None:
+            getattr(self, '_add_additional_collection_options')(request)
+
+    def validate_collection_options(self, request):
+        """
+        If the subclass has the appropriate method, call it.
+        Otherwise, do some generic options informations setup to be returned.
+        """
+        getattr(
+            self,
+            'validate_collection_{name}_options'.format(
+                name=self.name.replace('-', '_')
+            ),
+            self._add_collection_options,
+        )(request)
