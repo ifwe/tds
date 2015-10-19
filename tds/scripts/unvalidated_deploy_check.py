@@ -1,14 +1,34 @@
 """Notify about unvalidated deployments."""
 
+import argparse
 import sys
 
 import tds.utils.config
+import tds.version
 
-from ..utils.script_helpers import (
+from tds.utils.script_helpers import (
     UnvalidatedDeploymentNotifier,
     TagopsdbDeploymentProvider,
     ValidationMonitor
 )
+
+
+def parse_command_line(sysargs):
+    """Parse the command line and return the parser to the main program."""
+
+    parser = argparse.ArgumentParser(description='TDS Unvalidated Check')
+
+    parser.add_argument('-V', '--version', action='version',
+                        version='TDS Unvalidated Check %s'
+                        % tds.version.__version__)
+    parser.add_argument('-v', '--verbose', action='count',
+                        help='Show more information (more used shows greater '
+                             'information)')
+    parser.add_argument('--config-dir',
+                        help='Specify directory containing app config',
+                        default='/etc/tagops/')
+
+    return parser.parse_args(sysargs)
 
 
 def main():
@@ -16,7 +36,9 @@ def main():
     Load config, create ValidationMonitor instance, and process notifications.
     """
 
-    config = tds.utils.config.TDSDeployConfig()
+    args = parse_command_line(sys.argv[1:])
+
+    config = tds.utils.config.TDSDeployConfig(conf_dir=args['config_dir'])
     db_config = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
 
     config.load()

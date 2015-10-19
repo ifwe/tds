@@ -8,13 +8,15 @@ import subprocess
 
 import tds
 import tds.scripts.tds_prog
+import tds.scripts.unvalidated_deploy_check
 import tds.utils.processes as processes
 import tds.apps.repo_updater
 
-from behave import when, then
+from behave import given, when, then
 
 TDS_SCRIPT = tds.scripts.tds_prog.__file__
 REPO_UPDATE_SCRIPT = tds.apps.repo_updater.__file__
+UNVALIDATED_CHECK_SCRIPT = tds.scripts.unvalidated_deploy_check.__file__
 TRACEBACK_TEXT = 'Traceback (most recent call last)'
 
 
@@ -49,7 +51,13 @@ def when_i_start_to_run(context, command):
             sys.executable
         ]
 
-    if cmd_parts[0] == "daemon":
+    if cmd_parts[0] == 'check':
+        cmd_parts = (
+            cmd_executable +
+            [UNVALIDATED_CHECK_SCRIPT] +
+            getattr(context, 'extra_run_args', [])
+        )
+    elif cmd_parts[0] == "daemon":
         cmd_parts = (
             cmd_executable +
             [REPO_UPDATE_SCRIPT] +
