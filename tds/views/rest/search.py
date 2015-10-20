@@ -15,6 +15,8 @@ class SearchView(base.BaseView):
     obj_type should be one of the keys of SearchView.TYPES below.
     """
 
+    name = 'search'
+
     APPLICATION_DICT = {
         'model': tds.model.Application,
         'params': types.APPLICATION_TYPES,
@@ -23,6 +25,16 @@ class SearchView(base.BaseView):
             'job': 'path',
         },
         'descriptions': descriptions.APPLICATION_DESCRIPTIONS,
+    }
+
+    APPLICATION_TIER_DICT = {
+        'model': tagopsdb.model.ProjectPackage,
+        'params': types.APPLICATION_TIER_TYPES,
+        'param_routes': {
+            'application_id': 'pkg_def_id',
+            'tier_id': 'app_id',
+        },
+        'descriptions': descriptions.APPLICATION_TIER_DESCRIPTIONS,
     }
 
     DEPLOYMENT_DICT = {
@@ -121,6 +133,7 @@ class SearchView(base.BaseView):
 
     TYPES = {
         'applications': APPLICATION_DICT,
+        'application_tiers': APPLICATION_TIER_DICT,
         'deployments': DEPLOYMENT_DICT,
         'environments': ENVIRONMENT_DICT,
         'ganglias': GANGLIA_DICT,

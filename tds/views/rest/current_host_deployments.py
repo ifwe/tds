@@ -21,7 +21,7 @@ class CurrentHostDeployment(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get the most recent completed host deployment "
-                 "for an application and host.")
+                 "for an application and host."),
     )
 
     full_types = types.HOST_DEPLOYMENT_TYPES
