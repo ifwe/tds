@@ -29,3 +29,14 @@ class EnvironmentView(BaseView):
     }
 
     unique = ('short_name', 'domain', 'prefix')
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get environment matching name or ID."),
+        PUT=dict(description="Update environment matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of environments, optionally by limit "
+                 "and/or start."),
+        POST=dict(description="Add a new environment."),
+    )
