@@ -14,6 +14,12 @@ APPLICATION_TYPES = {
     'env_specific': 'boolean',
 }
 
+APPLICATION_TIER_TYPES = {
+    'project_id': 'integer',
+    'application_id': 'integer',
+    'tier_id': 'integer',
+}
+
 DEPLOYMENT_TYPES = {
     'id': 'integer',
     'user': 'string',

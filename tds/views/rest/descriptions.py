@@ -14,6 +14,12 @@ APPLICATION_DESCRIPTIONS = {
     'env_specific': 'Whether the application is environment specific',
 }
 
+APPLICATION_TIER_DESCRIPTIONS = {
+    'project_id': 'Unique integer identifier for the project',
+    'application_id': 'Unique integer identifier for the application',
+    'tier_id': 'Unique integer indentifier for the tier',
+}
+
 DEPLOYMENT_DESCRIPTIONS = {
     'id': 'Unique integer identifier',
     'user': 'Username of creator',

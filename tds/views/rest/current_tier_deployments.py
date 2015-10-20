@@ -8,6 +8,8 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
+from . import types, descriptions
+
 
 @resource(path="/applications/{name_or_id}/tiers/{tier_name_or_id}/environments"
           "/{environment_name_or_id}")
@@ -24,6 +26,15 @@ class CurrentTierDeployment(BaseView):
     }
 
     defaults = {}
+
+    individual_allowed_methods = dict(
+        GET=dict(descriptions="Get the most recent completed tier deployment "
+                 "for an application, tier, and environment."),
+    )
+
+    full_types = types.TIER_DEPLOYMENT_TYPES
+
+    full_descriptions = descriptions.TIER_DEPLOYMENT_DESCRIPTIONS
 
     def validate_individual_current_tier_deployment(self, request):
         self.get_obj_by_name_or_id('application', tds.model.Application,

@@ -8,6 +8,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb
 from .base import BaseView, init_view
+from . import types as obj_types, descriptions
 
 
 @resource(collection_path="/projects/{name_or_id}/applications/"
@@ -40,22 +41,14 @@ class ApplicationTierView(BaseView):
         'name': 'string',
     }
 
-    full_types = {
-        'project_id': 'integer',
-        'application_id': 'integer',
-        'tier_id': 'integer',
-    }
+    full_types = obj_types.APPLICATION_TIER_TYPES
 
     param_descriptions = {
         'id': 'Unique integer identifier for the tier',
         'name': 'Unique string identifier for the tier',
     }
 
-    full_descriptions = {
-        'project_id': 'Unique integer identifier for the project',
-        'application_id': 'Unique integer identifier for the application',
-        'tier_id': 'Unique integer identifier for the tier'
-    }
+    full_descriptions = descriptions.APPLICATION_TIER_DESCRIPTIONS
 
     param_routes = {
         'application_id': 'pkg_def_id',
