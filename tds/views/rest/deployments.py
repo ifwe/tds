@@ -8,6 +8,7 @@ import tagopsdb.model
 import tds.model
 from .base import BaseView, init_view
 
+
 @resource(collection_path="/deployments", path="/deployments/{id}")
 @init_view(name="deployment")
 class DeploymentView(BaseView):
@@ -15,6 +16,32 @@ class DeploymentView(BaseView):
     param_routes = {}
 
     defaults = {}
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get deployment matching ID."),
+        PUT=dict(description="Update deployment matching ID."),
+        DELETE=dict(description="Delete deployment matching ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of deployments, optionally by limit "
+                 "and/or start."),
+        POST=dict(description="Add a new deployment."),
+    )
+
+    def _add_additional_individual_options(self, request):
+        self.result['DELETE']['parameters'] = dict(
+            cascade=dict(
+                type='boolean',
+                description='Whether to delete all associated host and tier '
+                'deployments',
+            )
+        )
+        self.result['PUT']['parameters']['force'] = dict(
+            type='boolean',
+            description='Whether to force queue the deployment despite lack of'
+            ' validation in the previous environment',
+        )
 
     def _handle_extra_params(self):
         self.valid_attrs.append('force')
