@@ -34,8 +34,8 @@ class ApplicationView(BaseView):
 
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of applications, optionally by limit "
-                 "and/or start"),
-        POST=dict(description="Add a new application"),
+                 "and/or start."),
+        POST=dict(description="Add a new application."),
     )
 
     defaults = {

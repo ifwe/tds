@@ -28,7 +28,7 @@ class CurrentTierDeployment(BaseView):
     defaults = {}
 
     individual_allowed_methods = dict(
-        GET=dict(descriptions="Get the most recent completed tier deployment "
+        GET=dict(description="Get the most recent completed tier deployment "
                  "for an application, tier, and environment."),
     )
 
