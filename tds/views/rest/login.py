@@ -15,9 +15,23 @@ class LoginView(BaseView):
     View to log in and get a cookie for use later.
     """
 
+    name = 'login'
+
     types = {
         'user': 'string',
         'password': 'string',
+    }
+
+    individual_allowed_methods = dict(
+        POST=dict(
+            description="Authenticate and get a session cookie.",
+            returns="Session cookie attached at cookies->session."
+        ),
+    )
+
+    param_descriptions = {
+        'user': 'LDAP username to use for authentication',
+        'password': 'String password to use for authentication',
     }
 
     required_post_fields = ('user', 'password')
@@ -73,3 +87,11 @@ class LoginView(BaseView):
             self.request.is_admin,
         )
         return response
+
+    @view(validators=('method_not_allowed',))
+    def delete(self):
+        pass
+
+    @view(validators=('method_not_allowed',))
+    def put(self):
+        pass
