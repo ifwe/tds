@@ -22,9 +22,39 @@ class ApplicationTierView(BaseView):
     to filter application-tier relationships.
     """
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get project-application-tier association."),
+        DELETE=dict(description="Delete project-application-tier association."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(
+            description="Get all project-application-tier associations."
+        ),
+        POST=dict(description="Create new association for project-application "
+                  "of tier with given ID or name (ID given precedence)."),
+    )
+
     types = {
         'id': 'integer',
         'name': 'string',
+    }
+
+    full_types = {
+        'project_id': 'integer',
+        'application_id': 'integer',
+        'tier_id': 'integer',
+    }
+
+    param_descriptions = {
+        'id': 'Unique integer identifier for the tier',
+        'name': 'Unique string identifier for the tier',
+    }
+
+    full_descriptions = {
+        'project_id': 'Unique integer identifier for the project',
+        'application_id': 'Unique integer identifier for the application',
+        'tier_id': 'Unique integer identifier for the tier'
     }
 
     param_routes = {
@@ -152,4 +182,4 @@ class ApplicationTierView(BaseView):
 
     @view(validators=('method_not_allowed'))
     def put(self):
-        return self.make_response({})
+        pass
