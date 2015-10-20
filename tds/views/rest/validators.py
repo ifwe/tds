@@ -442,6 +442,20 @@ class ValidatedView(JSONValidatedView):
                     name=self.name
                 )
 
+        if 'POST' in self.result:
+            self.result['POST']['parameters'] = dict()
+            for attr in self.types:
+                self.result['POST']['parameters'][attr] = dict(
+                    type=self.types[attr],
+                    description=self.param_descriptions[attr]
+                )
+            if 'returns' not in self.result['POST']:
+                self.result['POST']['returns'] = 'Newly created {name}'.format(
+                    name=self.name
+                )
+            for attr in getattr(self, 'required_post_fields', list()):
+                self.result['POST']['parameters'][attr]['required'] = True
+
         if getattr(self, '_add_additional_individual_options', None) is not None:
             getattr(self, '_add_additional_individual_options')(request)
 
