@@ -7,6 +7,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
+from . import types, descriptions
 
 @resource(path="/applications/{name_or_id}/hosts/{host_name_or_id}")
 @init_view(name="current-host-deployment", model=tds.model.HostDeployment,
@@ -17,6 +18,15 @@ class CurrentHostDeployment(BaseView):
     """
 
     param_routes = {}
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get the most recent completed host deployment "
+                 "for an application and host.")
+    )
+
+    full_types = types.HOST_DEPLOYMENT_TYPES
+
+    full_descriptions = descriptions.HOST_DEPLOYMENT_DESCRIPTIONS
 
     defaults = {}
 
