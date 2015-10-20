@@ -441,6 +441,12 @@ class ValidatedView(JSONValidatedView):
                 self.result['PUT']['returns'] = "Updated {name}".format(
                     name=self.name
                 )
+            for attr in getattr(self, 'unique', list()):
+                self.result['PUT']['parameters'][attr]['unique'] = True
+            if getattr(self, 'unique_together', None) is not None:
+                self.result['POST']['unique_together'] = sorted(
+                    self.unique_together
+                )
 
         if 'POST' in self.result:
             self.result['POST']['parameters'] = dict()
@@ -455,6 +461,22 @@ class ValidatedView(JSONValidatedView):
                 )
             for attr in getattr(self, 'required_post_fields', list()):
                 self.result['POST']['parameters'][attr]['required'] = True
+            for attr in getattr(self, 'unique', list()):
+                self.result['POST']['parameters'][attr]['unique'] = True
+            if getattr(self, 'unique_together', None) is not None:
+                self.result['POST']['unique_together'] = sorted(
+                    self.unique_together
+                )
+
+        if getattr(self, 'permissions', None) is not None:
+            for method in self.result:
+                if method.lower() in self.permissions:
+                    self.result[method]['permissions'] = self.permissions[
+                        method.lower()
+                    ]
+                else:
+                    self.result[method]['permissions'] = 'user'
+        self.result['OPTIONS']['permissions'] = 'none'
 
         if getattr(self, '_add_additional_individual_options', None) is not None:
             getattr(self, '_add_additional_individual_options')(request)
@@ -512,8 +534,25 @@ class ValidatedView(JSONValidatedView):
                     name=self.name
                 )
 
-        for attr in getattr(self, 'required_post_fields', list()):
-            self.result['POST']['parameters'][attr]['required'] = True
+            for attr in getattr(self, 'required_post_fields', list()):
+                self.result['POST']['parameters'][attr]['required'] = True
+            for attr in getattr(self, 'unique', list()):
+                self.result['POST']['parameters'][attr]['unique'] = True
+            if getattr(self, 'unique_together', None) is not None:
+                self.result['POST']['unique_together'] = sorted(
+                    self.unique_together
+                )
+
+        if getattr(self, 'permissions', None) is not None:
+            for method in self.result:
+                if 'collection_{method}'.format(method=method.lower()) in \
+                        self.permissions:
+                    self.result[method]['permissions'] = self.permissions[
+                        'collection_{method}'.format(method=method.lower())
+                    ]
+                else:
+                    self.result[method]['permissions'] = 'user'
+        self.result['OPTIONS']['permissions'] = 'none'
 
         if getattr(self, '_add_additional_collection_options', None) is not \
                 None:
