@@ -37,6 +37,17 @@ class TierView(BaseView):
         'collection_post': 'admin',
     }
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get tier matching name or ID."),
+        PUT=dict(description="Update tier matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of tiers, optionally by limit and/"
+                 "or start."),
+        POST=dict(description="Add a new tier."),
+    )
+
     def validate_tier_post(self):
         """
         Validate a POST request by preventing collisions over unique fields and

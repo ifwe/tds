@@ -1,6 +1,6 @@
-Feature: OPTIONS for projects by ID
+Feature: OPTIONS for projects
     As a user
-    I want to know my options for the projects by endpoints
+    I want to know my options for the projects endpoints
     So that I can avoid errors and be more effective in using the API
 
     @rest
