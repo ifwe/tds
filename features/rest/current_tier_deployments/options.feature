@@ -3,9 +3,6 @@ Feature: OPTIONS for most recent tier deployment
     I want to know my options for the most recent tier deployment endpoint
     So that I can avoid errors and be more effective in using the API
 
-    Background:
-        Given I have a cookie with user permissions
-
     @rest
     Scenario: get options for the endpoint
         When I query OPTIONS "/applications/foo/tiers/bar/environments/biz"

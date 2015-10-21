@@ -3,9 +3,6 @@ Feature: REST API search OPTIONS
     I want to know my param options for the search endpoint
     So that I can avoid errors in my queries
 
-    Background:
-        Given I have a cookie with user permissions
-
     @rest
     Scenario: get options for search tiers
         When I query OPTIONS "/search/tiers"

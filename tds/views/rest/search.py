@@ -289,7 +289,7 @@ class SearchView(base.BaseView):
             self.results
         ])
 
-    @view(validators=('validate_search_options', 'validate_cookie'))
+    @view(validators=('validate_search_options',))
     def options(self):
         return self.make_response(
             body=self.to_json_obj(self.result),

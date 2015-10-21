@@ -3,9 +3,6 @@ Feature: OPTIONS for applications
     I want to know what my options are for applications endpoints
     So that I can avoid errors and be more effective in using the API
 
-    Background:
-        Given I have a cookie with user permissions
-
     @rest
     Scenario: get options for the collection endpoint
         When I query OPTIONS "/applications"

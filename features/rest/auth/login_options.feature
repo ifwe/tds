@@ -3,9 +3,6 @@ Feature: OPTIONS for login
     I want to know what my options are for the login endpoint
     So that I can login without errors
 
-    Background:
-        Given I have a cookie with user permissions
-
     @rest
     Scenario: get options for the login endpoint
         When I query OPTIONS "/login"
@@ -22,3 +19,5 @@ Feature: OPTIONS for login
         And the response body contains "password"
         And the response body contains "String password to use for authentication"
         And the response body contains "required"
+        And the response body contains "permissions"
+        And the response body contains "none"
