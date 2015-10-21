@@ -24,7 +24,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the hosts are associated with the deploy target
         And there is an ongoing deployment on the deploy target
         When I run "deploy promote myapp 123 <targets>"
-        Then the output has "User "test-user" is currently running a deployment for the the-apptype app tier in the development environment, skipping..."
+        Then the output has "currently running a deployment for the the-apptype app tier in the development environment, skipping..."
 
     Examples:
         | targets                   |
@@ -47,7 +47,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the hosts are associated with the deploy target
         And there is an ongoing deployment on the hosts="dprojhost01"
         When I run "deploy promote myapp 123 <targets>"
-        Then the output has "User "test-user" is currently running a deployment for the hosts "dprojhost01" in the development environment, skipping..."
+        Then the output has "currently running a deployment for the hosts "dprojhost01" in the development environment, skipping..."
 
     Examples:
         | targets                   |
@@ -97,7 +97,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the package is deployed on the deploy targets in the "stage" env
         And there is an ongoing deployment on the deploy target
         When I run "deploy fix myapp <targets>"
-        Then the output has "User "test-user" is currently running a deployment for the the-apptype app tier in the staging environment, skipping..."
+        Then the output has "currently running a deployment for the the-apptype app tier in the staging environment, skipping..."
 
     Examples:
         | targets                   |

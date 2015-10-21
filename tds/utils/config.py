@@ -204,7 +204,8 @@ class TDSDatabaseConfig(TDSConfig):
             '%s.%s.yml' % (name_fragment, access_level),
             conf_dir=conf_dir
         )
-        super(TDSDatabaseConfig, self).__init__(self.access.filename)
+        super(TDSDatabaseConfig, self).__init__(self.access.filename,
+                                                conf_dir=conf_dir)
 
     def load(self):
         self.basic.load()

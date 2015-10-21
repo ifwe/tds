@@ -16,7 +16,8 @@ from .model_steps import parse_properties
 @given(u'email notification is enabled')
 def email_notification_is_enabled(context):
     add_config_val(context, 'notifications',
-                   dict(enabled_methods=['email']))
+                   dict(enabled_methods=['email']),
+                   use_list=True)
 
 
 @given(u'the email server is broken')
@@ -54,20 +55,39 @@ def verify_email_contents(context, attrs):
         email_subject = ''.join(email_headers['Subject'].split('\n'))
         email_body = ''.join(email_content._payload.split('\n'))
 
-        subject_re = re.compile(
-            r'\[TDS\] %(deptype)s of version %(version)s of %(name)s '
-            r'on %(targtype)s %(targets)s in %(env)s' % attrs, flags=re.I
-        )
+        if 'unvalidated' in attrs:
+            subject_re = re.compile(
+                r'\[TDS\] ATTENTION: %(name)s in %(environment)s for '
+                r'%(targets)s app tier needs validation\!' % attrs, flags=re.I
+            )
+            body_re = re.compile(
+                r'Version %(version)s of package %(name)s in %(targets)s '
+                r'app tier\\nhas not been validated. Please validate it.\\n'
+                r'Without this, Puppet cannot manage the tier correctly.'
+                % attrs, flags=re.S
+            )
+        else:
+            subject_re = re.compile(
+                r'\[TDS\] %(deptype)s of version %(version)s of %(name)s '
+                r'on %(targtype)s %(targets)s in %(env)s' % attrs, flags=re.I
+            )
+            body_re = re.compile(
+                r'%(curr_user)s performed a "tds deploy %(deptype)s" for the '
+                r'following %(targtype)s in %(env)s:    %(targets)s' % attrs,
+                flags=re.S
+            )
+
         assert subject_re.match(email_subject), \
             (email_subject, subject_re.pattern, subject_re.flags)
-
-        body_re = re.compile(
-            r'%(curr_user)s performed a "tds deploy %(deptype)s" for the '
-            r'following %(targtype)s in %(env)s:    %(targets)s' % attrs,
-            flags=re.S
-        )
         assert body_re.match(email_body), \
             (email_body, body_re.pattern, body_re.flags)
+
+
+@then(u'no email is sent')
+def no_email_is_sent(context):
+    assert not os.path.isfile(
+        os.path.join(context.EMAIL_SERVER_DIR, 'message.json')
+    )
 
 
 @then(u'an email is sent with the relevant information for {properties}')
@@ -77,6 +97,7 @@ def email_is_sent_with_relevant_information(context, properties):
         'version': context.tds_packages[-1].version,
         'name': context.tds_packages[-1].pkg_name,
         'env': context.tds_env,
+        'environment': context.tds_environment,
     })
 
     if attrs.get('apptypes', None) is not None:
