@@ -86,6 +86,9 @@ class ValidatedView(JSONValidatedView):
         If the 'select' parameter was passed in the query, validate that the
         comma-separated attributes passed are valid attributes for the model.
         """
+        if not (getattr(request, 'validated_params', None) and 'select' in
+                request.validated_params):
+            return
         if valid_attrs is None:
             valid_attrs = self.full_types.keys()
         if 'select' in request.validated_params:
