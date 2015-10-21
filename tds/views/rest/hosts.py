@@ -51,6 +51,17 @@ class HostView(BaseView):
         'collection_post': 'admin',
     }
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get host matching name or ID."),
+        PUT=dict(description="Update host matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of hosts, optionally by limit and/"
+                 "or start."),
+        POST=dict(description="Add a new host."),
+    )
+
     def validate_host_post(self):
         """
         Validate a POST request by preventing collisions over unique fields and
