@@ -25,3 +25,14 @@ class ProjectView(BaseView):
         'delete': 'admin',
         'collection_post': 'admin',
     }
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get project matching name or ID."),
+        PUT=dict(description="Update project matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of projects, optionally by limit and/"
+                 "or start."),
+        POST=dict(description="Add a new project."),
+    )
