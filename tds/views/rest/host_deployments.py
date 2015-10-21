@@ -24,6 +24,18 @@ class HostDeploymentView(BaseView):
         ('deployment_id', 'host_id', 'package_id'),
     )
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get host deployment matching ID."),
+        PUT=dict(description="Update host deployment matching ID."),
+        DELETE=dict(description="Delete host deployment matching ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of host deployments, optionally by "
+                 "limit and/or start."),
+        POST=dict(description="Add a new host deployment."),
+    )
+
     def validate_host_deployment_delete(self):
         if self.name not in self.request.validated:
             return
