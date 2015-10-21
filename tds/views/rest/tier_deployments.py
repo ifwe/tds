@@ -27,6 +27,18 @@ class TierDeploymentView(BaseView):
         ('deployment_id', 'tier_id', 'package_id'),
     )
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get tier deployment matching ID."),
+        PUT=dict(description="Update tier deployment matching ID."),
+        DELETE=dict(description="Delete tier deployment matching ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of tier deployments, optionally by "
+                 "limit and/or start."),
+        POST=dict(description="Add a new tier deployment."),
+    )
+
     def validate_tier_deployment_delete(self):
         if self.name not in self.request.validated:
             return
