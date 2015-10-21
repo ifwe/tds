@@ -102,17 +102,17 @@ class Notifier(object):
         'Returns the message for an unvalidated deployment'
         subject = (
             'ATTENTION: %s in %s for %s app tier needs validation!' % (
-                deployment.package.name,
-                deployment.target['env'],
+                deployment.package['name'],
+                deployment.target['environment'],
                 ','.join(x.name for x in deployment.target['apptypes'])
             )
         )
         body = (
-            'Version %s of package %s in %s app tier\n'
-            'has not been validated. Please validate it.\n'
-            'Without this, Puppet cannot manage the tier correctly.' % (
-                deployment.package.version,
-                deployment.package.name,
+            r'Version %s of package %s in %s app tier\n'
+            r'has not been validated. Please validate it.\n'
+            r'Without this, Puppet cannot manage the tier correctly.' % (
+                deployment.package['version'],
+                deployment.package['name'],
                 ', '.join(x.name for x in deployment.target['apptypes']),
             )
         )
