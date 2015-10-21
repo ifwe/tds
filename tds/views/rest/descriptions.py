@@ -17,7 +17,7 @@ APPLICATION_DESCRIPTIONS = {
 APPLICATION_TIER_DESCRIPTIONS = {
     'project_id': 'Unique integer identifier for the project',
     'application_id': 'Unique integer identifier for the application',
-    'tier_id': 'Unique integer indentifier for the tier',
+    'tier_id': 'Unique integer identifier for the tier',
 }
 
 DEPLOYMENT_DESCRIPTIONS = {

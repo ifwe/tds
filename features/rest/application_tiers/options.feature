@@ -16,6 +16,8 @@ Feature: OPTIONS for application-tier associations
         And the response body contains "Unique integer identifier for the project"
         And the response body contains "Unique integer identifier for the application"
         And the response body contains "Unique integer identifier for the tier"
+        And the response body contains "returns"
+        And the response body contains "Newly created project-application-tier association"
 
     @rest
     Scenario: get options for the individual endpoint
@@ -31,3 +33,5 @@ Feature: OPTIONS for application-tier associations
         And the response body contains "Unique integer identifier for the project"
         And the response body contains "Unique integer identifier for the application"
         And the response body contains "Unique integer identifier for the tier"
+        And the response body contains "returns"
+        And the response body contains "Deleted project-application-tier association"

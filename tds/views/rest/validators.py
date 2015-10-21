@@ -469,6 +469,12 @@ class ValidatedView(JSONValidatedView):
                     self.unique_together
                 )
 
+        if 'DELETE' in self.result:
+            if 'returns' not in self.result['DELETE']:
+                self.result['DELETE']['returns'] = "Deleted {name}".format(
+                    name=self.name
+                )
+
         for method in self.result:
             if 'permissions' in self.result[method]:
                 continue
