@@ -7,6 +7,8 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb
 from .base import BaseView, init_view
+from . import types as obj_types, descriptions
+
 
 @resource(collection_path="/tiers/{name_or_id}/hipchats",
           path="/tiers/{name_or_id}/hipchats/{hipchat_name_or_id}")
@@ -21,9 +23,38 @@ class TierHipchatView(BaseView):
         'name': 'string',
     }
 
+    full_types = obj_types.HIPCHAT_TYPES
+
+    param_descriptions = {
+        'id': 'ID of the HipChat',
+        'name': 'Name of the HipChat',
+    }
+
+    full_descriptions = descriptions.HIPCHAT_DESCRIPTIONS
+
     param_routes = {
         'name': 'room_name',
     }
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get a HipChat associated with the tier."),
+        DELETE=dict(
+            description="Disassociate a HipChat from the tier.",
+            returns="Disassociated HipChat",
+        ),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(
+            description="Get a list of HipChats associated with the tier, "
+            "optionally by limit and/or start."
+        ),
+        POST=dict(
+            description="Associate a HipChat with the tier by name or "
+                "ID (ID given precedence).",
+            returns="Associated HipChat",
+            ),
+    )
 
     def validate_individual_tier_hipchat(self, request):
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')

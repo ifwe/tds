@@ -25,15 +25,21 @@ class ApplicationTierView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get project-application-tier association."),
-        DELETE=dict(description="Delete project-application-tier association."),
+        DELETE=dict(
+            description="Delete project-application-tier association.",
+            returns="Deleted project-application-tier association.",
+        ),
     )
 
     collection_allowed_methods = dict(
         GET=dict(
             description="Get all project-application-tier associations."
         ),
-        POST=dict(description="Create new association for project-application "
-                  "of tier with given ID or name (ID given precedence)."),
+        POST=dict(
+            description="Create new association for project-application "
+                "of tier with given ID or name (ID given precedence).",
+            returns="Newly created project-application-tier association",
+        ),
     )
 
     types = {

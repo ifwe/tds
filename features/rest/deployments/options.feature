@@ -12,6 +12,8 @@ Feature: OPTIONS for deployments
         And the response body contains "Get a list of deployments, optionally by limit and/or start."
         And the response body contains "Add a new deployment."
         And the response body contains "Unique integer identifier"
+        And the response body contains "returns"
+        And the response body contains "Newly created deployment"
 
     @rest
     Scenario: get options for the individual endpoint
@@ -28,3 +30,5 @@ Feature: OPTIONS for deployments
         And the response body contains "Whether to delete all associated host and tier deployments"
         And the response body contains "force"
         And the response body contains "Whether to force queue the deployment despite lack of validation in the previous environment"
+        And the response body contains "returns"
+        And the response body contains "Deleted deployment"

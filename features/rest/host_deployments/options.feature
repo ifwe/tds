@@ -19,6 +19,7 @@ Feature: OPTIONS for host deployments
         And the response body contains "Unique integer identifier"
         And the response body contains "unique_together"
         And the response body contains "required"
+        And the response body contains "returns"
 
     @rest
     Scenario: get options for the individual endpoint
@@ -36,3 +37,4 @@ Feature: OPTIONS for host deployments
         And the response body contains "id"
         And the response body contains "host_id"
         And the response body contains "deployment_id"
+        And the response body contains "returns"
