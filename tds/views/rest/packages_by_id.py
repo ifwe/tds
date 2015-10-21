@@ -11,6 +11,8 @@ except ImportError:
 
 import tds.model
 from .base import BaseView, init_view
+from . import types as obj_types, descriptions
+
 
 @resource(collection_path="/packages", path="/packages/{id}")
 @init_view(name='package-by-id', model=tds.model.Package, set_params=False)
@@ -28,11 +30,37 @@ class PackageByIDView(BaseView):
 
     param_routes = {
         'name': 'pkg_name',
+        'application_id': 'pkg_def_id',
     }
+
+    full_types = obj_types.PACKAGE_TYPES
+
+    param_descriptions = {
+        'id': 'Unique integer identifier',
+        'version': 'Version number',
+        'revision': 'Revision number',
+        'status': 'Current status',
+        'builder': 'Entity that built the package',
+        'job': 'Name of Jenkins job',
+        'name': "Name of the package's application",
+    }
+
+    full_descriptions = descriptions.PACKAGE_DESCRIPTIONS
 
     defaults = {
         'status': 'pending',
     }
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get package matching ID."),
+        PUT=dict(description="Update package matching ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of packages, optionally by limit and/"
+                 "or start."),
+        POST=dict(description="Add a new package."),
+    )
 
     required_post_fields = ('version', 'revision', 'name')
 
