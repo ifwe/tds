@@ -49,8 +49,8 @@ Feature: GET package(s) from the REST API by ID
         When I query GET "/packages?foo=bar"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['limit', 'start']. |
+            | location  | name  | description                                                               |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['limit', 'select', 'start'].   |
 
     @rest
     Scenario Outline: specify limit and/or last queries

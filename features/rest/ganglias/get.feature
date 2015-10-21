@@ -63,8 +63,8 @@ Feature: GET Ganglia(s) from the REST API
         When I query GET "/ganglias?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['limit', 'start']. |
+            | location  | name  | description                                                               |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['limit', 'select', 'start'].   |
 
         Examples:
             | query             |

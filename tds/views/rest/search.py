@@ -211,7 +211,7 @@ class SearchView(base.BaseView):
         self.obj_dict = self.TYPES[request.matchdict['obj_type']]
         self.model = self.obj_dict['model']
         self._validate_params(
-            self.obj_dict['params'].keys() + ['limit', 'start']
+            self.obj_dict['params'].keys() + ['limit', 'start', 'select']
         )
 
         for param in request.validated_params:
@@ -222,12 +222,17 @@ class SearchView(base.BaseView):
                 setattr(self, choice_param, self._get_param_choices(param))
 
         self._validate_json_params(self.obj_dict['params'])
-        self._validate_json_params({'limit': 'integer', 'start': 'integer'})
+        self._validate_json_params(
+            {'limit': 'integer', 'start': 'integer', 'select': 'string'}
+        )
         self.limit = self.start = None
         if 'limit' in request.validated_params:
             self.limit = request.validated_params.pop('limit')
         if 'start' in request.validated_params:
             self.start = request.validated_params.pop('start')
+        self._validate_select_attributes(
+            request, self.obj_dict['params'].keys()
+        )
         self._route_params(self.obj_dict['param_routes'])
         self._get_results()
 

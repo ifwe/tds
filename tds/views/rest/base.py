@@ -161,13 +161,17 @@ class BaseView(ValidatedView):
         d = obj
         if getattr(obj, 'to_dict', None) is not None:
             d = obj.to_dict()
-        if not param_routes:
-            return d
 
         for k in param_routes:
             if param_routes[k] in d:
                 d[k] = d[param_routes[k]]
                 del d[param_routes[k]]
+
+        if 'select' in self.request.validated:
+            for k in d:
+                if k not in self.request.validated['select']:
+                    del d[k]
+
         return d
 
     def get_obj_by_name_or_id(self, obj_type=None, model=None, name_attr=None,
@@ -254,8 +258,10 @@ class BaseView(ValidatedView):
         if obj_cls is None:
             raise tds.exceptions.NotFoundError('Model', [obj_type])
 
-        self._validate_params(('limit', 'start'))
-        self._validate_json_params({'limit': 'integer', 'start': 'integer'})
+        self._validate_params(('limit', 'start', 'select'))
+        self._validate_json_params(
+            {'limit': 'integer', 'start': 'integer', 'select': 'string'}
+        )
 
         if plural not in self.request.validated:
             self.request.validated[plural] = obj_cls.query().order_by(
@@ -336,8 +342,8 @@ class BaseView(ValidatedView):
         Return a list of matching resources for the query in the request.
         Request parameters:
             Request should either be empty (match all packages for the given
-            application) or contain a 'limit' and 'start' parameters for
-            pagination.
+            application) or contain a 'limit', 'start', and/or select
+            parameters for pagination and selection of attributes.
         Returns:
             "200 OK" if valid request successfully processed
         """
