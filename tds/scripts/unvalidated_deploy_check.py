@@ -24,6 +24,9 @@ def parse_command_line(sysargs):
     parser.add_argument('-v', '--verbose', action='count',
                         help='Show more information (more used shows greater '
                              'information)')
+    parser.add_argument('--auth-config',
+                        help='Specify authorization config file',
+                        default=None)
     parser.add_argument('--config-dir',
                         help='Specify directory containing app config',
                         default='/etc/tagops/')
@@ -38,8 +41,9 @@ def main():
 
     args = parse_command_line(sys.argv[1:])
 
-    config = tds.utils.config.TDSDeployConfig(conf_dir=args['config_dir'])
-    db_config = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb')
+    config = tds.utils.config.TDSDeployConfig(conf_dir=args.config_dir)
+    db_config = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb',
+                                                   conf_dir=args.config_dir)
 
     config.load()
     db_config.load()

@@ -25,6 +25,7 @@ def merge(*mappings, **opts):
     mapping = {}
 
     keytransform = opts.get('keytransform', lambda k: k)
+    use_list = opts.get('use_list', lambda k: k)
 
     for elem in mappings:
         if isMappingType(elem):
@@ -44,12 +45,14 @@ def merge(*mappings, **opts):
                             elem)
 
         for key, value in items:
-            merge_values(mapping, keytransform(key), value, keytransform)
+            merge_values(
+                mapping, keytransform(key), value, keytransform, use_list
+            )
 
     return mapping
 
 
-def merge_values(mapping, key, value, keytransform=None):
+def merge_values(mapping, key, value, keytransform=None, use_list=None):
     '''
     Exactly like mapping.update({key: value}) except that if both values are
     mappings, then they are merged recursively.
@@ -69,8 +72,22 @@ def merge_values(mapping, key, value, keytransform=None):
             merge_values(curval, keytransform(subkey), subvalue)
     else:
         # new value doesn't exist in mapping or both values are not mappings--
-        # so overwrite the old value with the new one
-        mapping[keytransform(key)] = value
+        # so overwrite the old value with the new one, unless 'use_list'
+        # is set in which case if it's a sequence append the value to the
+        # current sequence
+        try:
+            map_val = mapping[keytransform(key)]
+        except KeyError:
+            mapping[keytransform(key)] = value
+        else:
+            if (use_list and isSequenceType(map_val)
+                    and not isinstance(value, str)):
+                if isSequenceType(value):
+                    map_val.extend(value)
+                else:
+                    map_val.append(value)
+            else:
+                mapping[keytransform(key)] = value
 
 
 def lower_if_string(val):
