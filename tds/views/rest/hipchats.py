@@ -33,3 +33,14 @@ class HipchatView(BaseView):
         'delete': 'admin',
         'collection_post': 'admin',
     }
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get HipChat matching name or ID."),
+        PUT=dict(description="Update HipChat matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of HipChats, optionally by limit and/"
+                 "or start."),
+        POST=dict(description="Add a new HipChat."),
+    )
