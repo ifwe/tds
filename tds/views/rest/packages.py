@@ -33,6 +33,24 @@ class PackageView(BaseView):
 
     required_post_fields = ('version', 'revision')
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get package for an application with version and "
+                 "revision."),
+        PUT=dict(description="Update package for an application with version "
+                 "and revision."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of packages for an application, "
+                 "optionally by limit and/or start."),
+        POST=dict(description="Add a new package for an application."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        del self.types['application_id']
+        del self.param_descriptions['application_id']
+        super(PackageView, self).__init__(*args, **kwargs)
+
     def validate_individual_package(self, request):
         self.get_obj_by_name_or_id('application')
         if 'application' in request.validated:

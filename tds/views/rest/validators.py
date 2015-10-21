@@ -469,16 +469,16 @@ class ValidatedView(JSONValidatedView):
                     self.unique_together
                 )
 
-        if getattr(self, 'permissions', None) is not None:
-            for method in self.result:
-                if 'permissions' in self.result[method]:
-                    continue
-                if method.lower() in self.permissions:
-                    self.result[method]['permissions'] = self.permissions[
-                        method.lower()
-                    ]
-                else:
-                    self.result[method]['permissions'] = 'user'
+        for method in self.result:
+            if 'permissions' in self.result[method]:
+                continue
+            if getattr(self, 'permissions', None) and method.lower() in \
+                    self.permissions:
+                self.result[method]['permissions'] = self.permissions[
+                    method.lower()
+                ]
+            else:
+                self.result[method]['permissions'] = 'user'
 
         if getattr(self, '_add_additional_individual_options', None) is not None:
             getattr(self, '_add_additional_individual_options')(request)
@@ -546,17 +546,17 @@ class ValidatedView(JSONValidatedView):
                     self.unique_together
                 )
 
-        if getattr(self, 'permissions', None) is not None:
-            for method in self.result:
-                if 'permissions' in self.result[method]:
-                    continue
-                if 'collection_{method}'.format(method=method.lower()) in \
-                        self.permissions:
-                    self.result[method]['permissions'] = self.permissions[
-                        'collection_{method}'.format(method=method.lower())
-                    ]
-                else:
-                    self.result[method]['permissions'] = 'user'
+        for method in self.result:
+            if 'permissions' in self.result[method]:
+                continue
+            if getattr(self, 'permissions', None) and \
+                    'collection_{method}'.format(method=method.lower()) in \
+                    self.permissions:
+                self.result[method]['permissions'] = self.permissions[
+                    'collection_{method}'.format(method=method.lower())
+                ]
+            else:
+                self.result[method]['permissions'] = 'user'
 
         if getattr(self, '_add_additional_collection_options', None) is not \
                 None:
