@@ -167,7 +167,8 @@ class BaseView(ValidatedView):
                 d[k] = d[param_routes[k]]
                 del d[param_routes[k]]
 
-        if 'select' in self.request.validated:
+        if getattr(self.request, 'validated', False) and 'select' in \
+                self.request.validated:
             for k in d:
                 if k not in self.request.validated['select']:
                     del d[k]
