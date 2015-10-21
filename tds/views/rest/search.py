@@ -101,7 +101,9 @@ class SearchView(base.BaseView):
     PACKAGE_DICT = {
         'model': tds.model.Package,
         'params': types.PACKAGE_TYPES,
-        'param_routes': {},
+        'param_routes': {
+            'application_id': 'pkg_def_id',
+        },
         'descriptions': descriptions.PACKAGE_DESCRIPTIONS,
     }
 

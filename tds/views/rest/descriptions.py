@@ -80,6 +80,8 @@ PACKAGE_DESCRIPTIONS = {
     'status': 'Current status',
     'builder': 'Entity that built the package',
     'job': 'Name of Jenkins job',
+    'application_id': "Unique integer identifier for the package's "
+        "application",
 }
 
 PROJECT_DESCRIPTIONS = {

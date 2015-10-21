@@ -80,6 +80,7 @@ PACKAGE_TYPES = {
     'status': 'choice',
     'builder': 'choice',
     'job': 'string',
+    'application_id': 'integer',
 }
 
 PROJECT_TYPES = {
