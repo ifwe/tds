@@ -445,7 +445,7 @@ class ValidatedView(JSONValidatedView):
             for attr in getattr(self, 'unique', list()):
                 self.result['PUT']['parameters'][attr]['unique'] = True
             if getattr(self, 'unique_together', None) is not None:
-                self.result['POST']['unique_together'] = sorted(
+                self.result['PUT']['unique_together'] = sorted(
                     self.unique_together
                 )
 
