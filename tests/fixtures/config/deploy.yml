@@ -23,7 +23,7 @@ notifications:
   hipchat:
     rooms: [fakeroom]
     token: deadbeef
-  validation_time: 10
+  validation_time: 2
 proxy:
   https: http://proxy.example.com:443
   fakeproto: svn://svn.example.com:12345
