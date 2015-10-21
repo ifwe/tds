@@ -25,7 +25,8 @@ class LoginView(BaseView):
     individual_allowed_methods = dict(
         POST=dict(
             description="Authenticate and get a session cookie.",
-            returns="Session cookie attached at cookies->session."
+            returns="Session cookie attached at cookies->session.",
+            permissions='none',
         ),
     )
 

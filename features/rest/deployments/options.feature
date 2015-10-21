@@ -3,9 +3,6 @@ Feature: OPTIONS for deployments
     I want to know my options for the deployments endpoints
     So that I can avoid errors and be more effective in using the API
 
-    Background:
-        Given I have a cookie with user permissions
-
     @rest
     Scenario: get options for the collection endpoint
         When I query OPTIONS "/deployments"

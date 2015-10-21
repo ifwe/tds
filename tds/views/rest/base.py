@@ -416,7 +416,7 @@ class BaseView(ValidatedView):
             self.to_json_obj(self.request.validated[self.name])
         )
 
-    @view(validators=('validate_individual_options', 'validate_cookie'))
+    @view(validators=('validate_individual_options',))
     def options(self):
         """
         Return method documentation for individual resources.
@@ -430,7 +430,7 @@ class BaseView(ValidatedView):
             ),
         )
 
-    @view(validators=('validate_collection_options', 'validate_cookie'))
+    @view(validators=('validate_collection_options',))
     def collection_options(self):
         """
         Return method documentation for collection of resources.

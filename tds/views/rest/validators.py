@@ -420,6 +420,7 @@ class ValidatedView(JSONValidatedView):
         self.result['OPTIONS'] = dict(
             description="Get HTTP method options and parameters for this URL "
                 "endpoint.",
+            permissions='none',
         )
 
         if 'GET' in self.result:
@@ -470,13 +471,14 @@ class ValidatedView(JSONValidatedView):
 
         if getattr(self, 'permissions', None) is not None:
             for method in self.result:
+                if 'permissions' in self.result[method]:
+                    continue
                 if method.lower() in self.permissions:
                     self.result[method]['permissions'] = self.permissions[
                         method.lower()
                     ]
                 else:
                     self.result[method]['permissions'] = 'user'
-        self.result['OPTIONS']['permissions'] = 'none'
 
         if getattr(self, '_add_additional_individual_options', None) is not None:
             getattr(self, '_add_additional_individual_options')(request)
@@ -502,6 +504,7 @@ class ValidatedView(JSONValidatedView):
         self.result['OPTIONS'] = dict(
             description="Get HTTP method options and parameters for this URL "
                 "endpoint.",
+            permissions='none',
         )
 
         if 'GET' in self.result:
@@ -545,6 +548,8 @@ class ValidatedView(JSONValidatedView):
 
         if getattr(self, 'permissions', None) is not None:
             for method in self.result:
+                if 'permissions' in self.result[method]:
+                    continue
                 if 'collection_{method}'.format(method=method.lower()) in \
                         self.permissions:
                     self.result[method]['permissions'] = self.permissions[
@@ -552,7 +557,6 @@ class ValidatedView(JSONValidatedView):
                     ]
                 else:
                     self.result[method]['permissions'] = 'user'
-        self.result['OPTIONS']['permissions'] = 'none'
 
         if getattr(self, '_add_additional_collection_options', None) is not \
                 None:
