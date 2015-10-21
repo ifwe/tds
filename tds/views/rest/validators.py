@@ -45,6 +45,8 @@ class ValidatedView(JSONValidatedView):
         attach it to the request at request.validated[name].
         This validator can raise a "400 Bad Request" error.
         """
+        self._validate_params(['select'])
+        self._validate_json_params({'select': 'string'})
         validator = getattr(
             self,
             'validate_individual_{name}'.format(
@@ -56,6 +58,8 @@ class ValidatedView(JSONValidatedView):
             validator(request)
         else:
             self.get_obj_by_name_or_id()
+
+        self._validate_select_attributes(request)
 
     def validate_collection_get(self, request):
         """
@@ -74,6 +78,32 @@ class ValidatedView(JSONValidatedView):
             getter(request)
         else:
             self.get_collection_by_limit_start()
+
+        self._validate_select_attributes(request)
+
+    def _validate_select_attributes(self, request, valid_attrs=None):
+        """
+        If the 'select' parameter was passed in the query, validate that the
+        comma-separated attributes passed are valid attributes for the model.
+        """
+        if valid_attrs is None:
+            valid_attrs = self.full_types.keys()
+        if 'select' in request.validated_params:
+            request.validated['select'] = request.validated_params[
+                'select'
+            ].split(',')
+            for attr in request.validated['select']:
+                if attr not in valid_attrs:
+                    request.errors.add(
+                        'query', 'select',
+                        '{attr} is not a valid attribute. Valid attributes: '
+                        '{valid_attrs}.'.format(
+                            attr=attr,
+                            valid_attrs=sorted(valid_attrs),
+                        )
+                    )
+                    request.errors.status = 400
+            del request.validated_params['select']
 
     def _add_post_defaults(self):
         """
@@ -424,7 +454,12 @@ class ValidatedView(JSONValidatedView):
         )
 
         if 'GET' in self.result:
-            self.result['GET']['attributes'] = dict()
+            self.result['GET']['attributes'] = dict(
+                select=dict(
+                    type='CSV',
+                    description="Comma-separated list of attributes",
+                )
+            )
             for attr in self.full_types:
                 self.result['GET']['attributes'][attr] = dict(
                     type=self.full_types[attr],
@@ -528,6 +563,10 @@ class ValidatedView(JSONValidatedView):
                 start=dict(
                     type='integer',
                     description='ID of where to start the list'
+                ),
+                select=dict(
+                    type='CSV',
+                    description="Comma-separated list of attributes",
                 )
             )
 

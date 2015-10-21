@@ -31,6 +31,23 @@ Feature: REST API search GET
             | proj3 |
 
     @rest
+    Scenario: specify select query
+        Given there are projects:
+            | name  |
+            | proj1 |
+            | proj2 |
+            | proj3 |
+        When I query GET "/search/projects?select=name"
+        Then the response code is 200
+        And the response is a list of 3 items
+        And the response list contains objects:
+            | name  |
+            | proj1 |
+            | proj2 |
+            | proj3 |
+        And the response list objects do not contain attributes id
+
+    @rest
     Scenario: get a specific project
         Given there are projects:
             | name  |
@@ -166,8 +183,8 @@ Feature: REST API search GET
         When I query GET "/search/hosts?status=operational"
         Then the response code is 422
         And the response contains errors:
-            | location  | name      | description                                                                                                                                                                                                                                       |
-            | query     | status    | Unsupported query: status. Valid parameters: ['arch', 'cab', 'cage', 'console_port', 'distribution', 'environment_id', 'id', 'kernel_version', 'limit', 'name', 'power_circuit', 'power_port', 'rack', 'start', 'state', 'tier_id', 'timezone'].  |
+            | location  | name      | description                                                                                                                                                                                                                                                   |
+            | query     | status    | Unsupported query: status. Valid parameters: ['arch', 'cab', 'cage', 'console_port', 'distribution', 'environment_id', 'id', 'kernel_version', 'limit', 'name', 'power_circuit', 'power_port', 'rack', 'select', 'start', 'state', 'tier_id', 'timezone'].    |
 
     @rest
     Scenario: pass a param that is routed to the ORM name

@@ -128,6 +128,21 @@ def then_the_response_is_an_object_with(context, properties):
         assert False, (e, context.response.json())
 
 
+@then(u'the response object does not contain attributes {attrs}')
+def then_the_response_object_does_not_contain_attributes(context, attrs):
+    attrs = attrs.split(',')
+    assert all(attr not in context.response.json() for attr in attrs), (
+        attrs, context.response.json()
+    )
+
+
+@then(u'the response list objects do not contain attributes {attrs}')
+def then_the_response_list_objects_do_not_contain_attributes(context, attrs):
+    attrs = attrs.split(',')
+    assert all(all(attr not in obj for attr in attrs) for obj in
+               context.response.json()), (attrs, context.response.json())
+
+
 @then(u'the response list contains id range {minimum} to {maximum}')
 def then_the_response_list_contains_id_range(context, minimum, maximum):
     """
