@@ -5,18 +5,6 @@ Feature: GET deployment(s) from the REST API
 
     Background:
         Given I have a cookie with user permissions
-        And there is an application with pkg_name="app1"
-        And there are packages:
-            | version   | revision  |
-            | 1         | 1         |
-            | 1         | 2         |
-            | 2         | 3         |
-            | 2         | 4         |
-        And there is an application with pkg_name="app2"
-        And there are packages:
-            | version   | revision  |
-            | 3         | 5         |
-            | 3         | 6         |
 
     @rest
     Scenario: no deployments
@@ -35,37 +23,37 @@ Feature: GET deployment(s) from the REST API
     @rest
     Scenario: get all deployments
         Given there are deployments:
-            | id    | user  | package_id    | status        |
-            | 1     | foo   | 1             | pending       |
-            | 2     | bar   | 2             | queued        |
-            | 3     | baz   | 3             | inprogress    |
+            | id    | user  | status        |
+            | 1     | foo   | pending       |
+            | 2     | bar   | queued        |
+            | 3     | baz   | inprogress    |
         When I query GET "/deployments"
         Then the response code is 200
         And the response is a list of 3 items
-        And the response list contains an object with id=1,user="foo",package_id=1,status="pending"
-        And the response list contains an object with id=2,user="bar",package_id=2,status="queued"
-        And the response list contains an object with id=3,user="baz",package_id=3,status="inprogress"
+        And the response list contains an object with id=1,user="foo",status="pending"
+        And the response list contains an object with id=2,user="bar",status="queued"
+        And the response list contains an object with id=3,user="baz",status="inprogress"
 
     @rest
     Scenario: get a specific deployment
         Given there are deployments:
-            | id    | user  | package_id    | status        |
-            | 1     | foo   | 1             | pending       |
-            | 2     | bar   | 2             | queued        |
-            | 3     | baz   | 3             | inprogress    |
+            | id    | user  | status        |
+            | 1     | foo   | pending       |
+            | 2     | bar   | queued        |
+            | 3     | baz   | inprogress    |
         When I query GET "/deployments/2"
         Then the response code is 200
-        And the response is an object with id=2,user="bar",package_id=2,status="queued"
+        And the response is an object with id=2,user="bar",status="queued"
 
     @rest
     Scenario Outline: specify limit and/or last queries
         Given there are deployments:
-            | id    | user  | package_id    | status        |
-            | 1     | foo   | 1             | pending       |
-            | 2     | bar   | 2             | queued        |
-            | 3     | baz   | 3             | inprogress    |
-            | 4     | bar   | 2             | queued        |
-            | 5     | baz   | 3             | inprogress    |
+            | id    | user  | status        |
+            | 1     | foo   | pending       |
+            | 2     | bar   | queued        |
+            | 3     | baz   | inprogress    |
+            | 4     | bar   | queued        |
+            | 5     | baz   | inprogress    |
         When I query GET "/deployments?limit=<limit>&start=<start>"
         Then the response code is 200
         And the response is a list of <num> items

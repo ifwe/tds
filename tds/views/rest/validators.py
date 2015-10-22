@@ -18,124 +18,6 @@ class ValidatedView(JSONValidatedView):
     This class implements common non-JSON validators.
     """
 
-    def get_obj_by_name_or_id(self, obj_type=None, model=None, name_attr=None,
-                              param_name=None, can_be_name=True,
-                              dict_name=None):
-        """
-        Validate that an object of type self.name with the name_or_id given in
-        the request exists and attach it to the request at
-        request.validated[obj_type].
-        Otherwise, attach an error with location='path', name='name_or_id' and
-        a description.
-        This error will return a "400 Bad Request" response to this request.
-        """
-        if not obj_type:
-            obj_type = self.name
-            if getattr(self, 'model', None):
-                model = self.model
-        elif not model:
-            model = getattr(tds.model, obj_type.title(), None)
-            if model is None:
-                raise tds.exceptions.NotFoundError('Model', [obj_type])
-
-        if not param_name:
-            param_name = 'name_or_id'
-
-        try:
-            obj_id = int(self.request.matchdict[param_name])
-            obj = model.get(id=obj_id)
-            name = False
-        except ValueError:
-            if can_be_name:
-                obj_id = False
-                name = self.request.matchdict[param_name]
-                obj_dict = dict()
-                if name_attr:
-                    obj_dict[name_attr] = name
-                elif 'name' in self.param_routes:
-                    obj_dict[self.param_routes['name']] = name
-                else:
-                    obj_dict['name'] = name
-                obj = model.get(**obj_dict)
-            else:
-                obj_id = self.request.matchdict[param_name]
-                obj = None
-
-        if obj is None:
-            self.request.errors.add(
-                'path', param_name,
-                "{obj_type} with {prop} {val} does not exist.".format(
-                    obj_type=obj_type.capitalize(),
-                    prop="ID" if obj_id else "name",
-                    val=obj_id if obj_id else name,
-                )
-            )
-            self.request.errors.status = 404
-        elif dict_name:
-            self.request.validated[dict_name] = obj
-        else:
-            self.request.validated[obj_type] = obj
-
-    def get_collection_by_limit_start(self, obj_type=None, plural=None):
-        """
-        Make sure that the selection parameters are valid for collection GET.
-        If they are not, raise "400 Bad Request".
-        Else, set request.validated[plural] to objects matching query.
-        If obj_type is not provided, it is defaulted to self.name.
-        If plural is not provided, it is defaulted to obj_type + 's' if
-        obj_type is provided and to self.plural if obj_type is not provided.
-        """
-
-        if not plural and not obj_type:
-            plural = self.plural
-        elif obj_type:
-            plural = obj_type + 's'
-
-        if not obj_type:
-            obj_type = self.name
-
-        if getattr(self, 'model', None):
-            obj_cls = self.model
-        else:
-            obj_cls = getattr(tds.model, obj_type.title(), None)
-
-        if obj_cls is None:
-            raise tds.exceptions.NotFoundError('Model', [obj_type])
-
-        self._validate_params(('limit', 'start'))
-
-        if plural not in self.request.validated:
-            self.request.validated[plural] = obj_cls.query().order_by(
-                obj_cls.id
-            )
-
-        if 'start' in self.request.validated_params:
-            self.request.validated[plural] = (
-                self.request.validated[plural].filter(
-                    obj_cls.id >= self.request.validated_params['start']
-                )
-            )
-
-        if obj_cls == tds.model.Application:
-            self.request.validated[plural] = (
-                self.request.validated[plural].filter(
-                    obj_cls.pkg_name != '__dummy__'
-                )
-            )
-        elif obj_cls == tds.model.AppTarget:
-            self.request.validated[plural] = (
-                self.request.validated[plural].filter(
-                    obj_cls.app_type != '__dummy__'
-                )
-            )
-
-        if 'limit' in self.request.validated_params:
-            self.request.validated[plural] = (
-                self.request.validated[plural].limit(
-                    self.request.validated_params['limit']
-                )
-            )
-
     def _validate_params(self, valid_params):
         """
         Validate all query parameters in self.request against valid_params and
@@ -151,7 +33,7 @@ class ValidatedView(JSONValidatedView):
                 self.request.errors.add(
                     'query', key,
                     "Unsupported query: {param}. Valid parameters: "
-                    "{all}.".format(param=key, all=valid_params),
+                    "{all}.".format(param=key, all=sorted(valid_params)),
                 )
                 self.request.errors.status = 422
             elif self.request.params[key]:
@@ -163,6 +45,8 @@ class ValidatedView(JSONValidatedView):
         attach it to the request at request.validated[name].
         This validator can raise a "400 Bad Request" error.
         """
+        self._validate_params(['select'])
+        self._validate_json_params({'select': 'string'})
         validator = getattr(
             self,
             'validate_individual_{name}'.format(
@@ -175,33 +59,54 @@ class ValidatedView(JSONValidatedView):
         else:
             self.get_obj_by_name_or_id()
 
+        self._validate_select_attributes(request)
+
     def validate_collection_get(self, request):
         """
         Make sure that the selection parameters are valid for resource type.
         If they are not, raise "400 Bad Request".
         Else, set request.validated[name] to resource matching query.
         """
-        if self.name == 'package':
-            self.get_obj_by_name_or_id('application')
-            if 'application' in request.validated:
-                self.get_pkgs_by_limit_start()
-        elif self.name == 'tier-hipchat':
-            if len(request.params) > 0:
-                for key in request.params:
-                    request.errors.add(
-                        'query', key,
-                        "Unsupported query: {key}. There are no valid "
-                        "parameters for this method.".format(key=key),
-                    )
-                request.errors.status = 422
-            self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
-                                       'app_type')
-            if 'tier' in request.validated:
-                request.validated[self.plural] = request.validated[
-                    'tier'
-                ].hipchats
+        getter = getattr(
+            self,
+            'validate_{name}_collection'.format(
+                name=self.name.replace('-', '_'),
+            ),
+            None
+        )
+        if getter is not None:
+            getter(request)
         else:
             self.get_collection_by_limit_start()
+
+        self._validate_select_attributes(request)
+
+    def _validate_select_attributes(self, request, valid_attrs=None):
+        """
+        If the 'select' parameter was passed in the query, validate that the
+        comma-separated attributes passed are valid attributes for the model.
+        """
+        if not (getattr(request, 'validated_params', None) and 'select' in
+                request.validated_params):
+            return
+        if valid_attrs is None:
+            valid_attrs = self.full_types.keys()
+        if 'select' in request.validated_params:
+            request.validated['select'] = request.validated_params[
+                'select'
+            ].split(',')
+            for attr in request.validated['select']:
+                if attr not in valid_attrs:
+                    request.errors.add(
+                        'query', 'select',
+                        '{attr} is not a valid attribute. Valid attributes: '
+                        '{valid_attrs}.'.format(
+                            attr=attr,
+                            valid_attrs=sorted(valid_attrs),
+                        )
+                    )
+                    request.errors.status = 400
+            del request.validated_params['select']
 
     def _add_post_defaults(self):
         """
@@ -229,6 +134,8 @@ class ValidatedView(JSONValidatedView):
         Validate a PUT or POST request by validating all given attributes
         against the list of valid attributes for this view's associated model.
         """
+        if getattr(self, '_handle_extra_params', None) is not None:
+            self._handle_extra_params()
         self._validate_params(self.valid_attrs)
         self._validate_json_params()
 
@@ -256,9 +163,9 @@ class ValidatedView(JSONValidatedView):
             getattr(self, func_name)()
         else:
             try:
-                self._validate_id("PUT")
                 self._validate_name("PUT")
                 self._validate_unique_together("PUT")
+                self._validate_all_unique_params("PUT")
             except:
                 raise NotImplementedError(
                     'A collision validator for this view has not been '
@@ -279,9 +186,9 @@ class ValidatedView(JSONValidatedView):
             getattr(self, func_name)()
         else:
             try:
-                self._validate_id("POST")
                 self._validate_name("POST")
                 self._validate_unique_together("POST")
+                self._validate_all_unique_params("POST")
             except:
                 raise NotImplementedError(
                     'A collision validator for this view has not been '
@@ -335,64 +242,53 @@ class ValidatedView(JSONValidatedView):
                     )
                     self.request.errors.status = 409
 
-    def _validate_id(self, request_type, obj_type=None):
-        """
-        Validate that the ID unique constraint isn't violated for a request
-        with either POST or PUT request_type.
-        """
-        if not obj_type:
-            obj_type = self.name
-        if 'id' in self.request.validated_params:
-            found_obj = self.model.get(id=self.request.validated_params['id'])
-            if not found_obj:
-                return
-            elif request_type == 'POST':
-                self.request.errors.add(
-                    'query', 'id',
-                    "Unique constraint violated. A{n} {type} with this ID"
-                    " already exists.".format(
-                        n='n' if obj_type[0] in 'aeiou' else '',
-                        type=obj_type
-                    )
-                )
-            elif found_obj != self.request.validated[self.name]:
-                self.request.errors.add(
-                    'query', 'id',
-                    "Unique constraint violated. Another {type} with this"
-                    " ID already exists.".format(type=obj_type),
-                )
-            self.request.errors.status = 409
+    def _validate_all_unique_params(self, request_type):
+        if getattr(self, 'unique', None) is None:
+            return
+        for param in self.unique:
+            self._validate_unique_param(request_type, param)
 
     def _validate_name(self, request_type, obj_type=None):
         """
         Validate that the name unique constraint isn't violated for a request
         with either POST or PUT request_type.
         """
+        self._validate_unique_param(request_type, "name", obj_type)
+
+    def _validate_unique_param(self, request_type, param_name, obj_type=None,
+                               msg_param_name=None):
         if not obj_type:
             obj_type = self.name
-        if 'name' in self.request.validated_params:
-            dict_key = 'name'
-            if 'name' in self.param_routes:
-                dict_key = self.param_routes['name']
+        if not msg_param_name:
+            msg_param_name = param_name
+        if param_name in self.request.validated_params:
+            dict_key = self.param_routes[param_name] if param_name in \
+                self.param_routes else param_name
             found_obj = self.model.get(
-                **{dict_key: self.request.validated_params['name']}
+                **{dict_key: self.request.validated_params[param_name]}
             )
             if not found_obj:
                 return
             elif request_type == 'POST':
                 self.request.errors.add(
-                    'query', 'name',
-                    "Unique constraint violated. A{n} {type} with this name"
+                    'query', param_name,
+                    "Unique constraint violated. A{n} {type} with this {param}"
                     " already exists.".format(
                         n='n' if obj_type[0] in 'aeiou' else '',
                         type=obj_type,
+                        param=msg_param_name,
                     )
                 )
+            elif obj_type not in self.request.validated:
+                return
             elif found_obj != self.request.validated[obj_type]:
                 self.request.errors.add(
-                    'query', 'name',
-                    "Unique constraint violated. Another {type} with this"
-                    " name already exists.".format(type=obj_type)
+                    'query', param_name,
+                    "Unique constraint violated. Another {type} with this "
+                    "{param} already exists.".format(
+                        type=obj_type,
+                        param=msg_param_name,
+                    )
                 )
             self.request.errors.status = 409
 
@@ -400,17 +296,14 @@ class ValidatedView(JSONValidatedView):
         """
         Validate that the object can be deleted.
         """
-        if not getattr(self, 'name', None):
-            return self.method_not_allowed(request)
         func_name = 'validate_{name}_delete'.format(
-            name=self.name.replace('-', '_')
+            name=getattr(self, 'name', '').replace('-', '_')
         )
-        if getattr(self, func_name, None):
+        if getattr(self, func_name, None) is not None:
             self._validate_params(['cascade'])
             self._validate_json_params({'cascade': 'boolean'})
-            self.request.validated['cascade'] = 'cascade' in \
-                self.request.validated_params and \
-                self.request.validated_params['cascade']
+            request.validated['cascade'] = 'cascade' in \
+                request.validated_params and request.validated_params['cascade']
             getattr(self, func_name)()
         else:
             return self.method_not_allowed(request)
@@ -441,11 +334,14 @@ class ValidatedView(JSONValidatedView):
         else:
             request.validated['user'] = username
             request.is_admin = is_admin
-            collection_path = self._services[
-                'collection_{name}'.format(
-                    name=self.__class__.__name__.lower()
-                )
-            ].path
+            try:
+                collection_path = self._services[
+                    'collection_{name}'.format(
+                        name=self.__class__.__name__.lower()
+                    )
+                ].path
+            except KeyError:
+                collection_path = None
             prefix = "collection_" if request.path == collection_path else ''
             if not getattr(self, 'permissions', None):
                 return
@@ -548,3 +444,181 @@ class ValidatedView(JSONValidatedView):
         """
         request.errors.add('url', 'method', "Method not allowed.")
         request.errors.status = 405
+
+    def _add_individual_options(self, request):
+        """
+        Add options to self.result.
+        """
+        self.result = self.individual_allowed_methods
+        self.result['OPTIONS'] = dict(
+            description="Get HTTP method options and parameters for this URL "
+                "endpoint.",
+            permissions='none',
+        )
+
+        if 'GET' in self.result:
+            self.result['GET']['attributes'] = dict(
+                select=dict(
+                    type='CSV',
+                    description="Comma-separated list of attributes",
+                )
+            )
+            for attr in self.full_types:
+                self.result['GET']['attributes'][attr] = dict(
+                    type=self.full_types[attr],
+                    description=self.full_descriptions[attr],
+                )
+
+        if 'PUT' in self.result:
+            self.result['PUT']['parameters'] = dict()
+            for attr in self.types:
+                self.result['PUT']['parameters'][attr] = dict(
+                    type=self.types[attr],
+                    description=self.param_descriptions[attr],
+                )
+            if 'returns' not in self.result['PUT']:
+                self.result['PUT']['returns'] = "Updated {name}".format(
+                    name=self.name
+                )
+            for attr in getattr(self, 'unique', list()):
+                self.result['PUT']['parameters'][attr]['unique'] = True
+            if getattr(self, 'unique_together', None) is not None:
+                self.result['PUT']['unique_together'] = sorted(
+                    self.unique_together
+                )
+
+        if 'POST' in self.result:
+            self.result['POST']['parameters'] = dict()
+            for attr in self.types:
+                self.result['POST']['parameters'][attr] = dict(
+                    type=self.types[attr],
+                    description=self.param_descriptions[attr]
+                )
+            if 'returns' not in self.result['POST']:
+                self.result['POST']['returns'] = 'Newly created {name}'.format(
+                    name=self.name
+                )
+            for attr in getattr(self, 'required_post_fields', list()):
+                self.result['POST']['parameters'][attr]['required'] = True
+            for attr in getattr(self, 'unique', list()):
+                self.result['POST']['parameters'][attr]['unique'] = True
+            if getattr(self, 'unique_together', None) is not None:
+                self.result['POST']['unique_together'] = sorted(
+                    self.unique_together
+                )
+
+        if 'DELETE' in self.result:
+            if 'returns' not in self.result['DELETE']:
+                self.result['DELETE']['returns'] = "Deleted {name}".format(
+                    name=self.name
+                )
+
+        for method in self.result:
+            if 'permissions' in self.result[method]:
+                continue
+            if getattr(self, 'permissions', None) and method.lower() in \
+                    self.permissions:
+                self.result[method]['permissions'] = self.permissions[
+                    method.lower()
+                ]
+            else:
+                self.result[method]['permissions'] = 'user'
+
+        if getattr(self, '_add_additional_individual_options', None) is not None:
+            getattr(self, '_add_additional_individual_options')(request)
+
+    def validate_individual_options(self, request):
+        """
+        If the subclass has the appropriate method, call it.
+        Otherwise, do some generic options information setup to be returned.
+        """
+        getattr(
+            self,
+            'validate_individual_{name}_options'.format(
+                name=self.name.replace('-', '_')
+            ),
+            self._add_individual_options,
+        )(request)
+
+    def _add_collection_options(self, request):
+        """
+        Add options to self.result.
+        """
+        self.result = self.collection_allowed_methods
+        self.result['OPTIONS'] = dict(
+            description="Get HTTP method options and parameters for this URL "
+                "endpoint.",
+            permissions='none',
+        )
+
+        if 'GET' in self.result:
+            self.result['GET']['attributes'] = dict()
+            for attr in self.full_types:
+                self.result['GET']['attributes'][attr] = dict(
+                    type=self.full_types[attr],
+                    description=self.full_descriptions[attr],
+                )
+            self.result['GET']['parameters'] = dict(
+                limit=dict(
+                    type='integer',
+                    description='Maximum number of items to return',
+                ),
+                start=dict(
+                    type='integer',
+                    description='ID of where to start the list'
+                ),
+                select=dict(
+                    type='CSV',
+                    description="Comma-separated list of attributes",
+                )
+            )
+
+        if 'POST' in self.result:
+            self.result['POST']['parameters'] = dict()
+            for attr in self.types:
+                self.result['POST']['parameters'][attr] = dict(
+                    types=self.types[attr],
+                    description=self.param_descriptions[attr],
+                )
+            if 'returns' not in self.result['POST']:
+                self.result['POST']['returns'] = "Newly created {name}".format(
+                    name=self.name
+                )
+
+            for attr in getattr(self, 'required_post_fields', list()):
+                self.result['POST']['parameters'][attr]['required'] = True
+            for attr in getattr(self, 'unique', list()):
+                self.result['POST']['parameters'][attr]['unique'] = True
+            if getattr(self, 'unique_together', None) is not None:
+                self.result['POST']['unique_together'] = sorted(
+                    self.unique_together
+                )
+
+        for method in self.result:
+            if 'permissions' in self.result[method]:
+                continue
+            if getattr(self, 'permissions', None) and \
+                    'collection_{method}'.format(method=method.lower()) in \
+                    self.permissions:
+                self.result[method]['permissions'] = self.permissions[
+                    'collection_{method}'.format(method=method.lower())
+                ]
+            else:
+                self.result[method]['permissions'] = 'user'
+
+        if getattr(self, '_add_additional_collection_options', None) is not \
+                None:
+            getattr(self, '_add_additional_collection_options')(request)
+
+    def validate_collection_options(self, request):
+        """
+        If the subclass has the appropriate method, call it.
+        Otherwise, do some generic options informations setup to be returned.
+        """
+        getattr(
+            self,
+            'validate_collection_{name}_options'.format(
+                name=self.name.replace('-', '_')
+            ),
+            self._add_collection_options,
+        )(request)

@@ -12,14 +12,6 @@ from .base import BaseView, init_view
 @init_view(name="tier-deployment", model=tds.model.AppDeployment)
 class TierDeploymentView(BaseView):
 
-    types = {
-        'id': 'integer',
-        'deployment_id': 'integer',
-        'tier_id': 'integer',
-        'status': 'choice',
-        'environment_id': 'integer',
-    }
-
     param_routes = {
         'tier_id': 'app_id',
     }
@@ -28,10 +20,23 @@ class TierDeploymentView(BaseView):
         'status': 'pending',
     }
 
-    required_post_fields = ('deployment_id', 'tier_id', 'environment_id',)
+    required_post_fields = ('deployment_id', 'tier_id', 'environment_id',
+                            'package_id')
 
     unique_together = (
-        ('deployment_id', 'tier_id'),
+        ('deployment_id', 'tier_id', 'package_id'),
+    )
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get tier deployment matching ID."),
+        PUT=dict(description="Update tier deployment matching ID."),
+        DELETE=dict(description="Delete tier deployment matching ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of tier deployments, optionally by "
+                 "limit and/or start."),
+        POST=dict(description="Add a new tier deployment."),
     )
 
     def validate_tier_deployment_delete(self):
@@ -113,7 +118,7 @@ class TierDeploymentView(BaseView):
             # be changed anyway if the put request is otherwise valid.
             if self.name in self.request.validated and \
                     host_dep.host.app_id == \
-                    self.request.validated[self.name].id:
+                    self.request.validated[self.name].app_id:
                 continue
             if host_dep.host.environment_id != own_environment.id:
                 self.request.errors.add(
@@ -143,11 +148,56 @@ class TierDeploymentView(BaseView):
             )
             self.request.errors.status = 403
         self.validate_conflicting_env('PUT')
-        self._validate_id("PUT", "tier deployment")
         self._validate_foreign_key('tier_id', 'tier', tds.model.AppTarget)
         self._validate_foreign_key('environment_id', 'environment',
                                    tagopsdb.model.Environment)
+        self._validate_foreign_key('package_id', 'package', tds.model.Package)
         self._validate_unique_together("PUT", "tier deployment")
+        # If the package_id is being changed and the deployment isn't pending:
+        if 'package_id' in self.request.validated_params and \
+                self.request.validated_params['package_id'] != \
+                self.request.validated[self.name].package_id and \
+                self.request.validated[self.name].deployment.status != \
+                'pending':
+            self.request.errors.add(
+                'query', 'package_id',
+                'Cannot change package_id for a tier deployment with a '
+                'non-pending deployment.'
+            )
+            self.request.errors.status = 403
+        if not any(
+            x in self.request.validated_params for x in ('tier_id',
+                                                         'package_id')
+        ):
+            return
+        pkg_id = self.request.validated_params['package_id'] if 'package_id' \
+            in self.request.validated_params else \
+            self.request.validated[self.name].package_id
+        tier_id = self.request.validated_params['tier_id'] if 'tier_id' in \
+            self.request.validated_params else \
+            self.request.validated[self.name].app_id
+        self._validate_project_package(pkg_id, tier_id)
+
+    def _validate_project_package(self, pkg_id, tier_id):
+        found_pkg = tds.model.Package.get(id=pkg_id)
+        found_tier = tds.model.AppTarget.get(id=tier_id)
+        if not (found_pkg and found_tier):
+            return
+        found_project_pkg = tagopsdb.model.ProjectPackage.find(
+            pkg_def_id=found_pkg.pkg_def_id,
+            app_id=tier_id,
+        )
+        if not found_project_pkg:
+            self.request.errors.add(
+                'query', 'tier_id' if 'tier_id' in self.request.validated_params
+                else 'package_id',
+                'Tier {t_name} is not associated with the application {a_name}'
+                ' for any projects.'.format(
+                    t_name=found_tier.name,
+                    a_name=found_pkg.application.name,
+                )
+            )
+            self.request.errors.status = 403
 
     def validate_tier_deployment_post(self):
         if 'status' in self.request.validated_params:
@@ -158,11 +208,20 @@ class TierDeploymentView(BaseView):
                 )
                 self.request.errors.status = 403
         self.validate_conflicting_env('POST')
-        self._validate_id("POST", "tier deployment")
         self._validate_foreign_key('tier_id', 'tier', tds.model.AppTarget)
         self._validate_foreign_key('environment_id', 'environment',
                                    tagopsdb.model.Environment)
+        self._validate_foreign_key('package_id', 'package', tds.model.Package)
         self._validate_unique_together("POST", "tier deployment")
+        if not all(
+            x in self.request.validated_params for x in ('package_id',
+                                                         'tier_id')
+        ):
+            return
+        self._validate_project_package(
+            self.request.validated_params['package_id'],
+            self.request.validated_params['tier_id'],
+        )
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
@@ -176,6 +235,7 @@ class TierDeploymentView(BaseView):
                 deployment_id=self.request.validated_params['deployment_id'],
                 user=self.request.validated['user'],
                 status='pending',
+                package_id=self.request.validated_params['package_id'],
             )
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
@@ -190,20 +250,29 @@ class TierDeploymentView(BaseView):
         else:
             new_tier_id = curr_dep.app_id
             tier_id_different = False
+
         if 'environment_id' in self.request.validated_params:
             new_env_id = self.request.validated_params['environment_id']
             env_id_different = new_env_id != curr_dep.environment_id
         else:
             new_env_id = curr_dep.environment_id
             env_id_different = False
+
+        if 'package_id' in self.request.validated_params:
+            new_package_id = self.request.validated_params['package_id']
+            package_id_different = new_package_id != curr_dep.package_id
+        else:
+            new_package_id = curr_dep.package_id
+            package_id_different = False
+
         if 'deployment_id' in self.request.validated_params:
             new_dep_id = self.request.validated_params['deployment_id']
         else:
             new_dep_id = curr_dep.deployment_id
-        # If environment ID or tier ID is being changed, delete all the current
+        # If environment, tier or package ID is being changed, delete all
         # host deployments associated with this tier deployment and create new
         # ones based on the new state of this tier deployment.
-        if env_id_different or tier_id_different:
+        if env_id_different or tier_id_different or package_id_different:
             for host_dep in curr_dep.deployment.host_deployments:
                 if host_dep.host.app_id == curr_dep.app_id:
                     tagopsdb.Session.delete(host_dep)
@@ -216,6 +285,7 @@ class TierDeploymentView(BaseView):
                     deployment_id=new_dep_id,
                     user=self.request.validated['user'],
                     status='pending',
+                    package_id=new_package_id
                 )
         for attr in self.request.validated_params:
             setattr(

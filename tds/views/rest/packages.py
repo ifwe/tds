@@ -25,15 +25,6 @@ class PackageView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
-    types = {
-        'id': 'integer',
-        'version': 'integer',
-        'revision': 'integer',
-        'status': 'choice',
-        'builder': 'choice',
-        'job': 'string',
-    }
-
     param_routes = {}
 
     defaults = {
@@ -42,10 +33,33 @@ class PackageView(BaseView):
 
     required_post_fields = ('version', 'revision')
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get package for an application with version and "
+                 "revision."),
+        PUT=dict(description="Update package for an application with version "
+                 "and revision."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of packages for an application, "
+                 "optionally by limit and/or start."),
+        POST=dict(description="Add a new package for an application."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        del self.types['application_id']
+        del self.param_descriptions['application_id']
+        super(PackageView, self).__init__(*args, **kwargs)
+
     def validate_individual_package(self, request):
         self.get_obj_by_name_or_id('application')
         if 'application' in request.validated:
             self.get_pkg_by_version_revision()
+
+    def validate_package_collection(self, request):
+        self.get_obj_by_name_or_id('application')
+        if 'application' in request.validated:
+            self.get_pkgs_by_limit_start()
 
     def get_pkg_by_version_revision(self):
         """
@@ -120,7 +134,6 @@ class PackageView(BaseView):
         Validate a PUT request by preventing collisions over unique fields for
         packages.
         """
-        self._validate_id("PUT")
         if self.name not in self.request.validated:
             return
 
@@ -166,7 +179,6 @@ class PackageView(BaseView):
         Validate a POST request by preventing collisions over unique fields.
         """
         self.get_obj_by_name_or_id('application')
-        self._validate_id("POST")
         app_check = 'application' in self.request.validated
         ver_check = 'version' in self.request.validated_params
         rev_check = 'revision' in self.request.validated_params
@@ -250,7 +262,7 @@ class PackageView(BaseView):
             job = jenkins[job_name]
         except KeyError:
             self._add_jenkins_error("Jenkins job {job} does not exist.".format(
-                    job=job_name,
+                job=job_name,
             ))
             self.request.errors.status = 400
             return

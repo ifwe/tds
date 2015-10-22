@@ -11,16 +11,16 @@ Feature: DELETE host deployment(s) from the REST API
             | 1         | 1         |
             | 1         | 2         |
         And there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | foo   | 1             | pending   |
+            | id    | user  | status    |
+            | 1     | foo   | pending   |
         And there is an environment with name="dev"
         And there are hosts:
             | name  | env   |
             | host1 | dev   |
             | host2 | dev   |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 1     | 1             | 1         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1             |
 
     @rest
     Scenario: attempt to delete a host deployment that doesn't exist
@@ -40,11 +40,11 @@ Feature: DELETE host deployment(s) from the REST API
     @rest
     Scenario Outline: attempt to delete a host deployment whose deployment is non-pending
         Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 2     | foo   | 1             | <status>  |
+            | id    | user  | status    |
+            | 2     | foo   | <status>  |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 2             | 2         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 2     | 2             | 2         | pending   | foo   | 1             |
         When I query DELETE "/host_deployments/2"
         Then the response code is 403
         And the response contains errors:
@@ -68,11 +68,11 @@ Feature: DELETE host deployment(s) from the REST API
             | name  | env   | app_id    |
             | host3 | dev   | 1         |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 1             | 3         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 2     | 1             | 3         | pending   | foo   | 1             |
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
         When I query DELETE "/host_deployments/2?<query>"
         Then the response code is 403
         And the response contains errors:
@@ -96,11 +96,11 @@ Feature: DELETE host deployment(s) from the REST API
             | name  | env   | app_id    |
             | host3 | dev   | 1         |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 1             | 3         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 2     | 1             | 3         | pending   | foo   | 1             |
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
         When I query DELETE "/host_deployments/2?<query>"
         Then the response code is 200
         And there is no host deployment with id=2

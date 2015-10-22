@@ -11,16 +11,21 @@ Feature: PUT host deployment(s) from the REST API
             | 1         | 1         |
             | 1         | 2         |
         And there are deployments:
-            | id    | user  | package_id    | status    |
-            | 1     | foo   | 1             | pending   |
+            | id    | user  | status    |
+            | 1     | foo   | pending   |
+        And there are projects:
+            | name  |
+            | proj1 |
         And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And the tier "tier1" is associated with the application "app1" for the project "proj1"
         And there are hosts:
-            | name  | env   |
-            | host1 | dev   |
-            | host2 | dev   |
+            | name  | env   | app_id    |
+            | host1 | dev   | 2         |
+            | host2 | dev   | 2         |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 1     | 1             | 1         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1             |
 
     @rest
     Scenario: put a host deployment
@@ -43,11 +48,11 @@ Feature: PUT host deployment(s) from the REST API
     @rest
     Scenario Outline: attempt to modify a host deployment whose deployment is non-pending
         Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 2     | foo   | 1             | <status>  |
+            | id    | user  | status    |
+            | 2     | foo   | <status>  |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 2             | 1         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 2     | 2             | 1         | pending   | foo   | 1             |
         When I query PUT "/host_deployments/2?host_id=2"
         Then the response code is 403
         And the response contains errors:
@@ -66,22 +71,6 @@ Feature: PUT host deployment(s) from the REST API
             | stopped       |
 
     @rest
-    Scenario: attempt to violate a unique constraint
-        Given there are deployments:
-            | id    | user  | package_id    | status    |
-            | 2     | foo   | 1             | pending   |
-        And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 2             | 1         | pending   | foo   |
-        When I query PUT "/host_deployments/2?id=1"
-        Then the response code is 409
-        And the response contains errors:
-            | location  | name  | description                                                                       |
-            | query     | id    | Unique constraint violated. Another host deployment with this ID already exists.  |
-        And there is no host deployment with id=1,deployment_id=2
-        And there is a host deployment with id=2,deployment_id=2
-
-    @rest
     Scenario: attempt to modify status
         When I query PUT "/host_deployments/1?status=inprogress"
         Then the response code is 403
@@ -92,17 +81,17 @@ Feature: PUT host deployment(s) from the REST API
         And there is a host deployment with id=1,status="pending"
 
     @rest
-    Scenario: attempt to violate (deployment_id, host_id) unique together constraint
+    Scenario: attempt to violate (deployment_id, host_id, package_id) unique together constraint
         Given there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 1             | 2         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 2     | 1             | 2         | pending   | foo   | 1             |
         When I query PUT "/host_deployments/2?host_id=1"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                                                                       |
-            | query     | host_id   | ('deployment_id', 'host_id') are unique together. Another host deployment with these attributes already exists.   |
-        And there is no host deployment with id=2,deployment_id=1,host_id=1
-        And there is a host deployment with id=2,deployment_id=1,host_id=2
+            | location  | name          | description                                                                                                       |
+            | query     | package_id    | ('deployment_id', 'host_id', 'package_id') are unique together. Another host deployment with these attributes already exists.   |
+        And there is no host deployment with id=2,deployment_id=1,host_id=1,package_id=1
+        And there is a host deployment with id=2,deployment_id=1,host_id=2,package_id=1
 
     @rest
     Scenario: attempt to modify a host deployment that doesn't exist
@@ -116,15 +105,15 @@ Feature: PUT host deployment(s) from the REST API
     Scenario: attempt to modify host_id to a host in a different environment from that of the deployment
         Given there is a deploy target with name="tier1"
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
         And there is an environment with name="staging"
         And there are hosts:
-            | name  | env       |
-            | host3 | staging   |
+            | name  | env       | app_id    |
+            | host3 | staging   | 2         |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 1             | 2         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 2     | 1             | 2         | pending   | foo   | 1             |
         When I query PUT "/host_deployments/1?host_id=3"
         Then the response code is 409
         And the response contains errors:
@@ -138,18 +127,18 @@ Feature: PUT host deployment(s) from the REST API
     Scenario: attempt to modify deployment_id to a deployment with a different environment
         Given there is a deploy target with name="tier1"
         And there are deployments:
-            | id    | user  | package_id    | status    |
-            | 2     | foo   | 1             | pending   |
+            | id    | user  | status    |
+            | 2     | foo   | pending   |
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
         And there is an environment with name="staging"
         And there are hosts:
-            | name  | env       |
-            | host3 | staging   |
+            | name  | env       | app_id    |
+            | host3 | staging   | 2         |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 2             | 3         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 2     | 2             | 3         | pending   | foo   | 1             |
         When I query PUT "/host_deployments/2?deployment_id=1"
         Then the response code is 409
         And the response contains errors:
@@ -163,18 +152,18 @@ Feature: PUT host deployment(s) from the REST API
     Scenario: attempt to modify host_id and deployment_id s.t. environments conflict
         Given there is a deploy target with name="tier1"
         And there are tier deployments:
-            | id    | deployment_id | app_id    | status    | user  | environment_id    |
-            | 1     | 1             | 1         | pending   | foo   | 1                 |
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 1     | 1             | 1         | pending   | foo   | 1                 | 1             |
         And there are deployments:
-            | id    | user  | package_id    | status    |
-            | 2     | foo   | 1             | pending   |
+            | id    | user  | status    |
+            | 2     | foo   | pending   |
         And there is an environment with name="staging"
         And there are hosts:
-            | name  | env       |
-            | host3 | staging   |
+            | name  | env       | app_id    |
+            | host3 | staging   | 2         |
         And there are host deployments:
-            | id    | deployment_id | host_id   | status    | user  |
-            | 2     | 2             | 2         | pending   | foo   |
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 2     | 2             | 2         | pending   | foo   | 1             |
         When I query PUT "/host_deployments/2?deployment_id=1&host_id=3"
         Then the response code is 409
         And the response contains errors:
@@ -183,3 +172,26 @@ Feature: PUT host deployment(s) from the REST API
             | query     | host_id   | Cannot deploy to different environments with same deployment. There is a host deployment associated with this deployment with ID 1 and environment development.   |
         And there is no host deployment with id=2,deployment_id=1,host_id=3
         And there is a host deployment with id=2,deployment_id=2,host_id=2
+
+    @rest
+    Scenario Outline: attempt to deploy to a host whose tier isn't associated with the package's application
+        Given there is an application with pkg_name="app2"
+        And there are packages:
+            | version   | revision  |
+            | 2         | 3         |
+        And there is a deploy target with name="tier2"
+        And there are hosts:
+            | name  | env   | app_id    |
+            | host3 | dev   | 3         |
+        When I query PUT "/host_deployments/1?<query>"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                                                               |
+            | query     | <name>    | Tier <tier> of host <host> is not associated with the application <app> for any projects. |
+        And there is no host deployment with id=1,<props>
+
+        Examples:
+            | query                     | name          | tier  | host  | app   | props                     |
+            | host_id=3                 | host_id       | tier2 | host3 | app1  | host_id=3                 |
+            | host_id=3&package_id=3    | host_id       | tier2 | host3 | app2  | host_id=3,package_id=3    |
+            | package_id=3              | package_id    | tier1 | host1 | app2  | package_id=3              |

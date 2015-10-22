@@ -19,28 +19,21 @@ Feature: Add (POST) project on REST API
         And there is a project with name="proj4",id=4
 
     @rest
-    Scenario: specify id
-        When I query POST "/projects?name=proj4&id=10"
-        Then the response code is 201
-        And the response is an object with name="proj4",id=10
-        And there is a project with name="proj4",id=10
-
-    @rest
     Scenario: omit required field
         When I query POST "/projects"
         Then the response code is 400
         And the response contains errors:
             | location  | name  | description               |
             | query     |       | name is a required field. |
-        And there is no project with name="proj4"
+        And there is no project with id=4
 
     @rest
     Scenario Outline: pass an invalid parameter
         When I query POST "/projects?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                               |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name']. |
+            | location  | name  | description                                           |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['name'].   |
         And there is no project with name="proj4"
 
         Examples:
@@ -49,15 +42,9 @@ Feature: Add (POST) project on REST API
             | foo=bar&name=proj4   |
 
     @rest
-    Scenario Outline: attempt to violate a unique constraint
-        When I query POST "/projects?<query>"
+    Scenario: attempt to violate a unique constraint
+        When I query POST "/projects?name=proj3"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                               |
-            | query     | <name>    | Unique constraint violated. A project with this <type> already exists.    |
-
-        Examples:
-            | query             | name  | type  |
-            | name=proj3        | name  | name  |
-            | name=proj3&id=2   | name  | name  |
-            | name=proj3&id=2   | id    | ID    |
+            | location  | name  | description                                                           |
+            | query     | name  | Unique constraint violated. A project with this name already exists.  |

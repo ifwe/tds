@@ -5,18 +5,12 @@ REST API view for host deployments.
 from cornice.resource import resource, view
 
 import tds.model
+import tagopsdb.model
 from .base import BaseView, init_view
 
 @resource(collection_path="/host_deployments", path="/host_deployments/{id}")
 @init_view(name="host-deployment", model=tds.model.HostDeployment)
 class HostDeploymentView(BaseView):
-
-    types = {
-        'id': 'integer',
-        'deployment_id': 'integer',
-        'host_id': 'integer',
-        'status': 'choice',
-    }
 
     param_routes = {}
 
@@ -24,10 +18,22 @@ class HostDeploymentView(BaseView):
         'status': 'pending',
     }
 
-    required_post_fields = ('deployment_id', 'host_id',)
+    required_post_fields = ('deployment_id', 'host_id', 'package_id')
 
     unique_together = (
-        ('deployment_id', 'host_id'),
+        ('deployment_id', 'host_id', 'package_id'),
+    )
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get host deployment matching ID."),
+        PUT=dict(description="Update host deployment matching ID."),
+        DELETE=dict(description="Delete host deployment matching ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of host deployments, optionally by "
+                 "limit and/or start."),
+        POST=dict(description="Add a new host deployment."),
     )
 
     def validate_host_deployment_delete(self):
@@ -152,9 +158,55 @@ class HostDeploymentView(BaseView):
             )
             self.request.errors.status = 403
         self.validate_conflicting_env('PUT')
-        self._validate_id("PUT", "host deployment")
         self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
+        self._validate_foreign_key('package_id', 'package', tds.model.Package)
         self._validate_unique_together("PUT", "host deployment")
+        # If the package_id is being changed and the deployment isn't pending:
+        if 'package_id' in self.request.validated_params and \
+                self.request.validated_params['package_id'] != \
+                self.request.validated[self.name].package_id and \
+                self.request.validated[self.name].deployment.status != \
+                'pending':
+            self.request.errors.add(
+                'query', 'package_id',
+                'Cannot change package_id for a host deployment with a '
+                'non-pending deployment.'
+            )
+            self.request.errors.status = 403
+        if not any(
+            x in self.request.validated_params for x in ('host_id',
+                                                         'package_id')
+        ):
+            return
+        pkg_id = self.request.validated_params['package_id'] if 'package_id' \
+            in self.request.validated_params else \
+            self.request.validated[self.name].package_id
+        host_id = self.request.validated_params['host_id'] if 'host_id' in \
+            self.request.validated_params else \
+            self.request.validated[self.name].host_id
+        self._validate_project_package(pkg_id, host_id)
+
+    def _validate_project_package(self, pkg_id, host_id):
+        found_pkg = tds.model.Package.get(id=pkg_id)
+        found_host = tds.model.HostTarget.get(id=host_id)
+        if not (found_pkg and found_host):
+            return
+        found_project_pkg = tagopsdb.model.ProjectPackage.find(
+            pkg_def_id=found_pkg.pkg_def_id,
+            app_id=found_host.app_id,
+        )
+        if not found_project_pkg:
+            self.request.errors.add(
+                'query', 'host_id' if 'host_id' in self.request.validated_params
+                else 'package_id',
+                'Tier {t_name} of host {h_name} is not associated with the '
+                'application {a_name} for any projects.'.format(
+                    t_name=found_host.application.name,
+                    h_name=found_host.name,
+                    a_name=found_pkg.application.name,
+                )
+            )
+            self.request.errors.status = 403
 
     def validate_host_deployment_post(self):
         if 'status' in self.request.validated_params:
@@ -165,9 +217,18 @@ class HostDeploymentView(BaseView):
                 )
                 self.request.errors.status = 403
         self.validate_conflicting_env('POST')
-        self._validate_id("POST", "host deployment")
         self._validate_foreign_key('host_id', 'host', tds.model.HostTarget)
+        self._validate_foreign_key('package_id', 'package', tds.model.Package)
         self._validate_unique_together("POST", "host deployment")
+        if not all(
+            x in self.request.validated_params for x in ('package_id',
+                                                         'host_id')
+        ):
+            return
+        self._validate_project_package(
+            self.request.validated_params['package_id'],
+            self.request.validated_params['host_id'],
+        )
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))

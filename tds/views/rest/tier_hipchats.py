@@ -7,10 +7,12 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb
 from .base import BaseView, init_view
+from . import types as obj_types, descriptions
+
 
 @resource(collection_path="/tiers/{name_or_id}/hipchats",
           path="/tiers/{name_or_id}/hipchats/{hipchat_name_or_id}")
-@init_view(name="tier-hipchat", model=tagopsdb.model.Hipchat)
+@init_view(name="tier-hipchat", model=tagopsdb.model.Hipchat, set_params=False)
 class TierHipchatView(BaseView):
     """
     Tier-Hipchat relationship view.
@@ -21,9 +23,38 @@ class TierHipchatView(BaseView):
         'name': 'string',
     }
 
+    full_types = obj_types.HIPCHAT_TYPES
+
+    param_descriptions = {
+        'id': 'ID of the HipChat',
+        'name': 'Name of the HipChat',
+    }
+
+    full_descriptions = descriptions.HIPCHAT_DESCRIPTIONS
+
     param_routes = {
         'name': 'room_name',
     }
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get a HipChat associated with the tier."),
+        DELETE=dict(
+            description="Disassociate a HipChat from the tier.",
+            returns="Disassociated HipChat",
+        ),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(
+            description="Get a list of HipChats associated with the tier, "
+            "optionally by limit and/or start."
+        ),
+        POST=dict(
+            description="Associate a HipChat with the tier by name or "
+                "ID (ID given precedence).",
+            returns="Associated HipChat",
+            ),
+    )
 
     def validate_individual_tier_hipchat(self, request):
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')
@@ -44,6 +75,22 @@ class TierHipchatView(BaseView):
                 )
                 request.errors.status = 404
             request.validated[self.name] = request.validated['HipChat']
+
+    def validate_tier_hipchat_collection(self, request):
+        if len(request.params) > 0:
+            for key in request.params:
+                request.errors.add(
+                    'query', key,
+                    "Unsupported query: {key}. There are no valid "
+                    "parameters for this method.".format(key=key),
+                )
+            request.errors.status = 422
+        self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
+                                   'app_type')
+        if 'tier' in request.validated:
+            request.validated[self.plural] = request.validated[
+                'tier'
+            ].hipchats
 
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):

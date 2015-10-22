@@ -42,8 +42,8 @@ Feature: Update (PUT) application on REST API
         When I query PUT "/applications/<select>?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                              |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['job', 'validation_type', 'env_specific', 'name', 'build_host', 'deploy_type', 'arch', 'id', 'build_type'].   |
+            | location  | name  | description                                                                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'validation_type'].  |
         And there is an application with pkg_name="app1",id=2
 
         Examples:
@@ -57,20 +57,14 @@ Feature: Update (PUT) application on REST API
 
     @rest
     Scenario Outline: attempt to violate a unique constraint
-        When I query PUT "/applications/<select>?<query>"
+        When I query PUT "/applications/<select>?name=app2"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                                        |
-            | query     | <name>    | Unique constraint violated. Another application with this <type> already exists.   |
+            | location  | name  | description                                                                       |
+            | query     | name  | Unique constraint violated. Another application with this name already exists.    |
         And there is an application with pkg_name="app1",id=2
 
         Examples:
-            | select    | query             | name  | type  |
-            | app1      | name=app2         | name  | name  |
-            | 2         | name=app2         | name  | name  |
-            | app1      | id=3              | id    | ID    |
-            | 2         | id=3              | id    | ID    |
-            | app1      | name=app2&id=3    | name  | name  |
-            | app1      | name=app2&id=3    | id    | ID    |
-            | 2         | name=app2&id=3    | name  | name  |
-            | 2         | name=app2&id=3    | id    | ID    |
+            | select    |
+            | app1      |
+            | 2         |
