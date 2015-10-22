@@ -99,7 +99,6 @@ class DeployController(BaseController):
 
     def display_output(self):
         """"""
-
         pass
 
     def find_current_app_deployments(self, package, apptypes, params):
@@ -120,7 +119,7 @@ class DeployController(BaseController):
             for app_deployment in apptype.app_deployments:
                 if app_deployment.environment_obj != environment:
                     continue
-                if app_deployment.deployment.package != package.delegate:
+                if app_deployment.package != package.delegate:
                     break
 
                 app_deployments[apptype.id] = (apptype.name, app_deployment)
@@ -247,9 +246,7 @@ class DeployController(BaseController):
     def prepare_deployments(self):
         """"""
 
-        self.deployment = tds.model.Deployment.create(
-            package_id=self.package.id, user=self.user
-        )
+        self.deployment = tds.model.Deployment.create(user=self.user)
         self.deployment_status['deployment'] = {
             self.deployment.id, self.deployment.status
         }
@@ -307,6 +304,7 @@ class DeployController(BaseController):
                 host_id=host.id,
                 user=self.user,
                 status='pending',
+                package_id=self.package.id
             )
             host_deps.append(host_dep)
 
@@ -332,6 +330,7 @@ class DeployController(BaseController):
                     user=self.user,
                     environment_id=self.environment.id,
                     status='pending',
+                    package_id=self.package.id,
                 )
                 tier_deps.append(tier_dep)
 
@@ -426,7 +425,7 @@ class DeployController(BaseController):
             tier_name, curr_app_dep = app_deployments[apptype.id]
 
             if (curr_app_dep is not None and
-                curr_app_dep.deployment.package == package.delegate):
+                curr_app_dep.package == package.delegate):
                 log.info('Application "%s", version "%s" is currently '
                          'deployed on tier "%s", skipping...',
                          application.name, package.version, tier_name)
@@ -471,7 +470,7 @@ class DeployController(BaseController):
             tier_name, curr_app_dep = app_deployments[apptype.id]
 
             if (curr_app_dep is not None and
-                curr_app_dep.deployment.package == package.delegate):
+                curr_app_dep.package == package.delegate):
                 log.info('Application "%s", version "%s" is currently '
                          'deployed on tier "%s", skipping...',
                          application.name, package.version, tier_name)
