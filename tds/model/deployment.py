@@ -12,17 +12,15 @@ class Deployment(Base):
 
     delegate = tagopsdb.Deployment
 
-    @property
-    def application(self):
-        return Application(
-            delegate=self.delegate.deployment.package.application
-        )
-
 
 class AppDeployment(Deployment):
     """Model class for deployment of an application to a tier."""
 
     delegate = tagopsdb.AppDeployment
+
+    @property
+    def application(self):
+        return Application(delegate=self.delegate.package.application)
 
 
 class HostDeployment(Deployment):
@@ -37,3 +35,7 @@ class HostDeployment(Deployment):
     @property
     def host_state(self):
         return self.delegate.host.state
+
+    @property
+    def application(self):
+        return Application(delegate=self.delegate.package.application)
