@@ -41,8 +41,8 @@ Feature: POST app tier(s) from the REST API
         When I query POST "/tiers?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'puppet_class', 'ganglia_name', 'id', 'distribution', 'ganglia_id', 'name']. |
+            | location  | name  | description                                                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['distribution', 'ganglia_id', 'ganglia_name', 'name', 'puppet_class', 'status'].   |
         And there is no deploy target with name="tier3"
         And there is no deploy target with id=4
 
@@ -52,33 +52,22 @@ Feature: POST app tier(s) from the REST API
             | foo=bar&name=tier3    |
 
     @rest
-    Scenario Outline: attempt to violate a unique constraint
-        When I query POST "/tiers?<query>"
+    Scenario: attempt to violate a unique constraint
+        When I query POST "/tiers?name=tier2"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                           |
-            | query     | <name>    | Unique constraint violated. A tier with this <type> already exists.   |
-
-        Examples:
-            | query             | name  | type  |
-            | name=tier2        | name  | name  |
-            | name=tier2&id=1   | name  | name  |
-            | name=tier2&id=1   | id    | ID    |
+            | location  | name  | description                                                       |
+            | query     | name  | Unique constraint violated. A tier with this name already exists. |
 
     @rest
-    Scenario Outline: pass a non-integer for an integer param
-        When I query POST "/tiers?name=tier3&<query>"
+    Scenario: pass a non-integer for an integer param
+        When I query POST "/tiers?name=tier3&ganglia_id=3.1415"
         Then the response code is 400
         And the response contains errors:
-            | location  | name      | description                                                               |
-            | query     | <name>    | Validation failed: Value 3.1415 for argument <type> is not an integer.    |
+            | location  | name          | description                                                                   |
+            | query     | ganglia_id    | Validation failed: Value 3.1415 for argument ganglia_id is not an integer.    |
         And there is no deploy target with name="tier3"
-        And there is no deploy target with id=<id>
-
-        Examples:
-            | query             | name          | id        | type          |
-            | id=3.1415         | id            | 3.1415    | id            |
-            | ganglia_id=3.1415 | ganglia_id    | 4         | ganglia_id    |
+        And there is no deploy target with id=4
 
     @rest
     Scenario: pass a Ganglia ID for a Ganglia entry that doesn't exist

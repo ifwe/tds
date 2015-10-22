@@ -18,13 +18,6 @@ class GangliaView(BaseView):
     correspond to the /ganglias/{name_or_id} URL.
     """
 
-    # JSON types for params.
-    types = {
-        'id': 'integer',
-        'name': 'string',
-        'port': 'integer',
-    }
-
     # URL parameter routes to Python object fields.
     # Params not included are mapped to themselves.
     param_routes = {
@@ -40,3 +33,14 @@ class GangliaView(BaseView):
         'delete': 'admin',
         'collection_post': 'admin',
     }
+
+    individual_allowed_methods = dict(
+        GET=dict(description="Get Ganglia matching name or ID."),
+        PUT=dict(description="Update Ganglia matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of Ganglias, optionally by limit and/"
+                 "or start."),
+        POST=dict(description="Add a new Ganglia."),
+    )

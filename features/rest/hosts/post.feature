@@ -25,7 +25,6 @@ Feature: POST host(s) from the REST API
             | cage=1&cab=foo&rack=3             | ,cage=1,cab="foo",rack=3              |
             | kernel_version=foo                | ,kernel_version="foo"                 |
             | console_port=foo&power_port=foo   | ,console_port="foo",power_port="foo"  |
-            | id=20                             | ,id=20                                |
 
     @rest
     Scenario Outline: omit required fields
@@ -48,8 +47,8 @@ Feature: POST host(s) from the REST API
         When I query POST "/hosts?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['power_circuit', 'environment_id', 'console_port', 'timezone', 'cage', 'id', 'name', 'kernel_version', 'arch', 'state', 'power_port', 'cab', 'distribution', 'tier_id', 'rack'].   |
+            | location  | name  | description                                                                                                                                                                                                           |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'cab', 'cage', 'console_port', 'distribution', 'environment_id', 'kernel_version', 'name', 'power_circuit', 'power_port', 'rack', 'state', 'tier_id', 'timezone']. |
         And there is no host with name="host3"
         And there is no host with id=3
 
@@ -59,18 +58,12 @@ Feature: POST host(s) from the REST API
             | foo=bar&tier_id=2&name=host   |
 
     @rest
-    Scenario Outline: attempt to violate a unique constraint
-        When I query POST "/hosts?tier_id=2&<query>"
+    Scenario: attempt to violate a unique constraint
+        When I query POST "/hosts?tier_id=2&name=host2"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                           |
-            | query     | <name>    | Unique constraint violated. A host with this <type> already exists.   |
-
-        Examples:
-            | query             | name  | type  |
-            | name=host2        | name  | name  |
-            | name=host2&id=1   | name  | name  |
-            | name=host2&id=1   | id    | ID    |
+            | location  | name  | description                                                       |
+            | query     | name  | Unique constraint violated. A host with this name already exists. |
 
     @rest
     Scenario: pass a tier ID for a tier that doesn't exist
@@ -93,6 +86,6 @@ Feature: POST host(s) from the REST API
         And there is no host with id=<id>
 
         Examples:
-            | query             | name      | id        | type      |
-            | tier_id=3.1415    | tier_id   | 3         | tier_id   |
-            | id=3.1415         | id        | 3.1415    | id        |
+            | query                 | name              | id        | type              |
+            | tier_id=3.1415        | tier_id           | 3         | tier_id           |
+            | environment_id=3.1415 | environment_id    | 3.1415    | environment_id    |

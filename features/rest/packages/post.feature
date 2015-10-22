@@ -36,15 +36,6 @@ Feature: Add (POST) package on REST API
         And there is a package with version="2",revision="2",creator="testuser",job="somejob"
 
     @rest @jenkins_server
-    Scenario: specify id
-        Given there is a jenkins job with name="myjob"
-        And the job has a build with number="2"
-        When I query POST "/applications/app3/packages?version=2&revision=2&id=10"
-        Then the response code is 201
-        And the response is an object with version="2",revision="2",id=10,creator="testuser"
-        And there is a package with version="2",revision="2",id=10,creator="testuser"
-
-    @rest @jenkins_server
     Scenario: omit required field
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="2"
@@ -62,8 +53,8 @@ Feature: Add (POST) package on REST API
         When I query POST "/applications/app3/packages?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                           |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'builder', 'job', 'version', 'id', 'revision'].  |
+            | location  | name  | description                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
         And there is no package with version="2",revision="2",creator="testuser"
 
         Examples:
@@ -72,20 +63,14 @@ Feature: Add (POST) package on REST API
             | foo=bar&version=2&revision=2  |
 
     @rest @jenkins_server
-    Scenario Outline: attempt to violate a unique constraint
+    Scenario: attempt to violate a unique constraint
         Given there is a jenkins job with name="myjob"
-        And the job has a build with number="<num>"
-        When I query POST "/applications/app3/packages?<query>"
+        And the job has a build with number="1"
+        When I query POST "/applications/app3/packages?version=1&revision=1"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                   |
-            | query     | <name>    | Unique constraint violated. A package <type> already exists.  |
-
-        Examples:
-            | num   | query                     | name      | type                                                  |
-            | 1     | version=1&revision=1      | version   | for this application with this version and revision   |
-            | 1     | version=1&revision=1&id=3 | version   | for this application with this version and revision   |
-            | 2     | version=2&revision=2&id=1 | id        | with this ID                                          |
+            | location  | name      | description                                                                                               |
+            | query     | version   | Unique constraint violated. A package for this application with this version and revision already exists. |
 
     @rest @jenkins_server
     Scenario Outline: attempt to set status to something other than pending

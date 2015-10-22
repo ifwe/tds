@@ -39,8 +39,8 @@ Feature: PUT HipChat(s) from the REST API
         When I query PUT "/hipchats/<select>?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                               |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name']. |
+            | location  | name  | description                                           |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['name'].   |
         And there is a HipChat with room_name="hipchat1",id=1
 
         Examples:
@@ -54,15 +54,13 @@ Feature: PUT HipChat(s) from the REST API
 
     @rest
     Scenario Outline: attempt to violate a unique constraint
-        When I query PUT "/hipchats/<select>?<query>"
+        When I query PUT "/hipchats/<select>?name=hipchat2"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                                   |
-            | query     | <name>    | Unique constraint violated. Another hipchat with this <type> already exists.  |
+            | location  | name  | description                                                                   |
+            | query     | name  | Unique constraint violated. Another hipchat with this name already exists.    |
 
         Examples:
-            | select    | query                 | name  | type  |
-            | hipchat1  | name=hipchat2         | name  | name  |
-            | 1         | id=2                  | id    | ID    |
-            | hipchat1  | id=2&name=hipchat2    | id    | ID    |
-            | 1         | id=2&name=hipchat2    | name  | name  |
+            | select    | query         |
+            | hipchat1  | name=hipchat2 |
+            | 1         | name=hipchat2 |

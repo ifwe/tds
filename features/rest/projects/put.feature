@@ -41,8 +41,8 @@ Feature: Update (PUT) project on REST API
         When I query PUT "/projects/<select>?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                               |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['id', 'name']. |
+            | location  | name  | description                                           |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['name'].   |
         And there is a project with name="proj2",id=2
 
         Examples:
@@ -56,20 +56,14 @@ Feature: Update (PUT) project on REST API
 
     @rest
     Scenario Outline: attempt to violate a unique constraint
-        When I query PUT "/projects/<select>?<query>"
+        When I query PUT "/projects/<select>?name=proj2"
         Then the response code is 409
         And the response contains errors:
-            | location  | name      | description                                                                   |
-            | query     | <name>    | Unique constraint violated. Another project with this <type> already exists.  |
+            | location  | name  | description                                                                   |
+            | query     | name  | Unique constraint violated. Another project with this name already exists.    |
         And there is a project with name="proj1",id=1
 
         Examples:
-            | select    | query             | name  | type  |
-            | proj1     | name=proj2        | name  | name  |
-            | 1         | name=proj2        | name  | name  |
-            | proj1     | id=2              | id    | ID    |
-            | 1         | id=2              | id    | ID    |
-            | proj1     | name=proj2&id=2   | name  | name  |
-            | proj1     | name=proj2&id=2   | id    | ID    |
-            | 1         | name=proj2&id=2   | name  | name  |
-            | 1         | name=proj2&id=2   | id    | ID    |
+            | select    |
+            | proj1     |
+            | 1         |

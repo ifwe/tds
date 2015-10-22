@@ -20,25 +20,6 @@ class HostView(BaseView):
     others correspond to the /hosts/{name_or_id} URL.
     """
 
-    # JSON types for params.
-    types = {
-        'id': 'integer',
-        'name': 'string',
-        'tier_id': 'integer',
-        'cage': 'integer',
-        'cab': 'string',
-        'rack': 'integer',
-        'kernel_version': 'string',
-        'console_port': 'string',
-        'power_port': 'string',
-        'power_circuit': 'string',
-        'state': 'choice',
-        'arch': 'choice',
-        'distribution': 'choice',
-        'timezone': 'string',
-        'environment_id': 'integer',
-    }
-
     # Remove these choice fields when they are defined in TagOpsDB.
     arch_choices = ('i386', 'noarch', 'x86_64',)
 
@@ -70,12 +51,22 @@ class HostView(BaseView):
         'collection_post': 'admin',
     }
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get host matching name or ID."),
+        PUT=dict(description="Update host matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of hosts, optionally by limit and/"
+                 "or start."),
+        POST=dict(description="Add a new host."),
+    )
+
     def validate_host_post(self):
         """
         Validate a POST request by preventing collisions over unique fields and
         validating that an app tier with the given tier_id exists.
         """
-        self._validate_id("POST")
         self._validate_name("POST")
         self._validate_foreign_key('tier_id', 'app tier', tds.model.AppTarget)
 
@@ -84,6 +75,5 @@ class HostView(BaseView):
         Validate a PUT request by preventing collisions over unique fields and
         validating that an app tier with the given tier_id exists.
         """
-        self._validate_id("PUT")
         self._validate_name("PUT")
         self._validate_foreign_key('tier_id', 'app tier', tds.model.AppTarget)

@@ -15,17 +15,17 @@ Feature: PUT app tier(s) from the REST API
         And the response is an object with <props>
 
         Examples:
-            | select    | params                            | props                                         |
-            | tier2     |                                   | name="tier2",id=3                             |
-            | 3         |                                   | name="tier2",id=3                             |
-            | tier2     | status=inactive                   | name="tier2",id=3,status="inactive"           |
-            | 3         | status=inactive                   | name="tier2",id=3,status="inactive"           |
-            | tier2     | puppet_class=cls                  | name="tier2",id=3,puppet_class="cls"          |
-            | 3         | puppet_class=cls                  | name="tier2",id=3,puppet_class="cls"          |
-            | tier2     | distribution=centos7.1            | name="tier2",id=3,distribution="centos7.1"    |
-            | 3         | distribution=centos7.1            | name="tier2",id=3,distribution="centos7.1"    |
-            | 3         | name=tier100                      | name="tier100",id=3                           |
-            | tier2     | name=tier100&id=20                | name="tier100",id=20                          |
+            | select    | params                    | props                                         |
+            | tier2     |                           | name="tier2",id=3                             |
+            | 3         |                           | name="tier2",id=3                             |
+            | tier2     | status=inactive           | name="tier2",id=3,status="inactive"           |
+            | 3         | status=inactive           | name="tier2",id=3,status="inactive"           |
+            | tier2     | puppet_class=cls          | name="tier2",id=3,puppet_class="cls"          |
+            | 3         | puppet_class=cls          | name="tier2",id=3,puppet_class="cls"          |
+            | tier2     | distribution=centos7.1    | name="tier2",id=3,distribution="centos7.1"    |
+            | 3         | distribution=centos7.1    | name="tier2",id=3,distribution="centos7.1"    |
+            | 3         | name=tier100              | name="tier100",id=3                           |
+            | tier2     | name=tier100              | name="tier100",id=3                           |
 
     @rest
     Scenario Outline: attempt to update a tier that doesn't exist
@@ -46,8 +46,8 @@ Feature: PUT app tier(s) from the REST API
         When I query PUT "/tiers/<select>?name=tier100&id=50&foo=bar"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['status', 'puppet_class', 'ganglia_name', 'id', 'distribution', 'ganglia_id', 'name']. |
+            | location  | name  | description                                                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['distribution', 'ganglia_id', 'ganglia_name', 'name', 'puppet_class', 'status'].   |
         And there is no deploy target with name="tier100"
         And there is no deploy target with id=4
 

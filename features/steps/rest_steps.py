@@ -39,6 +39,17 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
                        "Valid options: user, admin.".format(p=perm_type))
 
 
+@given(u'I have set the request headers {properties}')
+def given_i_have_set_the_request_headers(context, properties):
+    properties = parse_properties(properties)
+    context.request_headers = properties
+
+
+@given(u'I have disabled redirect following')
+def given_i_have_disabled_redirect_following(context):
+    context.follow_redirects = False
+
+
 @when(u'I query {method} "{path}"')
 def when_i_query(context, method, path):
     """
@@ -48,6 +59,12 @@ def when_i_query(context, method, path):
     if http_method is None:
         assert False, "Unkown method: {method}".format(method=method)
 
+    if not getattr(context, 'request_headers', None):
+        context.request_headers = dict()
+
+    if getattr(context, 'follow_redirects', None) is None:
+        context.follow_redirects = True
+
     if getattr(context, 'cookie', None):
         context.response = http_method(
             "http://{addr}:{port}{path}".format(
@@ -55,20 +72,26 @@ def when_i_query(context, method, path):
                 port=context.rest_server.server_port,
                 path=path,
             ),
+            allow_redirects=context.follow_redirects,
+            headers=context.request_headers,
             cookies=dict(session=context.cookie),
         )
     else:
-        context.response = http_method("http://{addr}:{port}{path}".format(
-            addr=context.rest_server.server_name,
-            port=context.rest_server.server_port,
-            path=path,
-        ))
+        context.response = http_method(
+            "http://{addr}:{port}{path}".format(
+                addr=context.rest_server.server_name,
+                port=context.rest_server.server_port,
+                path=path,
+            ),
+            allow_redirects=context.follow_redirects,
+            headers=context.request_headers,
+        )
 
 
 @then(u'the response code is {code}')
 def then_the_response_code_is(context, code):
     assert int(code) == context.response.status_code, (
-        context.response.status_code, code, context.response.json()
+        context.response.status_code, code, context.response.text
     )
 
 
@@ -105,6 +128,21 @@ def then_the_response_is_an_object_with(context, properties):
         assert False, (e, context.response.json())
 
 
+@then(u'the response object does not contain attributes {attrs}')
+def then_the_response_object_does_not_contain_attributes(context, attrs):
+    attrs = attrs.split(',')
+    assert all(attr not in context.response.json() for attr in attrs), (
+        attrs, context.response.json()
+    )
+
+
+@then(u'the response list objects do not contain attributes {attrs}')
+def then_the_response_list_objects_do_not_contain_attributes(context, attrs):
+    attrs = attrs.split(',')
+    assert all(all(attr not in obj for attr in attrs) for obj in
+               context.response.json()), (attrs, context.response.json())
+
+
 @then(u'the response list contains id range {minimum} to {maximum}')
 def then_the_response_list_contains_id_range(context, minimum, maximum):
     """
@@ -133,6 +171,12 @@ def then_the_response_body_contains(context, message):
     assert message in context.response.text, (message, context.response.text)
 
 
+@then(u'the response body does not contain "{message}"')
+def then_the_response_body_does_not_contain(context, message):
+    assert message not in context.response.text, (message,
+                                                  context.response.text)
+
+
 @then(u'the response contains a cookie')
 def then_the_response_contains_a_cookie(context):
     assert len(context.response.cookies) > 0, context.response.cookies
@@ -141,3 +185,17 @@ def then_the_response_contains_a_cookie(context):
 @then(u'the response does not contain a cookie')
 def then_the_response_does_not_contain_a_cookie(context):
     assert len(context.response.cookies) == 0, context.response.cookies
+
+
+@then(u'the response header contains a location with "{snippet}"')
+def then_the_response_header_contains_a_location_with(context, snippet):
+    assert snippet in context.response.headers['location'], (
+        context.response.headers['location']
+    )
+
+
+@then(u'the response header contains "{name}" set to "{value}"')
+def then_the_response_header_contains_name_set_to_value(context, name, value):
+    assert value == context.response.headers[name], (
+        context.response.headers[name]
+    )

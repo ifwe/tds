@@ -101,8 +101,8 @@ Feature: GET host(s) from the REST API
         When I query GET "/hosts?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ('limit', 'start'). |
+            | location  | name  | description                                                               |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['limit', 'select', 'start'].   |
 
         Examples:
             | query             |

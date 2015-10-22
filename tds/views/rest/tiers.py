@@ -20,17 +20,6 @@ class TierView(BaseView):
     others correspond to the /tiers/{name_or_id} URL.
     """
 
-    # JSON types for params.
-    types = {
-        'id': 'integer',
-        'name': 'string',
-        'distribution': 'choice',
-        'puppet_class': 'string',
-        'ganglia_id': 'integer',
-        'ganglia_name': 'string',
-        'status': 'choice',
-    }
-
     # URL parameter routes to Python object fields.
     # Params not included are mapped to themselves.
     param_routes = {
@@ -48,12 +37,22 @@ class TierView(BaseView):
         'collection_post': 'admin',
     }
 
+    individual_allowed_methods = dict(
+        GET=dict(description="Get tier matching name or ID."),
+        PUT=dict(description="Update tier matching name or ID."),
+    )
+
+    collection_allowed_methods = dict(
+        GET=dict(description="Get a list of tiers, optionally by limit and/"
+                 "or start."),
+        POST=dict(description="Add a new tier."),
+    )
+
     def validate_tier_post(self):
         """
         Validate a POST request by preventing collisions over unique fields and
         validating that a Ganglia object exists for the given ID.
         """
-        self._validate_id("POST")
         self._validate_name("POST")
         self._validate_foreign_key('ganglia_id', 'Ganglia object',
                                    tagopsdb.model.Ganglia, 'cluster_name')
@@ -63,7 +62,6 @@ class TierView(BaseView):
         Validate a PUT request by preventing collisions over unique fields and
         validating that a Ganglia object exists for the given ID.
         """
-        self._validate_id("PUT")
         self._validate_name("PUT")
         self._validate_foreign_key('ganglia_id', 'Ganglia object',
                                    tagopsdb.model.Ganglia, 'cluster_name')
