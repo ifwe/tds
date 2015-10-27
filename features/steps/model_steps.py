@@ -316,7 +316,6 @@ def deploy_package_to_target(package, target, env, status='complete'):
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
-        package_id=package.id,
         user='test-user',
     )
     dep = tagopsdb.Deployment.get(**dep_props)
@@ -327,6 +326,7 @@ def deploy_package_to_target(package, target, env, status='complete'):
     tagopsdb.Session.commit()
 
     app_dep = tagopsdb.AppDeployment(
+        package_id=package.id,
         deployment_id=dep.id,
         app_id=target.id,
         user=dep.user,
@@ -340,10 +340,11 @@ def deploy_package_to_target(package, target, env, status='complete'):
     deploy_to_hosts(
         tagopsdb.Host.find(app_id=target.id, environment_id=env_id),
         dep,
+        package.id,
     )
 
 
-def deploy_to_hosts(hosts, deployment, status='ok'):
+def deploy_to_hosts(hosts, deployment, package_id, status='ok'):
     """
     Add a host deployment entry for the given package to every host in hosts,
     using the given deployment.
@@ -356,6 +357,7 @@ def deploy_to_hosts(hosts, deployment, status='ok'):
                 host_id=host.id,
                 user='test-user',
                 status=status,
+                package_id=package_id,
             )
 
             tagopsdb.Session.add(host_dep)
@@ -1360,13 +1362,9 @@ def given_the_package_has_status_set_with_properties(
     targets = context.tds_targets
     package = context.tds_packages[-1] if version is None \
         else check_if_package_exists(context, version)
-    deployments = tagopsdb.Deployment.find(package_id=package.id)
-    dep_ids = [d.id for d in deployments]
     target_ids = [t.id for t in targets]
 
-    for app_dep in tagopsdb.AppDeployment.all():
-        if app_dep.deployment_id not in dep_ids:
-            continue
+    for app_dep in tagopsdb.AppDeployment.find(package_id=package.id):
 
         if app_dep.app_id not in target_ids:
             continue
@@ -1377,9 +1375,7 @@ def given_the_package_has_status_set_with_properties(
         app_dep.status = status
         tagopsdb.Session.add(app_dep)
 
-    for host_dep in tagopsdb.HostDeployment.all():
-        if host_dep.deployment_id not in dep_ids:
-            continue
+    for host_dep in tagopsdb.HostDeployment.find(package_id=package.id):
 
         if host_dep.host.environment != environment:
             continue
