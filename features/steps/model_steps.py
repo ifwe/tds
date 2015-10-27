@@ -454,7 +454,6 @@ def given_the_package_is_deployed_on_host(context, properties):
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
-        package_id=package.id,
         user='test-user',
     )
 
@@ -471,6 +470,7 @@ def given_the_package_is_deployed_on_host(context, properties):
         deployment_id=deployment.id,
         user=deployment.user,
         status='ok',
+        package_id=package.id,
     )
 
     tagopsdb.Session.add(host_deployment)
@@ -508,10 +508,9 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
     )
 
 def set_status_for_package(package, status):
-    for deployment in package.deployments:
-        for app_dep in deployment.app_deployments:
-            app_dep.status = status
-            tagopsdb.Session.add(app_dep)
+    for app_dep in package.app_deployments:
+        app_dep.status = status
+        tagopsdb.Session.add(app_dep)
 
     tagopsdb.Session.commit()
 
