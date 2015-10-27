@@ -62,40 +62,26 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         Then the output has "Application "myapp", version "124" is not validated in the previous environment for tier "the-apptype", skipping..."
 
     Scenario: promote version to hosts
-        Given the deploy strategy is "salt"
         When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with status="queued"
         And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
         And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
 
-    Scenario Outline: promote version to hosts
-        Given the deploy strategy is "<strategy>"
+    Scenario: promote version to hosts
         When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
         And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: promote older version to hosts
-        Given the deploy strategy is "<strategy>"
+    Scenario: promote older version to hosts
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with status="queued"
         And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=1
         And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=1
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
     Scenario: promote version to apptype
-        Given the deploy strategy is "salt"
         When I run "deploy promote myapp 123 --apptype the-apptype"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with status="queued"
@@ -103,156 +89,98 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
         And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
 
-    Scenario Outline: promote version to apptype
-        Given the deploy strategy is "<strategy>"
+    Scenario: promote version to apptype
         When I run "deploy promote myapp 123 --apptype the-apptype"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with status="queued"
         And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: promote olders version to apptype
-        Given the deploy strategy is "<strategy>"
+    Scenario: promote olders version to apptype
         When I run "deploy promote myapp 121 --apptype the-apptype"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with status="queued"
         And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=1,environment_id=2
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: promote version to all apptypes
-        Given the deploy strategy is "<strategy>"
-        And there is a deploy target with name="another-apptype"
+    Scenario: promote version to all apptypes
+        Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
-        And the deploy target is a part of the project-application pair
-        And the package is deployed on the deploy targets in the "dev" env
-        And the package has been validated in the "development" environment
+        And the tier "another-apptype" is associated with the application "myapp" for the project "proj"
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
+            | 4     | 2             | 1                 | validated | foo   | 3         | 3             |
         When I run "deploy promote myapp 123 --all-apptypes"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with status="queued"
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,envrionment_id=1
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=3,package_id=3,environment_id=1
+        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2
+        And there is a tier deployment with status="pending",deployment_id=3,app_id=3,package_id=3,environment_id=2
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: promote older version to all apptypes
-        Given the deploy strategy is "<strategy>"
-        And there is a deploy target with name="another-apptype"
+    Scenario: promote older version to all apptypes
+        Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
-        And the deploy target is a part of the project-application pair
+        And the tier "another-apptype" is associated with the application "myapp" for the project "proj"
         And the package "121" is deployed on the deploy targets in the "dev" env
         And the package "121" has been validated in the "development" environment
         When I run "deploy promote myapp 121 --all-apptypes"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And the output has "Completed: 1 out of 1 hosts"
-        And package "myapp" version "121" was deployed to the deploy targets
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with status="queued"
+        And there is a tier deployment with status="pending",deployment_id=4,app_id=2,package_id=1,environment_id=2
+        And there is a tier deployment with status="pending",deployment_id=4,app_id=3,package_id=1,environment_id=2
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: promote version to hosts with a failure
-        Given the deploy strategy is "<strategy>"
-        And the host "sprojhost01" will fail to deploy
-        When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: sprojhost01"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: promote version to apptype with a failure
-        Given the deploy strategy is "<strategy>"
-        And the host "sprojhost01" will fail to deploy
-        When I run "deploy promote myapp 123 --apptype the-apptype"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: sprojhost01"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: promote version to all apptypes with a failure
-        Given the deploy strategy is "<strategy>"
-        And the host "sprojhost01" will fail to deploy
-        When I run "deploy promote myapp 123 --all-apptypes"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: sprojhost01"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    @delay
-    Scenario Outline: promote version to with delay option
-        Given the deploy strategy is "<strategy>"
-        When I run "deploy promote myapp 123 --delay 10"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And package "myapp" version "123" was deployed to the deploy target
-        And it took at least 10 seconds
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
+    #TODO: Figure out whether to keep these tests and where to put them
+    # Scenario: promote version to hosts with a failure
+    #     Given the host "sprojhost01" will fail to deploy
+    #     When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
+    #     Then the output has "Some hosts had failures"
+    #     And the output has "Hostname: sprojhost01"
+    #
+    # Scenario: promote version to apptype with a failure
+    #     Given the host "sprojhost01" will fail to deploy
+    #     When I run "deploy promote myapp 123 --apptype the-apptype"
+    #     Then the output has "Some hosts had failures"
+    #     And the output has "Hostname: sprojhost01"
+    #
+    # Scenario: promote version to all apptypes with a failure
+    #     Given the host "sprojhost01" will fail to deploy
+    #     When I run "deploy promote myapp 123 --all-apptypes"
+    #     Then the output has "Some hosts had failures"
+    #     And the output has "Hostname: sprojhost01"
+    #
+    # @delay
+    # Scenario: promote version to with delay option
+    #     When I run "deploy promote myapp 123 --delay 10"
+    #     Then the output has "Completed: 2 out of 2 hosts"
+    #     And there is a deployment with status="queued"
+    #     And there is a tier deployment with
+    #     And it took at least 10 seconds
 
     Scenario Outline: promote version that isn't validated in previous env with force option
-        Given the deploy strategy is "<strategy>"
-        And there is a package with version="124"
+        Given there is a package with version="124"
         When I run "deploy promote <switch> myapp 124"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And package "myapp" version "124" was deployed to the deploy target
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with status="queued"
+        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=4,environment_id=2
 
         Examples:
-            | switch    | strategy  |
-            | -f        | mco       |
-            | -f        | salt      |
-            | --force   | mco       |
-            | --force   | salt      |
+            | switch    |
+            | -f        |
+            | --force   |
 
-    Scenario Outline: promote a version that has already been deployed
-        Given the deploy strategy is "<strategy>"
-        And the package is deployed on the deploy targets in the "stage" env
+    @wip
+    Scenario: promote a version that has already been deployed
+        Given the package is deployed on the deploy targets in the "stage" env
         When I run "deploy promote myapp 123"
         Then the output has "Application "myapp" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: promote a version that has already been validated
-        Given the deploy strategy is "<strategy>"
-        And the package is deployed on the deploy targets in the "stage" env
+    Scenario: promote a version that has already been validated
+        Given the package is deployed on the deploy targets in the "stage" env
         And the package has been validated in the "staging" environment
         When I run "deploy promote myapp 123"
         Then the output has "Application "myapp" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: deploying to multiple hosts of different apptypes
-        Given the deploy strategy is "<strategy>"
-        And there is a deploy target with name="other-apptype"
+    Scenario: deploying to multiple hosts of different apptypes
+        Given there is a deploy target with name="other-apptype"
         And there are hosts:
             | name       | env    |
             | dother01   | dev    |
@@ -272,14 +200,8 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | sprojhost02   |
             | sother01      |
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: deploying older version to multiple hosts of different apptypes
-        Given the deploy strategy is "<strategy>"
-        And there is a deploy target with name="other-apptype"
+    Scenario: deploying older version to multiple hosts of different apptypes
+        Given there is a deploy target with name="other-apptype"
         And there are hosts:
             | name       | env    |
             | dother01   | dev    |
@@ -297,8 +219,3 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | sprojhost01   |
             | sprojhost02   |
             | sother01      |
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
