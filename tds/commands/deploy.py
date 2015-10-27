@@ -539,8 +539,10 @@ class DeployController(BaseController):
     @input_validate('targets')
     @input_validate('application')
     def show(self, application, package, apptypes=None, **params):
-        # For the given application/package and given apptypes,
-        # return the current deployment information (if any).
+        """
+        For the given application/package and given apptypes,
+        return the current deployment information (if any).
+        """
         if not apptypes:
             apptypes = application.targets
 
