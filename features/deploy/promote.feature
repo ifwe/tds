@@ -154,7 +154,7 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
     #     And the output has "Hostname: sprojhost01"
     #
     # @delay
-    # Scenario: promote version to with delay option
+    # Scenario: promote version to all apptypes with delay option
     #     When I run "deploy promote myapp 123 --delay 10"
     #     Then the output has "Completed: 2 out of 2 hosts"
     #     And there is a deployment with status="queued"
