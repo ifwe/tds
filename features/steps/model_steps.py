@@ -1219,7 +1219,7 @@ def then_the_package_version_is_invalidated(context, version):
     assert check_package_validation(
         context,
         package,
-        package.deployments[-1].app_deployments,
+        package.app_deployments,
         'invalidated'
     )
 
@@ -1271,7 +1271,7 @@ def then_the_package_is_invalidated_for_deploy_target(context, properties):
 
 def check_if_app_deployment_exists(context, package, app_deployments):
     for app_deployment in app_deployments:
-        if app_deployment.deployment.package == package:
+        if app_deployment.package == package:
             break
     else:
         app_deployment = None
