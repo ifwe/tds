@@ -116,12 +116,12 @@ Feature: HipChat notifications
         Given the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="121"
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="122"
         And the package is deployed on the deploy target
         And the package has been invalidated
@@ -138,12 +138,12 @@ Feature: HipChat notifications
         Given the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="121"
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="122"
         And the package is deployed on the deploy target
         And the package has been invalidated
@@ -160,12 +160,12 @@ Feature: HipChat notifications
         Given the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="121"
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="122"
         And the package is deployed on the deploy target
         And the package has been invalidated
@@ -182,12 +182,12 @@ Feature: HipChat notifications
         Given the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="200"
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="201"
         And the package is deployed on the deploy target
         And the package has been invalidated

@@ -25,7 +25,13 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And there are tier deployments:
             | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
             | 1     | 1             | 1                 | validated | foo   | 2         | 1             |
+        And I wait 1 seconds
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
             | 2     | 2             | 2                 | validated | foo   | 2         | 2             |
+        And I wait 1 seconds
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
             | 3     | 1             | 1                 | validated | foo   | 2         | 3             |
         And there are hosts:
             | name          | env   | app_id    |
@@ -167,17 +173,16 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | -f        |
             | --force   |
 
-    @wip
     Scenario: promote a version that has already been deployed
         Given the package is deployed on the deploy targets in the "stage" env
         When I run "deploy promote myapp 123"
-        Then the output has "Application "myapp" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
+        Then the output has "Application "myapp", version "123" is currently deployed on tier "the-apptype", skipping..."
 
     Scenario: promote a version that has already been validated
         Given the package is deployed on the deploy targets in the "stage" env
         And the package has been validated in the "staging" environment
         When I run "deploy promote myapp 123"
-        Then the output has "Application "myapp" with version "123" already deployed to this environment (staging) for apptype "the-apptype""
+        Then the output has "Application "myapp", version "123" is currently deployed on tier "the-apptype", skipping..."
 
     Scenario: deploying to multiple hosts of different apptypes
         Given there is a deploy target with name="other-apptype"
@@ -193,12 +198,11 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         When I run "deploy promote myapp 124 --hosts sprojhost01 sprojhost02 sother01"
-        Then the output has "Completed: 3 out of 3 hosts"
-        And package "myapp" version "124" was deployed to these hosts:
-            | name          |
-            | sprojhost01   |
-            | sprojhost02   |
-            | sother01      |
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with status="queued"
+        And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=4
+        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=4
+        And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=4
 
     Scenario: deploying older version to multiple hosts of different apptypes
         Given there is a deploy target with name="other-apptype"
@@ -213,9 +217,8 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the package "121" is deployed on the deploy targets in the "dev" env
         And the package "121" has been validated in the "development" environment
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02 sother01"
-        Then the output has "Completed: 3 out of 3 hosts"
-        And package "myapp" version "121" was deployed to these hosts:
-            | name          |
-            | sprojhost01   |
-            | sprojhost02   |
-            | sother01      |
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with status="queued"
+        And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=1
+        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=1
+        And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=1

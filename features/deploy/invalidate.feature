@@ -66,7 +66,7 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         And the package has been validated
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="124"
         And the package is deployed on the deploy target
         When I run "deploy invalidate myapp 123"
@@ -83,7 +83,7 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         And the package has been validated
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="124"
         And the package is deployed on the deploy target
         When I run "deploy invalidate myapp 123 --apptype foo"
@@ -114,7 +114,7 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
         And the deploy targets are a part of the project-application pair
         And the package is deployed on the deploy targets
         And the package has been validated
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="124"
         And the package is deployed on the deploy target
         When I run "deploy invalidate myapp 123 --apptype foo"
@@ -136,7 +136,7 @@ Feature: deploy invalidate application version [--apptypes|--all-apptypes]
         And the deploy targets are a part of the project-application pair
         And the package is deployed on the deploy targets
         And the package has been validated
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="124"
         And the package is deployed on the deploy targets
         When I run "deploy invalidate myapp 123 --all-apptypes"

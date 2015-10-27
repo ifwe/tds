@@ -24,12 +24,12 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="122"
         And the package is deployed on the deploy target
         And the package has been invalidated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="123"
         And the package is deployed on the deploy target
         And the package has been validated
@@ -91,11 +91,11 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package "121" is deployed on the deploy target
         And the package "121" is validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And the package "122" is deployed on the deploy target
         And the package "122" is invalidated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And the package "123" is deployed on the deploy target
         And the package "123" is validated
 
@@ -143,11 +143,11 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package "121" is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And the package "122" is deployed on the deploy target
         And the package has been invalidated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And the package "123" is deployed on the deploy target
         And the package has been validated
 
@@ -173,11 +173,11 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package "121" is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And the package "122" is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And the package "123" is deployed on the deploy target
         And the package has been validated
 
