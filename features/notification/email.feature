@@ -65,7 +65,7 @@ Feature: email notifications
     Scenario: rollback of single apptype occurs with working mail notification
         Given the package is deployed on the deploy targets
         And the package has been validated
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="124"
         And the package is deployed on the deploy targets
         And the package has been validated
@@ -76,7 +76,7 @@ Feature: email notifications
     Scenario: rollback of all apptypes occurs with working mail notification
         Given the package is deployed on the deploy targets
         And the package has been validated
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="124"
         And the package is deployed on the deploy targets
         And the package has been validated
@@ -87,7 +87,7 @@ Feature: email notifications
     Scenario: rollback of a host(s) occurs with a working mail notification
         Given the package is deployed on the deploy targets
         And the package has been validated
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="124"
         And the package is deployed on the deploy targets
         When I run "deploy rollback myapp --hosts dprojhost01 danotherhost01"

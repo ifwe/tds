@@ -98,7 +98,7 @@ Feature: GET most recent deployment of an application on a given host
         And there are host deployments:
             | id    | deployment_id | status    | user  | host_id   | package_id    |
             | 1     | 1             | ok        | foo   | 1         | 1             |
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there are host deployments:
             | id    | deployment_id | status    | user  | host_id   | package_id    |
             | 2     | 1             | <status>  | foo   | 1         | 2             |

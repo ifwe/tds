@@ -131,11 +131,11 @@ Feature: GET most recent deployment of an application on a given tier and enviro
             | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
             | 1     | 1             | 1                 | validated | foo   | 2         | 2             |
             | 2     | 1             | 1                 | validated | foo   | 3         | 1             |
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there are tier deployments:
             | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
             | 3     | 1             | 1                 | complete  | foo   | 2         | 2             |
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is an environment with name="stage"
         And there are tier deployments:
             | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
