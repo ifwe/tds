@@ -492,9 +492,8 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
 
     host = tagopsdb.Host.get(**attrs)
 
-    deployment = tagopsdb.Deployment.get(package_id=package.id)
     host_dep = tagopsdb.HostDeployment.get(
-        host_id=host.id, deployment_id=deployment.id
+        host_id=host.id, package_id=package.id
     )
 
     host_dep.status = 'failed'
@@ -503,7 +502,7 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
 
     given_the_package_has_status_set_with_properties(
         context,
-        deployment.package.version,
+        package.version,
         context.tds_environment,
         'incomplete'
     )
@@ -1197,7 +1196,7 @@ def then_the_package_is_validated(context):
     assert check_package_validation(
         context,
         package,
-        package.deployments[-1].app_deployments,
+        package.app_deployments,
         'validated'
     ), (package.deployments[-1].app_deployments, package.deployments[-1])
 
