@@ -406,7 +406,7 @@ class DeployController(BaseController):
                 log.info(
                     'Most recent deployment of this package on tier {t_name} '
                     'was completed successfully. Skipping....'.format(
-                        t_name=apptype.name, status=found.status
+                        t_name=apptype.name,
                     )
                 )
                 continue
@@ -443,7 +443,7 @@ class DeployController(BaseController):
                     'host {h_name}. Skipping....'.format(h_name=host.name)
                 )
                 continue
-            elif found.status not in ('inprogress', 'failed', 'pending'):
+            elif found.status == 'ok':
                 log.info(
                     'Most recent deployment of this package on host {h_name} '
                     'was completed successfully. Skipping....'.format(
