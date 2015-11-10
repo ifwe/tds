@@ -222,6 +222,8 @@ class DeployController(BaseController):
 
     def manage_attached_session(self):
         """"""
+        log.info('Deployment now being run, press Ctrl-C at any time to '
+                 'cancel...')
 
         try:
             self.display_output()
@@ -237,7 +239,7 @@ class DeployController(BaseController):
                 log.info('Deployment was already completed, nothing to do.')
                 return
             else:
-                raise RuntimeError('Deployment state "%s" unexpected'
+                raise RuntimeError('Deployment state "%s" unexpected.'
                                    % self.deployment.status)
 
             self.deployment.status = 'canceled'
@@ -378,25 +380,148 @@ class DeployController(BaseController):
         notification = tds.notifications.Notifications(self.app_config)
         notification.notify(deployment)
 
-    @input_validate('deployment')
-    def fix(self, deployment=None, **params):
-        # For the given hosts or tiers, determine if there are any failed
-        # host deployments.  If so, re-attempt the deployments after ensuring
-        # no other conflicting deployments are in progress; if they
-        # succeed and it's a tier deployment, update the tier as 'complete'
-        # as well, otherwise leave as 'incomplete'.
-        self.deployment = deployment
+    @input_validate('package_hostonly')
+    @input_validate('targets')
+    @input_validate('application')
+    def fix(self, application, package, hosts=None, apptypes=None,
+            **params):
+        self.environment = tagopsdb.Environment.get(
+            environment=self.envs[params['env']]
+        )
+        app_ids = set()
+        host_ids = set()
+        for apptype in apptypes:
+            found = package.application.get_latest_tier_deployment(
+                apptype.id,
+                self.environment.id,
+            )
+            if found.package_id != package.id:
+                log.info(
+                    'There is a more recent deployment of this application on '
+                    'tier {t_name}. Skipping....'.format(t_name=apptype.name)
+                )
+                continue
+            elif found.status not in ('incomplete', 'pending'):
+                log.info(
+                    'Most recent deployment of this package on tier {t_name} '
+                    'was completed successfully. Skipping....'.format(
+                        t_name=apptype.name, status=found.status
+                    )
+                )
+                continue
+            ongoing_tier_deps = tagopsdb.Session.query(
+                tagopsdb.model.AppDeployment
+            ).join(
+                tagopsdb.model.AppDeployment.deployment
+            ).filter(
+                tagopsdb.model.AppDeployment.app_id == apptype.id,
+                tagopsdb.model.AppDeployment.status.in_(
+                    ('pending', 'inprogress')
+                ),
+                tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
+            ).all()
+            ongoing_host_deps = tagopsdb.Session.query(
+                tagopsdb.model.HostDeployment
+            ).join(
+                tagopsdb.model.HostDeployment.deployment
+            ).join(
+                tagopsdb.model.HostDeployment.host
+            ).filter(
+                tagopsdb.model.Host.app_id == apptype.id,
+                tagopsdb.model.HostDeployment.status.in_(
+                    ('pending', 'inprogress')
+                ),
+                tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
+            ).all()
+            if ongoing_tier_deps:
+                log.info(
+                    'There is an ongoing deployment on the tier {t_name}. '
+                    'Skipping....'.format(t_name=apptype.name)
+                )
+                continue
+            if ongoing_host_deps:
+                log.info(
+                    'There is an ongoing deployment for a host in the tier '
+                    '{t_name}. Skipping....'.format(t_name=apptype.name)
+                )
+                continue
+            app_ids.add(found.app_id)
+            host_ids |= set([
+                x.host_id for x in
+                tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
+                    tagopsdb.model.HostDeployment.host
+                ).filter(
+                    tagopsdb.model.HostDeployment.deployment_id ==
+                        found.deployment_id,
+                    tagopsdb.model.Host.app_id == found.app_id,
+                    tagopsdb.model.HostDeployment.status.in_([
+                        'inprogress', 'failed', 'pending',
+                    ])
+                ).all()
+            ])
+        for host in hosts:
+            if host.id in host_ids:
+                continue
+            found = package.application.get_latest_host_deployment(host.id)
+            if found.package_id != package.id:
+                log.info(
+                    'There is a more recent deployment of this application on '
+                    'host {h_name}. Skipping....'.format(h_name=host.name)
+                )
+                continue
+            elif found.status not in ('inprogress', 'failed', 'pending'):
+                log.info(
+                    'Most recent deployment of this package on host {h_name} '
+                    'was completed successfully. Skipping....'.format(
+                        h_name=host.name
+                    )
+                )
+                continue
+            ongoing_host_deps = tagopsdb.Session.query(
+                tagopsdb.model.HostDeployment
+            ).join(
+                tagopsdb.model.HostDeployment.deployment
+            ).filter(
+                tagopsdb.model.HostDeployment.id == host.id,
+                tagopsdb.model.HostDeployment.status.in_(
+                    ('pending', 'inprogress')
+                ),
+                tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
+            ).all()
+            if ongoing_host_deps:
+                log.info(
+                    'There is an ongoing deployment for the host {h_name}. '
+                    'Skipping....'.format(h_name=host.name)
+                )
+                continue
+            host_ids.add(found.host_id)
 
-        if self.deployment.status not in ['failed', 'stopped']:
-            log.info('Deployment %s not in failed state, nothing '
-                     'to fix' % self.deployment.id)
+        if not (app_ids or host_ids):
+            log.info('Nothing to do.')
             return dict()
 
-        self.fix_deployments()
-        self.send_notifications(**params)
-
-        # Let installer daemon access deployment now
-        self.deployment.status = 'queued'
+        self.deployment = tds.model.Deployment(
+            user=params['user'],
+            status='queued',
+        )
+        tagopsdb.Session.add(self.deployment)
+        for app_id in app_ids:
+            app_dep = tds.model.AppDeployment(
+                deployment_id=self.deployment.id,
+                app_id=app_id,
+                environment_id=self.environment.id,
+                user=params['user'],
+                package_id=package.id,
+            )
+            tagopsdb.Session.add(app_dep)
+        for host_id in host_ids:
+            host_dep = tds.model.HostDeployment(
+                deployment_id=self.deployment.id,
+                host_id=host_id,
+                user=params['user'],
+                package_id=package.id,
+            )
+            tagopsdb.Session.add(host_dep)
         tagopsdb.Session.commit()
 
         if params['detach']:
@@ -404,8 +529,6 @@ class DeployController(BaseController):
                      'now.')
             return dict()
 
-        log.info('Deployment now being run, press Ctrl-C at any time to '
-                 'cancel...')
         self.manage_attached_session()
 
     @input_validate('package')
@@ -498,8 +621,6 @@ class DeployController(BaseController):
                      'now.')
             return dict()
 
-        log.info('Deployment now being run, press Ctrl-C at any time to '
-                 'cancel...')
         self.manage_attached_session()
 
     @input_validate('package')
