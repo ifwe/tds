@@ -390,6 +390,7 @@ class DeployController(BaseController):
         )
         app_ids = set()
         host_ids = set()
+
         for apptype in apptypes:
             found = package.application.get_latest_tier_deployment(
                 apptype.id,
@@ -409,30 +410,12 @@ class DeployController(BaseController):
                     )
                 )
                 continue
-            ongoing_tier_deps = tagopsdb.Session.query(
-                tagopsdb.model.AppDeployment
-            ).join(
-                tagopsdb.model.AppDeployment.deployment
-            ).filter(
-                tagopsdb.model.AppDeployment.app_id == apptype.id,
-                tagopsdb.model.AppDeployment.status.in_(
-                    ('pending', 'inprogress')
-                ),
-                tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
-            ).all()
-            ongoing_host_deps = tagopsdb.Session.query(
-                tagopsdb.model.HostDeployment
-            ).join(
-                tagopsdb.model.HostDeployment.deployment
-            ).join(
-                tagopsdb.model.HostDeployment.host
-            ).filter(
-                tagopsdb.model.Host.app_id == apptype.id,
-                tagopsdb.model.HostDeployment.status.in_(
-                    ('pending', 'inprogress')
-                ),
-                tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
-            ).all()
+            ongoing_tier_deps = apptype.get_ongoing_deployments(
+                self.enviornment.id
+            )
+            ongoing_host_deps = apptype.get_ongoing_host_deployments(
+                self.environment.id
+            )
             if ongoing_tier_deps:
                 log.info(
                     'There is an ongoing deployment on the tier {t_name}. '
@@ -446,19 +429,10 @@ class DeployController(BaseController):
                 )
                 continue
             app_ids.add(found.app_id)
-            host_ids |= set([
-                x.host_id for x in
-                tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
-                    tagopsdb.model.HostDeployment.host
-                ).filter(
-                    tagopsdb.model.HostDeployment.deployment_id ==
-                        found.deployment_id,
-                    tagopsdb.model.Host.app_id == found.app_id,
-                    tagopsdb.model.HostDeployment.status.in_([
-                        'inprogress', 'failed', 'pending',
-                    ])
-                ).all()
-            ])
+            host_ids |= set(
+                [x.host_id for x in found.get_incomplete_host_deployments()]
+            )
+
         for host in hosts:
             if host.id in host_ids:
                 continue
@@ -477,18 +451,7 @@ class DeployController(BaseController):
                     )
                 )
                 continue
-            ongoing_host_deps = tagopsdb.Session.query(
-                tagopsdb.model.HostDeployment
-            ).join(
-                tagopsdb.model.HostDeployment.deployment
-            ).filter(
-                tagopsdb.model.HostDeployment.id == host.id,
-                tagopsdb.model.HostDeployment.status.in_(
-                    ('pending', 'inprogress')
-                ),
-                tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
-            ).all()
-            if ongoing_host_deps:
+            if host.get_ongoing_deployments():
                 log.info(
                     'There is an ongoing deployment for the host {h_name}. '
                     'Skipping....'.format(h_name=host.name)

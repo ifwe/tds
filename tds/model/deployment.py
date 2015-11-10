@@ -22,6 +22,17 @@ class AppDeployment(Deployment):
     def application(self):
         return Application(delegate=self.delegate.package.application)
 
+    def get_incomplete_host_deployments(self):
+        return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
+            tagopsdb.model.HostDeployment.host
+        ).filter(
+            tagopsdb.model.HostDeployment.deployment_id == self.deployment_id,
+            tagopsdb.model.Host.app_id == self.app_id,
+            tagopsdb.model.HostDeployment.status.in_(
+                ('inprogress', 'failed', 'pending')
+            ),
+        ).all()
+
 
 class HostDeployment(Deployment):
     """Model class for deployment of an application to a host."""
