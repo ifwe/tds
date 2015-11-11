@@ -188,9 +188,19 @@ DEPLOY_DATA = odict([
                 ('help', 'Disconnect client after preparing deployments'),
                 ('action', 'store_true'),
             ])),
-            (('deployment',), odict([
-                ('help', 'Database ID for deployment to fix'),
-                ('type', int),
+            (('--hosts',), odict([
+                ('help', 'Specific host(s) for correction'),
+                ('metavar', 'HOST'),
+                ('nargs', '*'),
+            ])),
+            (('--apptypes',), odict([
+                ('help', 'Specific app type(s) for correction'),
+                ('metavar', 'APPTYPE'),
+                ('nargs', '*'),
+            ])),
+            (('--all-apptypes',), odict([
+                ('help', 'Handle all app types for correction'),
+                ('action', 'store_true'),
             ])),
         ])),
     ])),
