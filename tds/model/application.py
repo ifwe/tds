@@ -81,7 +81,7 @@ class Application(Base):
         return tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
             tagopsdb.model.AppDeployment.package
         ).filter(
-            tagopsdb.model.Package.pkd_def_id == self.id,
+            tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.AppDeployment.app_id == tier_id,
             tagopsdb.model.AppDeployment.environment_id == environment_id,
         ).order_by(desc(tagopsdb.model.AppDeployment.realized)).first()

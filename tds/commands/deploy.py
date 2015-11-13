@@ -390,103 +390,119 @@ class DeployController(BaseController):
         )
         app_ids = set()
         host_ids = set()
-
-        for apptype in apptypes:
-            found = package.application.get_latest_tier_deployment(
-                apptype.id,
-                self.environment.id,
-            )
-            if found.package_id != package.id:
-                log.info(
-                    'There is a more recent deployment of this application on '
-                    'tier {t_name}. Skipping....'.format(t_name=apptype.name)
+        if not hosts:
+            for apptype in apptypes:
+                found = application.get_latest_tier_deployment(
+                    apptype.id,
+                    self.environment.id,
                 )
-                continue
-            elif found.status not in ('incomplete', 'pending'):
-                log.info(
-                    'Most recent deployment of this package on tier {t_name} '
-                    'was completed successfully. Skipping....'.format(
-                        t_name=apptype.name,
+                if not found:
+                    log.info(
+                        'No deployment of this application to tier {t_name} '
+                        'was found. Skipping....'.format(t_name=apptype.name)
                     )
-                )
-                continue
-            ongoing_tier_deps = apptype.get_ongoing_deployments(
-                self.enviornment.id
-            )
-            ongoing_host_deps = apptype.get_ongoing_host_deployments(
-                self.environment.id
-            )
-            if ongoing_tier_deps:
-                log.info(
-                    'There is an ongoing deployment on the tier {t_name}. '
-                    'Skipping....'.format(t_name=apptype.name)
-                )
-                continue
-            if ongoing_host_deps:
-                log.info(
-                    'There is an ongoing deployment for a host in the tier '
-                    '{t_name}. Skipping....'.format(t_name=apptype.name)
-                )
-                continue
-            app_ids.add(found.app_id)
-            host_ids |= set(
-                [x.host_id for x in found.get_incomplete_host_deployments()]
-            )
-
-        for host in hosts:
-            if host.id in host_ids:
-                continue
-            found = package.application.get_latest_host_deployment(host.id)
-            if found.package_id != package.id:
-                log.info(
-                    'There is a more recent deployment of this application on '
-                    'host {h_name}. Skipping....'.format(h_name=host.name)
-                )
-                continue
-            elif found.status == 'ok':
-                log.info(
-                    'Most recent deployment of this package on host {h_name} '
-                    'was completed successfully. Skipping....'.format(
-                        h_name=host.name
+                    continue
+                found = tds.model.AppDeployment(delegate=found)
+                if found.package_id != package.id:
+                    log.info(
+                        'There is a more recent deployment of this application'
+                        ' on tier {t_name}. Skipping....'.format(
+                            t_name=apptype.name
+                        )
                     )
+                    continue
+                elif found.status not in ('incomplete', 'pending'):
+                    log.info(
+                        'Most recent deployment of this package on tier '
+                        '{t_name} was completed successfully. '
+                        'Skipping....'.format(
+                            t_name=apptype.name,
+                        )
+                    )
+                    continue
+                ongoing_tier_deps = apptype.get_ongoing_deployments(
+                    self.environment.id
                 )
-                continue
-            if host.get_ongoing_deployments():
-                log.info(
-                    'There is an ongoing deployment for the host {h_name}. '
-                    'Skipping....'.format(h_name=host.name)
+                ongoing_host_deps = apptype.get_ongoing_host_deployments(
+                    self.environment.id
                 )
-                continue
-            host_ids.add(found.host_id)
+                if ongoing_tier_deps:
+                    log.info(
+                        'There is an ongoing deployment on the tier {t_name}. '
+                        'Skipping....'.format(t_name=apptype.name)
+                    )
+                    continue
+                if ongoing_host_deps:
+                    log.info(
+                        'There is an ongoing deployment for a host in the tier'
+                        ' {t_name}. Skipping....'.format(t_name=apptype.name)
+                    )
+                    continue
+                app_ids.add(found.app_id)
+                host_ids |= set([
+                    x.host_id for x in found.get_incomplete_host_deployments()
+                ])
+
+        else:
+            for host in hosts:
+                if host.id in host_ids:
+                    continue
+                found = application.get_latest_host_deployment(host.id)
+                if not found:
+                    log.info(
+                        'No deployment of this application to host {h_name} '
+                        'was found. Skipping....'.format(h_name=host.name)
+                    )
+                    continue
+                if found.package_id != package.id:
+                    log.info(
+                        'There is a more recent deployment of this application'
+                        ' on host {h_name}. Skipping....'.format(
+                            h_name=host.name
+                        )
+                    )
+                    continue
+                elif found.status == 'ok':
+                    log.info(
+                        'Most recent deployment of this package on host '
+                        '{h_name} was completed successfully. Skipping....'
+                        .format(h_name=host.name)
+                    )
+                    continue
+                if host.get_ongoing_deployments():
+                    log.info(
+                        'There is an ongoing deployment for the host {h_name}.'
+                        ' Skipping....'.format(h_name=host.name)
+                    )
+                    continue
+                host_ids.add(found.host_id)
 
         if not (app_ids or host_ids):
             log.info('Nothing to do.')
             return dict()
-
-        self.deployment = tds.model.Deployment(
+        self.deployment = tds.model.Deployment.create(
             user=params['user'],
-            status='queued',
+            status='pending',
         )
-        tagopsdb.Session.add(self.deployment)
         for app_id in app_ids:
-            app_dep = tds.model.AppDeployment(
+            app_dep = tds.model.AppDeployment.create(
                 deployment_id=self.deployment.id,
                 app_id=app_id,
                 environment_id=self.environment.id,
                 user=params['user'],
                 package_id=package.id,
+                status='pending',
             )
-            tagopsdb.Session.add(app_dep)
         for host_id in host_ids:
-            host_dep = tds.model.HostDeployment(
+            host_dep = tds.model.HostDeployment.create(
                 deployment_id=self.deployment.id,
                 host_id=host_id,
                 user=params['user'],
                 package_id=package.id,
+                status='pending',
             )
-            tagopsdb.Session.add(host_dep)
+        self.deployment.status = 'queued'
         tagopsdb.Session.commit()
-
         if params['detach']:
             log.info('Deployment ready for installer daemon, disconnecting '
                      'now.')
