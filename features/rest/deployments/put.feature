@@ -33,11 +33,11 @@ Feature: PUT deployment(s) from the REST API
 
     @rest
     Scenario: put a deployment
-        When I query PUT "/deployments/1?status=queued"
+        When I query PUT "/deployments/1?status=queued&delay=10"
         Then the response code is 200
-        And the response is an object with id=1,status="queued"
-        And there is a deployment with id=1,status="queued"
-        And there is no deployment with id=1,status="pending"
+        And the response is an object with id=1,status="queued",delay=10
+        And there is a deployment with id=1,status="queued",delay=10
+        And there is no deployment with id=1,status="pending",delay=0
 
     @rest
     Scenario: attempt to queue a deployment with no tier or host deployments

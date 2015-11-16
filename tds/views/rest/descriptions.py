@@ -24,6 +24,7 @@ DEPLOYMENT_DESCRIPTIONS = {
     'id': 'Unique integer identifier',
     'user': 'Username of creator',
     'status': 'Current status of the deployment',
+    'delay': 'Delay in integer seconds between restarts',
 }
 
 ENVIRONMENT_DESCRIPTIONS = {

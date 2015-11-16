@@ -61,14 +61,14 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes]
     Scenario: fix to hosts
         When I run "deploy fix myapp --hosts sprojhost02"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with id=4,status="queued"
+        And there is a deployment with id=4,status="queued",delay=0
         And there is no tier deployment with deployment_id=4
         And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=2
 
     Scenario: fix to apptype
         When I run "deploy fix myapp --apptype the-apptype"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with id=4,status="queued"
+        And there is a deployment with id=4,status="queued",delay=0
         And there is a tier deployment with deployment_id=4,app_id=2,status="pending",package_id=2,environment_id=2
         And there is no host deployment with deployment_id=4,host_id=3
         And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=2
@@ -91,7 +91,7 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes]
             | 3     | 4             | failed    | foo   | 5         | 2             |
         When I run "deploy fix myapp --all-apptypes"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with id=5,status="queued"
+        And there is a deployment with id=5,status="queued",delay=0
         And there is no tier deployment with deployment_id=5,environment_id=1
         And there is no tier deployment with deployment_id=5,app_id=2,environment_id=1
         And there is no host deployment with deployment_id=5,host_id=1
@@ -120,14 +120,13 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes]
     #     When I run "deploy fix myapp --all-apptypes"
     #     Then the output has "Some hosts had failures"
     #     And the output has "Hostname: sprojhost02"
-    #
-    # @delay
-    # Scenario: fix with delay option
-    #     When I run "deploy fix myapp --delay 10"
-    #     Then the output has "Completed: 2 out of 2 hosts"
-    #     And package "myapp" version "123" was deployed to host "sprojhost02"
-    #     And the output has "Host "sprojhost01" already has "myapp@123" successfully deployed, skipping"
-    #     And it took at least 10 seconds
+
+    Scenario: fix with delay option
+        When I run "deploy fix myapp --delay 10"
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=4,status="queued",delay=10
+        And there is a tier deployment with deployment_id=4,status="pending",app_id=2,package_id=2,environment_id=2
+        And there is a host deployment with deployment_id=4,status="pending",host_id=4,package_id=2
 
     Scenario: TDS-51
         Given I am in the "dev" environment
@@ -145,7 +144,7 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes]
             | 4     | 4             | ok        | foo   | 2         | 3             |
         When I run "deploy fix myapp --apptypes the-apptype"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with id=5,status="queued"
+        And there is a deployment with id=5,status="queued",delay=0
         And there is a tier deployment with deployment_id=5,status="pending",app_id=2,package_id=3,environment_id=1
         And there is no tier deployment with deployment_id=5,environment_id=2
         And there is a host deployment with deployment_id=5,status="pending",host_id=1,package_id=3
