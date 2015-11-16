@@ -14,6 +14,13 @@ Feature: POST deployment(s) from the REST API
         And there is a deployment with id=1,status="pending",user="testuser"
 
     @rest
+    Scenario: pass delay option
+        When I query POST "/deployments?delay=10"
+        Then the response code is 201
+        And the response is an object with id=1,status="pending",user="testuser",delay=10
+        And there is a deployment with id=1,status="pending",user="testuser",delay=10
+
+    @rest
     Scenario: attempt to set the status while posting
         When I query POST "/deployments?status=queued"
         Then the response code is 403

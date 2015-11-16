@@ -70,7 +70,7 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
     Scenario: promote version to hosts
         When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
         And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
 
@@ -83,14 +83,14 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
     Scenario: promote older version to hosts
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=1
         And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=1
 
     Scenario: promote version to apptype
         When I run "deploy promote myapp 123 --apptype the-apptype"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2
         And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
         And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
@@ -98,13 +98,13 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
     Scenario: promote version to apptype
         When I run "deploy promote myapp 123 --apptype the-apptype"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2
 
     Scenario: promote olders version to apptype
         When I run "deploy promote myapp 121 --apptype the-apptype"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=1,environment_id=2
 
     Scenario: promote version to all apptypes
@@ -117,7 +117,7 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | 4     | 2             | 1                 | validated | foo   | 3         | 3             |
         When I run "deploy promote myapp 123 --all-apptypes"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2
         And there is a tier deployment with status="pending",deployment_id=3,app_id=3,package_id=3,environment_id=2
 
@@ -130,7 +130,7 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the package "121" has been validated in the "development" environment
         When I run "deploy promote myapp 121 --all-apptypes"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a tier deployment with status="pending",deployment_id=4,app_id=2,package_id=1,environment_id=2
         And there is a tier deployment with status="pending",deployment_id=4,app_id=3,package_id=1,environment_id=2
 
@@ -152,20 +152,18 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
     #     When I run "deploy promote myapp 123 --all-apptypes"
     #     Then the output has "Some hosts had failures"
     #     And the output has "Hostname: sprojhost01"
-    #
-    # @delay
-    # Scenario: promote version to all apptypes with delay option
-    #     When I run "deploy promote myapp 123 --delay 10"
-    #     Then the output has "Completed: 2 out of 2 hosts"
-    #     And there is a deployment with status="queued"
-    #     And there is a tier deployment with
-    #     And it took at least 10 seconds
+
+    Scenario: promote version to all apptypes with delay option
+        When I run "deploy promote myapp 123 --delay 10"
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=3,status="queued",delay=10
+        And there is a tier deployment with deployment_id=3,status="pending",app_id=2,package_id=3,environment_id=2
 
     Scenario Outline: promote version that isn't validated in previous env with force option
         Given there is a package with version="124"
         When I run "deploy promote <switch> myapp 124"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=4,environment_id=2
 
         Examples:
@@ -199,7 +197,7 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the package has been validated in the "development" environment
         When I run "deploy promote myapp 124 --hosts sprojhost01 sprojhost02 sother01"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=4
         And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=4
         And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=4
@@ -218,7 +216,7 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the package "121" has been validated in the "development" environment
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02 sother01"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
-        And there is a deployment with status="queued"
+        And there is a deployment with status="queued",delay=0
         And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=1
         And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=1
         And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=1

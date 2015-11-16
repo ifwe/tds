@@ -245,10 +245,13 @@ class DeployController(BaseController):
             self.deployment.status = 'canceled'
             tagopsdb.Session.commit()
 
-    def prepare_deployments(self):
+    def prepare_deployments(self, params):
         """"""
 
-        self.deployment = tds.model.Deployment.create(user=self.user)
+        self.deployment = tds.model.Deployment.create(
+            user=self.user,
+            delay=params.get('delay', 0),
+        )
         self.deployment_status['deployment'] = {
             self.deployment.id, self.deployment.status
         }
@@ -338,21 +341,21 @@ class DeployController(BaseController):
 
         return tier_deps
 
-        #     for app_dep in tier.app_deployments:
-        #         if app_dep.deployment.id == self.deployment.id:
-        #             if app_dep.deployment.status in [
-        #                 'incomplete', 'inprogress'
-        #             ]:
-        #                 tier_deps[app_dep.deployment.id] = \
-        #                     app_dep.deployment.status = 'pending'
-        #             elif app_dep.deployment.status in [
-        #                 'complete', 'invalidated', 'validated'
-        #             ]:
-        #                 # Skip this tier
-        #                 break
-        #
-        #             self.prepare_host_deployments(hosts=set(tier.hosts))
+        # for app_dep in tier.app_deployments:
+        #     if app_dep.deployment.id == self.deployment.id:
+        #         if app_dep.deployment.status in [
+        #             'incomplete', 'inprogress'
+        #         ]:
+        #             tier_deps[app_dep.deployment.id] = \
+        #                 app_dep.deployment.status = 'pending'
+        #         elif app_dep.deployment.status in [
+        #             'complete', 'invalidated', 'validated'
+        #         ]:
+        #             # Skip this tier
         #             break
+        #
+        #         self.prepare_host_deployments(hosts=set(tier.hosts))
+        #         break
 
     def perform_validation(self, app_deployment, package, params):
         """
@@ -483,6 +486,7 @@ class DeployController(BaseController):
         self.deployment = tds.model.Deployment.create(
             user=params['user'],
             status='pending',
+            delay=params.get('delay', 0),
         )
         for app_id in app_ids:
             app_dep = tds.model.AppDeployment.create(
@@ -588,7 +592,7 @@ class DeployController(BaseController):
         if not (self.deploy_hosts or self.deploy_tiers):
             return dict()
 
-        self.prepare_deployments()
+        self.prepare_deployments(params)
         self.send_notifications(**params)
 
         # Let installer daemon access deployment now

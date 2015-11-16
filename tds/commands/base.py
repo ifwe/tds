@@ -94,23 +94,26 @@ class BaseController(object):
                 return dict(error=exc)
 
         handler = getattr(self, action, None)
+        try:
+            if handler is None:
+                raise tds.exceptions.InvalidInputError(
+                    "Unknown action for %s: %s", type(self).__name__, action
+                )
 
-        if handler is None:
-            raise tds.exceptions.InvalidInputError(
-                "Unknown action for %s: %s", type(self).__name__, action
+            # TODO: turn validation errors into a different kind of exception
+            params = self.validate_params(
+                getattr(handler, '_needs_validation', None),
+                params
             )
 
-        # TODO: turn validation errors into a different kind of exception
-        params = self.validate_params(
-            getattr(handler, '_needs_validation', None),
-            params
-        )
+            for key in params.keys():
+                if params[key] is None:
+                    params.pop(key)
 
-        for key in params.keys():
-            if params[key] is None:
-                params.pop(key)
+            return handler(**params)
+        except Exception as exc:
 
-        return handler(**params)
+            return dict(error=exc)
 
     def validate_params(self, validate_attrs, params):
         """

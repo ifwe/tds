@@ -24,6 +24,7 @@ DEPLOYMENT_TYPES = {
     'id': 'integer',
     'user': 'string',
     'status': 'choice',
+    'delay': 'integer',
 }
 
 ENVIRONMENT_TYPES = {
