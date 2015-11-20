@@ -627,6 +627,7 @@ class DeployController(BaseController):
         )
         host_deps = set()  # [(host_id, pkg_id), ...]
         tier_deps = set()  # [(tier_id, pkg_id), ...]
+        tier_deps_to_invalidate = set()
         if hosts:
             for host in hosts:
                 current_dep = application.get_latest_completed_host_deployment(
@@ -724,6 +725,12 @@ class DeployController(BaseController):
                     environment_id=self.environment.id,
                 ):
                     host_deps.add((host.id, validated_dep.package_id))
+                for invalid_dep in tds.model.AppDeployment.find(
+                    app_id=current_dep.app_id,
+                    environment_id=current_dep.environment_id,
+                    package_id=current_dep.package_id,
+                ):
+                    tier_deps_to_invalidate.add(invalid_dep)
         if not (tier_deps or host_deps):
             log.info('Nothing to do.')
             return dict()
@@ -750,6 +757,9 @@ class DeployController(BaseController):
                 status='pending',
             )
         self.deployment.status = 'queued'
+        for invalid_dep in tier_deps_to_invalidate:
+            invalid_dep.status = 'invalidated'
+            tagopsdb.Session.add(invalid_dep)
         tagopsdb.Session.commit()
         if params['detach']:
             log.info('Deployment ready for installer daemon, disconnecting '

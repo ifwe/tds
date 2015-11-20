@@ -53,6 +53,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
         And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
+        And there is a tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
 
     Scenario: rollback version to hosts
         Given there is a package with version="124"
@@ -63,6 +64,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=3
         And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=3
         And there is no tier deployment with deployment_id=2,app_id=2
+        And there is no tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
 
     Scenario: rollback version to apptype
         When I run "deploy rollback myapp --apptype the-apptype"
@@ -71,6 +73,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
         And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
+        And there is a tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
 
     Scenario: rollback version to all apptypes
         Given there is a deploy target with name="another-apptype"
@@ -96,6 +99,8 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is a tier deployment with deployment_id=2,app_id=3,status="pending",environment_id=2,package_id=1
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
         And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
+        And there is a tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
+        And there is a tier deployment with app_id=3,status="invalidated",environment_id=2,package_id=3
 
     #TODO: Figure out what to do with these tests
     # Scenario: rollback version to hosts with a failure
@@ -165,6 +170,8 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is no host deployment with deployment_id=2,host_id=4
         And there is no tier deployment with deployment_id=2,app_id=2
         And there is no tier deployment with deployment_id=2,app_id=3
+        And there is no tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
+        And there is no tier deployment with app_id=3,status="invalidated",environment_id=2,package_id=4
 
     Scenario: rollback version with delay option
         When I run "deploy rollback myapp --delay 10"
@@ -173,3 +180,4 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
         And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
+        And there is a tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
