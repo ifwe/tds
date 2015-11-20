@@ -386,14 +386,51 @@ class DeployController(BaseController):
     @input_validate('package_hostonly')
     @input_validate('targets')
     @input_validate('application')
-    def fix(self, application, package, hosts=None, apptypes=None,
-            **params):
+    def fix(self, application, package, hosts=None, apptypes=None, **params):
         self.environment = tagopsdb.Environment.get(
             environment=self.envs[params['env']]
         )
         app_ids = set()
         host_ids = set()
-        if not hosts:
+        if hosts:
+            for host in hosts:
+                if host.id in host_ids:
+                    continue
+                found = application.get_latest_host_deployment(host.id)
+                if not found:
+                    log.info(
+                        'No deployment of this application to host {h_name} '
+                        'was found. Skipping....'.format(h_name=host.name)
+                    )
+                    continue
+                elif found.status == 'ok':
+                    log.info(
+                        'Most recent deployment of this package on host '
+                        '{h_name} was completed successfully. Skipping....'
+                        .format(h_name=host.name)
+                    )
+                    continue
+                if host.get_ongoing_deployments():
+                    log.info(
+                        'There is an ongoing deployment for the host {h_name}.'
+                        ' Skipping....'.format(h_name=host.name)
+                    )
+                    continue
+                if host.application.get_ongoing_deployments(
+                    self.environment.id
+                ):
+                    log.info(
+                        'There is an ongoing deployment for the tier {t_name} '
+                        'of the host {h_name} in the current environment. '
+                        'Skipping....'.format(
+                            t_name=host.application.name,
+                            h_name=host.name,
+                        )
+                    )
+                    continue
+                host_ids.add(found.host_id)
+
+        else:
             for apptype in apptypes:
                 found = application.get_latest_tier_deployment(
                     apptype.id,
@@ -406,15 +443,7 @@ class DeployController(BaseController):
                     )
                     continue
                 found = tds.model.AppDeployment(delegate=found)
-                if found.package_id != package.id:
-                    log.info(
-                        'There is a more recent deployment of this application'
-                        ' on tier {t_name}. Skipping....'.format(
-                            t_name=apptype.name
-                        )
-                    )
-                    continue
-                elif found.status not in ('incomplete', 'pending'):
+                if found.status not in ('incomplete', 'pending'):
                     log.info(
                         'Most recent deployment of this package on tier '
                         '{t_name} was completed successfully. '
@@ -446,40 +475,6 @@ class DeployController(BaseController):
                     x.host_id for x in found.get_incomplete_host_deployments()
                 ])
 
-        else:
-            for host in hosts:
-                if host.id in host_ids:
-                    continue
-                found = application.get_latest_host_deployment(host.id)
-                if not found:
-                    log.info(
-                        'No deployment of this application to host {h_name} '
-                        'was found. Skipping....'.format(h_name=host.name)
-                    )
-                    continue
-                if found.package_id != package.id:
-                    log.info(
-                        'There is a more recent deployment of this application'
-                        ' on host {h_name}. Skipping....'.format(
-                            h_name=host.name
-                        )
-                    )
-                    continue
-                elif found.status == 'ok':
-                    log.info(
-                        'Most recent deployment of this package on host '
-                        '{h_name} was completed successfully. Skipping....'
-                        .format(h_name=host.name)
-                    )
-                    continue
-                if host.get_ongoing_deployments():
-                    log.info(
-                        'There is an ongoing deployment for the host {h_name}.'
-                        ' Skipping....'.format(h_name=host.name)
-                    )
-                    continue
-                host_ids.add(found.host_id)
-
         if not (app_ids or host_ids):
             log.info('Nothing to do.')
             return dict()
@@ -489,7 +484,7 @@ class DeployController(BaseController):
             delay=params.get('delay', 0),
         )
         for app_id in app_ids:
-            app_dep = tds.model.AppDeployment.create(
+            tds.model.AppDeployment.create(
                 deployment_id=self.deployment.id,
                 app_id=app_id,
                 environment_id=self.environment.id,
@@ -498,7 +493,7 @@ class DeployController(BaseController):
                 status='pending',
             )
         for host_id in host_ids:
-            host_dep = tds.model.HostDeployment.create(
+            tds.model.HostDeployment.create(
                 deployment_id=self.deployment.id,
                 host_id=host_id,
                 user=params['user'],
@@ -627,17 +622,141 @@ class DeployController(BaseController):
         # set the status to 'invalidated' (nothing for hosts), else throw
         # appropriate error.  If no previous validated version, throw
         # appropriate error as well.
-        app_deployments = self.find_current_app_deployments(
-            package, apptypes, params
+        self.environment = tagopsdb.Environment.get(
+            environment=self.envs[params['env']]
         )
+        host_deps = set()  # [(host_id, pkg_id), ...]
+        tier_deps = set()  # [(tier_id, pkg_id), ...]
+        if hosts:
+            for host in hosts:
+                current_dep = application.get_latest_completed_host_deployment(
+                    host_id=host.id,
+                )
+                current_tier_dep = \
+                    application.get_latest_completed_tier_deployment(
+                        tier_id=host.app_id,
+                        environment_id=self.environment.id,
+                    )
+                if current_tier_dep.realized > current_dep.realized:
+                    current_dep = current_tier_dep
+                if not current_dep:
+                    log.info(
+                        'No completed host deployment for application {a_name}'
+                        ' on host {h_name}. Skipping....'.format(
+                            a_name=application.name,
+                            t_name=apptype.name,
+                        )
+                    )
+                    continue
+                validated_dep = \
+                    application.get_latest_completed_tier_deployment(
+                        tier_id=host.app_id,
+                        environment_id=self.environment.id,
+                        must_be_validated=True,
+                        exclude_package_ids=[current_dep.package_id],
+                    )
+                if not validated_dep:
+                    log.info(
+                        'No validated tier deployment for application {a_name}'
+                        ' on tier {t_name} of host {h_name} before currently '
+                        'deployed version. Skipping....'
+                        .format(
+                            a_name=application.name,
+                            t_name=host.application.name,
+                            h_name=host.name,
+                        )
+                    )
+                    continue
+                if host.get_ongoing_deployments():
+                    log.info(
+                        'There is an ongoing deployment for the host {h_name}.'
+                        ' Skipping....'.format(h_name=host.name)
+                    )
+                    continue
+                if host.application.get_ongoing_deployments(
+                    self.environment.id
+                ):
+                    log.info(
+                        'There is an ongoing deployment for the tier {t_name} '
+                        'of the host {h_name} in the current environment. '
+                        'Skipping....'.format(
+                            t_name=host.application.name,
+                            h_name=host.name,
+                        )
+                    )
+                    continue
+                host_deps.add((host.id, validated_dep.package_id))
+        else:
+            for apptype in apptypes:
+                current_dep = application.get_latest_completed_tier_deployment(
+                        tier_id=apptype.id,
+                        environment_id=self.environment.id,
+                    )
+                if not current_dep:
+                    log.info(
+                        'No completed tier deployment for application {a_name}'
+                        ' on tier {t_name}. Skipping....'.format(
+                            a_name=application.name,
+                            t_name=apptype.name,
+                        )
+                    )
+                    continue
+                validated_dep = \
+                    application.get_latest_completed_tier_deployment(
+                        tier_id=apptype.id,
+                        environment_id=self.environment.id,
+                        must_be_validated=True,
+                        exclude_package_ids=[current_dep.package_id],
+                    )
+                if not validated_dep:
+                    log.info(
+                        'No validated tier deployment for application {a_name}'
+                        ' on tier {t_name} before currently deployed version. '
+                        'Skipping....'.format(
+                            a_name=application.name,
+                            t_name=apptype.name,
+                        )
+                    )
+                    continue
+                tier_deps.add((apptype.id, validated_dep.package_id))
+                for host in tds.model.HostTarget.find(
+                    app_id=apptype.id,
+                    environment_id=self.environment.id,
+                ):
+                    host_deps.add((host.id, validated_dep.package_id))
+        if not (tier_deps or host_deps):
+            log.info('Nothing to do.')
+            return dict()
+        self.deployment = tds.model.Deployment.create(
+            user=params['user'],
+            status='pending',
+            delay=params.get('delay', 0),
+        )
+        for tier_dep in tier_deps:
+            tds.model.AppDeployment.create(
+                deployment_id=self.deployment.id,
+                app_id=tier_dep[0],
+                environment_id=self.environment.id,
+                user=params['user'],
+                package_id=tier_dep[1],
+                status='pending',
+            )
+        for host_dep in host_deps:
+            tds.model.HostDeployment.create(
+                deployment_id=self.deployment.id,
+                host_id=host_dep[0],
+                user=params['user'],
+                package_id=host_dep[1],
+                status='pending',
+            )
+        self.deployment.status = 'queued'
+        tagopsdb.Session.commit()
+        if params['detach']:
+            log.info('Deployment ready for installer daemon, disconnecting '
+                     'now.')
+            return dict()
 
-        for apptype in apptypes:
-            tier_name, curr_app_dep = app_deployments[apptype.id]
-
-            if hosts:
-                self.deploy_hosts.update(set(
-                    host for host in hosts if host.application == apptype
-                ))
+        self.manage_attached_session()
 
     @input_validate('package_show')
     @input_validate('targets')
