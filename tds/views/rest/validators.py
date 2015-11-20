@@ -45,9 +45,6 @@ class ValidatedView(JSONValidatedView):
         attach it to the request at request.validated[name].
         This validator can raise a "400 Bad Request" error.
         """
-        if request.method == "GET":
-            self._validate_params(['select'])
-            self._validate_json_params({'select': 'string'})
         validator = getattr(
             self,
             'validate_individual_{name}'.format(
@@ -58,6 +55,9 @@ class ValidatedView(JSONValidatedView):
         if validator:
             validator(request)
         else:
+            if request.method == "GET":
+                self._validate_params(['select'])
+                self._validate_json_params({'select': 'string'})
             self.get_obj_by_name_or_id()
 
         self._validate_select_attributes(request)

@@ -606,22 +606,28 @@ class DeployController(BaseController):
     @input_validate('application')
     def restart(self, application, package, hosts=None, apptypes=None,
                 **params):
-        # For the given hosts or tiers, restart the appropriate service
-        # on each one for the given package and inform if restart succeeded
-        # or failed.
-        pass
+        """
+        For the given hosts or tiers, restart the appropriate service
+        on each one for the given package and inform if restart succeeded
+        or failed.
+        """
+        self.environment = tagopsdb.Environment.get(
+            environment=self.envs[params['env']]
+        )
 
     @input_validate('package')
     @input_validate('targets')
     @input_validate('application')
     def rollback(self, application, package, hosts=None, apptypes=None,
                  **params):
-        # For the given hosts or tiers, ensure the package is installed.
-        # If so, determine the previous deployed and validated version;
-        # if there's one, install that version and for a tier rollback
-        # set the status to 'invalidated' (nothing for hosts), else throw
-        # appropriate error.  If no previous validated version, throw
-        # appropriate error as well.
+        """
+        For the given hosts or tiers, ensure the package is installed.
+        If so, determine the previous deployed and validated version;
+        if there's one, install that version and for a tier rollback
+        set the status to 'invalidated' (nothing for hosts), else throw
+        appropriate error.  If no previous validated version, throw
+        appropriate error as well.
+        """
         self.environment = tagopsdb.Environment.get(
             environment=self.envs[params['env']]
         )
