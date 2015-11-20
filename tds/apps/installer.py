@@ -122,8 +122,8 @@ class Installer(TDSProgramBase):
 
         success, host_result = self.deploy_strategy.deploy_to_host(
             host_deployment.host.name,
-            host_deployment.deployment.package.name,
-            host_deployment.deployment.package.version,
+            host_deployment.package.name,
+            host_deployment.package.version,
             retry=self.retry
         )
 

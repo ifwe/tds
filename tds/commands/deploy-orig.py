@@ -856,7 +856,7 @@ class DeployController(BaseController):
             for app_dep in reversed(app.app_deployments):
                 if app_dep.environment_obj != environment:
                     continue
-                if app_dep.deployment.package != package:
+                if app_dep.package != package:
                     continue
 
                 app_deployments[app.id] = (
@@ -1327,7 +1327,7 @@ class DeployController(BaseController):
             dep = None
 
         if dep is not None:
-            pkg = dep.deployment.package
+            pkg = dep.package
             return pkg
 
         return None

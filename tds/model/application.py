@@ -87,17 +87,26 @@ class Application(Base):
         ).order_by(desc(tagopsdb.model.AppDeployment.realized)).first()
 
     def get_latest_completed_tier_deployment(self, tier_id, environment_id,
-                                             must_be_validated=False):
+                                             must_be_validated=False,
+                                             exclude_package_ids=None):
         in_list = ['validated'] if must_be_validated else ['validated',
                                                            'complete']
-        return tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
+        query = tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
             tagopsdb.model.AppDeployment.package
         ).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.AppDeployment.app_id == tier_id,
             tagopsdb.model.AppDeployment.environment_id == environment_id,
             tagopsdb.model.AppDeployment.status.in_(in_list)
-        ).order_by(desc(tagopsdb.model.AppDeployment.realized)).first()
+        )
+        if exclude_package_ids:
+            from sqlalchemy import not_
+            query = query.filter(not_(
+                tagopsdb.model.AppDeployment.package_id.in_(exclude_package_ids)
+            ))
+        return query.order_by(
+            desc(tagopsdb.model.AppDeployment.realized)
+        ).first()
 
     def get_latest_host_deployment(self, host_id):
         return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(

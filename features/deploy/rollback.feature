@@ -46,44 +46,34 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         When I run "deploy rollback myapp --apptype bad-apptype"
         Then the output has "Valid apptypes for application "myapp" are: ['the-apptype']"
 
-    Scenario Outline: rollback command with no specifier
-        Given the deploy strategy is "<strategy>"
+    Scenario: rollback command with no specifier
         When I run "deploy rollback myapp"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And package "myapp" version "121" was deployed to the deploy target
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=2,status="queued",delay=0
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: rollback version to hosts
-        Given the deploy strategy is "<strategy>"
-        And there is a package with version="124"
+    Scenario: rollback version to hosts
+        Given there is a package with version="124"
         And the package is deployed on the hosts
         When I run "deploy rollback myapp --hosts projhost01 projhost02"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And package "myapp" version "123" was deployed to the hosts
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=2,status="queued",delay=0
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=3
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=3
+        And there is no tier deployment with deployment_id=2,app_id=2
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: rollback version to apptype
-        Given the deploy strategy is "<strategy>"
+    Scenario: rollback version to apptype
         When I run "deploy rollback myapp --apptype the-apptype"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And package "myapp" version "121" was deployed to the deploy target
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=2,status="queued",delay=0
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: rollback version to all apptypes
-        Given the deploy strategy is "<strategy>"
-        And there is a deploy target with name="another-apptype"
+    Scenario: rollback version to all apptypes
+        Given there is a deploy target with name="another-apptype"
         And the deploy target is a part of the project-application pair
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -100,70 +90,50 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package "123" is validated
 
         When I run "deploy rollback myapp --all-apptypes"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And the output has "Completed: 1 out of 1 hosts"
-        And package "myapp" version "121" was deployed to the deploy targets
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=2,status="queued",delay=0
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
+        And there is a tier deployment with deployment_id=2,app_id=3,status="pending",environment_id=2,package_id=1
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
+    #TODO: Figure out what to do with these tests
+    # Scenario: rollback version to hosts with a failure
+    #     Given the host "projhost01" will fail to deploy
+    #     When I run "deploy rollback myapp --hosts projhost01 projhost02"
+    #     Then the output has "Some hosts had failures"
+    #     And the output has "Hostname: projhost01"
+    #
+    # Scenario: rollback version to apptype with a failure
+    #     Given the host "projhost01" will fail to deploy
+    #     When I run "deploy rollback myapp --apptype the-apptype"
+    #     Then the output has "Some hosts had failures"
+    #     And the output has "Hostname: projhost01"
+    #
+    # Scenario: rollback version to all apptypes with a failure
+    #     Given there is a deploy target with name="another-apptype"
+    #     And the deploy target is a part of the project-application pair
+    #     And there is a host with name="anotherhost01"
+    #     And the host is associated with the deploy target
+    #
+    #     And the package "121" is deployed on the deploy target
+    #     And the package has been validated
+    #
+    #     And I wait 1 seconds
+    #     And the package "122" is deployed on the deploy target
+    #     And the package has been invalidated
+    #
+    #     And I wait 1 seconds
+    #     And the package "123" is deployed on the deploy target
+    #     And the package has been validated
+    #
+    #     And the host "projhost01" will fail to deploy
+    #     When I run "deploy rollback myapp --all-apptypes"
+    #     Then the output has "Some hosts had failures"
+    #     And the output has "Hostname: projhost01"
 
-    Scenario Outline: rollback version to hosts with a failure
-        Given the deploy strategy is "<strategy>"
-        And the host "projhost01" will fail to deploy
-        When I run "deploy rollback myapp --hosts projhost01 projhost02"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost01"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: rollback version to apptype with a failure
-        Given the deploy strategy is "<strategy>"
-        And the host "projhost01" will fail to deploy
-        When I run "deploy rollback myapp --apptype the-apptype"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost01"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: rollback version to all apptypes with a failure
-        Given the deploy strategy is "<strategy>"
-        And there is a deploy target with name="another-apptype"
-        And the deploy target is a part of the project-application pair
-        And there is a host with name="anotherhost01"
-        And the host is associated with the deploy target
-
-        And the package "121" is deployed on the deploy target
-        And the package has been validated
-
-        And I wait 1 seconds
-        And the package "122" is deployed on the deploy target
-        And the package has been invalidated
-
-        And I wait 1 seconds
-        And the package "123" is deployed on the deploy target
-        And the package has been validated
-
-        And the host "projhost01" will fail to deploy
-        When I run "deploy rollback myapp --all-apptypes"
-        Then the output has "Some hosts had failures"
-        And the output has "Hostname: projhost01"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: rollback a single host out of multiple apptypes
-        Given the deploy strategy is "<strategy>"
-        And there is a deploy target with name="another-apptype"
+    Scenario: rollback a single host out of multiple apptypes
+        Given there is a deploy target with name="another-apptype"
         And the deploy target is a part of the project-application pair
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -181,27 +151,25 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package "123" is deployed on the deploy target
         And the package has been validated
 
+        And I wait 1 seconds
         And there is a package with version="124"
         And the package "124" is deployed on the deploy target
         And the package has been validated
 
         When I run "deploy rollback myapp --hosts anotherhost01"
-        Then the output has "Completed: 1 out of 1 hosts"
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=2,status="queued",delay=0
+        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=3
+        And there is no host deployment with deployment_id=2,host_id=1
+        And there is no host deployment with deployment_id=2,host_id=2
+        And there is no host deployment with deployment_id=2,host_id=4
+        And there is no tier deployment with deployment_id=2,app_id=2
+        And there is no tier deployment with deployment_id=2,app_id=3
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    @delay
-    Scenario Outline: rollback version with delay option
-        Given the deploy strategy is "<strategy>"
+    Scenario: rollback version with delay option
         When I run "deploy rollback myapp --delay 10"
-        Then the output has "Completed: 2 out of 2 hosts"
-        And package "myapp" version "121" was deployed to the deploy target
-        And it took at least 10 seconds
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=2,status="queued",delay=10
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
