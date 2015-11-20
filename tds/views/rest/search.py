@@ -176,7 +176,7 @@ class SearchView(base.BaseView):
                 "Unknown object type {obj_type}. Supported object types are: "
                 "{types}.".format(
                     obj_type=self.request.matchdict['obj_type'],
-                    types=self.TYPES.keys(),
+                    types=sorted(self.TYPES.keys()),
                 )
             )
             self.request.errors.status = 404
