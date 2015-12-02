@@ -66,7 +66,6 @@ class DeployController(BaseController):
         'validate': 'environment',
         'promote': 'environment',
         'fix': 'environment',
-        'redeploy': 'environment',
         'rollback': 'environment',
         'restart': 'environment',
     }
