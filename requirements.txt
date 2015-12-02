@@ -16,5 +16,5 @@ socketcache==0.1.0
 tabulate==0.7.2
 git+ssh://git@code.tagged.com/tagopsdb/tagopsdb.git@tds-120#egg=tagopsdb-0.9.12
 git+ssh://git@code.tagged.com/lib-python/python-simpledaemon.git@master#egg=simpledaemon-1.0
-cornice==1.0.0
+cornice==1.1.0
 python-ldap==2.4.20
