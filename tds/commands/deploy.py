@@ -614,6 +614,64 @@ class DeployController(BaseController):
             environment=self.envs[params['env']]
         )
 
+        restart_targets = list()
+
+        if apptypes:
+            for apptype in apptypes:
+                dep = application.get_latest_tier_deployment(
+                    apptype.id,
+                    self.environment.id,
+                )
+                if not dep or dep.status in ('incomplete', 'inprogress'):
+                    continue
+
+                found_host = False
+                for host in apptype.hosts:
+                    if host.environment.id == self.environment.id:
+                        found_host = True
+                        restart_targets.append((host, dep.package))
+
+                if not found_host:
+                    log.info(
+                        'No hosts for tier {tier} in environment {env}. '
+                        'Continuing...'.format(
+                            tier=apptype.name,
+                            env=self.environment.environment,
+                        )
+                    )
+
+        elif hosts:
+            for host in hosts:
+                dep = application.get_latest_host_deployment(host.id)
+                if not dep or dep.status in ('failed', 'inprogress'):
+                    continue
+
+                restart_targerts.append((host, dep.package))
+
+        if not restart_targets:
+            raise tds.exceptions.InvalidOperationError(
+                'Nothing to restart for application {app} in {env} '
+                'environment.'.format(
+                    app=package.name,
+                    env=self.environment.environment,
+                )
+            )
+
+        restart_targets.sort(key=lambda x: (x[0].name, x[1].name))
+
+        restart_results = list()
+
+        delay = params.get('delay', None)
+        for i, (host, pkg) in enumerate(restart_targets):
+            restart_results[(host, pkg)] = self.restart_host(
+                host.name, pkg.name
+            )[0]
+
+            if delay is not None and (i + 1) < len(restart_targets):
+                time.sleep(delay)
+
+        return dict(result=restart_results)
+
     @input_validate('package')
     @input_validate('targets')
     @input_validate('application')
