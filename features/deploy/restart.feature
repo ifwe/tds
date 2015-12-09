@@ -193,3 +193,32 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         | strategy |
         | mco      |
         | salt     |
+
+    Scenario Outline: restart on a tier with no hosts
+        Given there is a deploy target with name="anotherapp"
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the deploy targets in the "dev" env
+        And the deploy strategy is "<strategy>"
+        When I run "deploy restart myapp --apptypes anotherapp"
+        Then the output has "No hosts for tier anotherapp in environment development. Continuing..."
+        And the output has "Nothing to restart for application myapp in development environment."
+
+        Examples:
+        | strategy |
+        | mco      |
+        | salt     |
+
+    Scenario Outline: restart on a tier with no hosts
+        Given there is a deploy target with name="anotherapp"
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the deploy targets in the "dev" env
+        And the deploy strategy is "<strategy>"
+        When I run "deploy restart myapp --all-apptypes"
+        Then the output has "No hosts for tier anotherapp in environment development. Continuing..."
+        And package "myapp" was restarted on the host with name="appfoo01"
+        And package "myapp" was restarted on the host with name="appfoo02"
+
+        Examples:
+        | strategy |
+        | mco      |
+        | salt     |
