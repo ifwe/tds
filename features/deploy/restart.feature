@@ -177,6 +177,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         And the host "appfoo01" will fail to restart
         When I run "deploy restart myapp"
         Then the output has "Some hosts had failures"
+        And the output has "appfoo01 (myapp), result: It done broked!"
 
         Examples:
         | strategy |
@@ -188,6 +189,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         And the host "appfoo01" will fail to restart
         When I run "deploy restart myapp --hosts appfoo01 appfoo02"
         Then the output has "Some hosts had failures"
+        And the output has "appfoo01 (myapp), result: It done broked!"
 
         Examples:
         | strategy |

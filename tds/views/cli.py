@@ -495,12 +495,16 @@ class CLI(Base):
         keys = sorted(result.keys())
         printed_fail_message = False
         for key in keys:
-            if not result[key]:
+            if not result[key][0]:
                 if not printed_fail_message:
                     print "Some hosts had failures:\n"
                     printed_fail_message = True
                 host, pkg = key
-                print "%s (%s)" % (host.name, pkg.name)
+                print "{host} ({pkg}), result: {output}".format(
+                    host=host.name,
+                    pkg=pkg.name,
+                    output=result[key][1],
+                )
 
     generate_deploy_invalidate_result = \
         generate_deploy_promote_result = \

@@ -686,7 +686,7 @@ class DeployController(BaseController):
         for i, (host, pkg) in enumerate(restart_targets):
             restart_results[(host, pkg)] = self.deploy_strategy.restart_host(
                 host.name, pkg.name
-            )[0]
+            )
 
             if delay is not None and (i + 1) < len(restart_targets):
                 time.sleep(delay)
