@@ -2,6 +2,7 @@
 Controller for 'deploy' commands.
 """
 
+import time
 import logging
 
 from collections import OrderedDict
@@ -82,6 +83,26 @@ class DeployController(BaseController):
         self.user = None
 
         super(DeployController, self).__init__(config)
+
+        self.create_deploy_strategy(
+            self.app_config.get('deploy_strategy', 'salt')
+        )
+
+    def create_deploy_strategy(self, deploy_strat_name):
+        if deploy_strat_name == 'mco':
+            cls = tds.deploy_strategy.TDSMCODeployStrategy
+        elif deploy_strat_name == 'salt':
+            cls = tds.deploy_strategy.TDSSaltDeployStrategy
+        else:
+            raise tds.exceptions.ConfigurationError(
+                'Invalid deploy strategy: {strat}.'.format(
+                    strat=deploy_strat_name
+                )
+            )
+
+        self.deploy_strategy = cls(
+            **self.app_config.get(deploy_strat_name, {})
+        )
 
     def determine_availability(self, host, deployment=False):
         """"""
@@ -627,7 +648,7 @@ class DeployController(BaseController):
 
                 found_host = False
                 for host in apptype.hosts:
-                    if host.environment.id == self.environment.id:
+                    if host.environment_id == self.environment.id:
                         found_host = True
                         restart_targets.append((host, dep.package))
 
@@ -646,7 +667,7 @@ class DeployController(BaseController):
                 if not dep or dep.status in ('failed', 'inprogress'):
                     continue
 
-                restart_targerts.append((host, dep.package))
+                restart_targets.append((host, dep.package))
 
         if not restart_targets:
             raise tds.exceptions.InvalidOperationError(
@@ -659,11 +680,11 @@ class DeployController(BaseController):
 
         restart_targets.sort(key=lambda x: (x[0].name, x[1].name))
 
-        restart_results = list()
+        restart_results = dict()
 
         delay = params.get('delay', None)
         for i, (host, pkg) in enumerate(restart_targets):
-            restart_results[(host, pkg)] = self.restart_host(
+            restart_results[(host, pkg)] = self.deploy_strategy.restart_host(
                 host.name, pkg.name
             )[0]
 
