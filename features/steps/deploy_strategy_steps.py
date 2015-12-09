@@ -271,7 +271,7 @@ def given_the_host_will_fail_to_deploy(context, hostname, action):
         hostname: {
             'hostname': hostname,
             'exitcode': 1,
-            'stderr': 'its broken!',
-            'result': 'Something failed',
+            'stderr': 'It done broked!',
+            'result': 'It done broked!',
         }
     })
