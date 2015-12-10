@@ -210,7 +210,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         | mco      |
         | salt     |
 
-    Scenario Outline: restart on a tier with no hosts
+    Scenario Outline: restart all tiers, including a tier with no hosts
         Given there is a deploy target with name="anotherapp"
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy targets in the "dev" env
@@ -224,3 +224,21 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         | strategy |
         | mco      |
         | salt     |
+
+    Scenario Outline: restart on hosts with just a host deployment
+        Given there is a deploy target with name="anotherapp"
+        And there are hosts:
+            | name          | env   | app_id    |
+            | anotherhost01 | dev   | 3         |
+            | anotherhost02 | dev   | 3         |
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the hosts
+        And the deploy strategy is "<strategy>"
+        When I run "deploy restart myapp --hosts anotherhost01 anotherhost02"
+        Then package "myapp" was restarted on the host with name="anotherhost01"
+        And package "myapp" was restarted on the host with name="anotherhost02"
+
+        Examples:
+        | strategy  |
+        | mco       |
+        | salt      |
