@@ -123,6 +123,9 @@ class BaseController(object):
         if not validate_attrs:
             return params
 
+        if 'hosts' in params:
+            params['hostonly'] = True
+
         result = params.copy()
 
         for key in validate_attrs:

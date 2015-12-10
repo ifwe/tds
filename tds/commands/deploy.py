@@ -637,7 +637,19 @@ class DeployController(BaseController):
 
         restart_targets = list()
 
-        if apptypes:
+        if hosts:
+            for host in hosts:
+                dep = application.get_latest_host_deployment(host.id)
+                if not dep:
+                    dep = application.get_latest_tier_deployment(
+                        host.app_id,
+                        self.environment.id,
+                    )
+                    if not dep or dep.status in ('incomplete', 'inprogress'):
+                        continue
+
+                restart_targets.append((host, dep.package))
+        elif apptypes:
             for apptype in apptypes:
                 dep = application.get_latest_tier_deployment(
                     apptype.id,
@@ -661,13 +673,6 @@ class DeployController(BaseController):
                         )
                     )
 
-        elif hosts:
-            for host in hosts:
-                dep = application.get_latest_host_deployment(host.id)
-                if not dep or dep.status in ('failed', 'inprogress'):
-                    continue
-
-                restart_targets.append((host, dep.package))
 
         if not restart_targets:
             raise tds.exceptions.InvalidOperationError(
