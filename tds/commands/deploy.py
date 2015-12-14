@@ -416,6 +416,32 @@ class DeployController(BaseController):
             for host in hosts:
                 if host.id in host_ids:
                     continue
+                ongoing_host_deps =  host.get_ongoing_deployments()
+                if ongoing_host_deps:
+                    log.info(
+                        'User {user} is currently running a deployment for the'
+                        ' host {host} in the {env} environment. Skipping...'
+                        .format(
+                            user=ongoing_host_deps[0].user,
+                            host=ongoing_host_deps[0].host.name,
+                            env=self.environment.environment,
+                        )
+                    )
+                    continue
+                ongoing_tier_deps =  host.application.get_ongoing_deployments(
+                    self.environment.id
+                )
+                if ongoing_tier_deps:
+                    log.info(
+                        'User {user} is currently running a deployment for the'
+                        ' tier {tier} in the {env} environment. Skipping...'
+                        .format(
+                            user=ongoing_tier_deps[0].user,
+                            tier=host.application.name,
+                            env=self.environment.environment,
+                        )
+                    )
+                    continue
                 found = application.get_latest_host_deployment(host.id)
                 if not found:
                     log.info(
@@ -428,24 +454,6 @@ class DeployController(BaseController):
                         'Most recent deployment of this package on host '
                         '{h_name} was completed successfully. Skipping....'
                         .format(h_name=host.name)
-                    )
-                    continue
-                if host.get_ongoing_deployments():
-                    log.info(
-                        'There is an ongoing deployment for the host {h_name}.'
-                        ' Skipping....'.format(h_name=host.name)
-                    )
-                    continue
-                if host.application.get_ongoing_deployments(
-                    self.environment.id
-                ):
-                    log.info(
-                        'There is an ongoing deployment for the tier {t_name} '
-                        'of the host {h_name} in the current environment. '
-                        'Skipping....'.format(
-                            t_name=host.application.name,
-                            h_name=host.name,
-                        )
                     )
                     continue
                 host_ids.add(found.host_id)
@@ -462,16 +470,6 @@ class DeployController(BaseController):
                         'was found. Skipping....'.format(t_name=apptype.name)
                     )
                     continue
-                found = tds.model.AppDeployment(delegate=found)
-                if found.status not in ('incomplete', 'pending'):
-                    log.info(
-                        'Most recent deployment of this package on tier '
-                        '{t_name} was completed successfully. '
-                        'Skipping....'.format(
-                            t_name=apptype.name,
-                        )
-                    )
-                    continue
                 ongoing_tier_deps = apptype.get_ongoing_deployments(
                     self.environment.id
                 )
@@ -480,14 +478,34 @@ class DeployController(BaseController):
                 )
                 if ongoing_tier_deps:
                     log.info(
-                        'There is an ongoing deployment on the tier {t_name}. '
-                        'Skipping....'.format(t_name=apptype.name)
+                        'User {user} is currently running a deployment for the'
+                        ' tier {tier} in the {env} environment. Skipping...'
+                        .format(
+                            user=ongoing_tier_deps[0].user,
+                            tier=apptype.name,
+                            env=self.environment.environment,
+                        )
                     )
                     continue
                 if ongoing_host_deps:
                     log.info(
-                        'There is an ongoing deployment for a host in the tier'
-                        ' {t_name}. Skipping....'.format(t_name=apptype.name)
+                        'User {user} is currently running a deployment for the'
+                        ' host {host} in the {env} environment. Skipping...'
+                        .format(
+                            user=ongoing_host_deps[0].user,
+                            host=ongoing_host_deps[0].host.name,
+                            env=self.environment.environment,
+                        )
+                    )
+                    continue
+                found = tds.model.AppDeployment(delegate=found)
+                if found.status not in ('incomplete', 'pending'):
+                    log.info(
+                        'Most recent deployment of this package on tier '
+                        '{t_name} was completed successfully. '
+                        'Skipping....'.format(
+                            t_name=apptype.name,
+                        )
                     )
                     continue
                 app_ids.add(found.app_id)
@@ -582,25 +600,81 @@ class DeployController(BaseController):
             if (previous_env and
                 not package.check_app_deployments(apptype, previous_env) and
                 not params.get('force')):
-                log.info('Application "%s", version "%s" is not validated '
-                         'in the previous environment for tier "%s", '
-                         'skipping...', application.name, package.version,
-                         apptype.name)
+                log.info(
+                    'Application "{app}", version "{vers}" is not validated in'
+                    ' the previous environment for tier "{tier}", '
+                    'skipping...'.format(
+                        app=application.name,
+                        vers=package.version,
+                        tier=apptype.name
+                    )
+                )
                 continue
+
+            ongoing_deps = apptype.get_ongoing_deployments(self.environment.id)
+            if ongoing_deps:
+                log.info(
+                    'User {user} is currently running a deployment for the '
+                    'tier {tier} in the {env} environment. Skipping...'.format(
+                        user=ongoing_deps[0].user,
+                        tier=apptype.name,
+                        env=self.environment.environment,
+                    )
+                )
+                continue
+
 
             tier_name, curr_app_dep = app_deployments[apptype.id]
 
             if (curr_app_dep is not None and
                 curr_app_dep.package == package.delegate):
-                log.info('Application "%s", version "%s" is currently '
-                         'deployed on tier "%s", skipping...',
-                         application.name, package.version, tier_name)
+                log.info(
+                    'Application "{app}", version "{vers}" is currently '
+                    'deployed on tier "{tier}", skipping...'.format(
+                        app=application.name,
+                        vers=package.version,
+                        tier=tier_name
+                    )
+                )
                 continue
 
+            ongoing_host_deps = apptype.get_ongoing_host_deployments(
+                self.environment.id
+            )
+
             if hosts:
-                self.deploy_hosts.update(set(
-                    host for host in hosts if host.application == apptype
-                ))
+                app_hosts = set(host for host in hosts if host.application ==
+                                apptype)
+
+                to_remove = set()
+                if ongoing_host_deps:
+                    for host in app_hosts:
+                        relevant_deps = [dep for dep in ongoing_host_deps if
+                                         dep.host_id == host.id]
+                        if relevant_deps:
+                            log.info(
+                                'User {user} is currently running a deployment'
+                                ' for the host {host} in the {env} '
+                                'environment. Skipping...'.format(
+                                    user=relevant_deps[0].user,
+                                    host=host.name,
+                                    env=self.environment.environment,
+                                )
+                            )
+                            to_remove.add(host)
+                app_hosts -= to_remove
+
+                self.deploy_hosts |= app_hosts
+            elif ongoing_host_deps:
+                log.info(
+                    'User {user} is currently running a deployment for the '
+                    'host {host} in the {env} environment. Skipping...'.format(
+                        user=ongoing_host_deps[0].user,
+                        host=ongoing_host_deps[0].host.name,
+                        env=self.environment.environment,
+                    )
+                )
+                continue
             else:
                 self.deploy_tiers.add(apptype)
 

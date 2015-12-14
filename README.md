@@ -1,4 +1,6 @@
 # TDS
+[![Build Status](https://ci.tagged.com/job/tds-tds-features/badge/icon)](https://ci.tagged.com/job/tds-tds-features/)
+
 ## Author
 Kenneth Lareau
 
