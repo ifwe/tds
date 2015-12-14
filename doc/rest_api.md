@@ -45,11 +45,10 @@ As a result, `POST` requests will throw a `403: Forbidden` error in this case.
 
 ## Routing
 The URLs and methods will be the same for `/projects`, `/ganglias`, `/hipchats`,
-`/hosts`, `/tiers`, `/deployments`, `/host_deployments`, and `tier_deployments`
+`/hosts`, `/tiers`, `/deployments`, `/host_deployments`, and `/tier_deployments`
 as for `/applications` below.
 URLs and methods will also be the same for `/projects/NAME` as for
 `/applications/NAME` below.
-URLs and methods for deploying have yet to be determined.
 
 ### Path-Method Table
 <table>

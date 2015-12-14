@@ -19,7 +19,7 @@ with Alembic used for SQLAlchemy schema migrations.
 
 ## Installation
 To install all necessary dependencies and TDS:
-```
+```bash
 $ ./setup.py
 ```
 
@@ -27,7 +27,7 @@ $ ./setup.py
 
 ### PyPI packages
 See `requirements.txt`. To install (NOTE: `setup.py` will do this for you):
-```
+```bash
 $ pip install -r requirements.txt
 ```
 
@@ -42,7 +42,7 @@ $ pip install -r requirements.txt
 ## Testing
 First, install development requirements
 (again, `setup.py` automatically does this for you):
-```
+```bash
 $ pip install -r requirements-dev.txt
 ```
 
@@ -55,9 +55,10 @@ $ ./run_tests.py
 ### Feature tests
 The following command will run all
 <a href="//pythonhosted.org/behave/">Behave</a> tests:
-```
+```bash
 $ behave
 ```
+
 You may specify a set of tags to restrict which feature tests to run:
 <table>
 <thead>
