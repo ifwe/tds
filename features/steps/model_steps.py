@@ -311,12 +311,14 @@ def given_the_deploy_targets_are_a_part_of_the_proj_app_pairs(context):
                 )
 
 
-def deploy_package_to_target(package, target, env, status='complete'):
+def deploy_package_to_target(package, target, env, status='complete',
+                             dep_status='pending'):
     env_id = tagopsdb.Environment.get(env=env).id
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
         user='test-user',
+        status=dep_status,
     )
     dep = tagopsdb.Deployment.get(**dep_props)
     if dep is None:
@@ -1472,20 +1474,20 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
     package_id = context.tds_packages[-1].id
 
     dep_props = dict(
-        package_id=package_id,
         user='test-user',
     )
 
     deployment = tagopsdb.Deployment.get(**dep_props)
     if deployment is None:
         deployment = tagopsdb.Deployment(**dep_props)
+        deployment.status = 'inprogress'
         tagopsdb.Session.add(deployment)
         tagopsdb.Session.commit()
 
     hosts = [tagopsdb.Host.get(hostname=host_name)
              for host_name in host_names]
 
-    deploy_to_hosts(hosts, deployment, 'inprogress')
+    deploy_to_hosts(hosts, deployment, package_id, 'inprogress')
 
 
 @given(u'there is an ongoing deployment on the deploy target')
@@ -1494,6 +1496,7 @@ def given_there_is_an_ongoing_deployment_on_the_deploy_target(context):
         context.tds_packages[-1],
         context.tds_targets[-1],
         context.tds_env,
+        'inprogress',
         'inprogress',
     )
 
