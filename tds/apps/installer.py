@@ -92,13 +92,13 @@ class Installer(TDSProgramBase):
                 target=self.do_serial_deployment,
                 args=(deployment,),
             )
-            deployment_process.start()
             tup = (
                 deployment,
                 deployment_process,
                 datetime.now(),
             )
             self.ongoing_deployments[deployment.id] = tup
+            deployment_process.start()
 
             return tup
 
@@ -121,13 +121,10 @@ class Installer(TDSProgramBase):
 
         # If host already has a valid deployment, nothing to do
         if host_deployment.status == 'ok':
-            return
+            return 'ok'
 
-        tagopsdb.Session.close()
-        if tagopsdb.model.Deployment.get(
-            id=host_deployment.deployment_id,
-            status='canceled',
-        ):
+        tagopsdb.Session.refresh(host_deployment.deployment)
+        if host_deployment.deployment.status == 'canceled':
             return 'canceled'
 
         if not first_dep:
@@ -164,11 +161,13 @@ class Installer(TDSProgramBase):
 
         for dep_host in dep_hosts:
             host_deployment = tds.model.HostDeployment.get(
-                host=dep_host,
+                host_id=dep_host.id,
                 deployment_id=tier_deployment.deployment_id,
             )
-            tier_state.append(self._do_host_deployment(host_deployment,
-                                                       first_dep))
+            host_state = self._do_host_deployment(host_deployment, first_dep)
+            tier_state.append(host_state)
+            if host_state == 'canceled':
+                return
             first_dep = False
 
         if any(x in tier_state for x in ('failed', 'canceled')):
@@ -193,6 +192,12 @@ class Installer(TDSProgramBase):
             self._do_tier_deployment(tier_deployment, first_dep)
             first_dep = False
 
+            tagopsdb.Session.refresh(deployment)
+            if deployment.status == 'canceled':
+                deployment.status = 'stopped'
+                tagopsdb.Session.commit()
+                return
+
         host_deployments = sorted(
             [dep for dep in deployment.host_deployments if dep.status ==
              'pending'],
@@ -203,11 +208,12 @@ class Installer(TDSProgramBase):
             self._do_host_deployment(host_deployment, first_dep)
             first_dep = False
 
-        tagopsdb.Session.close()
-        deployment = tagopsdb.model.Deployment.get(id=deployment.id)
-        if deployment.status == 'canceled':
-            deployment.status = 'stopped'
-        elif any(dep.status != 'complete' for dep in tier_deployments) or \
+            tagopsdb.Session.refresh(deployment)
+            if deployment.status == 'canceled':
+                deployment.status = 'stopped'
+                return
+
+        if any(dep.status != 'complete' for dep in tier_deployments) or \
                 any(dep.status != 'ok' for dep in deployment.host_deployments):
             deployment.status = 'failed'
         else:
