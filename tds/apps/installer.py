@@ -35,19 +35,18 @@ class Installer(TDSProgramBase):
         """
         Determine deployment strategy and initialize several parameters
         """
-
-        log.info('Initializing database session')
-        self.initialize_db()
-
-        # ongoing_deployments is a list with items of form:
+        # ongoing_deployments is a dict with ID keys and values of form:
         # (deployment_entry, process_doing_deployment,
         #  time_of_deployment_start)
-        self.ongoing_deployments = list()
+        self.ongoing_deployments = dict()
         self.retry = kwargs.pop('retry') if 'retry' in kwargs else 4
         self.threshold = kwargs.pop('threshold') if 'threshold' in kwargs \
             else timedelta(minutes=5)
 
         super(Installer, self).__init__(*args, **kwargs)
+
+        log.info('Initializing database session')
+        self.initialize_db()
 
         self.create_deploy_strategy(
             self.config.get('deploy_strategy', 'salt')
@@ -86,16 +85,19 @@ class Installer(TDSProgramBase):
 
         if deps:
             deployment = deps[0]
+            deployment.status = 'inprogress'
+            tagopsdb.Session.commit()
             deployment_process = Process(
                 target=self.do_serial_deployment,
                 args=(deployment,),
             )
+            deployment_process.start()
             tup = (
                 deployment,
                 deployment_process,
                 datetime.now(),
             )
-            self.ongoing_deployments.append(tup)
+            self.ongoing_deployments[deployment.id] = tup
 
             return tup
 
@@ -107,7 +109,7 @@ class Installer(TDSProgramBase):
         self.threshold ago.
         """
 
-        return [dep for dep in self.ongoing_deployments
+        return [dep for dep in self.ongoing_deployments.itervalues()
                 if datetime.now() > dep[2] + self.threshold]
 
     def _do_host_deployment(self, host_deployment):
@@ -119,6 +121,13 @@ class Installer(TDSProgramBase):
         # If host already has a valid deployment, nothing to do
         if host_deployment.status == 'ok':
             return
+
+        tagopsdb.Session.close()
+        if tagopsdb.model.Deployment.get(
+            id=host_deployment.deployment_id,
+            status='canceled',
+        ):
+            return 'canceled'
 
         success, host_result = self.deploy_strategy.deploy_to_host(
             host_deployment.host.name,
@@ -150,10 +159,13 @@ class Installer(TDSProgramBase):
         tier_state = []
 
         for dep_host in dep_hosts:
-            host_deployment = tds.model.HostDeployment.find(host=dep_host)
+            host_deployment = tds.model.HostDeployment.get(
+                host=dep_host,
+                deployment_id=tier_deployment.deployment_id,
+            )
             tier_state.append(self._do_host_deployment(host_deployment))
 
-        if 'failed' in tier_state:
+        if any(x in tier_state for x in ('failed', 'canceled')):
             tier_deployment.status = 'incomplete'
         else:
             tier_deployment.status = 'complete'
@@ -165,20 +177,32 @@ class Installer(TDSProgramBase):
         Perform deployments for tier or host(s) one host at a time
         (no parallelism).
         """
-
         tier_deployments = deployment.app_deployments
 
-        if tier_deployments:
-            for tier_deployment in tier_deployments:
-                self._do_tier_deployment(tier_deployment)
-        else:
-            host_deployments = sorted(
-                deployment.host_deployments,
-                key=lambda host_dep: host_dep.host.name,
-            )
+        for tier_deployment in tier_deployments:
+            self._do_tier_deployment(tier_deployment)
 
-            for host_deployment in host_deployments:
-                self._do_host_deployment(host_deployment)
+        host_deployments = sorted(
+            [dep for dep in deployment.host_deployments if dep.status ==
+             'pending'],
+            key=lambda host_dep: host_dep.host.name,
+        )
+
+        for host_deployment in host_deployments:
+            self._do_host_deployment(host_deployment)
+
+        tagopsdb.Session.close()
+        deployment = tagopsdb.model.Deployment.get(id=deployment.id)
+        if deployment.status == 'canceled':
+            deployment.status = 'stopped'
+        elif any(dep.status != 'complete' for dep in tier_deployments) or \
+                any(dep.status != 'ok' for dep in deployment.host_deployments):
+            deployment.status = 'failed'
+        else:
+            deployment.status = 'complete'
+        tagopsdb.Session.commit()
+
+        del self.ongoing_deployments[deployment.id]
 
     def run(self):
         """

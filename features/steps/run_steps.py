@@ -15,6 +15,7 @@ from behave import when, then
 
 TDS_SCRIPT = tds.scripts.tds_prog.__file__
 REPO_UPDATE_SCRIPT = tds.apps.repo_updater.__file__
+DEPLOY_DAEMON_SCRIPT = tds.apps.installer.__file__
 TRACEBACK_TEXT = 'Traceback (most recent call last)'
 
 
@@ -53,6 +54,12 @@ def when_i_start_to_run(context, command):
         cmd_parts = (
             cmd_executable +
             [REPO_UPDATE_SCRIPT] +
+            getattr(context, 'extra_run_args', [])
+        )
+    elif cmd_parts[0] == "deploy_daemon":
+        cmd_parts = (
+            cmd_executable +
+            [DEPLOY_DAEMON_SCRIPT] +
             getattr(context, 'extra_run_args', [])
         )
     else:
