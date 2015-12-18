@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 
+import time
 from datetime import datetime, timedelta
 from multiprocessing import Process
 
@@ -112,7 +113,7 @@ class Installer(TDSProgramBase):
         return [dep for dep in self.ongoing_deployments.itervalues()
                 if datetime.now() > dep[2] + self.threshold]
 
-    def _do_host_deployment(self, host_deployment):
+    def _do_host_deployment(self, host_deployment, first_dep=True):
         """
         Perform host deployment for given host and update database
         with results.
@@ -128,6 +129,9 @@ class Installer(TDSProgramBase):
             status='canceled',
         ):
             return 'canceled'
+
+        if not first_dep:
+            time.sleep(host_deployment.deployment.delay)
 
         success, host_result = self.deploy_strategy.deploy_to_host(
             host_deployment.host.name,
@@ -146,7 +150,7 @@ class Installer(TDSProgramBase):
 
         return host_deployment.status
 
-    def _do_tier_deployment(self, tier_deployment):
+    def _do_tier_deployment(self, tier_deployment, first_dep=True):
         """
         Perform tier deployment for given tier (only doing hosts that
         require the deployment) and update database with results.
@@ -163,7 +167,9 @@ class Installer(TDSProgramBase):
                 host=dep_host,
                 deployment_id=tier_deployment.deployment_id,
             )
-            tier_state.append(self._do_host_deployment(host_deployment))
+            tier_state.append(self._do_host_deployment(host_deployment,
+                                                       first_dep))
+            first_dep = False
 
         if any(x in tier_state for x in ('failed', 'canceled')):
             tier_deployment.status = 'incomplete'
@@ -177,10 +183,15 @@ class Installer(TDSProgramBase):
         Perform deployments for tier or host(s) one host at a time
         (no parallelism).
         """
-        tier_deployments = deployment.app_deployments
+        tier_deployments = sorted(
+            deployment.app_deployments,
+            key=lambda dep:dep.target.name,
+        )
 
+        first_dep = True
         for tier_deployment in tier_deployments:
-            self._do_tier_deployment(tier_deployment)
+            self._do_tier_deployment(tier_deployment, first_dep)
+            first_dep = False
 
         host_deployments = sorted(
             [dep for dep in deployment.host_deployments if dep.status ==
@@ -189,7 +200,8 @@ class Installer(TDSProgramBase):
         )
 
         for host_deployment in host_deployments:
-            self._do_host_deployment(host_deployment)
+            self._do_host_deployment(host_deployment, first_dep)
+            first_dep = False
 
         tagopsdb.Session.close()
         deployment = tagopsdb.model.Deployment.get(id=deployment.id)
