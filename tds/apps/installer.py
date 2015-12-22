@@ -29,12 +29,12 @@ log = logging.getLogger('tds.apps.tds_installer')
 
 class Installer(TDSProgramBase):
     """
-    Thing to do the thing.
+    Daemon class that launches new processes to deploy packages to targets.
     """
 
     def __init__(self, *args, **kwargs):
         """
-        Determine deployment strategy and initialize several parameters
+        Determine deployment strategy and initialize some parameters.
         """
         # ongoing_deployments is a dict with ID keys and values of form:
         # (deployment_entry, process_doing_deployment,
@@ -63,17 +63,9 @@ class Installer(TDSProgramBase):
                 'Invalid deploy strategy: %r', deploy_strat_name
             )
 
-        self._deploy_strategy = cls(
+        self.deploy_strategy = cls(
             **self.config.get(deploy_strat_name, {})
         )
-
-    @property
-    def deploy_strategy(self):
-        """
-        Accessor for the DeployStrategy instance used by this object.
-        """
-
-        return self._deploy_strategy
 
     def find_deployments(self):
         """
