@@ -133,18 +133,18 @@ class Notifier(object):
         if deployment.target.get('hosts', None):
             dest_type = 'hosts'
             destinations = ', '.join(
-                x.name for x in deployment.target['hosts']
+                sorted(x.name for x in deployment.target['hosts'])
             )
         elif deployment.target.get('apptypes', None):
             dest_type = 'app tier(s)'
             destinations = ', '.join(
-                x.name for x in deployment.target['apptypes']
+                sorted(x.name for x in deployment.target['apptypes'])
             )
         else:
             dest_type = 'app tier(s)'
 
             targets = deployment.target.get('apptypes', [])
-            destinations = ', '.join(x.name for x in targets)
+            destinations = ', '.join(sorted(x.name for x in targets))
 
         log.log(5, 'Destination type is: %s', dest_type)
         log.log(5, 'Destinations are: %s', destinations)
