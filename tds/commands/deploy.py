@@ -609,6 +609,7 @@ class DeployController(BaseController):
                 self.deploy_tiers.add(apptype)
 
         if not (self.deploy_hosts or self.deploy_tiers):
+            log.info('Nothing to do.')
             return dict()
 
         params['package_name'] = application.name
