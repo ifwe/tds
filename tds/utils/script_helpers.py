@@ -11,7 +11,7 @@ class UnvalidatedDeploymentNotifier(tds.notifications.Notifications):
     @staticmethod
     def convert_deployment(app_deployment):
         'Create a TDS Deployment instance for a tagopsdb AppDeployment'
-        package = app_deployment.deployment.package
+        package = app_deployment.package
 
         return tds.model.Deployment(
             # XXX: How to get groups?
@@ -72,7 +72,7 @@ class TagopsdbDeploymentProvider(object):
 
         for unvalidated_dep in unvalidated_deps:
             tier = unvalidated_dep.target
-            package = unvalidated_dep.deployment.package
+            package = unvalidated_dep.package
 
             if (tier, package) in seen:
                 continue

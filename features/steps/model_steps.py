@@ -1365,22 +1365,18 @@ def given_the_package_has_status_set_with_properties(
     target_ids = [t.id for t in targets]
 
     for app_dep in tagopsdb.AppDeployment.find(package_id=package.id):
-
         if app_dep.app_id not in target_ids:
             continue
-
         if app_dep.environment != environment:
             continue
-
         app_dep.status = status
         tagopsdb.Session.add(app_dep)
 
-    for host_dep in tagopsdb.HostDeployment.find(package_id=package.id):
-
-        if host_dep.host.environment != environment:
-            continue
-
-        tagopsdb.Session.delete(host_dep)
+    if status in ('validated', 'invalidated'):
+        for host_dep in tagopsdb.HostDeployment.find(package_id=package.id):
+            if host_dep.host.environment != environment:
+                continue
+            tagopsdb.Session.delete(host_dep)
 
     tagopsdb.Session.commit()
 

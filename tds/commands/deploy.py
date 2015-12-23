@@ -328,8 +328,13 @@ class DeployController(BaseController):
         self.environment = tagopsdb.Environment.get(
             environment=self.envs[params['env']]
         )
+        self.package = package
+        self.user = params['user']
+
         app_ids = set()
+        self.deploy_tiers = set()
         host_ids = set()
+        self.deploy_hosts = set()
         if hosts:
             for host in hosts:
                 if host.id in host_ids:
@@ -375,6 +380,7 @@ class DeployController(BaseController):
                     )
                     continue
                 host_ids.add(found.host_id)
+                self.deploy_hosts.add(host)
 
         else:
             for apptype in apptypes:
@@ -427,6 +433,7 @@ class DeployController(BaseController):
                     )
                     continue
                 app_ids.add(found.app_id)
+                self.deploy_tiers.add(apptype)
                 host_ids |= set([
                     x.host_id for x in found.get_incomplete_host_deployments()
                 ])
@@ -456,6 +463,11 @@ class DeployController(BaseController):
                 package_id=package.id,
                 status='pending',
             )
+
+        params['package_name'] = application.name
+        params['version'] = package.version
+        self.send_notifications(**params)
+
         self.deployment.status = 'queued'
         tagopsdb.Session.commit()
         if params['detach']:
@@ -599,7 +611,7 @@ class DeployController(BaseController):
         if not (self.deploy_hosts or self.deploy_tiers):
             return dict()
 
-        self.prepare_deployments(params)
+        params['package_name'] = application.name
         self.send_notifications(**params)
 
         # Let installer daemon access deployment now
@@ -706,8 +718,13 @@ class DeployController(BaseController):
         self.environment = tagopsdb.Environment.get(
             environment=self.envs[params['env']]
         )
+        self.package = package
+        self.user = params['user']
+
         host_deps = set()  # [(host_id, pkg_id), ...]
+        self.deploy_hosts = set()
         tier_deps = set()  # [(tier_id, pkg_id), ...]
+        self.deploy_tiers = set()
         tier_deps_to_invalidate = set()
         if hosts:
             for host in hosts:
@@ -719,7 +736,8 @@ class DeployController(BaseController):
                         tier_id=host.app_id,
                         environment_id=self.environment.id,
                     )
-                if current_tier_dep.realized > current_dep.realized:
+                if not current_dep or current_tier_dep.realized > \
+                        current_dep.realized:
                     current_dep = current_tier_dep
                 if not current_dep:
                     log.info(
@@ -768,6 +786,7 @@ class DeployController(BaseController):
                     )
                     continue
                 host_deps.add((host.id, validated_dep.package_id))
+                self.deploy_hosts.add(host)
         else:
             for apptype in apptypes:
                 current_dep = application.get_latest_completed_tier_deployment(
@@ -801,6 +820,7 @@ class DeployController(BaseController):
                     )
                     continue
                 tier_deps.add((apptype.id, validated_dep.package_id))
+                self.deploy_tiers.add(apptype)
                 for host in tds.model.HostTarget.find(
                     app_id=apptype.id,
                     environment_id=self.environment.id,
@@ -837,10 +857,19 @@ class DeployController(BaseController):
                 package_id=host_dep[1],
                 status='pending',
             )
+
+        params['package_name'] = application.name
+        params['version'] = package.version
+        self.send_notifications(**params)
+
         self.deployment.status = 'queued'
         for invalid_dep in tier_deps_to_invalidate:
             invalid_dep.status = 'invalidated'
             tagopsdb.Session.add(invalid_dep)
+            for host_dep in invalid_dep.deployment.host_deployments:
+                if host_dep.host.app_id != invalid_dep.app_id:
+                    continue
+                tagopsdb.Session.delete(host_dep)
         tagopsdb.Session.commit()
         if params['detach']:
             log.info('Deployment ready for installer daemon, disconnecting '

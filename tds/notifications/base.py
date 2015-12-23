@@ -130,12 +130,12 @@ class Notifier(object):
 
         dep_type = deployment.action['subcommand'].capitalize()
 
-        if deployment.target.get('hosts', None) is not None:
+        if deployment.target.get('hosts', None):
             dest_type = 'hosts'
             destinations = ', '.join(
                 x.name for x in deployment.target['hosts']
             )
-        elif deployment.target.get('apptypes', None) is not None:
+        elif deployment.target.get('apptypes', None):
             dest_type = 'app tier(s)'
             destinations = ', '.join(
                 x.name for x in deployment.target['apptypes']
