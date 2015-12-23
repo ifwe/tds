@@ -612,6 +612,7 @@ class DeployController(BaseController):
             return dict()
 
         params['package_name'] = application.name
+        self.prepare_deployments(params)
         self.send_notifications(**params)
 
         # Let installer daemon access deployment now

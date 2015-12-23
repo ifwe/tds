@@ -43,26 +43,22 @@ Feature: Real-life application usage
         And the package with name="solr-app",version="123" is deployed on the deploy target with name="solrsearch"
         And the package with name="solr-app",version="124" is deployed on the deploy target with name="solrbrowse"
 
-    Scenario Outline: other app to deploy target with tagconfig and another app
-        Given the deploy strategy is "<strategy>"
+    Scenario: other app to deploy target with tagconfig and another app
         When I run "deploy promote solr-app 124 --apptypes solrsearch"
-        Then the output has "Completed: 3 out of 3 hosts"
-        And package "solr-app" version "124" was deployed to the deploy target with name="solrsearch"
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=2,status="queued"
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=2,environment_id=1
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=2
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=2
+        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=2
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: tagconfig to deploy target with tagconfig and another app
-        Given the deploy strategy is "<strategy>"
+    Scenario: tagconfig to deploy target with tagconfig and another app
         When I run "deploy promote tagconfig 457 --apptypes solrsearch"
-        Then the output has "Completed: 3 out of 3 hosts"
-        And package "tagconfig" version "457" was deployed to the deploy target with name="solrsearch"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And there is a deployment with id=2,status="queued"
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=5,environment_id=1
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=5
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=5
+        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=5
 
     # TODO: Definitely need more tests here!!!
