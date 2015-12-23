@@ -70,7 +70,7 @@ Feature: HipChat notifications
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: fix to all apptypes
+    Scenario: fix on all apptypes
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -80,11 +80,11 @@ Feature: HipChat notifications
         And hipchat notifications are enabled
         When I run "deploy fix myapp --all-apptypes"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","the-apptype","another-apptype","in+stage"
+        And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: fix to specific apptypes
+    Scenario: fix on specific apptypes
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -98,7 +98,7 @@ Feature: HipChat notifications
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: fix to specific host
+    Scenario: fix on specific host
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -112,7 +112,7 @@ Feature: HipChat notifications
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: rollback version to apptype
+    Scenario: rollback version on apptype
         Given the package is deployed on the deploy target
         And the package has been validated
 
@@ -134,7 +134,7 @@ Feature: HipChat notifications
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: rollback version to all apptypes
+    Scenario: rollback version on all apptypes
         Given the package is deployed on the deploy target
         And the package has been validated
 
@@ -156,17 +156,17 @@ Feature: HipChat notifications
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: rollback version to specific host
+    Scenario: rollback version on specific host
         Given the package is deployed on the deploy target
         And the package has been validated
 
         And I wait 1 seconds
-        And there is a package with version="121"
+        And there is a package with version="124"
         And the package is deployed on the deploy target
         And the package has been validated
 
         And I wait 1 seconds
-        And there is a package with version="122"
+        And there is a package with version="125"
         And the package is deployed on the deploy target
         And the package has been invalidated
 
@@ -174,7 +174,7 @@ Feature: HipChat notifications
 
         When I run "deploy rollback myapp --hosts sprojhost01"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "rollback","of+version+121+of+myapp+on+hosts","sprojhost01","in+stage"
+        And a hipchat notification message contains "rollback","of+version+124+of+myapp+on+hosts","sprojhost01","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
