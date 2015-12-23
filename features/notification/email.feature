@@ -33,12 +33,12 @@ Feature: email notifications
     @email_server
     Scenario: deployment of all apptypes occurs with working mail notification
         When I run "deploy promote myapp 123 --all-apptypes"
-        Then an email is sent with the relevant information for deptype="promote",apptypes="the-apptype:another-apptype"
+        Then an email is sent with the relevant information for deptype="promote",apptypes="another-apptype:the-apptype"
 
     @email_server
     Scenario: deployment of a host(s) occurs with working mail notification
         When I run "deploy promote myapp 123 --hosts dprojhost01 danotherhost01"
-        Then an email is sent with the relevant information for deptype="promote",hosts="dprojhost01:danotherhost01"
+        Then an email is sent with the relevant information for deptype="promote",hosts="danotherhost01:dprojhost01"
 
     @email_server
     Scenario: fix of single apptype occurs with working mail notification
@@ -52,7 +52,7 @@ Feature: email notifications
         Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
         When I run "deploy fix myapp --all-apptypes"
-        Then an email is sent with the relevant information for deptype="fix",apptypes="the-apptype:another-apptype"
+        Then an email is sent with the relevant information for deptype="fix",apptypes="another-apptype:the-apptype"
 
     @email_server
     Scenario: fix of a host(s) occurs with working mail notification
@@ -81,7 +81,7 @@ Feature: email notifications
         And the package is deployed on the deploy targets
         And the package has been validated
         When I run "deploy rollback myapp --all-apptypes"
-        Then an email is sent with the relevant information for deptype="rollback",apptypes="the-apptype:another-apptype"
+        Then an email is sent with the relevant information for deptype="rollback",apptypes="another-apptype:the-apptype"
 
     @email_server
     Scenario: rollback of a host(s) occurs with a working mail notification
@@ -91,7 +91,7 @@ Feature: email notifications
         And there is a package with version="124"
         And the package is deployed on the deploy targets
         When I run "deploy rollback myapp --hosts dprojhost01 danotherhost01"
-        Then an email is sent with the relevant information for deptype="rollback",hosts="dprojhost01:danotherhost01"
+        Then an email is sent with the relevant information for deptype="rollback",hosts="danotherhost01:dprojhost01"
 
     @email_server
     Scenario: email server fails while notification attempted
