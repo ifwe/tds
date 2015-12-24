@@ -53,6 +53,10 @@ class Installer(TDSProgramBase):
             self.config.get('deploy_strategy', 'salt')
         )
 
+        self.environment = tagopsdb.model.Environment.get(
+            env=self.config.get('env', {'environment': 'dev'})['environment']
+        )
+
     def create_deploy_strategy(self, deploy_strat_name):
         if deploy_strat_name == 'mco':
             cls = tds.deploy_strategy.TDSMCODeployStrategy
@@ -76,8 +80,17 @@ class Installer(TDSProgramBase):
 
         deps = tds.model.Deployment.find(status='queued')
 
-        if deps:
+        while deps:
             deployment = deps[0]
+            if any(
+                x.environment_id != self.environment.id for x in
+                deployment.app_deployments
+            ) or any(
+                x.host.environment_id != self.environment.id for x in
+                deployment.host_deployments
+            ):
+                deps.pop(0)
+                continue
             deployment.status = 'inprogress'
             tagopsdb.Session.commit()
             deployment_process = Process(

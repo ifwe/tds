@@ -50,6 +50,70 @@ Feature: deploy daemon
             | salt      |
             | mco       |
 
+    Scenario Outline: run daemon with a deployment queued with a tier deployment in a different environment
+        Given there are deployments:
+            | id    | user  | status    |
+            | 6     | foo   | queued    |
+        And there are tier deployments:
+            | id    | deployment_id | status    | user  | app_id    | package_id    | environment_id    |
+            | 6     | 6             | pending   | foo   | 2         | 1             | 2                 |
+        And the deploy strategy is "<strategy>"
+        When I run "deploy_daemon"
+        Then there were no deployments run
+        And there is a deployment with id=6,status="queued"
+        And there is a tier deployment with id=6,deployment_id=6,status="pending"
+
+        Examples:
+            | strategy  |
+            | salt      |
+            | mco       |
+
+    Scenario Outline: run daemon with a deployment queued with a tier deployment in a different environment
+        Given there are deployments:
+            | id    | user  | status    |
+            | 6     | foo   | queued    |
+        And there are hosts:
+            | name  | env   | app_id    |
+            | host2 | stage | 2         |
+        And there are host deployments:
+            | id    | deployment_id | status    | user  | host_id   | package_id    |
+            | 6     | 6             | pending   | foo   | 2         | 1             |
+        And the deploy strategy is "<strategy>"
+        When I run "deploy_daemon"
+        Then there were no deployments run
+        And there is a deployment with id=6,status="queued"
+        And there is a host deployment with id=6,deployment_id=6,status="pending"
+
+        Examples:
+            | strategy  |
+            | salt      |
+            | mco       |
+
+    Scenario Outline: run daemon with a deployment queued with a tier deployment in a different environment
+        Given there are deployments:
+            | id    | user  | status    |
+            | 6     | foo   | queued    |
+        And there are hosts:
+            | name  | env   | app_id    |
+            | host2 | stage | 2         |
+        And there are tier deployments:
+            | id    | deployment_id | status    | user  | app_id    | package_id    | environment_id    |
+            | 6     | 6             | pending   | foo   | 2         | 1             | 2                 |
+        And there are host deployments:
+            | id    | deployment_id | status    | user  | host_id   | package_id    |
+            | 6     | 6             | pending   | foo   | 2         | 1             |
+        And the deploy strategy is "<strategy>"
+        When I run "deploy_daemon"
+        Then there were no deployments run
+        And there is a deployment with id=6,status="queued"
+        And there is a tier deployment with id=6,deployment_id=6,status="pending"
+        And there is a host deployment with id=6,deployment_id=6,status="pending"
+
+        Examples:
+            | strategy  |
+            | salt      |
+            | mco       |
+
     Scenario Outline: run deamon with a tier deployment with no hosts
         Given there is a deploy target with name="tier2"
         And there are deployments:
