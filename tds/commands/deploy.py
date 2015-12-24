@@ -741,15 +741,6 @@ class DeployController(BaseController):
                 if not current_dep or current_tier_dep.realized > \
                         current_dep.realized:
                     current_dep = current_tier_dep
-                if not current_dep:
-                    log.info(
-                        'No completed host deployment for application {a_name}'
-                        ' on host {h_name}. Skipping....'.format(
-                            a_name=application.name,
-                            t_name=apptype.name,
-                        )
-                    )
-                    continue
                 validated_dep = \
                     application.get_latest_completed_tier_deployment(
                         tier_id=host.app_id,
@@ -795,15 +786,6 @@ class DeployController(BaseController):
                         tier_id=apptype.id,
                         environment_id=self.environment.id,
                     )
-                if not current_dep:
-                    log.info(
-                        'No completed tier deployment for application {a_name}'
-                        ' on tier {t_name}. Skipping....'.format(
-                            a_name=application.name,
-                            t_name=apptype.name,
-                        )
-                    )
-                    continue
                 validated_dep = \
                     application.get_latest_completed_tier_deployment(
                         tier_id=apptype.id,

@@ -185,3 +185,55 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
         And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=1
         And there is a tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
+
+    Scenario: rollback on host with no validated deployment
+        Given there is a deploy target with name="tier2"
+        And the deploy target is a part of the project-application pair
+        And there are hosts:
+            | name  | env   | app_id    |
+            | host1 | stage | 3         |
+            | host2 | stage | 3         |
+        And the package is deployed on the deploy target
+        When I run "deploy rollback myapp --hosts host1"
+        Then the output has "No validated tier deployment for application myapp on tier tier2 of host host1 before currently deployed version. Skipping..."
+        And the output has "Nothing to do."
+        And there is no deployment with id=2
+        And there is no host deployment with deployment_id=2,host_id=3
+
+    Scenario: rollback on host with no completed deployment
+        Given there is a deploy target with name="tier2"
+        And the deploy target is a part of the project-application pair
+        And there are hosts:
+            | name  | env   | app_id    |
+            | host1 | stage | 3         |
+            | host2 | stage | 3         |
+        When I run "deploy rollback myapp --hosts host1"
+        Then the output has "no deployed version found for host "host1""
+        And there is no deployment with id=2
+        And there is no host deployment with deployment_id=2,host_id=3
+
+    Scenario: rollback on tier with no validated deployment
+        Given there is a deploy target with name="tier2"
+        And the deploy target is a part of the project-application pair
+        And there are hosts:
+            | name  | env   | app_id    |
+            | host1 | stage | 3         |
+            | host2 | stage | 3         |
+        And the package is deployed on the deploy target
+        When I run "deploy rollback myapp --apptypes tier2"
+        Then the output has "No validated tier deployment for application myapp on tier tier2 before currently deployed version. Skipping..."
+        And the output has "Nothing to do."
+        And there is no deployment with id=2
+        And there is no tier deployment with deployment_id=2,app_id=3
+
+    Scenario: rollback on tier with no completed deployment
+        Given there is a deploy target with name="tier2"
+        And the deploy target is a part of the project-application pair
+        And there are hosts:
+            | name  | env   | app_id    |
+            | host1 | stage | 3         |
+            | host2 | stage | 3         |
+        When I run "deploy rollback myapp --apptypes tier2"
+        Then the output has "no deployed version found for target "tier2""
+        And there is no deployment with id=2
+        And there is no tier deployment with deployment_id=2,app_id=3
