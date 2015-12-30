@@ -5,10 +5,6 @@ Its only intended use is as a base class for the BaseView; directly importing
 and using this view is discouraged.
 """
 
-import datetime
-
-import tds, tagopsdb
-
 from . import utils
 from .json_validators import JSONValidatedView
 
