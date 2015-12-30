@@ -19,7 +19,7 @@ import tds.model
 import tds.exceptions
 
 from .validators import ValidatedView
-from . import utils, types, descriptions
+from . import types, descriptions
 
 
 def init_view(_view_cls=None, name=None, plural=None, model=None,
