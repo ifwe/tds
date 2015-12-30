@@ -118,8 +118,101 @@ class DeployController(BaseController):
         )
 
     def display_output(self):
-        """"""
-        pass
+        """
+        Create a queue, alphabetized by tier name and host name.
+        The daemon will go through the tier deployments first, by name.
+        And go through each tier's hosts, by name.
+        And then go through all the individual non-tier host deployments, by
+        name.
+        Emulate that with a queue and then go through displaying the status for
+        each item in the queue.
+        If the currently displaying item is a tier deployment, mark that down
+        and go through displaying all its host deployments first and then
+        display the final status for the tier deployment.
+        """
+        queue = list()
+        tier_deps = sorted(
+            self.deployment.app_deployments,
+            key=lambda dep: dep.target.name,
+        )
+        host_deps = sorted(
+            self.deployment.host_deployments,
+            key=lambda dep: dep.host.name,
+        )
+
+        for tier_dep in tier_deps:
+            queue.append(tier_dep)
+            tier_host_deps = sorted(
+                [dep for dep in self.deployment.host_deployments if
+                 dep.host.app_id == tier_dep.app_id],
+                key=lambda dep: dep.host.name,
+            )
+            queue.extend(tier_host_deps)
+        for host_dep in host_deps:
+            if not any(getattr(dep, 'host_id', None) is not None and
+                       dep.host_id == host_dep.host_id for dep in queue):
+                queue.append(host_dep)
+
+        while queue:
+            curr_item = queue[0]
+            while curr_item.status not in ('inprogress', 'complete', 'ok',
+                                           'failed', 'incomplete'):
+                time.sleep(0.1)
+                tagopsdb.Session.refresh(curr_item)
+            curr_status = curr_item.status
+            if getattr(curr_item, 'app_id', None) is not None:
+                self._display_status(curr_item)
+                max_len = 0
+                for x in range(1, len(queue) + 1):
+                    if x == len(queue):
+                        max_len = x
+                        break
+                    next_item = queue[x]
+                    if getattr(next_item, 'app_id', None) is not None or \
+                            next_item.host.app_id != curr_item.app_id:
+                        max_len = x
+                        break
+                for y in range(1, max_len):
+                    next_item = queue[y]
+                    tagopsdb.Session.refresh(next_item)
+                    self._display_status(next_item)
+                    while next_item.status not in ('failed', 'ok'):
+                        time.sleep(0.1)
+                        tagopsdb.Session.refresh(next_item)
+                    self._display_status(next_item)
+                    queue.pop(y)
+                tagopsdb.Session.refresh(curr_item)
+                self._display_status(curr_item)
+            else:
+                self._display_status(curr_item, True)
+                while curr_item.status not in ('failed', 'ok'):
+                    time.sleep(0.1)
+                    tagopsdb.Session.refresh(curr_item)
+                if curr_status != curr_item.status:
+                    self._dispaly_status(curr_item, True)
+            queue.pop(0)
+        tagopsdb.Session.refresh(self.deployment)
+        log.info('Deployment:\t[{status}]'.format(
+            status=self.deployment.status
+        ))
+
+    def _display_status(self, dep, host_only=False):
+        if host_only:
+            log.info('{host_name}:\t\t[{status}]'.format(
+                host_name=dep.host.name,
+                status=dep.status,
+            ))
+            return
+        if getattr(dep, 'app_id', None) is not None:
+            log.info('{tier_name}:\t\t[{status}]'.format(
+                tier_name=dep.target.name,
+                status=dep.status,
+            ))
+        else:
+            log.info('\t{host_name}:\t[{status}]'.format(
+                host_name=dep.host.name,
+                status=dep.status,
+            ))
 
     def find_current_app_deployments(self, package, apptypes, params):
         """
@@ -169,19 +262,19 @@ class DeployController(BaseController):
             if self.deployment.status in ['pending', 'queued']:
                 log.info('Deployment was still pending or queued, '
                          'canceling now.')
+                self.deployment.status = 'canceled'
+                tagopsdb.Session.commit()
             elif self.deployment.status == 'inprogress':
                 log.info('Deployment was in progress, canceling now; '
                          'the installer daemon will stop after its current '
                          'host deployment is complete.')
+                self.deployment.status = 'canceled'
+                tagopsdb.Session.commit()
             elif self.deployment.status in ['complete', 'failed']:
                 log.info('Deployment was already completed, nothing to do.')
-                return
             else:
                 raise RuntimeError('Deployment state "%s" unexpected.'
                                    % self.deployment.status)
-
-            self.deployment.status = 'canceled'
-            tagopsdb.Session.commit()
 
     def prepare_deployments(self, params):
         """"""

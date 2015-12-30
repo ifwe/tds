@@ -60,7 +60,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         |                   | salt     |
         | --apptypes appfoo | salt     |
 
-    Scenario Outline: restart an application with a multiple apptypes with no option
+    Scenario Outline: restart an application with multiple apptypes with no option
         Given there is a deploy target with name="appbar"
         And the deploy strategy is "<strategy>"
         And the deploy target is a part of the project-application pair
@@ -72,7 +72,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         | mco      |
         | salt     |
 
-    Scenario Outline: restart an application with a multiple apptypes with apptypes option
+    Scenario Outline: restart an application with multiple apptypes with apptypes option
         Given there is a deploy target with name="appbar"
         And the deploy strategy is "<strategy>"
         And the deploy target is a part of the project-application pair
@@ -86,7 +86,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         | mco      |
         | salt     |
 
-    Scenario Outline: restart an application with a multiple apptypes with all-apptypes option
+    Scenario Outline: restart an application with multiple apptypes with all-apptypes option
         Given there is a deploy target with name="appbar"
         And the deploy strategy is "<strategy>"
         And there are hosts:
