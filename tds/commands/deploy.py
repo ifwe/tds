@@ -126,9 +126,9 @@ class DeployController(BaseController):
         name.
         Emulate that with a queue and then go through displaying the status for
         each item in the queue.
-        If the currently displaying item is a tier deployment, mark that down
-        and go through displaying all its host deployments first and then
-        display the final status for the tier deployment.
+        If the currently displaying item is a tier deployment, go through
+        displaying all its host deployments first and then display the final
+        status for the tier deployment.
         """
         queue = list()
         tier_deps = sorted(
@@ -163,16 +163,14 @@ class DeployController(BaseController):
             if getattr(curr_item, 'app_id', None) is not None:
                 self._display_status(curr_item)
                 max_len = 0
-                for x in range(1, len(queue) + 1):
-                    if x == len(queue):
-                        max_len = x
-                        break
+                for x in range(1, len(queue)):
+                    max_len = x
                     next_item = queue[x]
                     if getattr(next_item, 'app_id', None) is not None or \
                             next_item.host.app_id != curr_item.app_id:
-                        max_len = x
+                        max_len -= 1
                         break
-                for y in range(1, max_len):
+                for y in range(0, max_len):
                     next_item = queue[1]
                     tagopsdb.Session.refresh(next_item)
                     self._display_status(next_item)
