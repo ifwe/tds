@@ -1,4 +1,4 @@
-Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptypes]
+Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptypes] [--detach]
     As a developer
     I want to redeploy older versions of applications to targets
     So that I can correct problems with services easily
@@ -35,20 +35,20 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package has been validated
 
     Scenario: rollback application that doesn't exist
-        When I run "deploy rollback badapp"
+        When I run "deploy rollback badapp --detach"
         Then the output has "Application does not exist: badapp"
 
     Scenario: rollback version to host that doesn't exist
-        When I run "deploy rollback myapp --hosts badhost01"
+        When I run "deploy rollback myapp --hosts badhost01 --detach"
         Then the output has "Host does not exist: badhost01"
 
     Scenario: rollback version to apptype that doesn't exist
-        When I run "deploy rollback myapp --apptype bad-apptype"
+        When I run "deploy rollback myapp --apptype bad-apptype --detach"
         Then the output has "Valid apptypes for application "myapp" are: ['the-apptype']"
 
     Scenario: rollback command with no specifier
-        When I run "deploy rollback myapp"
-        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        When I run "deploy rollback myapp --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with id=2,status="queued",delay=0
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
@@ -58,8 +58,8 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
     Scenario: rollback version to hosts
         Given there is a package with version="124"
         And the package is deployed on the hosts
-        When I run "deploy rollback myapp --hosts projhost01 projhost02"
-        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        When I run "deploy rollback myapp --hosts projhost01 projhost02 --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with id=2,status="queued",delay=0
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=3
         And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=3
@@ -67,8 +67,8 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is no tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
 
     Scenario: rollback version to apptype
-        When I run "deploy rollback myapp --apptype the-apptype"
-        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        When I run "deploy rollback myapp --apptype the-apptype --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with id=2,status="queued",delay=0
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
@@ -93,8 +93,8 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package "123" is deployed on the deploy target
         And the package "123" is validated
 
-        When I run "deploy rollback myapp --all-apptypes"
-        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        When I run "deploy rollback myapp --all-apptypes --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with id=2,status="queued",delay=0
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
         And there is a tier deployment with deployment_id=2,app_id=3,status="pending",environment_id=2,package_id=1
@@ -109,13 +109,13 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
     #TODO: Figure out what to do with these tests
     # Scenario: rollback version to hosts with a failure
     #     Given the host "projhost01" will fail to deploy
-    #     When I run "deploy rollback myapp --hosts projhost01 projhost02"
+    #     When I run "deploy rollback myapp --hosts projhost01 projhost02 --detach"
     #     Then the output has "Some hosts had failures"
     #     And the output has "Hostname: projhost01"
     #
     # Scenario: rollback version to apptype with a failure
     #     Given the host "projhost01" will fail to deploy
-    #     When I run "deploy rollback myapp --apptype the-apptype"
+    #     When I run "deploy rollback myapp --apptype the-apptype --detach"
     #     Then the output has "Some hosts had failures"
     #     And the output has "Hostname: projhost01"
     #
@@ -137,7 +137,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
     #     And the package has been validated
     #
     #     And the host "projhost01" will fail to deploy
-    #     When I run "deploy rollback myapp --all-apptypes"
+    #     When I run "deploy rollback myapp --all-apptypes --detach"
     #     Then the output has "Some hosts had failures"
     #     And the output has "Hostname: projhost01"
 
@@ -165,8 +165,8 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And the package "124" is deployed on the deploy target
         And the package has been validated
 
-        When I run "deploy rollback myapp --hosts anotherhost01"
-        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        When I run "deploy rollback myapp --hosts anotherhost01 --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with id=2,status="queued",delay=0
         And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=3
         And there is no host deployment with deployment_id=2,host_id=1
@@ -178,8 +178,8 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is no tier deployment with app_id=3,status="invalidated",environment_id=2,package_id=4
 
     Scenario: rollback version with delay option
-        When I run "deploy rollback myapp --delay 10"
-        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        When I run "deploy rollback myapp --delay 10 --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with id=2,status="queued",delay=10
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",environment_id=2,package_id=1
         And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=1
@@ -194,7 +194,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
             | host1 | stage | 3         |
             | host2 | stage | 3         |
         And the package is deployed on the deploy target
-        When I run "deploy rollback myapp --hosts host1"
+        When I run "deploy rollback myapp --hosts host1 --detach"
         Then the output has "No validated tier deployment for application myapp on tier tier2 of host host1 before currently deployed version. Skipping..."
         And the output has "Nothing to do."
         And there is no deployment with id=2
@@ -207,7 +207,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
             | name  | env   | app_id    |
             | host1 | stage | 3         |
             | host2 | stage | 3         |
-        When I run "deploy rollback myapp --hosts host1"
+        When I run "deploy rollback myapp --hosts host1 --detach"
         Then the output has "no deployed version found for host "host1""
         And there is no deployment with id=2
         And there is no host deployment with deployment_id=2,host_id=3
@@ -220,7 +220,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
             | host1 | stage | 3         |
             | host2 | stage | 3         |
         And the package is deployed on the deploy target
-        When I run "deploy rollback myapp --apptypes tier2"
+        When I run "deploy rollback myapp --apptypes tier2 --detach"
         Then the output has "No validated tier deployment for application myapp on tier tier2 before currently deployed version. Skipping..."
         And the output has "Nothing to do."
         And there is no deployment with id=2
@@ -233,7 +233,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
             | name  | env   | app_id    |
             | host1 | stage | 3         |
             | host2 | stage | 3         |
-        When I run "deploy rollback myapp --apptypes tier2"
+        When I run "deploy rollback myapp --apptypes tier2 --detach"
         Then the output has "no deployed version found for target "tier2""
         And there is no deployment with id=2
         And there is no tier deployment with deployment_id=2,app_id=3

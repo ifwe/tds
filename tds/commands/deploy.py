@@ -173,14 +173,14 @@ class DeployController(BaseController):
                         max_len = x
                         break
                 for y in range(1, max_len):
-                    next_item = queue[y]
+                    next_item = queue[1]
                     tagopsdb.Session.refresh(next_item)
                     self._display_status(next_item)
                     while next_item.status not in ('failed', 'ok'):
                         time.sleep(0.1)
                         tagopsdb.Session.refresh(next_item)
                     self._display_status(next_item)
-                    queue.pop(y)
+                    queue.pop(1)
                 tagopsdb.Session.refresh(curr_item)
                 self._display_status(curr_item)
             else:
