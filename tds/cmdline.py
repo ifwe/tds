@@ -275,10 +275,6 @@ DEPLOY_DATA = odict([
                 ('help', 'Time delay (in seconds) between each restart'),
                 ('type', int),
             ])),
-            (('--detach',), odict([
-                ('help', 'Disconnect client after preparing deployments'),
-                ('action', 'store_true'),
-            ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for restart'),
                 ('metavar', 'HOST'),
