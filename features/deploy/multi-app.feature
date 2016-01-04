@@ -44,7 +44,7 @@ Feature: Real-life application usage
         And the package with name="solr-app",version="124" is deployed on the deploy target with name="solrbrowse"
 
     Scenario: other app to deploy target with tagconfig and another app
-        When I run "deploy promote solr-app 124 --apptypes solrsearch"
+        When I run "deploy promote solr-app 124 --apptypes solrsearch --detach"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with id=2,status="queued"
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=2,environment_id=1
@@ -53,7 +53,7 @@ Feature: Real-life application usage
         And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=2
 
     Scenario: tagconfig to deploy target with tagconfig and another app
-        When I run "deploy promote tagconfig 457 --apptypes solrsearch"
+        When I run "deploy promote tagconfig 457 --apptypes solrsearch --detach"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with id=2,status="queued"
         And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=5,environment_id=1
