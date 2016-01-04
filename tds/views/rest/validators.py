@@ -122,9 +122,8 @@ class ValidatedView(JSONValidatedView):
         if 'application' in self.request.validated:
             if 'package' in self.name:
                 if 'job' not in self.request.validated_params:
-                    self.request.validated_params['job'] = self.request.validated[
-                        'application'
-                    ].path
+                    self.request.validated_params['job'] = \
+                        self.request.validated['application'].path
 
     def validate_put_post(self, _request):
         """
@@ -240,6 +239,9 @@ class ValidatedView(JSONValidatedView):
                     self.request.errors.status = 409
 
     def _validate_all_unique_params(self, request_type):
+        """
+        Validate all unique params if the view contains a unique attribute.
+        """
         if getattr(self, 'unique', None) is None:
             return
         for param in self.unique:
@@ -254,6 +256,14 @@ class ValidatedView(JSONValidatedView):
 
     def _validate_unique_param(self, request_type, param_name, obj_type=None,
                                msg_param_name=None):
+        """
+        Validate that a parameter is unique in the database.
+        request_type is "(POST|PUT)".
+        param_name is the API exposed name for the attribute and should be in
+        self.request.validated_params.
+        obj_type is the model or None if self.model.
+        msg_param_name is the param name to use in the error message.
+        """
         if not obj_type:
             obj_type = self.name
         if not msg_param_name:
@@ -521,7 +531,8 @@ class ValidatedView(JSONValidatedView):
             else:
                 self.result[method]['permissions'] = 'user'
 
-        if getattr(self, '_add_additional_individual_options', None) is not None:
+        if getattr(self, '_add_additional_individual_options', None) is not \
+                None:
             getattr(self, '_add_additional_individual_options')(request)
 
     def validate_individual_options(self, request):

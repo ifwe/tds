@@ -116,8 +116,8 @@ class BaseView(ValidatedView):
             self.defaults = {}
         try:
             with open(opj(os.path.dirname(os.path.realpath(__file__)),
-                          'settings.yml')) as f:
-                self.settings = yaml.load(f.read())
+                          'settings.yml')) as settings_file:
+                self.settings = yaml.load(settings_file.read())
         except:
             raise tds.exceptions.ConfigurationError(
                 "REST settings file does not exist. Expecting file {path}."
@@ -125,9 +125,9 @@ class BaseView(ValidatedView):
                                  'settings.yml'))
             )
         if self.valid_attrs and len(self.types) > 0:
-            for y in [x for x in self.types if self.types[x] == 'choice']:
+            for param in [x for x in self.types if self.types[x] == 'choice']:
                 choices = getattr(
-                    self, '{param}_choices'.format(param=y), None
+                    self, '{param}_choices'.format(param=param), None
                 )
                 if choices is None or len(choices) == 0:
                     try:
@@ -135,18 +135,18 @@ class BaseView(ValidatedView):
                             table = self.model.delegate.__table__
                         else:
                             table = self.model.__table__
-                        col_name = y
-                        if y in self.param_routes:
-                            col_name = self.param_routes[y]
+                        col_name = param
+                        if param in self.param_routes:
+                            col_name = self.param_routes[param]
                         setattr(
                             self,
-                            '{param}_choices'.format(param=y),
+                            '{param}_choices'.format(param=param),
                             table.columns[col_name].type.enums
                         )
                     except Exception as exc:
                         raise tds.exceptions.ProgrammingError(
                             "No choices set for param {param}. "
-                            "Got exception {e}.".format(param=y, e=exc)
+                            "Got exception {e}.".format(param=param, e=exc)
                         )
 
         super(BaseView, self).__init__(*args, **kwargs)
@@ -158,22 +158,22 @@ class BaseView(ValidatedView):
         if param_routes is None:
             param_routes = self.param_routes
 
-        d = obj
+        obj_dict = obj
         if getattr(obj, 'to_dict', None) is not None:
-            d = obj.to_dict()
+            obj_dict = obj.to_dict()
 
-        for k in param_routes:
-            if param_routes[k] in d:
-                d[k] = d[param_routes[k]]
-                del d[param_routes[k]]
+        for param in param_routes:
+            if param_routes[param] in obj_dict:
+                obj_dict[param] = obj_dict[param_routes[param]]
+                del obj_dict[param_routes[param]]
 
         if getattr(self.request, 'validated', False) and 'select' in \
                 self.request.validated:
-            for k in d:
-                if k not in self.request.validated['select']:
-                    del d[k]
+            for key in obj_dict:
+                if key not in self.request.validated['select']:
+                    del obj_dict[key]
 
-        return d
+        return obj_dict
 
     def get_obj_by_name_or_id(self, obj_type=None, model=None, name_attr=None,
                               param_name=None, can_be_name=True,

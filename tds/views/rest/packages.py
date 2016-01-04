@@ -47,16 +47,29 @@ class PackageView(BaseView):
     )
 
     def __init__(self, *args, **kwargs):
+        """
+        Do some basic initialization.
+        """
         del self.types['application_id']
         del self.param_descriptions['application_id']
         super(PackageView, self).__init__(*args, **kwargs)
 
     def validate_individual_package(self, request):
+        """
+        Validate that the package being retrieved exists and the application
+        that the package is being referenced by also exists.
+        If the package exists, added it to self.request.validated[self.name].
+        """
         self.get_obj_by_name_or_id('application')
         if 'application' in request.validated:
             self.get_pkg_by_version_revision()
 
     def validate_package_collection(self, request):
+        """
+        Validate that the application being used to reference packages exists
+        and add all packages for that application at
+        self.request.validated[self.plural].
+        """
         self.get_obj_by_name_or_id('application')
         if 'application' in request.validated:
             self.get_pkgs_by_limit_start()
@@ -214,12 +227,19 @@ class PackageView(BaseView):
             ].path
 
     def _add_jenkins_error(self, message):
+        """
+        Add a Jenkins error at 'job' or 'name_or_id' in that order.
+        """
         if 'job' in self.request.validated_params:
             self.request.errors.add('query', 'job', message)
         else:
             self.request.errors.add('path', 'name_or_id', message)
 
     def _validate_jenkins_build(self):
+        """
+        Validate that a Jenkins build exists for a package being added or
+        updated.
+        """
         try:
             jenkins = jenkinsapi.jenkins.Jenkins(self.settings['jenkins_url'])
         except KeyError:
@@ -269,12 +289,12 @@ class PackageView(BaseView):
 
         try:
             int(version)
-        except:
+        except ValueError:
             return
 
         try:
             build = job.get_build(int(version))
-        except (KeyError, JenkinsAPIException, NotFound) as exc:
+        except (KeyError, JenkinsAPIException, NotFound):
             self._add_jenkins_error(
                 "Build with version {vers} for job {job} does not exist on "
                 "Jenkins server.".format(vers=version, job=job_name)

@@ -72,7 +72,9 @@ class DeployController(BaseController):
     }
 
     def __init__(self, config):
-        """"""
+        """
+        Set some basic attributes.
+        """
 
         self.deployment = None
         self.deployment_status = {}
@@ -89,6 +91,10 @@ class DeployController(BaseController):
         )
 
     def create_deploy_strategy(self, deploy_strat_name):
+        """
+        Create a deploy strategy and set it to self.deploy_strategy for use by
+        restart command.
+        """
         if deploy_strat_name == 'mco':
             cls = tds.deploy_strategy.TDSMCODeployStrategy
         elif deploy_strat_name == 'salt':
@@ -105,8 +111,9 @@ class DeployController(BaseController):
         )
 
     def determine_availability(self, host, deployment=False):
-        """"""
-
+        """
+        Determine if a host is available for deployment.
+        """
         if deployment:
             host_deps = tagopsdb.HostDeployment.find(host_id=host.host_id)
         else:
@@ -163,14 +170,14 @@ class DeployController(BaseController):
             if getattr(curr_item, 'app_id', None) is not None:
                 self._display_status(curr_item)
                 max_len = 0
-                for x in range(1, len(queue)):
-                    max_len = x
-                    next_item = queue[x]
+                for idx in range(1, len(queue)):
+                    max_len = idx
+                    next_item = queue[idx]
                     if getattr(next_item, 'app_id', None) is not None or \
                             next_item.host.app_id != curr_item.app_id:
                         max_len -= 1
                         break
-                for y in range(0, max_len):
+                for _idx in range(0, max_len):
                     next_item = queue[1]
                     tagopsdb.Session.refresh(next_item)
                     self._display_status(next_item)
@@ -187,7 +194,7 @@ class DeployController(BaseController):
                     time.sleep(0.1)
                     tagopsdb.Session.refresh(curr_item)
                 if curr_status != curr_item.status:
-                    self._dispaly_status(curr_item, True)
+                    self._display_status(curr_item, True)
             queue.pop(0)
         tagopsdb.Session.refresh(self.deployment)
         log.info('Deployment:\t[{status}]'.format(
@@ -195,6 +202,11 @@ class DeployController(BaseController):
         ))
 
     def _display_status(self, dep, host_only=False):
+        """
+        Display the current status of a host or tier deployment.
+        If host_only, don't indent for a host deployment being part of a tier
+        deployment.
+        """
         if host_only:
             log.info('{host_name}:\t\t[{status}]'.format(
                 host_name=dep.host.name,
@@ -217,7 +229,6 @@ class DeployController(BaseController):
         Given a specific package, determine current deployments of that
         package for a given set of apptypes in a given environment.
         """
-
         environment = tagopsdb.Environment.get(
             environment=self.envs[params['env']]
         )
@@ -242,7 +253,6 @@ class DeployController(BaseController):
         Find the previous environment (short name).
         Note this currently does NOT validate the environment name passed.
         """
-
         if env == 'dev':
             return None
 
@@ -250,7 +260,10 @@ class DeployController(BaseController):
         return short_envs[short_envs.index(env) - 1]
 
     def manage_attached_session(self):
-        """"""
+        """
+        Attach to the session and handle a KeyboardInterrupt by canceling the
+        deployment if possible/reasonable. Inform user.
+        """
         log.info('Deployment now being run, press Ctrl-C at any time to '
                  'cancel...')
 
@@ -275,8 +288,9 @@ class DeployController(BaseController):
                                    % self.deployment.status)
 
     def prepare_deployments(self, params):
-        """"""
-
+        """
+        Prepare deployments for a promote.
+        """
         self.deployment = tds.model.Deployment.create(
             user=self.user,
             delay=params.get('delay', 0),
@@ -307,8 +321,9 @@ class DeployController(BaseController):
         tagopsdb.Session.commit()
 
     def prepare_host_deployments(self, hosts=None):
-        """"""
-
+        """
+        Prepare host deployments for a promote.
+        """
         hosts_to_do = []
         host_deps = []
 
@@ -345,8 +360,9 @@ class DeployController(BaseController):
         return host_deps
 
     def prepare_tier_deployments(self):
-        """"""
-
+        """
+        Prepare tier deployments for a promote.
+        """
         tier_deps = []
 
         self.deployment_status['hosts'] = []
@@ -388,9 +404,8 @@ class DeployController(BaseController):
 
     def perform_validation(self, app_deployment, package, params):
         """
-        Perform validation on a given app deployment
+        Perform validation on a given app deployment.
         """
-
         app_deployment.status = 'validated'
         tagopsdb.Session.commit()
 
@@ -401,8 +416,9 @@ class DeployController(BaseController):
         )
 
     def send_notifications(self, **params):
-        """Send notifications for a given deployment"""
-
+        """
+        Send notifications for a given deployment.
+        """
         deployment = create_deployment(
             hosts=self.deploy_hosts,
             apptypes=self.deploy_tiers,
@@ -416,6 +432,9 @@ class DeployController(BaseController):
     @input_validate('targets')
     @input_validate('application')
     def fix(self, application, package, hosts=None, apptypes=None, **params):
+        """
+        Perform a deploy fix.
+        """
         self.environment = tagopsdb.Environment.get(
             environment=self.envs[params['env']]
         )
@@ -573,10 +592,12 @@ class DeployController(BaseController):
     @input_validate('application')
     def invalidate(self, application, package, hosts=None, apptypes=None,
                    **params):
-        # Ensure that, for the tiers we're checking, the given package
-        # had been deployed at some point and is in the 'validated' state.
-        # If so, update tier to 'invalidated', otherwise do nothing
-        # (and mention nothing has been done).
+        """
+        Ensure that, for the tiers we're checking, the given package
+        had been deployed at some point and is in the 'validated' state.
+        If so, update tier to 'invalidated', otherwise do nothing
+        (and mention nothing has been done).
+        """
         app_deployments = self.find_current_app_deployments(
             package, apptypes, params
         )
@@ -602,10 +623,12 @@ class DeployController(BaseController):
     @input_validate('application')
     def promote(self, application, package, hosts=None, apptypes=None,
                 **params):
-        # For the given hosts for tiers, ensure the given package is not
-        # currently deployed (do nothing if this is the case), then attempt
-        # the deployments.... okay, this one is really complicated, let's
-        # discuss this one more.
+        """
+        For the given hosts for tiers, ensure the given package is not
+        currently deployed (do nothing if this is the case), then attempt
+        the deployments.... okay, this one is really complicated, let's
+        discuss this one more.
+        """
         self.environment = tagopsdb.Environment.get(
             environment=self.envs[params['env']]
         )
@@ -1010,11 +1033,13 @@ class DeployController(BaseController):
     @input_validate('application')
     def validate(self, application, package, hosts=None, apptypes=None,
                  **params):
-        # Ensure that, for the tiers we're checking, the given package is the
-        # current deployment and that the tier is in 'complete' state.
-        # If so, verify all the hosts have deployments in 'ok' state.
-        # If so, update tier to 'validated' and remove host deployments.
-        # Otherwise, throw appropriate error.
+        """
+        Ensure that, for the tiers we're checking, the given package is the
+        current deployment and that the tier is in 'complete' state.
+        If so, verify all the hosts have deployments in 'ok' state.
+        If so, update tier to 'validated' and remove host deployments.
+        Otherwise, throw appropriate error.
+        """
         app_deployments = self.find_current_app_deployments(
             package, apptypes, params
         )
