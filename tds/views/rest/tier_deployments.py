@@ -11,6 +11,9 @@ from .base import BaseView, init_view
 @resource(collection_path="/tier_deployments", path="/tier_deployments/{id}")
 @init_view(name="tier-deployment", model=tds.model.AppDeployment)
 class TierDeploymentView(BaseView):
+    """
+    View for a tier deployment.
+    """
 
     param_routes = {
         'tier_id': 'app_id',
@@ -40,6 +43,10 @@ class TierDeploymentView(BaseView):
     )
 
     def validate_tier_deployment_delete(self):
+        """
+        Validate that the tier deployment at self.request.validated[self.name]
+        is okay to delete.
+        """
         if self.name not in self.request.validated:
             return
         if self.request.validated[self.name].deployment.status != 'pending':
@@ -50,7 +57,11 @@ class TierDeploymentView(BaseView):
             )
             self.request.errors.status = 403
 
-    def validate_individual_tier_deployment(self, request):
+    def validate_individual_tier_deployment(self, _request):
+        """
+        Validate that the tier deployment the user is attempting to get exists
+        and add to request.validated[self.name].
+        """
         self.get_obj_by_name_or_id(obj_type='Tier deployment',
                                    model=self.model, param_name='id',
                                    can_be_name=False, dict_name=self.name)
@@ -131,6 +142,9 @@ class TierDeploymentView(BaseView):
                 self.request.errors.status = 409
 
     def validate_tier_deployment_put(self):
+        """
+        Validate a PUT request for a tier deployment.
+        """
         if self.name not in self.request.validated:
             return
         if self.request.validated[self.name].deployment.status != 'pending':
@@ -179,6 +193,11 @@ class TierDeploymentView(BaseView):
         self._validate_project_package(pkg_id, tier_id)
 
     def _validate_project_package(self, pkg_id, tier_id):
+        """
+        Validate that the tier with ID tier_id is associated with the
+        application package.application for package with ID pkg_id for some
+        project. If it isn't, add an error and set status to 403 (Forbidden).
+        """
         found_pkg = tds.model.Package.get(id=pkg_id)
         found_tier = tds.model.AppTarget.get(id=tier_id)
         if not (found_pkg and found_tier):
@@ -200,6 +219,9 @@ class TierDeploymentView(BaseView):
             self.request.errors.status = 403
 
     def validate_tier_deployment_post(self):
+        """
+        Validate a POST request for a new tier deployment.
+        """
         if 'status' in self.request.validated_params:
             if self.request.validated_params['status'] != 'pending':
                 self.request.errors.add(
@@ -226,11 +248,14 @@ class TierDeploymentView(BaseView):
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
+        """
+        Handle a collection POST request after all validation has passed.
+        """
         for host in tds.model.HostTarget.find(
             app_id=self.request.validated_params['tier_id'],
             environment_id=self.request.validated_params['environment_id']
         ):
-            host_dep = tds.model.HostDeployment.create(
+            tds.model.HostDeployment.create(
                 host_id=host.id,
                 deployment_id=self.request.validated_params['deployment_id'],
                 user=self.request.validated['user'],
@@ -243,6 +268,9 @@ class TierDeploymentView(BaseView):
     @view(validators=('validate_individual', 'validate_put_post',
                       'validate_obj_put', 'validate_cookie'))
     def put(self):
+        """
+        Handle a PUT request after all validation has passed.
+        """
         curr_dep = self.request.validated[self.name]
         if 'tier_id' in self.request.validated_params:
             new_tier_id = self.request.validated_params['tier_id']

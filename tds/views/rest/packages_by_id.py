@@ -17,6 +17,9 @@ from . import types as obj_types, descriptions
 @resource(collection_path="/packages", path="/packages/{id}")
 @init_view(name='package-by-id', model=tds.model.Package, set_params=False)
 class PackageByIDView(BaseView):
+    """
+    View for packages retrieved by ID.
+    """
 
     types = {
         'id': 'integer',
@@ -65,11 +68,17 @@ class PackageByIDView(BaseView):
     required_post_fields = ('version', 'revision', 'name')
 
     def validate_individual_package_by_id(self, request):
+        """
+        Validate that the package being retrieved by ID actually exists.
+        """
         self.get_obj_by_name_or_id(obj_type='Package', model=self.model,
                                    param_name='id', can_be_name=False,
                                    dict_name=self.name)
 
     def validate_package_by_id_put(self):
+        """
+        Validate a PUT request to a package retrieved by ID.
+        """
         if self.name not in self.request.validated:
             return
 
@@ -120,6 +129,9 @@ class PackageByIDView(BaseView):
                 self.request.errors.status = 403
 
     def validate_package_by_id_post(self):
+        """
+        Validate a POST for a new package.
+        """
         if 'name' not in self.request.validated_params:
             return
         found_app = tds.model.Application.get(
@@ -165,6 +177,10 @@ class PackageByIDView(BaseView):
         self._validate_jenkins_build()
 
     def _add_jenkins_error(self, message):
+        """
+        Add a Jenkins error at 'job', 'version', 'name', or 'id' in that order
+        with description message.
+        """
         if 'job' in self.request.validated_params:
             self.request.errors.add('query', 'job', message)
         elif 'version' in self.request.validated_params:
@@ -175,6 +191,10 @@ class PackageByIDView(BaseView):
             self.request.errors.add('path', 'id', message)
 
     def _validate_jenkins_build(self):
+        """
+        Validate that a Jenkins build exists for a package being added or
+        updated.
+        """
         try:
             jenkins = jenkinsapi.jenkins.Jenkins(self.settings['jenkins_url'])
         except KeyError:
@@ -231,12 +251,12 @@ class PackageByIDView(BaseView):
 
         try:
             int(version)
-        except:
+        except ValueError:
             return
 
         try:
             build = job.get_build(int(version))
-        except (KeyError, JenkinsAPIException, NotFound) as exc:
+        except (KeyError, JenkinsAPIException, NotFound):
             self._add_jenkins_error(
                 "Build with version {vers} for job {job} does not exist on "
                 "Jenkins server.".format(vers=version, job=job_name)
@@ -258,6 +278,9 @@ class PackageByIDView(BaseView):
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
+        """
+        Handle a collection POST after all validation has been passed.
+        """
         self.request.validated_params['creator'] = self.request.validated[
             'user'
         ]

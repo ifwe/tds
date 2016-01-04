@@ -12,6 +12,9 @@ from .base import BaseView, init_view
 @resource(collection_path="/deployments", path="/deployments/{id}")
 @init_view(name="deployment")
 class DeploymentView(BaseView):
+    """
+    View for deployments.
+    """
 
     param_routes = {}
 
@@ -29,7 +32,10 @@ class DeploymentView(BaseView):
         POST=dict(description="Add a new deployment."),
     )
 
-    def _add_additional_individual_options(self, request):
+    def _add_additional_individual_options(self, _request):
+        """
+        Add additional options for the individual URL endpoint.
+        """
         self.result['DELETE']['parameters'] = dict(
             cascade=dict(
                 type='boolean',
@@ -44,6 +50,9 @@ class DeploymentView(BaseView):
         )
 
     def _handle_extra_params(self):
+        """
+        Handle extra params for queries to this URL endpoint.
+        """
         self.valid_attrs.append('force')
         if 'force' in self.request.params:
             if self.request.method != 'PUT':
@@ -66,9 +75,18 @@ class DeploymentView(BaseView):
             del self.request.validated_params['force']
 
     def validate_individual_deployment(self, _request):
+        """
+        Validate that the deployment being retrieved exists.
+        Add an error if it doesn't.
+        Add it to self.request.validated[self.name] if it does.
+        """
         self.get_obj_by_name_or_id(param_name='id', can_be_name=False)
 
     def validate_deployment_delete(self):
+        """
+        Validate that it's okay to delete the deployment at
+        self.request.validated[self.name].
+        """
         # No deployment validated, can't do any further checks.
         # Should already be a 4xx error response.
         if self.name not in self.request.validated:
@@ -103,6 +121,9 @@ class DeploymentView(BaseView):
                 self.request.validated[self.name].app_deployments
 
     def validate_deployment_post(self):
+        """
+        Validate the addition of a new deployment.
+        """
         if 'status' in self.request.validated_params:
             if self.request.validated_params['status'] != 'pending':
                 self.request.errors.add(
@@ -256,6 +277,10 @@ class DeploymentView(BaseView):
         self.request.errors.status = 403
 
     def validate_deployment_put(self):
+        """
+        Validate a PUT request for the deployment at
+        self.request.validated[self.name].
+        """
         if 'status' in self.request.validated_params:
             getattr(self, '_validate_put_status_{status}'.format(
                 status=self.request.validated_params['status']
@@ -264,5 +289,8 @@ class DeploymentView(BaseView):
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
+        """
+        Handle a collection POST after all validation has passed.
+        """
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
