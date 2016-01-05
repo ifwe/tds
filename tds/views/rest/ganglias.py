@@ -2,7 +2,7 @@
 REST API view for Ganglia objects.
 """
 
-from cornice.resource import resource, view
+from cornice.resource import resource
 
 import tagopsdb
 from .base import BaseView, init_view
