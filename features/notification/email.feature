@@ -27,38 +27,38 @@ Feature: email notifications
 
     @email_server
     Scenario: deployment of single apptype occurs with working mail notification
-        When I run "deploy promote myapp 123 --apptypes the-apptype"
+        When I run "deploy promote myapp 123 --apptypes the-apptype --detach"
         Then an email is sent with the relevant information for deptype="promote",apptypes="the-apptype"
 
     @email_server
     Scenario: deployment of all apptypes occurs with working mail notification
-        When I run "deploy promote myapp 123 --all-apptypes"
+        When I run "deploy promote myapp 123 --all-apptypes --detach"
         Then an email is sent with the relevant information for deptype="promote",apptypes="another-apptype:the-apptype"
 
     @email_server
     Scenario: deployment of a host(s) occurs with working mail notification
-        When I run "deploy promote myapp 123 --hosts dprojhost01 danotherhost01"
+        When I run "deploy promote myapp 123 --hosts dprojhost01 danotherhost01 --detach"
         Then an email is sent with the relevant information for deptype="promote",hosts="danotherhost01:dprojhost01"
 
     @email_server
     Scenario: fix of single apptype occurs with working mail notification
         Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
-        When I run "deploy fix myapp --apptypes the-apptype"
+        When I run "deploy fix myapp --apptypes the-apptype --detach"
         Then an email is sent with the relevant information for deptype="fix",apptypes="the-apptype"
 
     @email_server
     Scenario: fix of all apptypes occurs with working mail notification
         Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
-        When I run "deploy fix myapp --all-apptypes"
+        When I run "deploy fix myapp --all-apptypes --detach"
         Then an email is sent with the relevant information for deptype="fix",apptypes="another-apptype:the-apptype"
 
     @email_server
     Scenario: fix of a host(s) occurs with working mail notification
         Given the package is deployed on the deploy targets in the "dev" env
         And the package failed to deploy on the host with name="dprojhost02"
-        When I run "deploy fix myapp --hosts dprojhost02"
+        When I run "deploy fix myapp --hosts dprojhost02 --detach"
         Then an email is sent with the relevant information for deptype="fix",hosts="dprojhost02"
 
     @email_server
@@ -69,7 +69,7 @@ Feature: email notifications
         And there is a package with version="124"
         And the package is deployed on the deploy targets
         And the package has been validated
-        When I run "deploy rollback myapp --apptypes the-apptype"
+        When I run "deploy rollback myapp --apptypes the-apptype --detach"
         Then an email is sent with the relevant information for deptype="rollback",apptypes="the-apptype"
 
     @email_server
@@ -80,7 +80,7 @@ Feature: email notifications
         And there is a package with version="124"
         And the package is deployed on the deploy targets
         And the package has been validated
-        When I run "deploy rollback myapp --all-apptypes"
+        When I run "deploy rollback myapp --all-apptypes --detach"
         Then an email is sent with the relevant information for deptype="rollback",apptypes="another-apptype:the-apptype"
 
     @email_server
@@ -90,11 +90,11 @@ Feature: email notifications
         And I wait 1 seconds
         And there is a package with version="124"
         And the package is deployed on the deploy targets
-        When I run "deploy rollback myapp --hosts dprojhost01 danotherhost01"
+        When I run "deploy rollback myapp --hosts dprojhost01 danotherhost01 --detach"
         Then an email is sent with the relevant information for deptype="rollback",hosts="danotherhost01:dprojhost01"
 
     @email_server
     Scenario: email server fails while notification attempted
         Given the email server is broken
-        When I run "deploy promote myapp 123 --apptypes the-apptype"
+        When I run "deploy promote myapp 123 --apptypes the-apptype --detach"
         Then there is a failure message for the email send

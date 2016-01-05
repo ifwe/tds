@@ -40,9 +40,9 @@ Feature: HipChat notifications
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         And hipchat notifications are enabled
-        When I run "deploy promote myapp 124 --hosts sprojhost01"
-        And I run "deploy promote myapp 124 --hosts sprojhost02"
-        And I run "deploy promote myapp 124 --hosts sother01"
+        When I run "deploy promote myapp 124 --hosts sprojhost01 --detach"
+        And I run "deploy promote myapp 124 --hosts sprojhost02 --detach"
+        And I run "deploy promote myapp 124 --hosts sother01 --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "promote","of+version+124+of+myapp+on+hosts+sprojhost01"
         And there are 3 hipchat notifications
@@ -53,7 +53,7 @@ Feature: HipChat notifications
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         And hipchat notifications are enabled
-        When I run "deploy promote myapp 124 --all-apptypes"
+        When I run "deploy promote myapp 124 --all-apptypes --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "promote","of+version+124+of+myapp+on+app+tier","the-apptype+in+stage"
         And there are 1 hipchat notifications
@@ -64,7 +64,7 @@ Feature: HipChat notifications
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         And hipchat notifications are enabled
-        When I run "deploy promote myapp 124 --apptypes the-apptype"
+        When I run "deploy promote myapp 124 --apptypes the-apptype --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "promote","of+version+124+of+myapp+on+app+tier","the-apptype+in+stage"
         And there are 1 hipchat notifications
@@ -78,7 +78,7 @@ Feature: HipChat notifications
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
-        When I run "deploy fix myapp --all-apptypes"
+        When I run "deploy fix myapp --all-apptypes --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
         And there are 1 hipchat notifications
@@ -92,7 +92,7 @@ Feature: HipChat notifications
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
-        When I run "deploy fix myapp --apptypes another-apptype"
+        When I run "deploy fix myapp --apptypes another-apptype --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
         And there are 1 hipchat notifications
@@ -106,7 +106,7 @@ Feature: HipChat notifications
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
-        When I run "deploy fix myapp --hosts anotherhost01"
+        When I run "deploy fix myapp --hosts anotherhost01 --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "fix","of+version+123+of+myapp+on+hosts+anotherhost01","in+stage"
         And there are 1 hipchat notifications
@@ -128,7 +128,7 @@ Feature: HipChat notifications
 
         And hipchat notifications are enabled
 
-        When I run "deploy rollback myapp --apptype the-apptype"
+        When I run "deploy rollback myapp --apptype the-apptype --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "rollback","of+version+121+of+myapp+on+app+tier","the-apptype","in+stage"
         And there are 1 hipchat notifications
@@ -150,7 +150,7 @@ Feature: HipChat notifications
 
         And hipchat notifications are enabled
 
-        When I run "deploy rollback myapp --all-apptypes"
+        When I run "deploy rollback myapp --all-apptypes --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "rollback","of+version+121+of+myapp+on+app+tier","the-apptype","in+stage"
         And there are 1 hipchat notifications
@@ -172,7 +172,7 @@ Feature: HipChat notifications
 
         And hipchat notifications are enabled
 
-        When I run "deploy rollback myapp --hosts sprojhost01"
+        When I run "deploy rollback myapp --hosts sprojhost01 --detach"
         Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "rollback","of+version+124+of+myapp+on+hosts","sprojhost01","in+stage"
         And there are 1 hipchat notifications
@@ -194,7 +194,7 @@ Feature: HipChat notifications
 
         And hipchat notifications are enabled
 
-        When I run "deploy rollback myapp --hosts sprojhost01"
+        When I run "deploy rollback myapp --hosts sprojhost01 --detach"
         Then there is a hipchat failure
         And the output has "Deployment was successful. However, notification to HipChat failed, status code is: 403"
 
@@ -206,5 +206,5 @@ Feature: HipChat notifications
 
         And hipchat notifications are enabled
 
-        When I run "deploy promote myapp 500 --all-apptypes"
+        When I run "deploy promote myapp 500 --all-apptypes --detach"
         Then the output has "Deployment was successful. However, notification to HipChat failed, message is: "
