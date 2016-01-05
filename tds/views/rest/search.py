@@ -149,6 +149,10 @@ class SearchView(base.BaseView):
     }
 
     def _get_results(self):
+        """
+        Set self.results to the results of the query in
+        self.request.validated_params.
+        """
         if not self.request.validated_params:
             self.results = self.model.all()
             return
@@ -184,6 +188,11 @@ class SearchView(base.BaseView):
         return True
 
     def _get_param_choices(self, param):
+        """
+        Return all param choices for a param with type 'choice'.
+        Get them from self.obj_dict if possible.
+        Otherwise, get them from the column's enums in the database table.
+        """
         choice_param = '{param}_choices'.format(param=param)
         if choice_param in self.obj_dict:
             return self.obj_dict[choice_param]
@@ -204,6 +213,9 @@ class SearchView(base.BaseView):
                 )
 
     def validate_search_get(self, request):
+        """
+        Validate a search GET request.
+        """
         self.name = 'search'
         if not self._validate_obj_type_exists():
             return
@@ -237,6 +249,9 @@ class SearchView(base.BaseView):
         self._get_results()
 
     def validate_search_options(self, request):
+        """
+        Validate search OPTIONS request.
+        """
         if not self._validate_obj_type_exists():
             return
         self.obj_dict = self.TYPES[request.matchdict['obj_type']]
@@ -266,6 +281,9 @@ class SearchView(base.BaseView):
 
     @view(validators=('validate_search_get', 'validate_cookie'))
     def get(self):
+        """
+        Perform a GET request after all validation has passed.
+        """
         if 'Expect' in self.request.headers:
             if self.request.headers['Expect'] in ("302 Found",
                                                   "303 See Other"):
@@ -298,6 +316,9 @@ class SearchView(base.BaseView):
 
     @view(validators=('validate_search_options',))
     def options(self):
+        """
+        Perform an OPTIONS request after all validation has passed.
+        """
         return self.make_response(
             body=self.to_json_obj(self.result),
             headers=dict(Allows="GET, OPTIONS")
@@ -305,8 +326,14 @@ class SearchView(base.BaseView):
 
     @view(validators=('method_not_allowed'))
     def delete(self):
+        """
+        Perform a DELETE request after all validation has passed.
+        """
         return self.make_response({})
 
     @view(validators=('method_not_allowed'))
     def put(self):
+        """
+        Perform a PUT after all validation has passed.
+        """
         return self.make_response({})

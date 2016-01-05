@@ -57,6 +57,10 @@ class TierHipchatView(BaseView):
     )
 
     def validate_individual_tier_hipchat(self, request):
+        """
+        Validate the individual tier-HipChat association being referenced
+        exists.
+        """
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')
         if 'tier' in request.validated:
             self.get_obj_by_name_or_id(
@@ -77,6 +81,9 @@ class TierHipchatView(BaseView):
             request.validated[self.name] = request.validated['HipChat']
 
     def validate_tier_hipchat_collection(self, request):
+        """
+        Validate the tier being referenced and HipChat being referenced exist.
+        """
         if len(request.params) > 0:
             for key in request.params:
                 request.errors.add(
@@ -94,6 +101,9 @@ class TierHipchatView(BaseView):
 
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
+        """
+        Perform a DELETE after all validation has passed.
+        """
         self.request.validated['tier'].hipchats.remove(self.request.validated[
             'HipChat'
         ])
@@ -103,6 +113,9 @@ class TierHipchatView(BaseView):
         )
 
     def validate_tier_hipchat_post(self, request):
+        """
+        Validate POST of a new tier-HipChat association.
+        """
         self._validate_params(self.valid_attrs)
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type')
         if 'tier' not in request.validated:
@@ -141,6 +154,9 @@ class TierHipchatView(BaseView):
 
     @view(validators=('validate_tier_hipchat_post', 'validate_cookie'))
     def collection_post(self):
+        """
+        Handle collection POST after all validation has passed.
+        """
         tagopsdb.Session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),

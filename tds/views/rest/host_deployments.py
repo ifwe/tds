@@ -11,6 +11,9 @@ from .base import BaseView, init_view
 @resource(collection_path="/host_deployments", path="/host_deployments/{id}")
 @init_view(name="host-deployment", model=tds.model.HostDeployment)
 class HostDeploymentView(BaseView):
+    """
+    View for host deployments.
+    """
 
     param_routes = {}
 
@@ -37,6 +40,10 @@ class HostDeploymentView(BaseView):
     )
 
     def validate_host_deployment_delete(self):
+        """
+        Validate that it's okay to delete the host deployment at
+        self.request.validated[self.name].
+        """
         if self.name not in self.request.validated:
             return
         if self.request.validated[self.name].deployment.status != 'pending':
@@ -66,7 +73,10 @@ class HostDeploymentView(BaseView):
         elif found_app_dep is not None:
             self.request.validated['delete_cascade'] = [found_app_dep]
 
-    def validate_individual_host_deployment(self, request):
+    def validate_individual_host_deployment(self, _request):
+        """
+        Validate that the host deployment being retrieved exists.
+        """
         self.get_obj_by_name_or_id(obj_type='Host deployment',
                                    model=self.model, param_name='id',
                                    can_be_name=False, dict_name=self.name)
@@ -141,6 +151,9 @@ class HostDeploymentView(BaseView):
                 self.request.errors.status = 409
 
     def validate_host_deployment_put(self):
+        """
+        Validate a PUT request for a host deployment.
+        """
         if self.name not in self.request.validated:
             return
         if self.request.validated[self.name].deployment.status != 'pending':
@@ -187,6 +200,11 @@ class HostDeploymentView(BaseView):
         self._validate_project_package(pkg_id, host_id)
 
     def _validate_project_package(self, pkg_id, host_id):
+        """
+        Validate that the tier for the host with ID host_id is associated with
+        the application for the package with ID pkg_id for some project.
+        If it isn't, add an error.
+        """
         found_pkg = tds.model.Package.get(id=pkg_id)
         found_host = tds.model.HostTarget.get(id=host_id)
         if not (found_pkg and found_host):
@@ -209,6 +227,9 @@ class HostDeploymentView(BaseView):
             self.request.errors.status = 403
 
     def validate_host_deployment_post(self):
+        """
+        Validate a POST of a new host deployment.
+        """
         if 'status' in self.request.validated_params:
             if self.request.validated_params['status'] != 'pending':
                 self.request.errors.add(
@@ -233,5 +254,8 @@ class HostDeploymentView(BaseView):
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
+        """
+        Perform a collection POST after all validation has passed.
+        """
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
