@@ -47,6 +47,9 @@ class AppTarget(DeployTarget):
 
     @property
     def hosts(self):
+        """
+        Return all hosts associated with this tier.
+        """
         return [HostTarget(delegate=x) for x in self.delegate.hosts]
 
     def remove_application(self, application, project=None):
@@ -70,6 +73,10 @@ class AppTarget(DeployTarget):
         tagopsdb.Session.commit()
 
     def get_ongoing_deployments(self, environment_id):
+        """
+        Return all ongoing tier deployments on this tier in the environment
+        with ID environment_id.
+        """
         return tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
             tagopsdb.model.AppDeployment.deployment
         ).filter(
@@ -80,6 +87,10 @@ class AppTarget(DeployTarget):
         ).all()
 
     def get_ongoing_host_deployments(self, environment_id):
+        """
+        Return all ongoing host deployments for hosts associated with this tier
+        in the environment with ID environment_id
+        """
         return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
             tagopsdb.model.HostDeployment.deployment
         ).join(tagopsdb.model.HostDeployment.host).filter(
@@ -99,18 +110,31 @@ class HostTarget(DeployTarget):
 
     @property
     def hosts(self):
+        """
+        Return a list containing just this host.
+        Convenience property to mirror AppTarget.hosts property.
+        """
         return [self]
 
     @property
     def application(self):
+        """
+        Return own tier.
+        """
         return AppTarget(delegate=self.delegate.application)
 
     @property
     def package_definitions(self):
+        """
+        Return all applications associated with this.
+        """
         return [Application(delegate=x)
                 for x in self.target.package_definitions]
 
     def get_ongoing_deployments(self):
+        """
+        Return all ongoing deployments on this host.
+        """
         return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
             tagopsdb.model.HostDeployment.host
         ).filter(

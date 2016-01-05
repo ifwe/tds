@@ -87,6 +87,9 @@ class RepoUpdater(TDSProgramBase):
                 log.error('Unable to remove file %s: %s', rpm, exc)
 
     def notify_bad_rpm(self, rpm_path):
+        """
+        Notify for a bad RPM.
+        """
         try:
             self.email_for_invalid_rpm(rpm_path)
             # Email send failed?  Tough noogies.
@@ -95,6 +98,9 @@ class RepoUpdater(TDSProgramBase):
 
     @staticmethod
     def validate_rpms_in_dir(curr_dir):
+        """
+        Validate RPMs in curr_dir and return a dict of good and bad RPMs.
+        """
         good = []
         bad = []
 
@@ -112,6 +118,9 @@ class RepoUpdater(TDSProgramBase):
         return dict(good=good, bad=bad)
 
     def handle_unprocessable_rpms(self, bad_things):
+        """
+        Log info on bad RPMs and notify for them.
+        """
         for bad_thing in bad_things:
             log.error('Unable to process RPM file')
 
@@ -231,6 +240,9 @@ class RepoUpdater(TDSProgramBase):
             log.info('Done processing.')
 
     def update_repo(self, rpms_packages):
+        """
+        Update the repo with the given RPMs.
+        """
         log.info('Updating repo...')
         old_umask = os.umask(0002)
         final_status = 'completed'
@@ -285,6 +297,9 @@ class RepoUpdater(TDSProgramBase):
 
 if __name__ == '__main__':
     def parse_command_line(cl_args):
+        """
+        Parse command line and return dict of them.
+        """
         # TODO implement parser thing?
         return {
             'config_dir': cl_args[1]

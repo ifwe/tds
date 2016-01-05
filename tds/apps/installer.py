@@ -58,6 +58,9 @@ class Installer(TDSProgramBase):
         )
 
     def create_deploy_strategy(self, deploy_strat_name):
+        """
+        Create a deploy strategy and set it to self.deploy_strategy.
+        """
         if deploy_strat_name == 'mco':
             cls = tds.deploy_strategy.TDSMCODeployStrategy
         elif deploy_strat_name == 'salt':
@@ -77,7 +80,6 @@ class Installer(TDSProgramBase):
         Returns the tuple that was appended to ongoing_deployments, False
         otherwise.
         """
-
         deps = tds.model.Deployment.find(status='queued')
 
         while deps:
@@ -114,7 +116,6 @@ class Installer(TDSProgramBase):
         Return the list of ongoing deployments that were started more than
         self.threshold ago.
         """
-
         return [dep for dep in self.ongoing_deployments.itervalues()
                 if datetime.now() > dep[2] + self.threshold]
 
@@ -123,7 +124,6 @@ class Installer(TDSProgramBase):
         Perform host deployment for given host and update database
         with results.
         """
-
         # If host already has a valid deployment, nothing to do
         if host_deployment.status == 'ok':
             return 'ok'
@@ -157,7 +157,6 @@ class Installer(TDSProgramBase):
         Perform tier deployment for given tier (only doing hosts that
         require the deployment) and update database with results.
         """
-
         dep_hosts = sorted(
             tier_deployment.application.hosts,
             key=lambda host: host.name,
@@ -232,20 +231,22 @@ class Installer(TDSProgramBase):
         Find a deployment in need of being done (which spawns a process
         that handles the actual deployment)
         """
-
         self.find_deployments()
 
 
 if __name__ == '__main__':
     def parse_command_line(cl_args):
+        """
+        Parse command line and return dict.
+        """
         # TODO implement parser thing?
         return {
             'config_dir': cl_args[1]
         }
-    args = parse_command_line(sys.argv[1:])
+    parsed_args = parse_command_line(sys.argv[1:])
 
     log.setLevel(logging.DEBUG)
-    logfile = os.path.join(args['config_dir'], 'tds_installer.log')
+    logfile = os.path.join(parsed_args['config_dir'], 'tds_installer.log')
     handler = logging.FileHandler(logfile, 'a')
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
@@ -253,5 +254,5 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     log.addHandler(handler)
 
-    prog = Installer(args)
+    prog = Installer(parsed_args)
     prog.run()

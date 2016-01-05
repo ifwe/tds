@@ -85,11 +85,11 @@ class JSONValidatedView(object):
         given = self.request.validated_params[param_name].split(',')
         for item in given:
             try:
-                int(given)
+                int(item)
             except ValueError:
                 return (
                     "Value {val} for argument {param} is not a comma-separated"
-                    " list of integers.".format(val=give, param=param_name)
+                    " list of integers.".format(val=item, param=param_name)
                 )
 
     def _validate_string(self, param_name):

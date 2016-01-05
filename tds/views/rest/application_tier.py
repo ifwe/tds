@@ -62,6 +62,11 @@ class ApplicationTierView(BaseView):
     }
 
     def validate_individual_application_tier(self, request):
+        """
+        Validate that the tier-application-project relationship being
+        referenced exists. If one is found, assing it to
+        request.validated_params[self.name].
+        """
         self.get_obj_by_name_or_id('project', tds.model.Project)
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name',
@@ -91,6 +96,10 @@ class ApplicationTierView(BaseView):
         request.validated[self.name] = found
 
     def validate_application_tier_collection(self, request):
+        """
+        Validate application and project being referenced exist and return
+        all associated tiers for that application-project pair.
+        """
         if len(request.params) > 0:
             for key in request.params:
                 request.errors.add(
@@ -110,6 +119,9 @@ class ApplicationTierView(BaseView):
             )
 
     def validate_application_tier_post(self, request):
+        """
+        Validate POST of a new tier-application-project relationship.
+        """
         self._validate_params(self.valid_attrs)
         self.get_obj_by_name_or_id('project', tds.model.Project)
         self.get_obj_by_name_or_id('application', tds.model.Application,
@@ -164,6 +176,9 @@ class ApplicationTierView(BaseView):
 
     @view(validators=('validate_application_tier_post', 'validate_cookie'))
     def collection_post(self):
+        """
+        Handle collection POST after all validation has passed.
+        """
         tagopsdb.Session.add(self.request.validated[self.name])
         tagopsdb.Session.commit()
         return self.make_response(
@@ -173,6 +188,9 @@ class ApplicationTierView(BaseView):
 
     @view(validators=('validate_individual', 'validate_cookie'))
     def delete(self):
+        """
+        Handle DELETE after all validation has passed.
+        """
         tagopsdb.Session.delete(self.request.validated[self.name])
         tagopsdb.Session.commit()
         return self.make_response(
@@ -181,4 +199,7 @@ class ApplicationTierView(BaseView):
 
     @view(validators=('method_not_allowed'))
     def put(self):
+        """
+        Method not allowed.
+        """
         pass

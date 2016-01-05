@@ -78,10 +78,16 @@ class PackageController(BaseController):
 
     @property
     def jenkins_url(self):
+        """
+        Return the Jenkins URL in self.app_config.
+        """
         return self.app_config['jenkins.url']
 
     @property
     def jenkins_direct_url(self):
+        """
+        Return the direct Jenkins URL in self.app_config.
+        """
         try:
             return self.app_config['jenkins.direct_url']
         except KeyError:
@@ -120,7 +126,9 @@ class PackageController(BaseController):
             return None
 
     def _queue_rpm(self, queued_rpm, rpm_name, package, job_name):
-        """Move requested RPM into queue for processing"""
+        """
+        Move requested RPM into queue for processing.
+        """
 
         try:
             jenkins = jenkinsapi.jenkins.Jenkins(self.jenkins_url)
@@ -185,7 +193,7 @@ class PackageController(BaseController):
                 os.makedirs(tmpdir)
 
         # Re-try download of file if needed
-        for attempt in range(3):
+        for _attempt in range(3):
             try:
                 artifact = build.get_artifact_dict()[rpm_name]
                 rpm_url = artifact.url
@@ -224,8 +232,8 @@ class PackageController(BaseController):
                 os.fsync(tmp_rpm.fileno())
 
             md5 = hashlib.md5()
-            with open(tmpname) as fh:
-                md5.update(fh.read())
+            with open(tmpname) as tmpfile:
+                md5.update(tmpfile.read())
                 tmpfile_md5 = md5.hexdigest()
 
             fingerprint_md5 = self._get_jenkins_fingerprint_md5(
@@ -272,9 +280,11 @@ class PackageController(BaseController):
 
     @validate('application')
     def add(
-        self, application, version, user, job=None, force=False, **params
+        self, application, version, user, job=None, force=False, **_params
     ):
-        """Add a given version of a package for a given project"""
+        """
+        Add a given version of a package for a given project.
+        """
 
         if force:
             raise Exception('Force not implemented yet')
@@ -363,7 +373,9 @@ class PackageController(BaseController):
 
     @validate('package')
     def delete(self, package, **params):
-        """Delete a given version of a package for a given project"""
+        """
+        Delete a given version of a package for a given project.
+        """
 
         log.debug(
             'Deleting version %s of the package for application "%s" '
@@ -388,8 +400,9 @@ class PackageController(BaseController):
 
     @validate('application')
     def list(self, applications=None, **_params):
-        """Show information for all existing packages in the software
-           repository for requested projects (or all projects)
+        """
+        Show information for all existing packages in the software repository
+        for requested projects (or all projects).
         """
 
         if not applications:
