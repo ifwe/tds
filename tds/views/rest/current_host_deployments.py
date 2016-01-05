@@ -31,6 +31,13 @@ class CurrentHostDeployment(BaseView):
     defaults = {}
 
     def validate_individual_current_host_deployment(self, request):
+        """
+        Validate that the application and host being selected exist and that
+        there is a deployment of the application on the host.
+        If one exists, assign the host deployment to
+        request.validated[self.name].
+        Add an error otherwise.
+        """
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name')
         self.get_obj_by_name_or_id('host', tds.model.HostTarget,
@@ -71,8 +78,14 @@ class CurrentHostDeployment(BaseView):
 
     @view(validators=('method_not_allowed',))
     def put(self):
+        """
+        Method not allowed.
+        """
         pass
 
     @view(validators=('method_not_allowed'))
     def delete(self):
+        """
+        Method not allowed.
+        """
         pass
