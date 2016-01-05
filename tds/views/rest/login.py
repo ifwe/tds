@@ -7,7 +7,7 @@ import ldap
 from cornice.resource import resource, view
 
 from . import utils
-from .base import BaseView, init_view
+from .base import BaseView
 
 @resource(path="/login")
 class LoginView(BaseView):
@@ -44,23 +44,25 @@ class LoginView(BaseView):
         if self.request.errors:
             return
         try:
-            l = ldap.initialize(self.settings['ldap_server'])
+            ldap_conn = ldap.initialize(self.settings['ldap_server'])
             password = self.request.validated_params['password']
-            dn = "uid={username},ou=People,dc=tagged,dc=com".format(
+            domain_name = "uid={username},ou=People,dc=tagged,dc=com".format(
                 username=self.request.validated_params['user']
             )
-            l.bind_s(dn, password)
-            results = l.search_s("cn=siteops,ou=Groups,dc=tagged,dc=com",
-                                 ldap.SCOPE_BASE)
+            ldap_conn.bind_s(domain_name, password)
+            results = ldap_conn.search_s(
+                "cn=siteops,ou=Groups,dc=tagged,dc=com",
+                ldap.SCOPE_BASE
+            )
             try:
                 self.request.is_admin = (
                     self.request.validated_params['user'] in
                     [member for result in results for member in
                      result[1]['memberUid']]
                 )
-            except KeyError, IndexError:
+            except (KeyError, IndexError):
                 self.request.is_admin = False
-            l.unbind()
+            ldap_conn.unbind()
         except ldap.SERVER_DOWN:
             self.request.errors.add('url', '',
                                     "Could not connect to LDAP server.")

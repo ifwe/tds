@@ -20,9 +20,17 @@ class AppDeployment(Deployment):
 
     @property
     def application(self):
+        """
+        Return the application of the package that is deployed with this tier
+        deployment.
+        """
         return Application(delegate=self.delegate.package.application)
 
     def get_incomplete_host_deployments(self):
+        """
+        Get all incomplete host deployments associated with this tier
+        deployment (and therefore also associated with its deployment).
+        """
         return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
             tagopsdb.model.HostDeployment.host
         ).filter(
@@ -41,12 +49,22 @@ class HostDeployment(Deployment):
 
     @property
     def app_target(self):
+        """
+        Return the tier of the host target of this host deployment.
+        """
         return AppTarget(delegate=self.delegate.host.target)
 
     @property
     def host_state(self):
+        """
+        Return the host state of the host target of this host deployment.
+        """
         return self.delegate.host.state
 
     @property
     def application(self):
+        """
+        Return the application of the package that is deployed with this host
+        deployment.
+        """
         return Application(delegate=self.delegate.package.application)

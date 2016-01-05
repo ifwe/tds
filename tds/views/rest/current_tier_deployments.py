@@ -37,6 +37,13 @@ class CurrentTierDeployment(BaseView):
     full_descriptions = descriptions.TIER_DEPLOYMENT_DESCRIPTIONS
 
     def validate_individual_current_tier_deployment(self, request):
+        """
+        Validate that the application and tier being selected exist and that
+        there is a deployment of the application on the tier.
+        If one exists, assign the tier deployment to
+        request.validated[self.name].
+        Add an error otherwise.
+        """
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name')
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget, 'app_type',
@@ -91,8 +98,14 @@ class CurrentTierDeployment(BaseView):
 
     @view(validators=('method_not_allowed',))
     def put(self):
+        """
+        Method not allowed.
+        """
         return self.make_response({})
 
     @view(validators=('method_not_allowed',))
     def delete(self):
+        """
+        Method not allowed.
+        """
         return self.make_response({})
