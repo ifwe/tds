@@ -24,7 +24,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the hosts are associated with the deploy target
         And there is an ongoing deployment on the deploy target
         And there is a package with version="124"
-        When I run "deploy promote myapp 124 <targets>"
+        When I run "deploy promote myapp 124 <targets> --detach"
         Then the output has "User test-user is currently running a deployment for the tier the-apptype in the development environment. Skipping..."
         And there is no deployment with id=2
         And there is no tier deployment with deployment_id=2
@@ -50,7 +50,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         And there is an ongoing deployment on the hosts="dprojhost01"
-        When I run "deploy promote myapp 123 <targets>"
+        When I run "deploy promote myapp 123 <targets> --detach"
         Then the output has "User test-user is currently running a deployment for the host dprojhost01 in the development environment. Skipping..."
         And there is no deployment with id=2
         And there is no tier deployment with deployment_id=2
@@ -62,7 +62,7 @@ Feature: Ongoing deployments blocking attempted new ones
         | --all-apptypes            |
         | --apptypes the-apptype    |
 
-    Scenario: promote with ongoing host deployment
+    Scenario: promote with ongoing host deployment on a different host
         Given I have "dev" permissions
         And I am in the "dev" environment
         And there is a project with name="proj"
@@ -76,7 +76,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         And there is an ongoing deployment on the hosts="dprojhost01"
-        When I run "deploy promote myapp 123 --hosts dprojhost02"
+        When I run "deploy promote myapp 123 --hosts dprojhost02 --detach"
         Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
         And there is a deployment with id=2,status="queued"
         And there is a host deployment with deployment_id=2,status="pending",host_id=2,package_id=1
@@ -105,7 +105,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the package has been validated in the "development" environment
         And the package is deployed on the deploy targets in the "stage" env
         And there is an ongoing deployment on the deploy target
-        When I run "deploy fix myapp <targets>"
+        When I run "deploy fix myapp <targets> --detach"
         Then the output has "User test-user is currently running a deployment for the tier the-apptype in the staging environment. Skipping..."
         And there is no deployment with id=3
         And there is no tier deployment with deployment_id=3
