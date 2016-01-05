@@ -77,7 +77,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the hosts are associated with the deploy target
         And there is an ongoing deployment on the hosts="dprojhost01"
         When I run "deploy promote myapp 123 --hosts dprojhost02 --detach"
-        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with id=2,status="queued"
         And there is a host deployment with deployment_id=2,status="pending",host_id=2,package_id=1
 
