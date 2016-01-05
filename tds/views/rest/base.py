@@ -2,11 +2,7 @@
 Base view class for REST API.
 """
 
-import os
 import json
-import yaml
-
-from os.path import join as opj
 
 from pyramid.response import Response
 from cornice.resource import view
@@ -96,60 +92,6 @@ class BaseView(ValidatedView):
     This class manages & enforces permission, does basic view initialization.
     It also handles validation for requests and parameters in requests.
     """
-
-    def __init__(self, request, *args, **kwargs):
-        """
-        Set params for this request.
-        See method corresponding the HTTP method below for details on expected
-        parameters.
-        """
-        self.request = request
-        if getattr(self, 'types', None):
-            self.valid_attrs = self.types.keys()
-        else:
-            self.valid_attrs = []
-        if not getattr(self, 'required_post_fields', None):
-            self.required_post_fields = tuple()
-        if not getattr(self, 'param_routes', None):
-            self.param_routes = {}
-        if not getattr(self, 'defaults', None):
-            self.defaults = {}
-        try:
-            with open(opj(os.path.dirname(os.path.realpath(__file__)),
-                          'settings.yml')) as settings_file:
-                self.settings = yaml.load(settings_file.read())
-        except:
-            raise tds.exceptions.ConfigurationError(
-                "REST settings file does not exist. Expecting file {path}."
-                .format(path=opj(os.path.dirname(os.path.realpath(__file__)),
-                                 'settings.yml'))
-            )
-        if self.valid_attrs and len(self.types) > 0:
-            for param in [x for x in self.types if self.types[x] == 'choice']:
-                choices = getattr(
-                    self, '{param}_choices'.format(param=param), None
-                )
-                if choices is None or len(choices) == 0:
-                    try:
-                        if getattr(self.model, 'delegate', None):
-                            table = self.model.delegate.__table__
-                        else:
-                            table = self.model.__table__
-                        col_name = param
-                        if param in self.param_routes:
-                            col_name = self.param_routes[param]
-                        setattr(
-                            self,
-                            '{param}_choices'.format(param=param),
-                            table.columns[col_name].type.enums
-                        )
-                    except Exception as exc:
-                        raise tds.exceptions.ProgrammingError(
-                            "No choices set for param {param}. "
-                            "Got exception {e}.".format(param=param, e=exc)
-                        )
-
-        super(BaseView, self).__init__(*args, **kwargs)
 
     def to_json_obj(self, obj, param_routes=None):
         """
