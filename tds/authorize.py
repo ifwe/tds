@@ -18,6 +18,9 @@ log = logging.getLogger('tds')
 
 
 class TDSAuthConfig(tds.utils.config.YAMLConfig):
+    """
+    TDS authorization configuration object.
+    """
 
     def load(self):
         try:

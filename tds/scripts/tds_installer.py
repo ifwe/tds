@@ -28,6 +28,9 @@ class TDSInstallerDaemon(Daemon):
         super(TDSInstallerDaemon, self).__init__(*args, **kwargs)
 
     def sigterm_handler(self, signum, frame):
+        """
+        Shut down the daemon.
+        """
         log.fatal('Received SIGTERM. Beginning shutdown...')
         if self.election is not None:
             self.election.cancel()
@@ -65,6 +68,9 @@ class TDSInstallerDaemon(Daemon):
 
     @staticmethod
     def create_zoo(zoo_config):
+        """
+        Create and return a new zoo.
+        """
         hostname = socket.gethostname()
 
         zoo = KazooClient('hosts=%s' % ','.join(zoo_config))

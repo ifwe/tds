@@ -5,7 +5,7 @@ REST API utilities.
 import hmac
 import hashlib
 import base64
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 def _create_digest(username, addr, seconds, settings, is_admin):
@@ -71,19 +71,19 @@ def validate_cookie(request, settings):
     False otherwise.
     """
     if not getattr(request, 'cookies', None) or 'session' not in \
-        request.cookies:
-            return (False, False, False)
+            request.cookies:
+        return (False, False, False)
 
     digest = seconds = username = None
 
     pairs = [p.split('=', 1) for p in request.cookies['session'].split('&')]
-    for k, v in pairs:
-        if k == 'issued':
-            seconds = int(v)
-        if k == 'user':
-            username = v
-        if k == 'digest':
-            digest = v
+    for key, val in pairs:
+        if key == 'issued':
+            seconds = int(val)
+        if key == 'user':
+            username = val
+        if key == 'digest':
+            digest = val
 
     if None in (digest, seconds, username):
         return (True, False, False)
@@ -97,8 +97,8 @@ def validate_cookie(request, settings):
         return (True, False, False)
 
     if (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds() - \
-        seconds - settings['cookie_life'] >= 0:
-            return (True, False, False)
+            seconds - settings['cookie_life'] >= 0:
+        return (True, False, False)
 
     is_admin = digest == admin_digest
 

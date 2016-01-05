@@ -2,7 +2,7 @@
 REST API view for projects.
 """
 
-from cornice.resource import resource, view
+from cornice.resource import resource
 
 from .base import BaseView, init_view
 
