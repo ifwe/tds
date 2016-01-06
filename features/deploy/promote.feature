@@ -123,6 +123,12 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And there is a deployment with status="queued",delay=0
         And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2
         And there is a tier deployment with status="pending",deployment_id=3,app_id=3,package_id=3,environment_id=2
+        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
+        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
+        And there is a host deployment with status="pending",deployment_id=3,host_id=5,package_id=3
+        And there is no tier deployment with deployment_id=3,environment_id=1
+        And there is no host deployment with deployment_id=3,host_id=1
+        And there is no host deployment with deployment_id=3,host_id=2
 
     Scenario: promote older version to all apptypes
         Given there is a deploy target with name="another-apptype"

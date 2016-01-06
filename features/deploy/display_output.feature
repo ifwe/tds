@@ -126,3 +126,81 @@ Feature: deploy display output
         And the output has "	sprojhost02:	[ok]"
         And the output has "the-apptype:		[incomplete]"
         And the output has "Deployment:	[failed]"
+
+    Scenario: promote version to all apptypes
+        Given there is a deploy target with name="another-apptype"
+        And there is a host with name="anotherhost01"
+        And the host is associated with the deploy target
+        And the tier "another-apptype" is associated with the application "myapp" for the project "proj"
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
+            | 4     | 2             | 1                 | validated | foo   | 3         | 3             |
+        When I start to run "deploy promote myapp 123 --all-apptypes"
+        And I wait 10 seconds
+        And the status of the tier deployment with deployment_id=3,app_id=3 changes to "inprogress"
+        And the status of the host deployment with deployment_id=3,host_id=5 changes to "inprogress"
+        And I wait 2 seconds
+        And the status of the host deployment with deployment_id=3,host_id=5 changes to "ok"
+        And the status of the tier deployment with deployment_id=3,app_id=3 changes to "complete"
+        And the status of the tier deployment with deployment_id=3,app_id=2 changes to "inprogress"
+        And the status of the host deployment with deployment_id=3,host_id=3 changes to "inprogress"
+        And I wait 2 seconds
+        And the status of the host deployment with deployment_id=3,host_id=3 changes to "ok"
+        And the status of the host deployment with deployment_id=3,host_id=4 changes to "inprogress"
+        And I wait 2 seconds
+        And the status of the host deployment with deployment_id=3,host_id=4 changes to "ok"
+        And the status of the tier deployment with deployment_id=3,app_id=2 changes to "complete"
+        And the status of the deployment with id=3 changes to "complete"
+        And I wait 2 seconds
+        And the command finishes
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And the output has "another-apptype:		[inprogress]"
+        And the output has "	anotherhost01:	[inprogress]"
+        And the output has "	anotherhost01:	[ok]"
+        And the output has "another-apptype:		[complete]"
+        And the output has "the-apptype:		[inprogress]"
+        And the output has "	sprojhost01:	[inprogress]"
+        And the output has "	sprojhost01:	[ok]"
+        And the output has "	sprojhost02:	[inprogress]"
+        And the output has "	sprojhost02:	[ok]"
+        And the output has "the-apptype:		[complete]"
+        And the output has "Deployment:	[complete]"
+
+    Scenario: promote version to all apptypes with a failure
+        Given there is a deploy target with name="another-apptype"
+        And there is a host with name="anotherhost01"
+        And the host is associated with the deploy target
+        And the tier "another-apptype" is associated with the application "myapp" for the project "proj"
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
+            | 4     | 2             | 1                 | validated | foo   | 3         | 3             |
+        When I start to run "deploy promote myapp 123 --all-apptypes"
+        And I wait 10 seconds
+        And the status of the tier deployment with deployment_id=3,app_id=3 changes to "inprogress"
+        And the status of the host deployment with deployment_id=3,host_id=5 changes to "inprogress"
+        And I wait 2 seconds
+        And the status of the host deployment with deployment_id=3,host_id=5 changes to "ok"
+        And the status of the tier deployment with deployment_id=3,app_id=3 changes to "complete"
+        And the status of the tier deployment with deployment_id=3,app_id=2 changes to "inprogress"
+        And the status of the host deployment with deployment_id=3,host_id=3 changes to "inprogress"
+        And I wait 2 seconds
+        And the status of the host deployment with deployment_id=3,host_id=3 changes to "ok"
+        And the status of the host deployment with deployment_id=3,host_id=4 changes to "inprogress"
+        And I wait 2 seconds
+        And the status of the host deployment with deployment_id=3,host_id=4 changes to "failed"
+        And the status of the tier deployment with deployment_id=3,app_id=2 changes to "incomplete"
+        And the status of the deployment with id=3 changes to "failed"
+        And I wait 2 seconds
+        And the command finishes
+        Then the output has "Deployment now being run, press Ctrl-C at any time to cancel..."
+        And the output has "another-apptype:		[inprogress]"
+        And the output has "	anotherhost01:	[inprogress]"
+        And the output has "	anotherhost01:	[ok]"
+        And the output has "another-apptype:		[complete]"
+        And the output has "the-apptype:		[inprogress]"
+        And the output has "	sprojhost01:	[inprogress]"
+        And the output has "	sprojhost01:	[ok]"
+        And the output has "	sprojhost02:	[inprogress]"
+        And the output has "	sprojhost02:	[failed]"
+        And the output has "the-apptype:		[incomplete]"
+        And the output has "Deployment:	[failed]"
