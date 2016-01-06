@@ -165,41 +165,47 @@ class DeployController(BaseController):
             while curr_item.status not in ('inprogress', 'complete', 'ok',
                                            'failed', 'incomplete'):
                 time.sleep(0.1)
-                tagopsdb.Session.refresh(curr_item)
+                self._refresh(curr_item)
             curr_status = curr_item.status
             if getattr(curr_item, 'app_id', None) is not None:
                 self._display_status(curr_item)
-                max_len = 0
-                for idx in range(1, len(queue)):
-                    max_len = idx
-                    next_item = queue[idx]
+                while len(queue) > 1:
+                    next_item = queue[1]
                     if getattr(next_item, 'app_id', None) is not None or \
                             next_item.host.app_id != curr_item.app_id:
-                        max_len -= 1
                         break
-                for _idx in range(0, max_len):
-                    next_item = queue[1]
-                    tagopsdb.Session.refresh(next_item)
-                    self._display_status(next_item)
-                    while next_item.status not in ('failed', 'ok'):
+                    while next_item.status not in ('inprogress', 'ok',
+                                                   'failed'):
                         time.sleep(0.1)
-                        tagopsdb.Session.refresh(next_item)
+                        self._refresh(next_item)
                     self._display_status(next_item)
+                    if next_item.status == 'inprogress':
+                        while next_item.status not in ('failed', 'ok'):
+                            time.sleep(0.1)
+                            self._refresh(next_item)
+                        self._display_status(next_item)
                     queue.pop(1)
-                tagopsdb.Session.refresh(curr_item)
+                self._refresh(curr_item)
                 self._display_status(curr_item)
             else:
                 self._display_status(curr_item, True)
                 while curr_item.status not in ('failed', 'ok'):
                     time.sleep(0.1)
-                    tagopsdb.Session.refresh(curr_item)
+                    self._refresh(curr_item)
                 if curr_status != curr_item.status:
                     self._display_status(curr_item, True)
             queue.pop(0)
-        tagopsdb.Session.refresh(self.deployment)
+        self._refresh(self.deployment)
         log.info('Deployment:\t[{status}]'.format(
             status=self.deployment.status
         ))
+
+    def _refresh(self, obj):
+        """
+        WTF
+        """
+        tagopsdb.Session.commit()
+        obj.refresh()
 
     def _display_status(self, dep, host_only=False):
         """
@@ -270,6 +276,7 @@ class DeployController(BaseController):
         try:
             self.display_output()
         except KeyboardInterrupt:
+            self._refresh(self.deployment)
             if self.deployment.status in ['pending', 'queued']:
                 log.info('Deployment was still pending or queued, '
                          'canceling now.')
@@ -368,7 +375,10 @@ class DeployController(BaseController):
         self.deployment_status['hosts'] = []
 
         for tier in self.deploy_tiers:
-            host_deps = self.prepare_host_deployments(tier.hosts)
+            host_deps = self.prepare_host_deployments(
+                host for host in tier.hosts if host.environment_id ==
+                self.environment.id
+            )
 
             if host_deps is None:
                 continue   # Just remove tier
@@ -666,7 +676,6 @@ class DeployController(BaseController):
                 )
                 continue
 
-
             tier_name, curr_app_dep = app_deployments[apptype.id]
 
             if (curr_app_dep is not None and
@@ -686,8 +695,9 @@ class DeployController(BaseController):
             )
 
             if hosts:
-                app_hosts = set(host for host in hosts if host.application ==
-                                apptype)
+                app_hosts = set(host for host in hosts if host.app_id ==
+                                apptype.id and host.environment_id ==
+                                self.environment.id)
 
                 to_remove = set()
                 if ongoing_host_deps:

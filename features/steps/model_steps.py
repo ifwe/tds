@@ -1725,3 +1725,21 @@ def given_the_tier_is_associated_with_the_application_for_the_project(
     )
     tagopsdb.Session.add(proj_pkg)
     tagopsdb.Session.commit()
+
+@when(u'the status of the {dep_type} with {props} changes to "{status}"')
+def when_the_status_of_deployment_changes_to(context, dep_type, props, status):
+    properties = parse_properties(props)
+    dep_mapping = {
+        'deployment': tagopsdb.model.Deployment,
+        'host deployment': tagopsdb.model.HostDeployment,
+        'tier deployment': tagopsdb.model.AppDeployment,
+    }
+    assert dep_type in dep_mapping
+
+    model = dep_mapping[dep_type]
+    tagopsdb.Session.close()
+    instance = model.get(**properties)
+    assert instance is not None
+
+    instance.status = status
+    tagopsdb.Session.commit()
