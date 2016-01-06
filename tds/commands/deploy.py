@@ -584,7 +584,6 @@ class DeployController(BaseController):
             log.info('Deployment ready for installer daemon, disconnecting '
                      'now.')
             return dict()
-
         self.manage_attached_session()
 
     @input_validate('package')
