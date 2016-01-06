@@ -61,6 +61,15 @@ class FailedConnectionError(TDSException):
     pass
 
 
+class IllegalStateError(TDSException):
+    """
+    Exception raised when the program is in a state that it should not reach.
+    For example, when validation is attempted on data that does not exist.
+    """
+
+    pass
+
+
 class InvalidInputError(TDSException):
     """Exception for invalid input from user."""
 
@@ -79,27 +88,8 @@ class InvalidRPMError(TDSException):
     pass
 
 
-class NotFoundError(TDSException):
-    """Exception for when an item is not found or does not exist."""
-
-    def __init__(self, object_type, objects, sing_end='', plu_end='s'):
-        """Create message given object_type and objects."""
-        if not isinstance(objects, str):
-            try:
-                objects = list(objects)
-            except TypeError:
-                objects = [objects]
-        message = "{object_type}{p1} do{p2} not exist: {objects}".format(
-            object_type=object_type,
-            p1=sing_end if len(objects) == 1 else plu_end,
-            p2='es' if len(objects) == 1 else '',
-            objects=', '.join(objects)
-        )
-        super(NotFoundError, self).__init__(message)
-
-
 class JenkinsJobNotFoundError(TDSException):
-    """Exception for when a Jenkins jobs is not found."""
+    """Exception for when a Jenkins job is not found."""
 
     def __init__(self, object_type, job, version, jenkins_url):
         message = "{object_type} does not exist on {url}: {job}@{version}"\
@@ -137,16 +127,23 @@ class MultipleResultsError(TDSException):
     pass
 
 
-class WrongEnvironmentError(TDSException):
-    """Exception for command attempts in incorrect environment"""
+class NotFoundError(TDSException):
+    """Exception for when an item is not found or does not exist."""
 
-    pass
-
-
-class WrongProjectTypeError(TDSException):
-    """Exception for command attempts with incorrect project type"""
-
-    pass
+    def __init__(self, object_type, objects, sing_end='', plu_end='s'):
+        """Create message given object_type and objects."""
+        if not isinstance(objects, str):
+            try:
+                objects = list(objects)
+            except TypeError:
+                objects = [objects]
+        message = "{object_type}{p1} do{p2} not exist: {objects}".format(
+            object_type=object_type,
+            p1=sing_end if len(objects) == 1 else plu_end,
+            p2='es' if len(objects) == 1 else '',
+            objects=', '.join(objects)
+        )
+        super(NotFoundError, self).__init__(message)
 
 
 class ProgrammingError(TDSException):
@@ -159,10 +156,13 @@ class ProgrammingError(TDSException):
     pass
 
 
-class IllegalStateError(TDSException):
-    """
-    Exception raised when the program is in a state that it should not reach.
-    For example, when validation is attempted on data that does not exist.
-    """
+class WrongEnvironmentError(TDSException):
+    """Exception for command attempts in incorrect environment"""
+
+    pass
+
+
+class WrongProjectTypeError(TDSException):
+    """Exception for command attempts with incorrect project type"""
 
     pass

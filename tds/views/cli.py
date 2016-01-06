@@ -318,6 +318,7 @@ class CLI(Base):
     """
     View implementation to print to sys.stdout
     """
+
     def generate_result(self, view_name, tds_result):
         """
         Dispatches on the various keys in 'tds_result' to provide
@@ -460,18 +461,6 @@ class CLI(Base):
         elif error:
             print format_exception(error)
 
-    def generate_package_add_result(self, result=None, error=None, **kwds):
-        """Format the result of a "package add" action."""
-        if error is not None:
-            return self.generate_default_result(
-                result=result, error=error, **kwds
-            )
-
-        package = result['package']
-        print (
-            'Added package: "%s@%s"' % (package.name, package.version)
-        )
-
     def generate_package_list_result(self, result=None, error=None, **kwds):
         """
         Generate the package list display for the given results, which
@@ -511,4 +500,5 @@ class CLI(Base):
         generate_deploy_validate_result = \
         generate_deploy_rollback_result = \
         generate_deploy_fix_result = \
+        generate_package_add_result = \
         silence(NotImplementedError)(generate_default_result)
