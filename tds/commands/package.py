@@ -51,31 +51,6 @@ class PackageController(BaseController):
         'delete': 'environment',
     }
 
-    @staticmethod
-    def wait_for_state_change(package):
-        """Check for state change for package in database"""
-
-        while True:
-            previous_status = package.status
-            tagopsdb.Session.commit()  # WTF
-            package.refresh()
-
-            if package.status == 'completed':
-                break
-
-            if package.status == 'failed':
-                # TODO: why did it fail? user needs to know
-                raise tds.exceptions.TDSException(
-                    'Failed to update repository with package '
-                    'for application "%s", version %s.\nPlease try again.',
-                    package.name, package.version
-                )
-
-            if package.status != previous_status:
-                log.log(5, 'State of package is now: %s', package.status)
-
-            time.sleep(0.5)
-
     @property
     def jenkins_url(self):
         """
@@ -83,27 +58,39 @@ class PackageController(BaseController):
         """
         return self.app_config['jenkins.url']
 
-    @property
-    def jenkins_direct_url(self):
+    def _refresh(self, obj):
         """
-        Return the direct Jenkins URL in self.app_config.
+        WTF
         """
-        try:
-            return self.app_config['jenkins.direct_url']
-        except KeyError:
-            return None
+        tagopsdb.Session.commit()
+        obj.refresh()
+
+    def _display_status(self, package):
+        """
+        Display the current status of the package.
+        """
+        log.info('Status:\t\t[{status}]'.format(status=package.status))
 
     def _display_output(self, package):
         """
         Display status changes as the package is being updated by the daemon.
         """
-        pass
+        while package.status not in ('processing', 'failed', 'completed'):
+            time.sleep(0.1)
+            self._refresh(package)
+        curr_status = package.status
+        self._display_status(package)
+        if curr_status == 'processing':
+            while package.status not in ('failed', 'completed'):
+                time.sleep(0.1)
+                self._refresh(package)
+            self._display_status(package)
 
     def _manage_attached_session(self, package):
         """
         Display updates on status of package as daemon works on it.
         """
-        log.info('Package now being added, press Ctrl-C at any time to detach'
+        log.info('Package now being added, press Ctrl-C at any time to detach '
                  'session...')
 
         try:
