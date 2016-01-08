@@ -116,42 +116,12 @@ class RepoUpdater(TDSProgramBase):
         except smtplib.SMTPException as exc:
             log.error('Email send failed: %s', exc)
 
-    @staticmethod
-    def validate_rpms_in_dir(curr_dir):
-        """
-        Validate RPMs in curr_dir and return a dict of good and bad RPMs.
-        """
-        good = []
-        bad = []
-
-        for name in os.listdir(curr_dir):
-            fullpath = os.path.join(curr_dir, name)
-            if not os.path.isfile(fullpath):
-                continue
-
-            rpm = utils.rpm.RPMDescriptor.from_path(fullpath)
-            if rpm is None:
-                bad.append(name)
-            else:
-                good.append(rpm)
-
-        return dict(good=good, bad=bad)
-
-    def handle_unprocessable_rpms(self, bad_things):
-        """
-        Log info on bad RPMs and notify for them.
-        """
-        for bad_thing in bad_things:
-            log.error('Unable to process RPM file')
-
-            self.notify_bad_rpm(bad_thing)
-            self.remove_file(bad_thing)
-
     def _download_rpms(self):
         """
         Determine the RPMs that need to be downloaded by reading the database
         and download those RPMs into the self.incoming_dir directory.
         """
+        rpms = list()
         self.pending_pkgs = tagopsdb.Package.find(status='pending')
         if not self.pending_pkgs:
             return
@@ -165,15 +135,30 @@ class RepoUpdater(TDSProgramBase):
             )
 
         for pkg in self.pending_pkgs:
+            rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
+                name=pkg.application.pkg_name,
+                version=pkg.version,
+                revision=pkg.revision,
+                arch=pkg.application.arch,
+            )
+            rpm_path = os.path.join(self.incoming_dir, rpm_name)
             try:
-                self._download_rpm_for_pkg(pkg, jenkins)
+                rpm = self._download_rpm_for_pkg(
+                    pkg, jenkins, rpm_name, rpm_path
+                )
             except exceptions.TDSException as exc:
+                if os.path.isfile(rpm_path):
+                    self.remove_file(rpm_path)
                 log.error('Failed to download RPM for package with id={id}: '
                           '{exc}'.format(id=pkg.id, exc=exc))
-                self.pkg.status == 'failed'
+                pkg.status = 'failed'
                 tagopsdb.Session.commit()
+            else:
+                rpms.append(rpm)
 
-    def _download_rpm_for_pkg(self, pkg, jenkins):
+        return rpms
+
+    def _download_rpm_for_pkg(self, pkg, jenkins, rpm_name, rpm_path):
         """
         Download the RPM for the given package. Raise an error on failure.
         """
@@ -190,13 +175,6 @@ class RepoUpdater(TDSProgramBase):
             build = [run for run in build.get_matrix_runs() if matrix_name
                      in run.baseurl][0]
 
-        rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
-            name=pkg.application.pkg_name,
-            version=pkg.version,
-            revision=pkg.revision,
-            arch=pkg.application.arch,
-        )
-        rpm_path = os.path.join(self.incoming_dir, rpm_name)
         fingerprint_md5 = self._get_jenkins_fingerprint_md5(
             job_name, rpm_name, pkg.version,
         )
@@ -235,32 +213,22 @@ class RepoUpdater(TDSProgramBase):
                     file_md5.lower():
                 break
             else:
-                self._unlink(rpm_path)
+                self.remove_file(rpm_path)
         else:
-            if os.path.isfile(rpm_file):
-                self._unlink(rpm_path)
             raise exceptions.JenkinsJobTransferError(
                 'Artifact', job_name, pkg.verion, self.jenkins_url,
             )
 
-        if utils.rpm.RPMDescriptor.from_path(rpm_path) is None:
-            self._unlink(rpm_path)
+        rpm = utils.rpm.RPMDescriptor.from_path(rpm_path)
+        if rpm is None:
+            self.notify_bad_rpm(rpm_name)
             raise exceptions.InvalidRPMError(
                 'Package {rpm_name} is an invalid RPM.'.format(
                     rpm_name=rpm_name
                 )
             )
-
-    def _unlink(self, rpm_path):
-        """
-        Attempt to unlink the file at rpm_path. Log error on failure.
-        """
-        try:
-            os.unlink(rpm_path)
-        except OSError as exc:
-            log.error('Unable to remove file {file}: {exc}'.format(
-                file=rpm_path, exc=exc,
-            ))
+        else:
+            return rpm
 
     def _get_jenkins_fingerprint_md5(self, job_name, rpm_name, version):
         """
@@ -296,20 +264,16 @@ class RepoUpdater(TDSProgramBase):
 
     def prepare_rpms(self):
         """Move RPMs in incoming directory to the processing directory."""
-        self._download_rpms()
+        rpms = self._download_rpms()
 
-        incoming_items = self.validate_rpms_in_dir(self.incoming_dir)
-
-        self.handle_unprocessable_rpms(incoming_items.get('bad', []))
-
-        good = incoming_items.get('good', [])
-        if not good:
+        if not rpms:
             return
 
         log.info('Valid files found, moving them from incoming directory '
                  'to processing directory to be processed...')
 
-        for rpm in good:
+        good = list()
+        for rpm in rpms:
             package = model.Package.get(**rpm.info)
 
             if package is None:
@@ -332,9 +296,12 @@ class RepoUpdater(TDSProgramBase):
                 package.status = 'failed'
                 self.remove_file(rpm.path)
             else:
-                package.status = 'processing'
+                rpm.path = os.path.join(self.processing_dir, rpm.filename)
+                good.append(rpm)
             finally:
                 tagopsdb.Session.commit()
+
+        return good
 
     def email_for_invalid_rpm(self, rpm_file):
         """Send an email to engineering if a bad RPM is found."""
@@ -355,16 +322,16 @@ class RepoUpdater(TDSProgramBase):
         smtp.sendmail(sender, receiver_emails, msg.as_string())
         smtp.quit()
 
-    def process_rpms(self):
+    def process_rpms(self, rpms):
         """Copy RPMs in processing directory to the repository and run
            update the repo.
         """
         ready_for_repo = []
-        processing_items = self.validate_rpms_in_dir(self.processing_dir)
 
-        self.handle_unprocessable_rpms(processing_items.get('bad', []))
+        if not rpms:
+            return
 
-        for rpm in processing_items.get('good', []):
+        for rpm in rpms:
             log.info('Verifying file %s and if valid moving to repository',
                      rpm.path)
 
@@ -442,8 +409,8 @@ class RepoUpdater(TDSProgramBase):
         """
         Find files in incoming dir and add them to the yum repository
         """
-        self.prepare_rpms()
-        self.process_rpms()
+        rpms = self.prepare_rpms()
+        self.process_rpms(rpms)
 
     @property
     def incoming_dir(self):
