@@ -128,11 +128,12 @@ class RepoUpdater(TDSProgramBase):
         try:
             jenkins = jenkinsapi.jenkins.Jenkins(self.jenkins_url)
         except Exception:
-            raise exceptions.FailedConnectionError(
+            log.error(
                 'Unable to contact Jenkins server at {url}.'.format(
                     url=self.jenkins_url,
                 )
             )
+            return rpms
 
         for pkg in self.pending_pkgs:
             rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
@@ -170,7 +171,12 @@ class RepoUpdater(TDSProgramBase):
         if '/' in job_name:
             job_name, matrix_name = job_name.split('/', 1)
         job = jenkins[job_name]
-        build = job.get_build(int(pkg.version))
+        try:
+            build = job.get_build(int(pkg.version))
+        except KeyError as exc:
+            raise exceptions.JenkinsJobNotFoundError(
+                'Artifact', job_name, pkg.version, self.jenkins_url,
+            )
         if matrix_name is not None:
             build = [run for run in build.get_matrix_runs() if matrix_name
                      in run.baseurl][0]
