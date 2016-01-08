@@ -10,8 +10,18 @@ import smtplib
 import subprocess
 import sys
 import time
+import hashlib
 
 from email.mime.text import MIMEText
+
+import requests
+import requests.exceptions
+import lxml.html
+import jenkinsapi.jenkins
+try:
+    from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
+except ImportError:
+    from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
 import tagopsdb
 import tagopsdb.exceptions
@@ -24,6 +34,7 @@ if __package__ is None:
 
 from .. import utils
 from .. import model
+from .. import exceptions
 from . import TDSProgramBase
 
 log = logging.getLogger('tds.apps.repo_updater')
@@ -39,7 +50,6 @@ class RepoUpdater(TDSProgramBase):
 
     def initialize(self):
         """Init the required config and resources for the app"""
-
         log.info('Initializing database session')
         self.initialize_db()
         self.validate_repo_config()
@@ -55,12 +65,23 @@ class RepoUpdater(TDSProgramBase):
                                              .get('receiver')
         except KeyError:
             self.email_receiver = None
+        try:
+            self.jenkins_url = self.config.get('jenkins').get('url')
+        except KeyError:
+            raise exceptions.ConfigurationError(
+                'Unable to get Jenkins URL from config file.'
+            )
+        self.jenkins_direct_url = self.config.get('jenkins').get(
+            'direct_url', None
+        )
+        self.max_attempts = self.config.get('jenkins').get(
+            'max_download_attempts', 3
+        )
 
     def validate_repo_config(self):
         """
         Make sure we've got all the values we need for the yum repository
         """
-
         repo_config = self.config.get('repo', None)
 
         if repo_config is None:
@@ -77,7 +98,6 @@ class RepoUpdater(TDSProgramBase):
     @staticmethod
     def remove_file(rpm):
         """Remove file from system."""
-
         try:
             os.unlink(rpm)
         except OSError as exc:
@@ -127,8 +147,156 @@ class RepoUpdater(TDSProgramBase):
             self.notify_bad_rpm(bad_thing)
             self.remove_file(bad_thing)
 
+    def _download_rpms(self):
+        """
+        Determine the RPMs that need to be downloaded by reading the database
+        and download those RPMs into the self.incoming_dir directory.
+        """
+        self.pending_pkgs = tagopsdb.Package.find(status='pending')
+        if not self.pending_pkgs:
+            return
+        try:
+            jenkins = jenkinsapi.jenkins.Jenkins(self.jenkins_url)
+        except Exception:
+            raise exceptions.FailedConnectionError(
+                'Unable to contact Jenkins server at {url}.'.format(
+                    url=self.jenkins_url,
+                )
+            )
+
+        for pkg in self.pending_pkgs:
+            try:
+                self._download_rpm_for_pkg(pkg, jenkins)
+            except exceptions.TDSException as exc:
+                log.error('Failed to download RPM for package with id={id}: '
+                          '{exc}'.format(id=pkg.id, exc=exc))
+                self.pkg.status == 'failed'
+                tagopsdb.Session.commit()
+
+    def _download_rpm_for_pkg(self, pkg, jenkins):
+        """
+        Download the RPM for the given package. Raise an error on failure.
+        """
+        pkg.status = 'processing'
+        tagopsdb.Session.commit()
+
+        job_name = pkg.job
+        matrix_name = None
+        if '/' in job_name:
+            job_name, matrix_name = job_name.split('/', 1)
+        job = jenkins[job_name]
+        build = job.get_build(int(pkg.version))
+        if matrix_name is not None:
+            build = [run for run in build.get_matrix_runs() if matrix_name
+                     in run.baseurl][0]
+
+        rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
+            name=pkg.application.pkg_name,
+            version=pkg.version,
+            revision=pkg.revision,
+            arch=pkg.application.arch,
+        )
+        rpm_path = os.path.join(self.incoming_dir, rpm_name)
+        fingerprint_md5 = self._get_jenkins_fingerprint_md5(
+            job_name, rpm_name, pkg.version,
+        )
+        for _attempt in range(self.max_attempts):
+            try:
+                artifact = build.get_artifact_dict()[rpm_name]
+                rpm_url = artifact.url
+            except (KeyError, JenkinsAPIException, NotFound):
+                raise exceptions.JenkinsJobNotFoundError(
+                    'Artifact', job_name, pkg.version, self.jenkins_url,
+                )
+
+            if self.jenkins_direct_url is not None:
+                rpm_url = rpm_url.replace(
+                    self.jenkins_url, self.jenkins_direct_url,
+                )
+
+            req = requests.get(rpm_url)
+
+            if req.status_code != requests.codes.ok:
+                raise exceptions.JenkinsJobNotFoundError(
+                    'Artifact', job_name, pkg.version, self.jenkins_url,
+                )
+            data = req.content
+            with open(rpm_path, 'wb') as rpm_file:
+                rpm_file.write(data)
+                rpm_file.flush()
+                os.fsync(rpm_file.fileno())
+
+            md5 = hashlib.md5()
+            with open(rpm_path) as rpm_file:
+                md5.update(rpm_file.read())
+                file_md5 = md5.hexdigest()
+
+            if fingerprint_md5 is None or fingerprint_md5.lower() == \
+                    file_md5.lower():
+                break
+            else:
+                self._unlink(rpm_path)
+        else:
+            if os.path.isfile(rpm_file):
+                self._unlink(rpm_path)
+            raise exceptions.JenkinsJobTransferError(
+                'Artifact', job_name, pkg.verion, self.jenkins_url,
+            )
+
+        if utils.rpm.RPMDescriptor.from_path(rpm_path) is None:
+            self._unlink(rpm_path)
+            raise exceptions.InvalidRPMError(
+                'Package {rpm_name} is an invalid RPM.'.format(
+                    rpm_name=rpm_name
+                )
+            )
+
+    def _unlink(self, rpm_path):
+        """
+        Attempt to unlink the file at rpm_path. Log error on failure.
+        """
+        try:
+            os.unlink(rpm_path)
+        except OSError as exc:
+            log.error('Unable to remove file {file}: {exc}'.format(
+                file=rpm_path, exc=exc,
+            ))
+
+    def _get_jenkins_fingerprint_md5(self, job_name, rpm_name, version):
+        """
+        Acquire the Jenkins fingerprint MD5 for the given package.
+        This may return 'None' if fingerprinting has not been enabled
+        for the given job (specifically for the RPM artifacts).
+        """
+
+        # Grab the 'fingerprints' page for the job
+        req = requests.get(os.path.join(
+            self.jenkins_url, 'job', job_name,
+            version, 'fingerprints', ''
+        ))
+
+        # The XPath is to extract an href from a row in a table
+        # where the artifact matches the RPM file
+        html = lxml.html.fromstring(req.content)
+        xpath = (
+            '//td[re:test(.,"(?<!\w)%s")]/../td[contains(.,"details")]/a/@href'
+            % rpm_name.replace('.', '\.')
+        )
+        fingerprint_href = html.xpath(
+            xpath,
+            namespaces = {'re': 'http://exslt.org/regular-expressions'}
+        )
+
+        # Found an href?  Get the md5 in it (last part of the path)!
+        # Otherwise let user know it's not there
+        if fingerprint_href:
+            return fingerprint_href[0].split('/')[-2]
+        else:
+            return None
+
     def prepare_rpms(self):
         """Move RPMs in incoming directory to the processing directory."""
+        self._download_rpms()
 
         incoming_items = self.validate_rpms_in_dir(self.incoming_dir)
 
@@ -170,7 +338,6 @@ class RepoUpdater(TDSProgramBase):
 
     def email_for_invalid_rpm(self, rpm_file):
         """Send an email to engineering if a bad RPM is found."""
-
         sender = 'siteops'
         sender_email = '%s@tagged.com' % sender
         receiver_emails = ['eng+tds@tagged.com']
@@ -192,7 +359,6 @@ class RepoUpdater(TDSProgramBase):
         """Copy RPMs in processing directory to the repository and run
            update the repo.
         """
-
         ready_for_repo = []
         processing_items = self.validate_rpms_in_dir(self.processing_dir)
 
@@ -276,7 +442,6 @@ class RepoUpdater(TDSProgramBase):
         """
         Find files in incoming dir and add them to the yum repository
         """
-
         self.prepare_rpms()
         self.process_rpms()
 
