@@ -326,10 +326,10 @@ class PackageController(BaseController):
             name=application.pkg_name,
             version=version,
             revision=revision,
-            arch=application.arch
+            arch=application.arch,
         )
         fingerprint_md5 = self._get_jenkins_fingerprint_md5(
-            job, rpm_name, version
+            job, rpm_name, version,
         )
         if fingerprint_md5 is None:
             log.info(

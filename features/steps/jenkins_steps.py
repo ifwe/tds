@@ -102,7 +102,10 @@ def given_the_job_has_a_build(context, number):
         context,
         artifact_fspath,
         dict(
-            stuff=True
+            name=str(context.tds_applications[-1].name),
+            version=number,
+            release=1,
+            arch=str(context.tds_applications[-1].arch),
         )
     )
 
