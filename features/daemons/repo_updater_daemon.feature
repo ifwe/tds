@@ -42,12 +42,15 @@ Feature: YUM repo updater
     @jenkins_server @email_server
     Scenario: fail to send email for invalid RPMs
         Given there is a jenkins job with name="job"
-        And the job has a build with number="123"
-        Given a file with name "pkg.rpm" is in the "incoming" directory
+        And the job has a build with number="123" with malformed data
+        And make will return 0
         And email notification is enabled
         And the email server is broken
         When I run "daemon"
-        Then the update repo log file has "ERROR Email send failed:"
+        Then the "incoming" directory is empty
+        And the "processing" directory is empty
+        And there is a package with version="123",status="failed"
+        And the update repo log file has "ERROR Email send failed:"
 
     # Scenario: interrupt while adding a package
 
