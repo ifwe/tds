@@ -52,13 +52,20 @@ Feature: YUM repo updater
         And there is a package with version="123",status="failed"
         And the update repo log file has "ERROR Email send failed:"
 
-    # Scenario: interrupt while adding a package
+    @email_server
+    Scenario: Jenkins unavailable
+        When I run "daemon"
+        Then the update repo log file has "ERROR Unable to contact Jenkins server at "
+
+    @jenkins_server @email_server
+    Scenario: artifact not on Jenkins
+        Given there is a jenkins job with name="job"
+        When I run "daemon"
+        Then the update repo log file has "ERROR Failed to download RPM for package with id=1: Artifact does not exist on "
 
     # Scenario: file can't be removed
 
     # Scenario: test config loading and failure modes
-
-    # Scenario: package entry does not exist
 
     # Scenario: failure to move file
 
