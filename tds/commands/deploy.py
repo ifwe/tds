@@ -396,22 +396,6 @@ class DeployController(BaseController):
 
         return tier_deps
 
-        # for app_dep in tier.app_deployments:
-        #     if app_dep.deployment.id == self.deployment.id:
-        #         if app_dep.deployment.status in [
-        #             'incomplete', 'inprogress'
-        #         ]:
-        #             tier_deps[app_dep.deployment.id] = \
-        #                 app_dep.deployment.status = 'pending'
-        #         elif app_dep.deployment.status in [
-        #             'complete', 'invalidated', 'validated'
-        #         ]:
-        #             # Skip this tier
-        #             break
-        #
-        #         self.prepare_host_deployments(hosts=set(tier.hosts))
-        #         break
-
     def perform_validation(self, app_deployment, package, params):
         """
         Perform validation on a given app deployment.
