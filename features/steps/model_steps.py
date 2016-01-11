@@ -332,7 +332,6 @@ def deploy_package_to_target(package, target, env, status='complete'):
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
-        package_id=package.id,
         user=curr_user,
     )
     dep = tagopsdb.Deployment.get(**dep_props)
@@ -348,6 +347,7 @@ def deploy_package_to_target(package, target, env, status='complete'):
         user=dep.user,
         status=status,
         environment_id=env_id,
+        package_id=package.id,
     )
 
     tagopsdb.Session.add(app_dep)
@@ -356,10 +356,11 @@ def deploy_package_to_target(package, target, env, status='complete'):
     deploy_to_hosts(
         tagopsdb.Host.find(app_id=target.id, environment_id=env_id),
         dep,
+        package.id,
     )
 
 
-def deploy_to_hosts(hosts, deployment, status='ok'):
+def deploy_to_hosts(hosts, deployment, package_id, status='ok'):
     """
     Add a host deployment entry for the given package to every host in hosts,
     using the given deployment.
@@ -372,6 +373,7 @@ def deploy_to_hosts(hosts, deployment, status='ok'):
                 host_id=host.id,
                 user=curr_user,
                 status=status,
+                package_id=package_id,
             )
 
             tagopsdb.Session.add(host_dep)
@@ -468,7 +470,6 @@ def given_the_package_is_deployed_on_host(context, properties):
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
-        package_id=package.id,
         user=curr_user,
     )
 
@@ -485,6 +486,7 @@ def given_the_package_is_deployed_on_host(context, properties):
         deployment_id=deployment.id,
         user=deployment.user,
         status='ok',
+        package_id=package.id,
     )
 
     tagopsdb.Session.add(host_deployment)
@@ -506,9 +508,8 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
 
     host = tagopsdb.Host.get(**attrs)
 
-    deployment = tagopsdb.Deployment.get(package_id=package.id)
     host_dep = tagopsdb.HostDeployment.get(
-        host_id=host.id, deployment_id=deployment.id
+        host_id=host.id, package_id=package.id
     )
 
     host_dep.status = 'failed'
@@ -1323,14 +1324,9 @@ def given_the_package_has_status_set_with_properties(
     targets = context.tds_targets
     package = context.tds_packages[-1] if version is None \
         else check_if_package_exists(context, version)
-    deployments = tagopsdb.Deployment.find(package_id=package.id)
-    dep_ids = [d.id for d in deployments]
     target_ids = [t.id for t in targets]
 
-    for app_dep in tagopsdb.AppDeployment.all():
-        if app_dep.deployment_id not in dep_ids:
-            continue
-
+    for app_dep in tagopsdb.AppDeployment.find(package_id=package.id):
         if app_dep.app_id not in target_ids:
             continue
 
@@ -1340,10 +1336,7 @@ def given_the_package_has_status_set_with_properties(
         app_dep.status = status
         tagopsdb.Session.add(app_dep)
 
-    for host_dep in tagopsdb.HostDeployment.all():
-        if host_dep.deployment_id not in dep_ids:
-            continue
-
+    for host_dep in tagopsdb.HostDeployment.find(package_id=package.id):
         if host_dep.host.environment != environment:
             continue
 
@@ -1454,7 +1447,7 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
     hosts = [tagopsdb.Host.get(hostname=host_name)
              for host_name in host_names]
 
-    deploy_to_hosts(hosts, deployment, 'inprogress')
+    deploy_to_hosts(hosts, deployment, package_id, 'inprogress')
 
 
 @given(u'there is an ongoing deployment on the deploy target')

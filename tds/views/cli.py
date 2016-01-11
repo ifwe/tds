@@ -63,7 +63,7 @@ PKG_DEPLOY_MISSING_TEMPLATE = (
     'to any of the given tiers\n'
 )
 APP_DEPLOY_HEADER_TEMPLATE = (
-    'Deployment of {app_dep.deployment.package.name} '
+    'Deployment of {app_dep.package.name} '
     'to {app_dep.application.name} tier '
     'in {app_dep.environment} environment:\n'
     '==========\n'
@@ -74,8 +74,8 @@ APP_DEPLOY_MISSING_TEMPLATE = (
     'in {app_dep[environment]} environment\n'
 )
 APP_DEPLOY_TEMPLATE = (
-    'Version: {app_dep.deployment.package.version}-'
-    '{app_dep.deployment.package.revision}\n'
+    'Version: {app_dep.package.version}-'
+    '{app_dep.package.revision}\n'
     'Declared: {app_dep.deployment.declared}\n'
     'Declaring user: {app_dep.deployment.user}\n'
     'Realized: {app_dep.realized}\n'
@@ -97,8 +97,8 @@ HOST_DEPLOY_MISSING_TEMPLATE = (
     'in {host_dep[environment]} environment\n'
 )
 HOST_DEPLOY_TEMPLATE = (
-    'Version: {host_dep.deployment.package.version}-'
-    '{host_dep.deployment.package.revision}\n'
+    'Version: {host_dep.package.version}-'
+    '{host_dep.package.revision}\n'
     'Declared: {host_dep.deployment.declared}\n'
     'Declaring user: {host_dep.deployment.user}\n'
     'Realized: {host_dep.realized}\n'
