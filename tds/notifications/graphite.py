@@ -31,4 +31,9 @@ class GraphiteNotifier(Notifier):
             prefix=self.config['prefix']
         )
 
-        graphite.send(deployment.package.name, 1)
+        if deployment.app_deployments:
+            package = deployment.app_deployments[0].package
+        else:
+            package = deployment.host_deployments[0].package
+
+        graphite.send(package.name, 1)

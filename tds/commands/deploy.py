@@ -329,8 +329,12 @@ class DeployController(BaseController):
             pbar = progressbar.ProgressBar(widgets=widgets,
                                            maxval=total_hosts).start()
 
+        if dep.app_deployments:
+            pkg = dep.app_deployments[0].package
+        else:
+            pkg = dep.host_deployments[0].package
+
         for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
-            pkg = dep.package
             app, version = pkg.name, pkg.version
             log.log(5, 'Application name and version: %s %s', app, version)
 
@@ -848,7 +852,7 @@ class DeployController(BaseController):
             for app_dep in app.app_deployments:
                 if app_dep.environment_obj != environment:
                     continue
-                if app_dep.deployment.package != package:
+                if app_dep.package != package:
                     continue
 
                 app_deployments[app.id] = (
@@ -1312,7 +1316,7 @@ class DeployController(BaseController):
             dep = None
 
         if dep is not None:
-            pkg = dep.deployment.package
+            pkg = dep.package
             return pkg
 
         return None
@@ -1409,9 +1413,12 @@ class DeployController(BaseController):
                 application.name, self.envs[params['env']]
             )
 
-        deployment = package.deployments[-1]
-        params['package_name'] = deployment.package.name
-        params['version'] = deployment.package.version
+        if package.app_deployments:
+            deployment = package.app_deployments[-1].deployment
+        else:
+            deployment = package.host_deployments[-1].deployment
+        params['package_name'] = package.name
+        params['version'] = package.version
 
         self.send_notifications(
             hosts, apptypes, application=application, **params
