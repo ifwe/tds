@@ -518,10 +518,9 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
 
 
 def set_status_for_package(package, status):
-    for deployment in package.deployments:
-        for app_dep in deployment.app_deployments:
-            app_dep.status = status
-            tagopsdb.Session.add(app_dep)
+    for app_dep in package.app_deployments:
+        app_dep.status = status
+        tagopsdb.Session.add(app_dep)
 
     tagopsdb.Session.commit()
 
@@ -1206,9 +1205,9 @@ def then_the_package_is_validated(context):
     assert check_package_validation(
         context,
         package,
-        package.deployments[-1].app_deployments,
+        package.app_deployments,
         'validated'
-    ), (package.deployments[-1].app_deployments, package.deployments[-1])
+    ), package.app_deployments
 
 
 @then(u'the package is invalidated')
@@ -1217,7 +1216,7 @@ def then_the_package_is_invalidated(context):
     assert check_package_validation(
         context,
         package,
-        package.deployments[-1].app_deployments,
+        package.app_deployments,
         'invalidated'
     )
 
@@ -1434,7 +1433,6 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
     package_id = context.tds_packages[-1].id
 
     dep_props = dict(
-        package_id=package_id,
         user=curr_user,
     )
 
