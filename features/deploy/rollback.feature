@@ -66,6 +66,17 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is no tier deployment with deployment_id=2,app_id=2
         And there is no tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
 
+    Scenario: rollback version to one host out of tier
+        Given there is a package with version="124"
+        And the package is deployed on the hosts
+        When I run "deploy rollback myapp --hosts projhost01 --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
+        And there is a deployment with id=2,status="queued",delay=0
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=3
+        And there is no host deployment with deployment_id=2,host_id=2
+        And there is no tier deployment with deployment_id=2,app_id=2
+        And there is no tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
+
     Scenario: rollback version to apptype
         When I run "deploy rollback myapp --apptype the-apptype --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
