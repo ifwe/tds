@@ -117,41 +117,6 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         And there is a tier deployment with app_id=2,status="invalidated",environment_id=2,package_id=3
         And there is a tier deployment with app_id=3,status="invalidated",environment_id=2,package_id=3
 
-    #TODO: Figure out what to do with these tests
-    # Scenario: rollback version to hosts with a failure
-    #     Given the host "projhost01" will fail to deploy
-    #     When I run "deploy rollback myapp --hosts projhost01 projhost02 --detach"
-    #     Then the output has "Some hosts had failures"
-    #     And the output has "Hostname: projhost01"
-    #
-    # Scenario: rollback version to apptype with a failure
-    #     Given the host "projhost01" will fail to deploy
-    #     When I run "deploy rollback myapp --apptype the-apptype --detach"
-    #     Then the output has "Some hosts had failures"
-    #     And the output has "Hostname: projhost01"
-    #
-    # Scenario: rollback version to all apptypes with a failure
-    #     Given there is a deploy target with name="another-apptype"
-    #     And the deploy target is a part of the project-application pair
-    #     And there is a host with name="anotherhost01"
-    #     And the host is associated with the deploy target
-    #
-    #     And the package "121" is deployed on the deploy target
-    #     And the package has been validated
-    #
-    #     And I wait 1 seconds
-    #     And the package "122" is deployed on the deploy target
-    #     And the package has been invalidated
-    #
-    #     And I wait 1 seconds
-    #     And the package "123" is deployed on the deploy target
-    #     And the package has been validated
-    #
-    #     And the host "projhost01" will fail to deploy
-    #     When I run "deploy rollback myapp --all-apptypes --detach"
-    #     Then the output has "Some hosts had failures"
-    #     And the output has "Hostname: projhost01"
-
     Scenario: rollback a single host out of multiple apptypes
         Given there is a deploy target with name="another-apptype"
         And the deploy target is a part of the project-application pair
