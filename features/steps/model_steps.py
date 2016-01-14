@@ -67,7 +67,7 @@ def host_factory(context, name, env=None, **kwargs):
     host = tagopsdb.Host(
         state=kwargs.get('state', 'operational'),
         hostname=name,
-        distribution='Centos 6.4',
+        distribution=kwargs.get('distribution', 'Centos 6.4'),
         app_id=kwargs.get(
             'app_id',
             tagopsdb.Application.get(name=tagopsdb.Application.dummy).id

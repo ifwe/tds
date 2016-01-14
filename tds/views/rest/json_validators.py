@@ -214,7 +214,8 @@ class JSONValidatedView(object):
             return (
                 "Value {val} for argument {param} must be one of: "
                 "{choices}.".format(
-                    val=given, param=param_name, choices=choices
+                    val=given, param=param_name,
+                    choices=sorted(str(choice) for choice in choices),
                 )
             )
         else:
