@@ -83,5 +83,5 @@ Feature: POST app tier(s) from the REST API
         Then the response code is 400
         And the response contains errors:
             | location  | name      | description                                                                               |
-            | query     | status    | Validation failed: Value foo for argument status must be one of: ('active', 'inactive').  |
+            | query     | status    | Validation failed: Value foo for argument status must be one of: ['active', 'inactive'].  |
         And there is no deploy target with name="tier3"

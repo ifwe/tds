@@ -82,7 +82,6 @@ class SearchView(base.BaseView):
             'rack': 'rack_location',
             'tier_id': 'app_id',
         },
-        'arch_choices': ('i386', 'noarch', 'x86_64',),
         'descriptions': descriptions.HOST_DESCRIPTIONS,
     }
 
