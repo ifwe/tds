@@ -54,14 +54,9 @@ HOST_TYPES = {
     'cage': 'integer',
     'cab': 'string',
     'rack': 'integer',
-    'kernel_version': 'string',
     'console_port': 'string',
-    'power_port': 'string',
-    'power_circuit': 'string',
     'state': 'choice',
-    'arch': 'choice',
-    'distribution': 'choice',
-    'timezone': 'string',
+    'distribution': 'string',
     'environment_id': 'integer',
 }
 
@@ -92,7 +87,7 @@ PROJECT_TYPES = {
 TIER_TYPES = {
     'id': 'integer',
     'name': 'string',
-    'distribution': 'choice',
+    'distribution': 'string',
     'puppet_class': 'string',
     'ganglia_id': 'integer',
     'ganglia_name': 'string',

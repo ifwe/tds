@@ -10,17 +10,16 @@ Feature: POST app tier(s) from the REST API
 
     @rest
     Scenario Outline: add a new tier
-        When I query POST "/tiers?name=tier3&<params>"
+        When I query POST "/tiers?name=tier3&distribution=centos7.1&<params>"
         Then the response code is 201
-        And the response is an object with name="tier3"<props>
-        And there is a deploy target with name="tier3"
+        And the response is an object with name="tier3",distribution="centos7.1"<props>
+        And there is a deploy target with name="tier3",distribution="centos7.1"
 
         Examples:
             | params                    | props                         |
             |                           |                               |
             | status=inactive           | ,status="inactive"            |
             | puppet_class=cls          | ,puppet_class="cls"           |
-            | distribution=centos7.1    | ,distribution="centos7.1"     |
 
     @rest
     Scenario Outline: omit required fields
@@ -47,13 +46,13 @@ Feature: POST app tier(s) from the REST API
         And there is no deploy target with id=4
 
         Examples:
-            | query                 |
-            | name=tier3&foo=bar    |
-            | foo=bar&name=tier3    |
+            | query                                     |
+            | name=tier3&foo=bar&distribution=centos7.1 |
+            | foo=bar&distribution=centos7.1&name=tier3 |
 
     @rest
     Scenario: attempt to violate a unique constraint
-        When I query POST "/tiers?name=tier2"
+        When I query POST "/tiers?name=tier2&distribution=centos7.1"
         Then the response code is 409
         And the response contains errors:
             | location  | name  | description                                                       |
@@ -61,7 +60,7 @@ Feature: POST app tier(s) from the REST API
 
     @rest
     Scenario: pass a non-integer for an integer param
-        When I query POST "/tiers?name=tier3&ganglia_id=3.1415"
+        When I query POST "/tiers?name=tier3&ganglia_id=3.1415&distribution=centos7.1"
         Then the response code is 400
         And the response contains errors:
             | location  | name          | description                                                                   |
@@ -71,7 +70,7 @@ Feature: POST app tier(s) from the REST API
 
     @rest
     Scenario: pass a Ganglia ID for a Ganglia entry that doesn't exist
-        When I query POST "/tiers?name=tier3&ganglia_id=500"
+        When I query POST "/tiers?name=tier3&ganglia_id=500&distribution=centos7.1"
         Then the response code is 400
         And the response contains errors:
             | location  | name          | description                           |
@@ -80,7 +79,7 @@ Feature: POST app tier(s) from the REST API
 
     @rest
     Scenario: pass an invalid status
-        When I query POST "/tiers?name=tier3&status=foo"
+        When I query POST "/tiers?name=tier3&status=foo&distribution=centos7.1"
         Then the response code is 400
         And the response contains errors:
             | location  | name      | description                                                                               |

@@ -27,8 +27,8 @@ Feature: PUT host(s) from the REST API
             | 1         |                                   | name="host1",id=1                                     |
             | host1     | rack=100&cage=20&environment_id=2 | name="host1",id=1,rack=100,cage=20,environment_id=2   |
             | 1         | rack=100&cage=20&environment_id=2 | name="host1",id=1,rack=100,cage=20,environment_id=2   |
-            | host1     | tier_id=2&kernel_version=foo      | name="host1",id=1,tier_id=2,kernel_version="foo"      |
-            | 1         | tier_id=2&kernel_version=foo      | name="host1",id=1,tier_id=2,kernel_version="foo"      |
+            | host1     | tier_id=2                         | name="host1",id=1,tier_id=2                           |
+            | 1         | tier_id=2                         | name="host1",id=1,tier_id=2                           |
             | host1     | name=host3                        | name="host3",id=1                                     |
             | 1         | name=host3                        | name="host3",id=1                                     |
 
@@ -51,8 +51,8 @@ Feature: PUT host(s) from the REST API
         When I query PUT "/hosts/<select>?name=host100&foo=bar"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                                                                                           |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'cab', 'cage', 'console_port', 'distribution', 'environment_id', 'kernel_version', 'name', 'power_circuit', 'power_port', 'rack', 'state', 'tier_id', 'timezone']. |
+            | location  | name  | description                                                                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['cab', 'cage', 'console_port', 'distribution', 'environment_id', 'name', 'rack', 'state', 'tier_id'].  |
 
         Examples:
             | select    |

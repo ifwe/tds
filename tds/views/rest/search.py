@@ -83,11 +83,6 @@ class SearchView(base.BaseView):
             'tier_id': 'app_id',
         },
         'arch_choices': ('i386', 'noarch', 'x86_64',),
-        'distribution_choices': (
-            'centos5.4', 'centos6.2', 'centos6.4', 'centos6.5',
-            'centos7.0', 'centos7.1', 'fedora18', 'rhel5.3', 'rhel6.2',
-            'rhel6.3', 'rhel6.4', 'rhel6.5', 'ontap',
-        ),
         'descriptions': descriptions.HOST_DESCRIPTIONS,
     }
 
