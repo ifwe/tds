@@ -1045,6 +1045,7 @@ class DeployController(BaseController):
 
             self.deploy_to_hosts_or_tiers(
                 apphosts, apptypes, params, dep, single_app_dep_map, pkg_id,
+                rollback=True
             )
 
     @tds.utils.debug

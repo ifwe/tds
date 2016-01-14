@@ -1511,3 +1511,47 @@ def then_update_repo_log_file_has(context, text):
     with open(os.path.join(context.WORK_DIR, 'update_deploy_repo.log')) as fh:
         actual = fh.read()
         assert text in actual, (text, actual)
+
+
+NAME_OBJ_MAPPINGS = {
+    'application': tds.model.Application,
+    'package': tds.model.Package,
+    'deploy target': tds.model.AppTarget,
+    'host': tds.model.HostTarget,
+    'tier': tds.model.AppTarget,
+    'deployment': tds.model.Deployment,
+    'host deployment': tds.model.HostDeployment,
+    'tier deployment': tds.model.AppDeployment,
+    'ganglia': tagopsdb.model.Ganglia,
+    'hipchat': tagopsdb.model.Hipchat,
+    'project': tds.model.Project,
+    'environment': tagopsdb.model.Environment,
+    'project-package': tagopsdb.model.ProjectPackage,
+}
+
+
+@then(u'there exists a {model} with {properties}')
+def then_there_exists_a_model_with(context, model, properties):
+    model = NAME_OBJ_MAPPINGS[model.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is not None, (found, model.all())
+
+
+@then(u'there exists an {obj_type} with {properties}')
+def then_there_exists_an_obj_type_with(context, obj_type, properties):
+    model = NAME_OBJ_MAPPINGS[obj_type.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is not None, (found, model.all())
+
+
+@then(u'there exists no {model} with {properties}')
+def then_there_exists_no_model_with(context, model, properties):
+    model = NAME_OBJ_MAPPINGS[model.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is None, found

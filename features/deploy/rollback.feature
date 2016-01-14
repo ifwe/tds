@@ -78,6 +78,7 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
         Then the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "123" was deployed to host "projhost01"
         And package "myapp" version "123" was not deployed to host "projhost02"
+        And there exists a tier deployment with status="complete",app_id="2"
 
         Examples:
             | strategy |
