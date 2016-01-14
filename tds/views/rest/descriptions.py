@@ -54,14 +54,9 @@ HOST_DESCRIPTIONS = {
     'cage': 'Cage location',
     'cab': 'Cab location',
     'rack': 'Rack location',
-    'kernel_version': 'Version string of OS kernel',
     'console_port': 'Console port used',
-    'power_port': 'Power port used',
-    'power_circuit': 'Power circuit used',
     'state': 'Current state',
-    'arch': 'Binary architecture supported',
     'distribution': 'Distribution used',
-    'timezone': 'Timezone of residence',
     'environment_id': 'ID of environment of residence',
 }
 

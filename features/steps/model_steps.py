@@ -18,7 +18,7 @@ def get_model_factory(name):
     if name == 'project':
         return project_factory
     if name == 'deploy target':
-        return lambda _ctxt, **kwargs: tds.model.AppTarget.create(**kwargs)
+        return tier_factory
     if name == 'package':
         return package_factory
     if name == 'host':
@@ -29,6 +29,12 @@ def get_model_factory(name):
         return application_factory
 
     return None
+
+
+def tier_factory(context, **kwargs):
+    if kwargs.get('distribution', None) is None:
+        kwargs['distribution'] = 'centos6.5'
+    return tds.model.AppTarget.create(**kwargs)
 
 
 def rpm_factory(context, **kwargs):
@@ -61,10 +67,7 @@ def host_factory(context, name, env=None, **kwargs):
     host = tagopsdb.Host(
         state=kwargs.get('state', 'operational'),
         hostname=name,
-        arch=kwargs.get('arch', 'x64'),
-        kernel_version='2.6.2',
         distribution='Centos 6.4',
-        timezone='UTC',
         app_id=kwargs.get(
             'app_id',
             tagopsdb.Application.get(name=tagopsdb.Application.dummy).id
@@ -73,8 +76,6 @@ def host_factory(context, name, env=None, **kwargs):
         cab_location=name[:10],
         rack_location=1,
         console_port='abcdef',
-        power_port='ghijkl',
-        power_circuit='12345',
         environment_id=env_id,
     )
 

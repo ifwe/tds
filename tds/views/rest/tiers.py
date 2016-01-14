@@ -29,7 +29,7 @@ class TierView(BaseView):
 
     defaults = {}
 
-    required_post_fields = ("name",)
+    required_post_fields = ("name", "distribution")
 
     permissions = {
         'put': 'admin',

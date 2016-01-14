@@ -20,11 +20,10 @@ Feature: POST host(s) from the REST API
         And the response is an object with name="host3",tier_id=2<props>
 
         Examples:
-            | params                            | props                                 |
-            |                                   |                                       |
-            | cage=1&cab=foo&rack=3             | ,cage=1,cab="foo",rack=3              |
-            | kernel_version=foo                | ,kernel_version="foo"                 |
-            | console_port=foo&power_port=foo   | ,console_port="foo",power_port="foo"  |
+            | params                | props                     |
+            |                       |                           |
+            | cage=1&cab=foo&rack=3 | ,cage=1,cab="foo",rack=3  |
+            | console_port=foo      | ,console_port="foo"       |
 
     @rest
     Scenario Outline: omit required fields
@@ -47,8 +46,8 @@ Feature: POST host(s) from the REST API
         When I query POST "/hosts?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                                                                                           |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'cab', 'cage', 'console_port', 'distribution', 'environment_id', 'kernel_version', 'name', 'power_circuit', 'power_port', 'rack', 'state', 'tier_id', 'timezone']. |
+            | location  | name  | description                                                                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['cab', 'cage', 'console_port', 'distribution', 'environment_id', 'name', 'rack', 'state', 'tier_id'].  |
         And there is no host with name="host3"
         And there is no host with id=3
 
