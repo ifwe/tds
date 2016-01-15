@@ -333,18 +333,30 @@ def deploy_package_to_target(package, target, env, status='complete'):
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
         user=curr_user,
+        status=status
     )
-    dep = tagopsdb.Deployment.get(**dep_props)
-    if dep is None:
-        dep = tagopsdb.Deployment(**dep_props)
 
-    tagopsdb.Session.add(dep)
+    found_dep = None
+    for dep in tagopsdb.Deployment.all():
+        if any(app_dep.package_id == package.id
+               for app_dep in dep.app_deployments):
+            found_dep = dep
+            break
+        elif any(host_dep.package_id == package.id
+                 for host_dep in dep.host_deployments):
+            found_dep = dep
+            break
+
+    if found_dep is None:
+        found_dep = tagopsdb.Deployment(**dep_props)
+
+    tagopsdb.Session.add(found_dep)
     tagopsdb.Session.commit()
 
     app_dep = tagopsdb.AppDeployment(
-        deployment_id=dep.id,
+        deployment_id=found_dep.id,
         app_id=target.id,
-        user=dep.user,
+        user=found_dep.user,
         status=status,
         environment_id=env_id,
         package_id=package.id,
@@ -355,7 +367,7 @@ def deploy_package_to_target(package, target, env, status='complete'):
 
     deploy_to_hosts(
         tagopsdb.Host.find(app_id=target.id, environment_id=env_id),
-        dep,
+        found_dep,
         package.id,
     )
 
@@ -471,20 +483,31 @@ def given_the_package_is_deployed_on_host(context, properties):
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
         user=curr_user,
+        status='complete'
     )
 
-    deployment = tagopsdb.Deployment.get(**dep_props)
-    if deployment is None:
-        deployment = tagopsdb.Deployment(**dep_props)
-        tagopsdb.Session.add(deployment)
+    found_dep = None
+    for dep in tagopsdb.Deployment.all():
+        if any(app_dep.package_id == package.id
+               for app_dep in dep.app_deployments):
+            found_dep = dep
+            break
+        elif any(host_dep.package_id == package.id
+                 for host_dep in dep.host_deployments):
+            found_dep = dep
+            break
+
+    if found_dep is None:
+        found_dep = tagopsdb.Deployment(**dep_props)
+        tagopsdb.Session.add(found_dep)
         tagopsdb.Session.commit()
 
-    assert deployment
+    assert found_dep
 
     host_deployment = tagopsdb.HostDeployment(
         host_id=host.id,
-        deployment_id=deployment.id,
-        user=deployment.user,
+        deployment_id=found_dep.id,
+        user=found_dep.user,
         status='ok',
         package_id=package.id,
     )
@@ -521,6 +544,11 @@ def set_status_for_package(package, status):
     for app_dep in package.app_deployments:
         app_dep.status = status
         tagopsdb.Session.add(app_dep)
+
+        for host_dep in package.host_deployments:
+            if host_dep.host.app_id == app_dep.app_id and \
+                    host_dep.host.environment_id == app_dep.environment_id:
+                tagopsdb.Session.delete(host_dep)
 
     tagopsdb.Session.commit()
 
@@ -1434,18 +1462,29 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
 
     dep_props = dict(
         user=curr_user,
+        status='complete'
     )
 
-    deployment = tagopsdb.Deployment.get(**dep_props)
-    if deployment is None:
-        deployment = tagopsdb.Deployment(**dep_props)
-        tagopsdb.Session.add(deployment)
+    found_dep = None
+    for dep in tagopsdb.Deployment.all():
+        if any(app_dep.package_id == package_id
+               for app_dep in dep.app_deployments):
+            found_dep = dep
+            break
+        elif any(host_dep.package_id == package_id
+                 for host_dep in dep.host_deployments):
+            found_dep = dep
+            break
+
+    if found_dep is None:
+        found_dep = tagopsdb.Deployment(**dep_props)
+        tagopsdb.Session.add(found_dep)
         tagopsdb.Session.commit()
 
     hosts = [tagopsdb.Host.get(hostname=host_name)
              for host_name in host_names]
 
-    deploy_to_hosts(hosts, deployment, package_id, 'inprogress')
+    deploy_to_hosts(hosts, found_dep, package_id, 'inprogress')
 
 
 @given(u'there is an ongoing deployment on the deploy target')
