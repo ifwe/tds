@@ -9,7 +9,10 @@ def main(*args):
     data = yaml.load(open(filename))
 
     def sub(x):
-        return str(data.get(x.group(1), ''))
+        to_return = str(data.get(x.group(1), ''))
+        if not to_return:
+            raise Exception()
+        return to_return
 
     print re.sub(r'%\{(.*?)}', sub, rpm_format)
     return 0

@@ -115,6 +115,7 @@ def package_factory(context, **kwargs):
         status=kwargs.get('status', 'completed'),
         creator=curr_user,
         builder='jenkins',
+        job=kwargs.get('job', application.path),
     )
 
     tagopsdb.Session.add(package)
@@ -1594,3 +1595,23 @@ def then_there_exists_no_model_with(context, model, properties):
     properties = parse_properties(properties)
     found = model.get(**properties)
     assert found is None, found
+
+
+@when(u'the status of the {obj_type} with {props} changes to "{status}"')
+def when_the_status_of_deployment_changes_to(context, obj_type, props, status):
+    properties = parse_properties(props)
+    obj_mapping = {
+        'deployment': tagopsdb.model.Deployment,
+        'host deployment': tagopsdb.model.HostDeployment,
+        'tier deployment': tagopsdb.model.AppDeployment,
+        'package': tagopsdb.model.Package,
+    }
+    assert obj_type in obj_mapping
+
+    model = obj_mapping[obj_type]
+    tagopsdb.Session.close()
+    instance = model.get(**properties)
+    assert instance is not None
+
+    instance.status = status
+    tagopsdb.Session.commit()
