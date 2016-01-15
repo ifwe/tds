@@ -100,10 +100,7 @@ class Notifier(object):
     @staticmethod
     def message_for_unvalidated(deployment):
         'Returns the message for an unvalidated deployment'
-        if deployment.app_deployments:
-            package = deployment.app_deployments[0].package
-        else:
-            package = deployment.host_deployments[0].package
+        package = deployment.package
         subject = (
             'ATTENTION: %s in %s for %s app tier needs validation!' % (
                 package['name'],
@@ -127,10 +124,7 @@ class Notifier(object):
         'Default message that will be used unless another handler is found'
         log.debug('Creating information for notifications')
 
-        if deployment.app_deployments:
-            package = deployment.app_deployments[0].package
-        else:
-            package = deployment.host_deployments[0].package
+        package = deployment.package
 
         # Determine version
         version = package.version
