@@ -2,6 +2,7 @@
 from datetime import timedelta, datetime
 
 import tagopsdb
+import tagopsdb.deploy.deploy
 import tds.notifications
 import tds.model
 
@@ -60,27 +61,12 @@ class TagopsdbDeploymentProvider(object):
     @staticmethod
     def get_all(environment):
         'Get all unvalidated deployments for `environment`'
-        unvalidated_deps = tds.model.AppDeployment.find(
-            env=environment,  # the config 'env.environment' is actually 'env'
-            needs_validation=True,
-            order_by=tds.model.AppDeployment.realized,
-            desc=True,
+        environment = \
+            tds.model.Environment.find(env=environment)[0].environment
+
+        return (
+            tagopsdb.deploy.deploy.find_unvalidated_deployments(environment)
         )
-
-        seen = set()
-        latest_unvalidated_deps = []
-
-        for unvalidated_dep in unvalidated_deps:
-            tier = unvalidated_dep.target
-            pkg_name = unvalidated_dep.package.pkg_name
-
-            if (tier, pkg_name) in seen:
-                continue
-
-            seen.add((tier, pkg_name))
-            latest_unvalidated_deps.append(unvalidated_dep)
-
-        return latest_unvalidated_deps
 
 
 class ValidationMonitor(object):
