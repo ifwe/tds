@@ -9,7 +9,8 @@ from ..environment import add_config_val
 @given(u'hipchat notifications are enabled')
 def given_hipchat_notifications_are_enabled(context):
     add_config_val(context, 'notifications',
-                   dict(enabled_methods=['hipchat']))
+                   dict(enabled_methods=['hipchat']),
+                   use_list=True)
 
 
 @then(u'there was a hipchat notification with {properties}')

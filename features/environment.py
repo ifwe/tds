@@ -332,7 +332,7 @@ def setup_conf_file(context):
     ))
 
 
-def add_config_val(context, key, val):
+def add_config_val(context, key, val, use_list=False):
     with open(context.TDS_CONFIG_FILE) as conf_file:
         full_conf = conf = yaml.load(conf_file)
 
@@ -343,7 +343,7 @@ def add_config_val(context, key, val):
 
     old_data = conf.get(key_parts[-1], {})
     if isinstance(val, dict):
-        conf[key_parts[-1]] = merge.merge(old_data, val)
+        conf[key_parts[-1]] = merge.merge(old_data, val, use_list=use_list)
     else:
         conf[key_parts[-1]] = val
 
