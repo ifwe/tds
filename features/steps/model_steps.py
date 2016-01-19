@@ -15,10 +15,6 @@ import tds.commands
 import tds.exceptions
 
 
-# Use this for the user for all package and deployment entries
-curr_user = pwd.getpwuid(os.getuid())[0]
-
-
 def get_model_factory(name):
     if name == 'project':
         return project_factory
@@ -117,7 +113,7 @@ def package_factory(context, **kwargs):
         version=kwargs.get('version', 1),
         revision=kwargs.get('revision', 1),
         status=kwargs.get('status', 'completed'),
-        creator=curr_user,
+        creator='test-user',
         builder='jenkins',
         job=kwargs.get('job', application.path),
     )
@@ -323,7 +319,7 @@ def deploy_package_to_target(package, target, env, status='complete',
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
-        user=curr_user,
+        user='test-user',
         status=dep_status,
     )
     dep = tagopsdb.Deployment.get(**dep_props)
@@ -363,7 +359,7 @@ def deploy_to_hosts(hosts, deployment, package_id, status='ok'):
             host_dep = tagopsdb.HostDeployment(
                 deployment_id=deployment.id,
                 host_id=host.id,
-                user=curr_user,
+                user='test-user',
                 status=status,
                 package_id=package_id,
             )
@@ -462,7 +458,7 @@ def given_the_package_is_deployed_on_host(context, properties):
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
-        user=curr_user,
+        user='test-user',
     )
 
     deployment = tagopsdb.Deployment.get(**dep_props)
@@ -1476,7 +1472,7 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
     package_id = context.tds_packages[-1].id
 
     dep_props = dict(
-        user=curr_user,
+        user='test-user',
     )
 
     deployment = tagopsdb.Deployment.get(**dep_props)
