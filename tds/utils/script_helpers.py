@@ -14,7 +14,7 @@ class UnvalidatedDeploymentNotifier(tds.notifications.Notifications):
         'Create a TDS Deployment instance for a tagopsdb AppDeployment'
         package = app_deployment.package
 
-        return tds.model.Deployment(
+        return tds.model.DeployInfo(
             # XXX: How to get groups?
             actor=tds.model.Actor(name=app_deployment.user, groups=[]),
             action=dict(
