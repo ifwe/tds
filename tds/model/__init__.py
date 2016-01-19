@@ -14,6 +14,7 @@ __all__ = [
     'AppTarget',
     'HostTarget',
     'DeployTarget',
+    'DeployInfo',
 ]
 
 from .base import Base
@@ -23,5 +24,6 @@ from .application import Application
 from .project import Project
 from .package import Package
 from .deploy_target import DeployTarget, HostTarget, AppTarget
+from .deploy_info import DeployInfo
 
 from tagopsdb import Environment
