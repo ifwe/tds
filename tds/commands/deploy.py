@@ -22,7 +22,7 @@ def create_deployment(hosts, apptypes, **params):
     Translate the common "params" argument into a Deployment instance.
     """
 
-    return tds.model.Deployment(
+    return tds.model.DeployInfo(
         actor=tds.model.Actor(
             name=params.get('user'),
             groups=params.get('groups'),
@@ -30,6 +30,10 @@ def create_deployment(hosts, apptypes, **params):
         action=dict(
             command=params.get('command_name'),
             subcommand=params.get('subcommand_name'),
+        ),
+        project=dict(
+            # TODO: deployments should be for projects, not packages
+            name=params.get('package_name'),
         ),
         package=tds.model.Package(
             name=params.get('package_name'),
