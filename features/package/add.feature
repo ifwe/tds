@@ -62,7 +62,7 @@ Feature: package add application version [-f|--force]
         When I run "package add myapp 123 --detach"
         Then the output has "Package already exists with failed status. Changing status to pending for daemon to attempt re-adding..."
         And the output has "Package ready for repo updater daemon. Disconnecting now."
-        And there is a package with name="myapp",version="123",status="pending"
+        And there is a package with name="myapp",version="123",status="pending",job="job"
 
     @jenkins_server
     Scenario: add a package to an application
@@ -71,7 +71,7 @@ Feature: package add application version [-f|--force]
         And the job has a build with number="123"
         When I run "package add myapp 123 --detach"
         Then the output has "Package ready for repo updater daemon. Disconnecting now."
-        And there is a package with name="myapp",version="123",status="pending"
+        And there is a package with name="myapp",version="123",status="pending",job="job"
 
     @jenkins_server
     Scenario: with explicit --job flag
@@ -80,7 +80,7 @@ Feature: package add application version [-f|--force]
         And the job has a build with number="123"
         When I run "package add --job another_job myapp 123 --detach"
         Then the output has "Package ready for repo updater daemon. Disconnecting now."
-        And there is a package with name="myapp",version="123",status="pending"
+        And there is a package with name="myapp",version="123",status="pending",job="another_job"
 
     @jenkins_server
     Scenario: override default job with explicit --job flag
@@ -90,19 +90,7 @@ Feature: package add application version [-f|--force]
         And the job has a build with number="123"
         When I run "package add --job another_job myapp 123 --detach"
         Then the output has "Package ready for repo updater daemon. Disconnecting now."
-        And there is a package with name="myapp",version="123",status="pending"
-
-    # @jenkins_server
-    # Scenario: package status was changed to 'failed' by repo updater
-    #     Given there is an application with name="myapp"
-    #     And there is a jenkins job with name="job"
-    #     And the job has a build with number="123"
-    #     When I start to run "package add myapp 123"
-    #     And I wait 5 seconds
-    #     And the status is changed to "failed" for package with name="myapp",version="123"
-    #     And I wait 5 seconds
-    #     And the command finishes
-    #     Then the output has "Failed to update repository with package for application "myapp", version 123."
+        And there is a package with name="myapp",version="123",status="pending",job="another_job"
 
     @jenkins_server
     Scenario: add a package to an application again
@@ -121,7 +109,7 @@ Feature: package add application version [-f|--force]
         And the job has a build with number="123"
         When I run "package add myapp 123 --detach --force"
         Then the output has "Package was previously completed. Changing status to pending again for daemon to attempt re-adding..."
-        And there is a package with name="myapp",version="123",status="pending"
+        And there is a package with name="myapp",version="123",status="pending",job="job"
 
     @jenkins_server
     Scenario: add a package to an application again with the previous package in processing state
@@ -131,27 +119,6 @@ Feature: package add application version [-f|--force]
         And the job has a build with number="123"
         When I run "package add myapp 123 --detach --force"
         Then the output has "Package already being processed by daemon. Added"
-
-    # @wip
-    # @jenkins_server
-    # Scenario: add a package to an application where actual package isn't available
-    #     Given there is an application with name="myapp"
-    #     And there is a jenkins job with name="job"
-    #     And the job has a build with number="123"
-    #     And jenkins does not have the job's artifact
-    #     When I run "package add myapp 123 --detach"
-    #     Then the output has "Artifact does not exist on http://localhost"
-    #     And the output has "job@123"
-
-    # @wip
-    # @jenkins_server
-    # Scenario: add a package to an application where repo update daemon fails to return in time
-    #     Given there is an application with name="myapp"
-    #     And there is a jenkins job with name="job"
-    #     And the job has a build with number="123"
-    #     When I run "package add myapp 123 --detach"
-    #     Then the output has "Package ready for repo updater daemon. Disconnecting now."
-    #     And there is a package with name="myapp",version="123",status="pending"
 
     # TODO: There are probably more failure tests that can be written here!
     # e.g. test for already-exists package in various states: completed, pending, processing, removed, failed
