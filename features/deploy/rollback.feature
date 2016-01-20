@@ -70,6 +70,21 @@ Feature: deploy rollback application [--delay] [--hosts|--apptypes|--all-apptype
             | mco      |
             | salt     |
 
+    Scenario Outline: rollback version to a single host out of a tier
+        Given the deploy strategy is "<strategy>"
+        And there is a package with version="124"
+        And the package is deployed on the hosts
+        When I run "deploy rollback myapp --hosts projhost01"
+        Then the output has "Completed: 1 out of 1 hosts"
+        And package "myapp" version "123" was deployed to host "projhost01"
+        And package "myapp" version "123" was not deployed to host "projhost02"
+        And there exists a tier deployment with status="complete",app_id="2"
+
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
+
     Scenario Outline: rollback version to apptype
         Given the deploy strategy is "<strategy>"
         When I run "deploy rollback myapp --apptype the-apptype"

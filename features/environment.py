@@ -472,6 +472,7 @@ def seed_db():
         ganglia_group_name='%s hosts' % app_name,
         description="%s application" % app_name,
         ganglia=ganglia,
+        distribution='centos6.5',
     ))
 
     pkg_name = tagopsdb.PackageDefinition.dummy
