@@ -38,7 +38,7 @@ Feature: check for unvalidated deployments in a given environment
         And I wait 3 seconds
         When I run "check"
         Then an email is sent with the relevant information for unvalidated="true",apptypes="the-apptype"
-        And there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        And there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "ATTENTION","myapp+in+development+for+the-apptype+app+tier","Version+122+of+package+myapp","has+not+been+validated"
         And there are 1 hipchat notifications
 
