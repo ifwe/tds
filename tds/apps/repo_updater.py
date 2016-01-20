@@ -122,6 +122,9 @@ class RepoUpdater(TDSProgramBase):
         and download those RPMs into the self.incoming_dir directory.
         """
         rpms = list()
+
+        # Close the session to ensure the DB is read again
+        tagopsdb.Session.close()
         self.pending_pkgs = tagopsdb.Package.find(status='pending')
         if not self.pending_pkgs:
             return
