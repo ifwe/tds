@@ -58,7 +58,7 @@ class Application(Base):
         from . import Package
         return Package.get(name=self.name, version=version, revision=revision)
 
-    def create_version(self, version, revision, creator, **attrs):
+    def create_version(self, version, revision, job, creator, **attrs):
         from . import Package
 
         defaults = dict(
@@ -66,6 +66,7 @@ class Application(Base):
             name=self.name,
             version=version,
             revision=revision,
+            job=job,
             status='pending',
             creator=creator,
             builder=self.build_type,
