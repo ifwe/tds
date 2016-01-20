@@ -25,7 +25,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And there is an ongoing deployment on the deploy target
         And there is a package with version="124"
         When I run "deploy promote myapp 124 <targets> --detach"
-        Then the output has "User test-user is currently running a deployment for the tier the-apptype in the development environment. Skipping..."
+        Then the output has "currently running a deployment for the tier the-apptype in the development environment. Skipping..."
         And there is no deployment with id=2
         And there is no tier deployment with deployment_id=2
         And there is no host deployment with deployment_id=2
@@ -51,7 +51,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the hosts are associated with the deploy target
         And there is an ongoing deployment on the hosts="dprojhost01"
         When I run "deploy promote myapp 123 <targets> --detach"
-        Then the output has "User test-user is currently running a deployment for the host dprojhost01 in the development environment. Skipping..."
+        Then the output has "currently running a deployment for the host dprojhost01 in the development environment. Skipping..."
         And there is no deployment with id=2
         And there is no tier deployment with deployment_id=2
         And there is no host deployment with deployment_id=2
@@ -106,7 +106,7 @@ Feature: Ongoing deployments blocking attempted new ones
         And the package is deployed on the deploy targets in the "stage" env
         And there is an ongoing deployment on the deploy target
         When I run "deploy fix myapp <targets> --detach"
-        Then the output has "User test-user is currently running a deployment for the tier the-apptype in the staging environment. Skipping..."
+        Then the output has "currently running a deployment for the tier the-apptype in the staging environment. Skipping..."
         And there is no deployment with id=3
         And there is no tier deployment with deployment_id=3
         And there is no host deployment with deployment_id=3
