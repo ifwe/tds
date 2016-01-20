@@ -147,6 +147,10 @@ PACKAGE_DATA = odict([
                 ('help', 'Allow an existing package to be re-added'),
                 ('action', 'store_true'),
             ])),
+            (('--detach',), odict([
+                ('help', 'Disconnect client after preparing package'),
+                ('action', 'store_true'),
+            ])),
         ])),
     ])),
     ('delete', odict([

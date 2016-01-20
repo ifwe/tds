@@ -309,7 +309,8 @@ class DeployController(BaseController):
         return self.deploy_strategy.restart_host(dep_host, app, retry)
 
     @tds.utils.debug
-    def deploy_to_hosts(self, params, dep_hosts, dep, redeploy=False):
+    def deploy_to_hosts(self, params, dep_hosts, dep, package_id,
+                        redeploy=False):
         """Perform deployment on given set of hosts (only doing those
            that previously failed with a redeploy).
         """
@@ -329,14 +330,14 @@ class DeployController(BaseController):
             pbar = progressbar.ProgressBar(widgets=widgets,
                                            maxval=total_hosts).start()
 
-        for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
-            pkg = dep.package
-            app, version = pkg.name, pkg.version
-            log.log(5, 'Application name and version: %s %s', app, version)
+        pkg = tagopsdb.model.Package.get(id=package_id)
+        app, version = pkg.name, pkg.version
+        log.log(5, 'Application name and version: %s %s', app, version)
 
-            host_dep = tagopsdb.deploy.deploy.find_host_deployment_by_depid(
-                dep.id,
-                dep_host.hostname
+        for dep_host in sorted(dep_hosts, key=lambda host: host.hostname):
+            host_dep = tagopsdb.model.HostDeployment.get(
+                host_id=dep_host.id,
+                package_id=pkg.id,
             )
 
             if redeploy and host_dep and host_dep.status != 'ok':
@@ -378,13 +379,14 @@ class DeployController(BaseController):
                 )
                 tagopsdb.deploy.deploy.delete_host_deployment(
                     dep_host.hostname,
-                    pkg.name
+                    app
                 )
                 host_dep = tagopsdb.deploy.deploy.add_host_deployment(
                     dep.id,
                     dep_host.id,
                     params['user'],
-                    'inprogress'
+                    'inprogress',
+                    package_id,
                 )
                 success, info = self.deploy_to_host(dep_host.hostname, app,
                                                     version)
@@ -439,7 +441,8 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def deploy_to_hosts_or_tiers(self, hosts, apptypes, params, dep,
-                                 app_dep_map, redeploy=False, rollback=False):
+                                 app_dep_map, package_id, redeploy=False,
+                                 rollback=False):
         """Do the deployment to the requested hosts or application tiers"""
 
         log.debug('Deploying to requested hosts or application tiers')
@@ -466,14 +469,19 @@ class DeployController(BaseController):
                 log.log(5, 'Hosts being deployed to are: %r', apphosts)
 
                 deploy_result = self.deploy_to_hosts(
-                    params, apphosts, dep, redeploy=redeploy
+                    params, apphosts, dep, package_id, redeploy=redeploy
                 )
 
-                # We want the tier status updated only if doing
-                # a rollback
-                if deploy_result and rollback:
-                    app_dep = app_dep_map[apptype.id][0]
-                    app_dep.status = 'complete'
+                app_dep = app_dep_map[apptype.id][0]
+
+                if deploy_result:
+                    # We want the tier status updated only if doing
+                    # a rollback
+                    if rollback:
+                        app_dep.status = 'complete'
+                    app_dep.deployment.status = 'complete'
+                else:
+                    app_dep.deployment.status = 'failed'
         else:
             log.log(5, 'Deployment is for application tiers...')
 
@@ -507,7 +515,8 @@ class DeployController(BaseController):
                         apptype.id,
                         params['user'],
                         'inprogress',
-                        self.envs[params['env']]
+                        self.envs[params['env']],
+                        package_id,
                     )
 
                 try:
@@ -530,11 +539,13 @@ class DeployController(BaseController):
                     )
                     continue
 
-                if self.deploy_to_hosts(params, dep_hosts, dep,
+                if self.deploy_to_hosts(params, dep_hosts, dep, package_id,
                                         redeploy=redeploy):
                     app_dep.status = 'complete'
+                    app_dep.deployment.status = 'complete'
                 else:
                     app_dep.status = 'incomplete'
+                    app_dep.deployment.status = 'failed'
 
                 log.log(5, 'Setting deployment status to: %s', app_dep.status)
 
@@ -848,7 +859,7 @@ class DeployController(BaseController):
             for app_dep in app.app_deployments:
                 if app_dep.environment_obj != environment:
                     continue
-                if app_dep.deployment.package != package:
+                if app_dep.package != package:
                     continue
 
                 app_deployments[app.id] = (
@@ -947,39 +958,18 @@ class DeployController(BaseController):
         """Perform all deployments to the requested application tiers or
            hosts
         """
-
         log.debug('Performing deployments to application tiers or hosts')
 
-        # All is well, now do the deployment
-        #   1. See if a deployment entry already exists in DB and use it,
-        #      otherwise create a new one
-        #   2. If deploying to tier, add an app deployment entry in DB
-        #   3. Determine the appropriate hosts to deploy the application
-        #   4. Do the deploy to the hosts
-        dep = None
-        pkg_deps = tagopsdb.deploy.deploy.find_deployment_by_pkgid(package.id)
+        log.log(5, 'Creating new deployment')
 
-        if pkg_deps:
-            log.log(5, 'Found existing deployment')
-
-            last_pkg_dep = pkg_deps[0]
-            log.log(5, 'Package deployment is: %r', last_pkg_dep)
-
-            dep = last_pkg_dep
-            log.log(5, 'Deployment is: %s', dep)
-
-        if dep is None:
-            log.log(5, 'Creating new deployment')
-
-            pkg_dep = tagopsdb.deploy.deploy.add_deployment(
-                package.id,
-                params['user'],
-            )
-            dep = pkg_dep
-            log.log(5, 'Deployment is: %s', dep)
+        pkg_dep = tagopsdb.deploy.deploy.add_deployment(
+            params['user'],
+        )
+        dep = pkg_dep
+        log.log(5, 'Deployment is: %s', dep)
 
         self.deploy_to_hosts_or_tiers(
-            hosts, apptypes, params, dep, app_dep_map
+            hosts, apptypes, params, dep, app_dep_map, package.id
         )
 
     @staticmethod
@@ -998,7 +988,7 @@ class DeployController(BaseController):
 
     @tds.utils.debug
     def perform_redeployments(self, hosts, apptypes, params, deployment,
-                              app_dep_map):
+                              app_dep_map, package_id):
         """Perform all redeployments to the requested application tiers or
            hosts
         """
@@ -1006,7 +996,8 @@ class DeployController(BaseController):
         log.debug('Performing redeployments to application tiers or hosts')
 
         self.deploy_to_hosts_or_tiers(
-            hosts, apptypes, params, deployment, app_dep_map, redeploy=True
+            hosts, apptypes, params, deployment, app_dep_map, package_id,
+            redeploy=True
         )
 
     @tds.utils.debug
@@ -1040,7 +1031,6 @@ class DeployController(BaseController):
                 log.log(5, 'Creating new deployment')
 
                 pkg_dep = tagopsdb.deploy.deploy.add_deployment(
-                    pkg_id,
                     params['user'],
                 )
                 dep = pkg_dep
@@ -1061,7 +1051,8 @@ class DeployController(BaseController):
             single_app_dep_map = {app_id: app_dep_map[app_id]}
 
             self.deploy_to_hosts_or_tiers(
-                apphosts, apptypes, params, dep, single_app_dep_map
+                apphosts, apptypes, params, dep, single_app_dep_map, pkg_id,
+                rollback=True
             )
 
     @tds.utils.debug
@@ -1312,7 +1303,7 @@ class DeployController(BaseController):
             dep = None
 
         if dep is not None:
-            pkg = dep.deployment.package
+            pkg = dep.package
             return pkg
 
         return None
@@ -1409,15 +1400,18 @@ class DeployController(BaseController):
                 application.name, self.envs[params['env']]
             )
 
-        deployment = package.deployments[-1]
-        params['package_name'] = deployment.package.name
-        params['version'] = deployment.package.version
+        if package.app_deployments:
+            deployment = package.app_deployments[-1].deployment
+        else:
+            deployment = package.host_deployments[-1].deployment
+        params['package_name'] = package.name
+        params['version'] = package.version
 
         self.send_notifications(
             hosts, apptypes, application=application, **params
         )
         self.perform_redeployments(
-            hosts, apptypes, params, deployment, app_dep_map
+            hosts, apptypes, params, deployment, app_dep_map, package.id
         )
 
         tagopsdb.Session.commit()

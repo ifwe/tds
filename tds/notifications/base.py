@@ -100,9 +100,10 @@ class Notifier(object):
     @staticmethod
     def message_for_unvalidated(deployment):
         'Returns the message for an unvalidated deployment'
+        package = deployment.package
         subject = (
             'ATTENTION: %s in %s for %s app tier needs validation!' % (
-                deployment.package['name'],
+                package['name'],
                 deployment.target['environment'],
                 ','.join(x.name for x in deployment.target['apptypes'])
             )
@@ -111,8 +112,8 @@ class Notifier(object):
             r'Version %s of package %s in %s app tier\n'
             r'has not been validated. Please validate it.\n'
             r'Without this, Puppet cannot manage the tier correctly.' % (
-                deployment.package['version'],
-                deployment.package['name'],
+                package['version'],
+                package['name'],
                 ', '.join(x.name for x in deployment.target['apptypes']),
             )
         )
@@ -123,8 +124,10 @@ class Notifier(object):
         'Default message that will be used unless another handler is found'
         log.debug('Creating information for notifications')
 
+        package = deployment.package
+
         # Determine version
-        version = deployment.package.version
+        version = package.version
 
         log.log(5, 'Application version is: %s', version)
 
@@ -150,7 +153,7 @@ class Notifier(object):
         log.log(5, 'Destinations are: %s', destinations)
 
         msg_subject = '%s of version %s of %s on %s %s in %s' \
-                      % (dep_type, version, deployment.package.name,
+                      % (dep_type, version, package.name,
                          dest_type, destinations,
                          self.app_config['env.environment'])
         msg_args = (

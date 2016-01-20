@@ -53,6 +53,15 @@ def given_there_is_a_jenkins_job_with_name(context, name):
 
 @given(u'the job has a build with number="{number}"')
 def given_the_job_has_a_build(context, number):
+    create_jenkins_artifact(context, number)
+
+
+@given(u'the job has a build with number="{number}" with malformed data')
+def given_the_job_has_a_build_with_malformed_data(context, number):
+    create_jenkins_artifact(context, number, True)
+
+
+def create_jenkins_artifact(context, number, malformed=False):
     job = context.jenkins_jobs[-1]
 
     builds = getattr(context, 'jenkins_builds', None)
@@ -98,12 +107,20 @@ def given_the_job_has_a_build(context, number):
 
     artifact_fspath = path_fragment + '/artifact/' + artifact_filename
 
+    if malformed:
+        data = dict(stuff=True)
+    else:
+        data = dict(
+            name=str(context.tds_applications[-1].name),
+            version=number,
+            release=1,
+            arch=str(context.tds_applications[-1].arch),
+        )
+
     update_jenkins(
         context,
         artifact_fspath,
-        dict(
-            stuff=True
-        )
+        data,
     )
 
     md5 = hashlib.md5()
