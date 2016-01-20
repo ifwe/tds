@@ -140,9 +140,6 @@ class PackageController(BaseController):
         """
         revision = '1'
 
-        if job is None:
-            job = application.path
-
         try:
             int(version)
         except ValueError:
@@ -205,6 +202,7 @@ class PackageController(BaseController):
                 package = application.create_version(
                     version=version,
                     revision=revision,
+                    job=job,
                     creator=user,
                 )
             except tagopsdb.exceptions.PackageException as e:
