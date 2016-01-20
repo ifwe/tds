@@ -18,10 +18,10 @@ def latest_deployed_package_for_app_target(environment, app, app_target):
             continue
         if app_dep.status == 'invalidated':
             continue
-        if app_dep.deployment.package.application != app:
+        if app_dep.package.application != app:
             continue
 
-        return app_dep.deployment.package
+        return app_dep.package
 
     raise Exception(
         "no deployed version found for target \"%s\"",
@@ -34,8 +34,8 @@ def latest_deployed_version_for_host_target(environment, app, host_target):
         app = app.delegate
 
     for host_dep in reversed(host_target.host_deployments):
-        if host_dep.deployment.package.application == app:
-            return host_dep.deployment.package
+        if host_dep.package.application == app:
+            return host_dep.package
 
     try:
         return latest_deployed_package_for_app_target(
@@ -113,7 +113,6 @@ class BaseController(object):
 
             return handler(**params)
         except Exception as exc:
-
             return dict(error=exc)
 
     def validate_params(self, validate_attrs, params):

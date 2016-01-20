@@ -23,7 +23,7 @@ def get_model_factory(name):
     if name == 'project':
         return project_factory
     if name == 'deploy target':
-        return lambda _ctxt, **kwargs: tds.model.AppTarget.create(**kwargs)
+        return tier_factory
     if name == 'package':
         return package_factory
     if name == 'host':
@@ -34,6 +34,11 @@ def get_model_factory(name):
         return application_factory
 
     return None
+
+def tier_factory(_context, **kwargs):
+    if kwargs.get('distribution', None) is None:
+        kwargs['distribution'] = 'centos6.5'
+    return tds.model.AppTarget.create(**kwargs)
 
 
 def rpm_factory(context, **kwargs):
@@ -66,17 +71,12 @@ def host_factory(context, name, env=None, **_kwargs):
     host = tagopsdb.Host(
         state='operational',
         hostname=name,
-        arch='x64',
-        kernel_version='2.6.2',
         distribution='Centos 6.4',
-        timezone='UTC',
         app_id=tagopsdb.Application.get(name=tagopsdb.Application.dummy).id,
         cage_location=len(tagopsdb.Host.all()),
         cab_location=name[:10],
         rack_location=1,
         console_port='abcdef',
-        power_port='ghijkl',
-        power_circuit='12345',
         environment_id=env_id,
     )
 
@@ -115,6 +115,7 @@ def package_factory(context, **kwargs):
         status=kwargs.get('status', 'completed'),
         creator=curr_user,
         builder='jenkins',
+        job=kwargs.get('job', application.path),
     )
 
     tagopsdb.Session.add(package)
@@ -332,22 +333,34 @@ def deploy_package_to_target(package, target, env, status='complete'):
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
-        package_id=package.id,
         user=curr_user,
+        status=status
     )
-    dep = tagopsdb.Deployment.get(**dep_props)
-    if dep is None:
-        dep = tagopsdb.Deployment(**dep_props)
 
-    tagopsdb.Session.add(dep)
+    found_dep = None
+    for dep in tagopsdb.Deployment.all():
+        if any(app_dep.package_id == package.id
+               for app_dep in dep.app_deployments):
+            found_dep = dep
+            break
+        elif any(host_dep.package_id == package.id
+                 for host_dep in dep.host_deployments):
+            found_dep = dep
+            break
+
+    if found_dep is None:
+        found_dep = tagopsdb.Deployment(**dep_props)
+
+    tagopsdb.Session.add(found_dep)
     tagopsdb.Session.commit()
 
     app_dep = tagopsdb.AppDeployment(
-        deployment_id=dep.id,
+        deployment_id=found_dep.id,
         app_id=target.id,
-        user=dep.user,
+        user=found_dep.user,
         status=status,
         environment_id=env_id,
+        package_id=package.id,
     )
 
     tagopsdb.Session.add(app_dep)
@@ -355,11 +368,12 @@ def deploy_package_to_target(package, target, env, status='complete'):
 
     deploy_to_hosts(
         tagopsdb.Host.find(app_id=target.id, environment_id=env_id),
-        dep,
+        found_dep,
+        package.id,
     )
 
 
-def deploy_to_hosts(hosts, deployment, status='ok'):
+def deploy_to_hosts(hosts, deployment, package_id, status='ok'):
     """
     Add a host deployment entry for the given package to every host in hosts,
     using the given deployment.
@@ -372,6 +386,7 @@ def deploy_to_hosts(hosts, deployment, status='ok'):
                 host_id=host.id,
                 user=curr_user,
                 status=status,
+                package_id=package_id,
             )
 
             tagopsdb.Session.add(host_dep)
@@ -468,23 +483,34 @@ def given_the_package_is_deployed_on_host(context, properties):
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
-        package_id=package.id,
         user=curr_user,
+        status='complete'
     )
 
-    deployment = tagopsdb.Deployment.get(**dep_props)
-    if deployment is None:
-        deployment = tagopsdb.Deployment(**dep_props)
-        tagopsdb.Session.add(deployment)
+    found_dep = None
+    for dep in tagopsdb.Deployment.all():
+        if any(app_dep.package_id == package.id
+               for app_dep in dep.app_deployments):
+            found_dep = dep
+            break
+        elif any(host_dep.package_id == package.id
+                 for host_dep in dep.host_deployments):
+            found_dep = dep
+            break
+
+    if found_dep is None:
+        found_dep = tagopsdb.Deployment(**dep_props)
+        tagopsdb.Session.add(found_dep)
         tagopsdb.Session.commit()
 
-    assert deployment
+    assert found_dep
 
     host_deployment = tagopsdb.HostDeployment(
         host_id=host.id,
-        deployment_id=deployment.id,
-        user=deployment.user,
+        deployment_id=found_dep.id,
+        user=found_dep.user,
         status='ok',
+        package_id=package.id,
     )
 
     tagopsdb.Session.add(host_deployment)
@@ -506,9 +532,8 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
 
     host = tagopsdb.Host.get(**attrs)
 
-    deployment = tagopsdb.Deployment.get(package_id=package.id)
     host_dep = tagopsdb.HostDeployment.get(
-        host_id=host.id, deployment_id=deployment.id
+        host_id=host.id, package_id=package.id
     )
 
     host_dep.status = 'failed'
@@ -517,10 +542,14 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
 
 
 def set_status_for_package(package, status):
-    for deployment in package.deployments:
-        for app_dep in deployment.app_deployments:
-            app_dep.status = status
-            tagopsdb.Session.add(app_dep)
+    for app_dep in package.app_deployments:
+        app_dep.status = status
+        tagopsdb.Session.add(app_dep)
+
+        for host_dep in package.host_deployments:
+            if host_dep.host.app_id == app_dep.app_id and \
+                    host_dep.host.environment_id == app_dep.environment_id:
+                tagopsdb.Session.delete(host_dep)
 
     tagopsdb.Session.commit()
 
@@ -1205,9 +1234,9 @@ def then_the_package_is_validated(context):
     assert check_package_validation(
         context,
         package,
-        package.deployments[-1].app_deployments,
+        package.app_deployments,
         'validated'
-    ), (package.deployments[-1].app_deployments, package.deployments[-1])
+    ), package.app_deployments
 
 
 @then(u'the package is invalidated')
@@ -1216,7 +1245,7 @@ def then_the_package_is_invalidated(context):
     assert check_package_validation(
         context,
         package,
-        package.deployments[-1].app_deployments,
+        package.app_deployments,
         'invalidated'
     )
 
@@ -1323,14 +1352,9 @@ def given_the_package_has_status_set_with_properties(
     targets = context.tds_targets
     package = context.tds_packages[-1] if version is None \
         else check_if_package_exists(context, version)
-    deployments = tagopsdb.Deployment.find(package_id=package.id)
-    dep_ids = [d.id for d in deployments]
     target_ids = [t.id for t in targets]
 
-    for app_dep in tagopsdb.AppDeployment.all():
-        if app_dep.deployment_id not in dep_ids:
-            continue
-
+    for app_dep in tagopsdb.AppDeployment.find(package_id=package.id):
         if app_dep.app_id not in target_ids:
             continue
 
@@ -1340,10 +1364,7 @@ def given_the_package_has_status_set_with_properties(
         app_dep.status = status
         tagopsdb.Session.add(app_dep)
 
-    for host_dep in tagopsdb.HostDeployment.all():
-        if host_dep.deployment_id not in dep_ids:
-            continue
-
+    for host_dep in tagopsdb.HostDeployment.find(package_id=package.id):
         if host_dep.host.environment != environment:
             continue
 
@@ -1441,20 +1462,30 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
     package_id = context.tds_packages[-1].id
 
     dep_props = dict(
-        package_id=package_id,
         user=curr_user,
+        status='complete'
     )
 
-    deployment = tagopsdb.Deployment.get(**dep_props)
-    if deployment is None:
-        deployment = tagopsdb.Deployment(**dep_props)
-        tagopsdb.Session.add(deployment)
+    found_dep = None
+    for dep in tagopsdb.Deployment.all():
+        if any(app_dep.package_id == package_id
+               for app_dep in dep.app_deployments):
+            found_dep = dep
+            break
+        elif any(host_dep.package_id == package_id
+                 for host_dep in dep.host_deployments):
+            found_dep = dep
+            break
+
+    if found_dep is None:
+        found_dep = tagopsdb.Deployment(**dep_props)
+        tagopsdb.Session.add(found_dep)
         tagopsdb.Session.commit()
 
     hosts = [tagopsdb.Host.get(hostname=host_name)
              for host_name in host_names]
 
-    deploy_to_hosts(hosts, deployment, 'inprogress')
+    deploy_to_hosts(hosts, found_dep, package_id, 'inprogress')
 
 
 @given(u'there is an ongoing deployment on the deploy target')
@@ -1520,3 +1551,67 @@ def then_update_repo_log_file_has(context, text):
     with open(os.path.join(context.WORK_DIR, 'update_deploy_repo.log')) as fh:
         actual = fh.read()
         assert text in actual, (text, actual)
+
+
+NAME_OBJ_MAPPINGS = {
+    'application': tds.model.Application,
+    'package': tds.model.Package,
+    'deploy target': tds.model.AppTarget,
+    'host': tds.model.HostTarget,
+    'tier': tds.model.AppTarget,
+    'deployment': tds.model.Deployment,
+    'host deployment': tds.model.HostDeployment,
+    'tier deployment': tds.model.AppDeployment,
+    'ganglia': tagopsdb.model.Ganglia,
+    'hipchat': tagopsdb.model.Hipchat,
+    'project': tds.model.Project,
+    'environment': tagopsdb.model.Environment,
+    'project-package': tagopsdb.model.ProjectPackage,
+}
+
+
+@then(u'there exists a {model} with {properties}')
+def then_there_exists_a_model_with(context, model, properties):
+    model = NAME_OBJ_MAPPINGS[model.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is not None, (found, model.all())
+
+
+@then(u'there exists an {obj_type} with {properties}')
+def then_there_exists_an_obj_type_with(context, obj_type, properties):
+    model = NAME_OBJ_MAPPINGS[obj_type.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is not None, (found, model.all())
+
+
+@then(u'there exists no {model} with {properties}')
+def then_there_exists_no_model_with(context, model, properties):
+    model = NAME_OBJ_MAPPINGS[model.lower()]
+    tagopsdb.Session.close()
+    properties = parse_properties(properties)
+    found = model.get(**properties)
+    assert found is None, found
+
+
+@when(u'the status of the {obj_type} with {props} changes to "{status}"')
+def when_the_status_of_deployment_changes_to(context, obj_type, props, status):
+    properties = parse_properties(props)
+    obj_mapping = {
+        'deployment': tagopsdb.model.Deployment,
+        'host deployment': tagopsdb.model.HostDeployment,
+        'tier deployment': tagopsdb.model.AppDeployment,
+        'package': tagopsdb.model.Package,
+    }
+    assert obj_type in obj_mapping
+
+    model = obj_mapping[obj_type]
+    tagopsdb.Session.close()
+    instance = model.get(**properties)
+    assert instance is not None
+
+    instance.status = status
+    tagopsdb.Session.commit()

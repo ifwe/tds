@@ -18,7 +18,7 @@ class Deployment(Base):
     @property
     def application(self):
         return Application(
-            delegate=self.delegate.deployment.package.application
+            delegate=self.delegate.package.application
         )
 
 
