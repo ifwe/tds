@@ -123,7 +123,6 @@ class BaseController(object):
 
             return handler(**params)
         except Exception as exc:
-
             return dict(error=exc)
 
     def validate_params(self, validate_attrs, params):

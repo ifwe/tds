@@ -81,7 +81,6 @@ class DeployController(BaseController):
         """
 
         self.deployment = None
-        self.deployment_status = {}
         self.deploy_hosts = set()
         self.deploy_tiers = set()
         self.environment = None
@@ -306,28 +305,11 @@ class DeployController(BaseController):
             user=self.user,
             delay=params.get('delay', 0),
         )
-        self.deployment_status['deployment'] = {
-            self.deployment.id, self.deployment.status
-        }
 
         if self.deploy_hosts:
-            self.deployment_status['type'] = 'host'
-            host_deps = self.prepare_host_deployments()
-
-            if host_deps is None:
-                tagopsdb.Session.rollback()
-                # Log something, then return... something
-            else:
-                self.deployment_status['hosts'] = host_deps
+            self.prepare_host_deployments()
         else:
-            self.deployment_status['type'] = 'tier'
-            tier_deps = self.prepare_tier_deployments()
-
-            if not tier_deps:
-                tagopsdb.Session.rollback()
-                # Log something, then return... something
-            else:
-                self.deployment_status['tiers'] = tier_deps
+            self.prepare_tier_deployments()
 
         tagopsdb.Session.commit()
 
@@ -336,7 +318,6 @@ class DeployController(BaseController):
         Prepare host deployments for a promote.
         """
         hosts_to_do = []
-        host_deps = []
 
         if hosts is None:
             hosts = self.deploy_hosts
@@ -359,46 +340,40 @@ class DeployController(BaseController):
             return None
 
         for host in hosts_to_do:
-            host_dep = tds.model.HostDeployment.create(
+            tds.model.HostDeployment.create(
                 deployment_id=self.deployment.id,
                 host_id=host.id,
                 user=self.user,
                 status='pending',
                 package_id=self.package.id
             )
-            host_deps.append(host_dep)
-
-        return host_deps
 
     def prepare_tier_deployments(self):
         """
         Prepare tier deployments for a promote.
         """
-        tier_deps = []
-
-        self.deployment_status['hosts'] = []
-
         for tier in self.deploy_tiers:
-            host_deps = self.prepare_host_deployments(
-                host for host in tier.hosts if host.environment_id ==
-                self.environment.id
+            host_targets = list()
+            for host in tier.hosts:
+                if host.environment_id != self.environment.id:
+                    continue
+                latest_host_dep = \
+                    self.application.get_latest_completed_host_deployment(
+                        host.id
+                    )
+                if latest_host_dep and latest_host_dep.package_id == \
+                        self.package.id:
+                    continue
+                host_targets.append(host)
+            self.prepare_host_deployments(host_targets)
+            tds.model.AppDeployment.create(
+                deployment_id=self.deployment.id,
+                app_id=tier.id,
+                user=self.user,
+                environment_id=self.environment.id,
+                status='pending',
+                package_id=self.package.id,
             )
-
-            if host_deps is None:
-                continue   # Just remove tier
-            else:
-                self.deployment_status['hosts'].extend(host_deps)
-                tier_dep = tds.model.AppDeployment.create(
-                    deployment_id=self.deployment.id,
-                    app_id=tier.id,
-                    user=self.user,
-                    environment_id=self.environment.id,
-                    status='pending',
-                    package_id=self.package.id,
-                )
-                tier_deps.append(tier_dep)
-
-        return tier_deps
 
     def perform_validation(self, app_deployment, package, params):
         """
@@ -437,6 +412,7 @@ class DeployController(BaseController):
             environment=self.envs[params['env']]
         )
         self.package = package
+        self.application = application
         self.user = params['user']
 
         app_ids = set()
@@ -630,6 +606,7 @@ class DeployController(BaseController):
             environment=self.envs[params['env']]
         )
         self.package = package
+        self.application = application
         self.user = params['user']
 
         app_deployments = self.find_current_app_deployments(
@@ -832,6 +809,7 @@ class DeployController(BaseController):
             environment=self.envs[params['env']]
         )
         self.package = package
+        self.application = application
         self.user = params['user']
 
         host_deps = set()  # [(host_id, pkg_id), ...]
