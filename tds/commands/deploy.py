@@ -472,16 +472,17 @@ class DeployController(BaseController):
                     params, apphosts, dep, package_id, redeploy=redeploy
                 )
 
-                app_dep = app_dep_map[apptype.id][0]
+                if app_dep_map[apptype.id] is not None:
+                    app_dep = app_dep_map[apptype.id][0]
 
-                if deploy_result:
-                    # We want the tier status updated only if doing
-                    # a rollback
-                    if rollback:
-                        app_dep.status = 'complete'
-                    app_dep.deployment.status = 'complete'
-                else:
-                    app_dep.deployment.status = 'failed'
+                    if deploy_result:
+                        # We want the tier status updated only if doing
+                        # a rollback
+                        if rollback:
+                            app_dep.status = 'complete'
+                        app_dep.deployment.status = 'complete'
+                    else:
+                        app_dep.deployment.status = 'failed'
         else:
             log.log(5, 'Deployment is for application tiers...')
 
@@ -857,9 +858,9 @@ class DeployController(BaseController):
             app_deployments[app.id] = None
 
             for app_dep in app.app_deployments:
-                if app_dep.environment_obj != environment:
+                if app_dep.environment_id != environment.id:
                     continue
-                if app_dep.package != package:
+                if app_dep.package_id != package.id:
                     continue
 
                 app_deployments[app.id] = (
