@@ -26,8 +26,11 @@ log = logging.getLogger('tds')
 
 
 def create_deployment(hosts, apptypes, **params):
-    """Translate the common "params" argument into a Deployment instance."""
-    return tds.model.Deployment(
+    """
+    Translate the common "params" argument into a Deployment instance.
+    """
+
+    return tds.model.DeployInfo(
         actor=tds.model.Actor(
             name=params.get('user'),
             groups=params.get('groups'),
@@ -35,6 +38,10 @@ def create_deployment(hosts, apptypes, **params):
         action=dict(
             command=params.get('command_name'),
             subcommand=params.get('subcommand_name'),
+        ),
+        project=dict(
+            # TODO: deployments should be for projects, not packages
+            name=params.get('package_name'),
         ),
         package=tds.model.Package(
             name=params.get('package_name'),
@@ -472,16 +479,15 @@ class DeployController(BaseController):
                     params, apphosts, dep, package_id, redeploy=redeploy
                 )
 
-                app_dep = app_dep_map[apptype.id][0]
-
                 if deploy_result:
                     # We want the tier status updated only if doing
                     # a rollback
                     if rollback:
+                        app_dep = app_dep_map[apptype.id][0]
                         app_dep.status = 'complete'
-                    app_dep.deployment.status = 'complete'
+                    dep.status = 'complete'
                 else:
-                    app_dep.deployment.status = 'failed'
+                    dep.status = 'failed'
         else:
             log.log(5, 'Deployment is for application tiers...')
 
@@ -542,10 +548,10 @@ class DeployController(BaseController):
                 if self.deploy_to_hosts(params, dep_hosts, dep, package_id,
                                         redeploy=redeploy):
                     app_dep.status = 'complete'
-                    app_dep.deployment.status = 'complete'
+                    dep.status = 'complete'
                 else:
                     app_dep.status = 'incomplete'
-                    app_dep.deployment.status = 'failed'
+                    dep.status = 'failed'
 
                 log.log(5, 'Setting deployment status to: %s', app_dep.status)
 
@@ -857,9 +863,9 @@ class DeployController(BaseController):
             app_deployments[app.id] = None
 
             for app_dep in app.app_deployments:
-                if app_dep.environment_obj != environment:
+                if app_dep.environment_id != environment.id:
                     continue
-                if app_dep.package != package:
+                if app_dep.package_id != package.id:
                     continue
 
                 app_deployments[app.id] = (

@@ -71,6 +71,7 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         Given the deploy strategy is "<strategy>"
         When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02"
         Then the output has "Completed: 2 out of 2 hosts"
+        And there exists a deployment with id=4,status="complete"
         And package "myapp" version "123" was deployed to these hosts:
             | name          |
             | sprojhost01   |
@@ -85,6 +86,7 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         Given the deploy strategy is "<strategy>"
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02"
         Then the output has "Completed: 2 out of 2 hosts"
+        And there exists a deployment with id=4,status="complete"
         And  package "myapp" version "121" was deployed to these hosts:
             | name          |
             | sprojhost01   |
@@ -129,6 +131,11 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         Then the output has "Completed: 2 out of 2 hosts"
         And the output has "Completed: 1 out of 1 hosts"
         And package "myapp" version "123" was deployed to the deploy targets
+
+        Examples:
+            | strategy |
+            | mco      |
+            | salt     |
 
     Scenario Outline: promote older version to all apptypes
         Given the deploy strategy is "<strategy>"
