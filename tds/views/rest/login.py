@@ -8,8 +8,10 @@ from cornice.resource import resource, view
 
 from . import utils
 from .base import BaseView
+from .urls import ALL_URLS
 
-@resource(path="/login")
+
+@resource(path=ALL_URLS['login'])
 class LoginView(BaseView):
     """
     View to log in and get a cookie for use later.

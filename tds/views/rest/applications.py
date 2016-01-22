@@ -7,9 +7,11 @@ from cornice.resource import resource, view
 import tagopsdb
 
 from .base import BaseView, init_view
+from .urls import ALL_URLS
 
 
-@resource(collection_path="/applications", path="/applications/{name_or_id}")
+@resource(collection_path=ALL_URLS['application_collection'],
+          path=ALL_URLS['application'])
 @init_view(name='application')
 class ApplicationView(BaseView):
     """

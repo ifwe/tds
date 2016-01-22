@@ -8,8 +8,10 @@ import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
 from . import types, descriptions
+from .urls import ALL_URLS
 
-@resource(path="/applications/{name_or_id}/hosts/{host_name_or_id}")
+
+@resource(path=ALL_URLS['current_host_deployment'])
 @init_view(name="current-host-deployment", model=tds.model.HostDeployment,
            set_params=False)
 class CurrentHostDeployment(BaseView):

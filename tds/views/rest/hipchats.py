@@ -6,8 +6,11 @@ from cornice.resource import resource
 
 import tagopsdb
 from .base import BaseView, init_view
+from .urls import ALL_URLS
 
-@resource(collection_path="/hipchats", path="/hipchats/{name_or_id}")
+
+@resource(collection_path=ALL_URLS['hipchat_collection'],
+          path=ALL_URLS['hipchat'])
 @init_view(name="hipchat", model=tagopsdb.model.Hipchat)
 class HipchatView(BaseView):
     """

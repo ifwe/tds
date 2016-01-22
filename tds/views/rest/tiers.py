@@ -9,8 +9,10 @@ import tagopsdb
 
 from . import utils
 from .base import BaseView, init_view
+from .urls import ALL_URLS
 
-@resource(collection_path="/tiers", path="/tiers/{name_or_id}")
+
+@resource(collection_path=ALL_URLS['tier_collection'], path=ALL_URLS['tier'])
 @init_view(name='tier', model=tds.model.AppTarget)
 class TierView(BaseView):
     """

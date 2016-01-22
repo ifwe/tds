@@ -5,9 +5,11 @@ REST API view for projects.
 from cornice.resource import resource
 
 from .base import BaseView, init_view
+from .urls import ALL_URLS
 
 
-@resource(collection_path="/projects", path="/projects/{name_or_id}")
+@resource(collection_path=ALL_URLS['project_collection'],
+          path=ALL_URLS['project'])
 @init_view(name='project')
 class ProjectView(BaseView):
     """
