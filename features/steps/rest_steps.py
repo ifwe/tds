@@ -199,3 +199,16 @@ def then_the_response_header_contains_name_set_to_value(context, name, value):
     assert value == context.response.headers[name], (
         context.response.headers[name]
     )
+
+
+@then(u'the response list has an object with property "{prop}" which lists')
+def then_the_response_list_contains_object_property_listing(context, prop):
+    matched = False
+    for obj in context.response.json():
+        if prop in obj and type(obj[prop]) == list:
+            if all(
+                x[0] in obj[prop] for x in context.table
+            ):
+                matched = True
+                break
+    assert matched, context.response.text

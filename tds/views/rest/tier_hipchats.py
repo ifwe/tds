@@ -8,10 +8,11 @@ import tds.model
 import tagopsdb
 from .base import BaseView, init_view
 from . import types as obj_types, descriptions
+from .urls import ALL_URLS
 
 
-@resource(collection_path="/tiers/{name_or_id}/hipchats",
-          path="/tiers/{name_or_id}/hipchats/{hipchat_name_or_id}")
+@resource(collection_path=ALL_URLS['tier_hipchat_collection'],
+          path=ALL_URLS['tier_hipchat'])
 @init_view(name="tier-hipchat", model=tagopsdb.model.Hipchat, set_params=False)
 class TierHipchatView(BaseView):
     """

@@ -7,8 +7,10 @@ from cornice.resource import resource, view
 import tagopsdb.model
 import tds.model
 from . import types, descriptions, base
+from .urls import ALL_URLS
 
-@resource(path="/search/{obj_type}")
+
+@resource(path=ALL_URLS['search'])
 class SearchView(base.BaseView):
     """
     Search view. Only supported method is GET.
@@ -261,7 +263,7 @@ class SearchView(base.BaseView):
             ),
             OPTIONS=dict(
                 description="Get HTTP method options and parameters for this "
-                    "URL endpoint."
+                    "URL endpoint.",
             ),
         )
         for key in self.obj_dict['params']:
@@ -315,7 +317,7 @@ class SearchView(base.BaseView):
         """
         return self.make_response(
             body=self.to_json_obj(self.result),
-            headers=dict(Allows="GET, OPTIONS")
+            headers=dict(Allows="GET, OPTIONS"),
         )
 
     @view(validators=('method_not_allowed'))

@@ -6,8 +6,11 @@ from cornice.resource import resource, view
 
 import tagopsdb
 from .base import BaseView, init_view
+from .urls import ALL_URLS
 
-@resource(collection_path="/environments", path="/environments/{name_or_id}")
+
+@resource(collection_path=ALL_URLS['environment_collection'],
+          path=ALL_URLS['environment'])
 @init_view(name="environment", model=tagopsdb.model.Environment)
 class EnvironmentView(BaseView):
 

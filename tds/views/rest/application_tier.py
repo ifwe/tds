@@ -9,12 +9,11 @@ import tds.model
 import tagopsdb
 from .base import BaseView, init_view
 from . import types as obj_types, descriptions
+from .urls import ALL_URLS
 
 
-@resource(collection_path="/projects/{name_or_id}/applications/"
-          "{application_name_or_id}/tiers",
-          path="/projects/{name_or_id}/applications/{application_name_or_id}/"
-          "tiers/{tier_name_or_id}")
+@resource(collection_path=ALL_URLS['application_tier_collection'],
+          path=ALL_URLS['application_tier'])
 @init_view(name="application-tier", model=tagopsdb.model.ProjectPackage,
            set_params=False)
 class ApplicationTierView(BaseView):

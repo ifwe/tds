@@ -6,8 +6,11 @@ from cornice.resource import resource
 
 import tagopsdb
 from .base import BaseView, init_view
+from .urls import ALL_URLS
 
-@resource(collection_path="/ganglias", path="/ganglias/{name_or_id}")
+
+@resource(collection_path=ALL_URLS['ganglia_collection'],
+          path=ALL_URLS['ganglia'])
 @init_view(name="ganglia", model=tagopsdb.model.Ganglia)
 class GangliaView(BaseView):
     """

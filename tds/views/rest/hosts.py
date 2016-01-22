@@ -8,8 +8,10 @@ import tds
 
 from . import utils
 from .base import BaseView, init_view
+from .urls import ALL_URLS
 
-@resource(collection_path="/hosts", path="/hosts/{name_or_id}")
+
+@resource(collection_path=ALL_URLS['host_collection'], path=ALL_URLS['host'])
 @init_view(name='host', model=tds.model.HostTarget)
 class HostView(BaseView):
     """

@@ -12,9 +12,11 @@ except ImportError:
 import tds.model
 from .base import BaseView, init_view
 from . import types as obj_types, descriptions
+from .urls import ALL_URLS
 
 
-@resource(collection_path="/packages", path="/packages/{id}")
+@resource(collection_path=ALL_URLS['package_by_id_collection'],
+          path=ALL_URLS['package_by_id'])
 @init_view(name='package-by-id', model=tds.model.Package, set_params=False)
 class PackageByIDView(BaseView):
     """

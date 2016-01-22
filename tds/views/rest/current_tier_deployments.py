@@ -9,10 +9,10 @@ import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
 from . import types, descriptions
+from .urls import ALL_URLS
 
 
-@resource(path="/applications/{name_or_id}/tiers/{tier_name_or_id}/environments"
-          "/{environment_name_or_id}")
+@resource(path=ALL_URLS['current_tier_deployment'])
 @init_view(name="current-tier-deployment", model=tds.model.AppDeployment,
            set_params=False)
 class CurrentTierDeployment(BaseView):

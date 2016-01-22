@@ -7,9 +7,11 @@ from cornice.resource import resource, view
 import tagopsdb.model
 import tds.model
 from .base import BaseView, init_view
+from .urls import ALL_URLS
 
 
-@resource(collection_path="/deployments", path="/deployments/{id}")
+@resource(collection_path=ALL_URLS['deployment_collection'],
+          path=ALL_URLS['deployment'])
 @init_view(name="deployment")
 class DeploymentView(BaseView):
     """
