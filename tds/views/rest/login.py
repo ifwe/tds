@@ -98,3 +98,7 @@ class LoginView(BaseView):
     @view(validators=('method_not_allowed',))
     def put(self):
         pass
+
+    @view(validators=('method_not_allowed',))
+    def get(self):
+        pass
