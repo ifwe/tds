@@ -242,7 +242,7 @@ class PackageView(BaseView):
         updated.
         """
         try:
-            jenkins = jenkinsapi.jenkins.Jenkins(self.settings['jenkins_url'])
+            jenkins = jenkinsapi.jenkins.Jenkins(self.jenkins_url)
         except KeyError:
             raise tds.exceptions.ConfigurationError(
                 'Could not find jenkins_url in settings file.'
@@ -250,7 +250,7 @@ class PackageView(BaseView):
         except Exception:
             self._add_jenkins_error(
                 "Unable to connect to Jenkins server at {addr} to check for "
-                "package.".format(addr=self.settings['jenkins_url'])
+                "package.".format(addr=self.jenkins_url)
             )
             self.request.errors.status = 500
             return

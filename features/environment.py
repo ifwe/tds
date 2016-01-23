@@ -257,7 +257,7 @@ def setup_rest_server(context):
             'cookie_life': 1296000,
             'ldap_server': 'ldaps://ldap.tag-dev.com',
             'secret_key': 'super secret',
-            'jenkins_url': jenkins_url,
+            'jenkins': dict(url=jenkins_url),
         }
         f.write(
             yaml.dump(context.rest_settings, default_flow_style=False)
