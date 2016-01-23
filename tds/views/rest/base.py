@@ -315,6 +315,13 @@ class BaseView(ValidatedView):
             "201 Created",
         )
 
+    @property
+    def jenkins_url(self):
+        """
+        Extract and return the Jenkins URL from settings.
+        """
+        return self.settings['jenkins']['url']
+
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
     def collection_post(self):
