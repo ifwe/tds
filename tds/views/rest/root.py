@@ -8,7 +8,7 @@ from .base import BaseView
 from .urls import ALL_URLS
 
 
-@resource(path="/")
+@resource(path="")
 class RootView(BaseView):
     """
     Root view. GET Returns all URLs supported. OPTIONS returns documentation.

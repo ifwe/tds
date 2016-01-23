@@ -5,7 +5,7 @@ Feature: REST API root OPTIONS
 
     @rest
     Scenario: get options for root URL
-        When I query OPTIONS "/"
+        When I query OPTIONS on the root url
         Then the response code is 200
         And the response header contains "Allows" set to "GET, OPTIONS"
         And the response body contains "Get all supported URLS."
