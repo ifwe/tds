@@ -10,6 +10,7 @@ import yaml
 from os.path import join as opj
 
 import tds
+import tds.utils.config
 
 
 class JSONValidatedView(object):
@@ -34,15 +35,30 @@ class JSONValidatedView(object):
             self.param_routes = {}
         if not getattr(self, 'defaults', None):
             self.defaults = {}
+
+        settings_path = None
+        local_path = opj(os.path.dirname(os.path.realpath(__file__)),
+                         'settings.yml')
+        global_path = opj(tds.utils.config.TDSConfig.default_conf_dir,
+                          'deploy.yml')
+        if os.path.exists(local_path):
+            settings_path = local_path
+        elif os.path.exists(global_path):
+            settings_path = global_path
+        else:
+            raise tds.exceptions.ConfigurationError(
+                "Could not find REST settings file at {local_path} "
+                "or {global_path}.".format(local_path=local_path,
+                                           global_path=global_path)
+            )
+
         try:
-            with open(opj(os.path.dirname(os.path.realpath(__file__)),
-                          'settings.yml')) as settings_file:
+            with open(settings_path) as settings_file:
                 self.settings = yaml.load(settings_file.read())
         except IOError:
             raise tds.exceptions.ConfigurationError(
-                "REST settings file does not exist. Expecting file {path}."
-                .format(path=opj(os.path.dirname(os.path.realpath(__file__)),
-                                 'settings.yml'))
+                "Could not open REST settings file {path}."
+                .format(path=settings_path)
             )
         if self.valid_attrs and len(self.types) > 0:
             for param in [x for x in self.types if self.types[x] == 'choice']:
