@@ -50,6 +50,11 @@ def given_i_have_disabled_redirect_following(context):
     context.follow_redirects = False
 
 
+@when(u'I query {method} on the root url')
+def when_i_query_on_the_root_url(context, method):
+    when_i_query(context, method, '')
+
+
 @when(u'I query {method} "{path}"')
 def when_i_query(context, method, path):
     """

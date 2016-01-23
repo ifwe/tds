@@ -5,7 +5,7 @@ Feature: REST API root GET
 
     @rest
     Scenario: get all URLs
-        When I query GET "/"
+        When I query GET on the root url
         Then the response code is 200
         And the response is a list of 32 items
         And the response list contains objects:
