@@ -100,9 +100,6 @@ setup_args = dict(
             'update_deploy_repo = tds.scripts.update_deploy_repo:daemon_main',
         ]
     },
-    data_files=[
-        ('share/tds/salt', ['share/salt/tds.py']),
-    ],
     test_suite='tests',
     tests_require=REQUIREMENTS['install'] + REQUIREMENTS['tests'],
     dependency_links=DEPENDENCY_LINKS,
