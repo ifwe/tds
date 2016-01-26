@@ -1,6 +1,6 @@
 import tds.views.rest
 
-from . import TDSProgramBase
+from tds.apps import TDSProgramBase
 
 
 # Initialize connection to database (for session handling)
