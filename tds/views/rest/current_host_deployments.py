@@ -65,6 +65,9 @@ class CurrentHostDeployment(BaseView):
             request.errors.status = 403
             return
 
+        self._validate_params(['select'])
+        self._validate_json_params({'select': 'string'})
+
         request.validated[self.name] = request.validated['application'] \
             .get_latest_completed_host_deployment(request.validated['host'].id)
         if not request.validated[self.name]:
