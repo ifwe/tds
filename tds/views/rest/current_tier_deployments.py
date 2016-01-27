@@ -72,8 +72,11 @@ class CurrentTierDeployment(BaseView):
             request.errors.status = 403
             return
 
-        self._validate_params(['must_be_validated'])
-        self._validate_json_params({'must_be_validated': 'boolean'})
+        self._validate_params(['must_be_validated', 'select'])
+        self._validate_json_params({
+            'must_be_validated': 'boolean',
+            'select': 'string',
+        })
         validated = 'must_be_validated' in request.validated_params and \
             request.validated_params['must_be_validated']
 

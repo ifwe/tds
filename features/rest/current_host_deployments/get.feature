@@ -112,3 +112,20 @@ Feature: GET most recent deployment of an application on a given host
             | inprogress    | 1     | 1         |
             | failed        | 1     | 1         |
             | ok            | 2     | 2         |
+
+    @rest
+    Scenario: specify select query
+        Given there are deployments:
+            | id    | user  | status    |
+            | 1     | foo   | complete  |
+        And there are host deployments:
+            | id    | deployment_id | status    | user  | host_id   | package_id    |
+            | 1     | 1             | ok        | foo   | 1         | 1             |
+        And I wait 1 seconds
+        And there are host deployments:
+            | id    | deployment_id | status    | user  | host_id   | package_id    |
+            | 2     | 1             | pending   | foo   | 1         | 2             |
+        When I query GET "/applications/app1/hosts/host1?select=id,deployment_id"
+        Then the response code is 200
+        And the response is an object with id=1,deployment_id=1
+        And the response object does not contain attributes status,host_id,package_id
