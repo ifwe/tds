@@ -88,10 +88,15 @@ def validate_cookie(request, settings):
     if None in (digest, seconds, username):
         return (True, False, False)
 
-    admin_digest = _create_digest(username, request.remote_addr, seconds,
-                                  settings, True)
-    non_admin_digest = _create_digest(username, request.remote_addr, seconds,
-                                      settings, False)
+    if 'X-Forwarded-For' in request.headers:
+        remote_addr = request.headers['X-Forwarded-For'].split(', ')[0]
+    else:
+        remote_addr = request.remote_addr
+
+    admin_digest = _create_digest(username, remote_addr, seconds, settings,
+                                  True)
+    non_admin_digest = _create_digest(username, remote_addr, seconds, settings,
+                                      False)
 
     if digest not in (admin_digest, non_admin_digest):
         return (True, False, False)
