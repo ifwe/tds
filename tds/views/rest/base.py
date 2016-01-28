@@ -256,8 +256,8 @@ class BaseView(ValidatedView):
             return resp
         else:
             raise NotImplementedError(
-                "REST renderer not implemented: {r}.".format(
-                    r=renderer,
+                "REST renderer not implemented: {renderer}.".format(
+                    renderer=renderer,
                 )
             )
 
