@@ -83,11 +83,16 @@ class LoginView(BaseView):
         """
         Handle a POST request after the parameters are marked valid JSON.
         """
+        if 'X-Forwarded-For' in self.request.headers:
+            remote_addr = \
+                self.request.headers['X-Forwarded-For'].split(', ')[0]
+        else:
+            remote_addr = self.request.remote_addr
         response = self.make_response("SUCCESS")
         utils.set_cookie(
             response,
             self.request.validated_params['user'],
-            self.request.remote_addr,
+            remote_addr,
             self.settings,
             self.request.is_admin,
         )
