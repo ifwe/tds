@@ -783,14 +783,22 @@ class DeployController(BaseController):
 
         delay = params.get('delay', None)
         for i, (host, pkg) in enumerate(restart_targets):
-            restart_results[(host, pkg)] = self.deploy_strategy.restart_host(
+            success, restart_result = self.deploy_strategy.restart_host(
                 host.name, pkg.name
+            )
+
+            log.info(
+                '{hostname}:\t\t[{status}]{printout}'.format(
+                    hostname=host.name,
+                    status='success' if success else 'failed',
+                    printout='' if success else '\n' + restart_result,
+                )
             )
 
             if delay is not None and (i + 1) < len(restart_targets):
                 time.sleep(delay)
 
-        return dict(result=restart_results)
+        return dict()
 
     @input_validate('package')
     @input_validate('targets')

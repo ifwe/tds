@@ -474,31 +474,11 @@ class CLI(Base):
 
         print format_package(result, self.output_format)
 
-    def generate_deploy_restart_result(self, result=None, error=None, **kwds):
-        """Format the result of a "deploy restart" action."""
-        if error is not None:
-            return self.generate_default_result(
-                result=result, error=error, **kwds
-            )
-
-        keys = sorted(result.keys())
-        printed_fail_message = False
-        for key in keys:
-            if not result[key][0]:
-                if not printed_fail_message:
-                    print "Some hosts had failures:\n"
-                    printed_fail_message = True
-                host, pkg = key
-                print "{host} ({pkg}), result: {output}".format(
-                    host=host.name,
-                    pkg=pkg.name,
-                    output=result[key][1],
-                )
-
     generate_deploy_invalidate_result = \
         generate_deploy_promote_result = \
         generate_deploy_validate_result = \
         generate_deploy_rollback_result = \
         generate_deploy_fix_result = \
+        generate_deploy_restart_result = \
         generate_package_add_result = \
         silence(NotImplementedError)(generate_default_result)
