@@ -342,11 +342,12 @@ class ValidatedView(JSONValidatedView):
             request.validated['user'] = username
             request.is_admin = is_admin
             try:
-                collection_path = self._services[
-                    'collection_{name}'.format(
-                        name=self.__class__.__name__.lower()
-                    )
-                ].path
+                collection_path = self.settings['url_prefix'] + \
+                    self._services[
+                        'collection_{name}'.format(
+                            name=self.__class__.__name__.lower()
+                        )
+                    ].path
             except KeyError:
                 collection_path = None
             prefix = "collection_" if request.path == collection_path else ''
