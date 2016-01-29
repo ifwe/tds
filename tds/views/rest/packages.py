@@ -51,8 +51,10 @@ class PackageView(BaseView):
         """
         Do some basic initialization.
         """
-        del self.types['application_id']
-        del self.param_descriptions['application_id']
+        if 'application_id' in self.types:
+            del self.types['application_id']
+        if 'application_id' in self.param_descriptions:
+            del self.param_descriptions['application_id']
         super(PackageView, self).__init__(*args, **kwargs)
 
     def validate_individual_package(self, request):
