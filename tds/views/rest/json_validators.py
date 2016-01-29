@@ -55,6 +55,14 @@ class JSONValidatedView(object):
         try:
             with open(settings_path) as settings_file:
                 self.settings = yaml.load(settings_file.read())
+                if settings_path == global_path:
+                    secret_key_path = opj(
+                        tds.utils.config.TDSConfig.default_conf_dir,
+                        'tds_rest_secret.yml'
+                    )
+                    with open(secret_key_path) as secret_key_file:
+                        self.settings['secret_key'] = \
+                            yaml.load(secret_key_file.read())['secret_key']
         except IOError:
             raise tds.exceptions.ConfigurationError(
                 "Could not open REST settings file {path}."
