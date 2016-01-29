@@ -52,6 +52,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp <option>"
         Then package "myapp" was restarted on the deploy target
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | option            | strategy |
@@ -80,6 +82,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         And the host is associated with the deploy target
         When I run "deploy restart myapp --apptypes appfoo"
         Then package "myapp" was restarted on the deploy target with name="appfoo"
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
@@ -99,6 +103,10 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         And the package has been validated in the "development" environment
         When I run "deploy restart myapp --all-apptypes"
         Then package "myapp" was restarted on the deploy targets
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
+        And the output has "appbar01:		[success]"
+        And the output has "appbar02:		[success]"
 
         Examples:
         | strategy |
@@ -109,6 +117,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp --hosts appfoo01"
         Then package "myapp" was restarted on the host with name="appfoo01"
+        And the output has "appfoo01:		[success]"
 
         Examples:
         | strategy |
@@ -119,6 +128,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp --hosts appfoo01 appfoo02"
         Then package "myapp" was restarted on the hosts
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
@@ -134,6 +145,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp --delay 10 --hosts appfoo01"
         Then package "myapp" was restarted on the host with name="appfoo01"
+        And the output has "appfoo01:		[success]"
 
         Examples:
         | strategy |
@@ -165,6 +177,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp --delay 10 --apptypes appfoo"
         Then package "myapp" was restarted on the deploy target
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
         And it took at least 10 seconds
 
         Examples:
@@ -176,8 +190,9 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         And the host "appfoo01" will fail to restart
         When I run "deploy restart myapp"
-        Then the output has "Some hosts had failures"
-        And the output has "appfoo01 (myapp), result: It done broked!"
+        Then the output has "appfoo01:		[failed]"
+        And the output has "It done broked!"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
@@ -188,8 +203,9 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         And the host "appfoo01" will fail to restart
         When I run "deploy restart myapp --hosts appfoo01 appfoo02"
-        Then the output has "Some hosts had failures"
-        And the output has "appfoo01 (myapp), result: It done broked!"
+        Then the output has "appfoo01:		[failed]"
+        And the output has "It done broked!"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
@@ -219,6 +235,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Then the output has "No hosts for tier anotherapp in environment development. Continuing..."
         And package "myapp" was restarted on the host with name="appfoo01"
         And package "myapp" was restarted on the host with name="appfoo02"
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
@@ -237,6 +255,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         When I run "deploy restart myapp --hosts anotherhost01 anotherhost02"
         Then package "myapp" was restarted on the host with name="anotherhost01"
         And package "myapp" was restarted on the host with name="anotherhost02"
+        And the output has "anotherhost01:		[success]"
+        And the output has "anotherhost02:		[success]"
 
         Examples:
         | strategy  |
