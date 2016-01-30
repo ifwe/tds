@@ -6,6 +6,7 @@ from cornice.resource import resource
 
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import PROJECT_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['project_collection'],
@@ -22,11 +23,7 @@ class ProjectView(BaseView):
 
     required_post_fields = ('name',)
 
-    permissions = {
-        'put': 'admin',
-        'delete': 'admin',
-        'collection_post': 'admin',
-    }
+    permissions = PROJECT_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get project matching name or ID."),

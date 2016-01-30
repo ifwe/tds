@@ -8,6 +8,7 @@ import tagopsdb.model
 import tds.model
 from . import types, descriptions, base
 from .urls import ALL_URLS
+from .permissions import SEARCH_PERMISSIONS
 
 
 @resource(path=ALL_URLS['search'])
@@ -18,6 +19,8 @@ class SearchView(base.BaseView):
     """
 
     name = 'search'
+
+    permissions = SEARCH_PERMISSIONS
 
     APPLICATION_DICT = {
         'model': tds.model.Application,

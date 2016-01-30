@@ -10,6 +10,7 @@ import tagopsdb.model
 from .base import BaseView, init_view
 from . import types, descriptions
 from .urls import ALL_URLS
+from .permissions import CURRENT_TIER_DEPLOYMENT_PERMISSIONS
 
 
 @resource(path=ALL_URLS['current_tier_deployment'])
@@ -35,6 +36,8 @@ class CurrentTierDeployment(BaseView):
     full_types = types.TIER_DEPLOYMENT_TYPES
 
     full_descriptions = descriptions.TIER_DEPLOYMENT_DESCRIPTIONS
+
+    permissions = CURRENT_TIER_DEPLOYMENT_PERMISSIONS
 
     def validate_individual_current_tier_deployment(self, request):
         """

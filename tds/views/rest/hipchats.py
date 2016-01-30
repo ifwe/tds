@@ -7,6 +7,7 @@ from cornice.resource import resource
 import tagopsdb
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import HIPCHAT_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['hipchat_collection'],
@@ -31,11 +32,7 @@ class HipchatView(BaseView):
 
     required_post_fields = ("name",)
 
-    permissions = {
-        'put': 'admin',
-        'delete': 'admin',
-        'collection_post': 'admin',
-    }
+    permissions = HIPCHAT_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get HipChat matching name or ID."),

@@ -9,6 +9,7 @@ import tagopsdb.model
 from .base import BaseView, init_view
 from . import types, descriptions
 from .urls import ALL_URLS
+from .permissions import CURRENT_HOST_DEPLOYMENT_PERMISSIONS
 
 
 @resource(path=ALL_URLS['current_host_deployment'])
@@ -31,6 +32,8 @@ class CurrentHostDeployment(BaseView):
     full_descriptions = descriptions.HOST_DEPLOYMENT_DESCRIPTIONS
 
     defaults = {}
+
+    permissions = CURRENT_HOST_DEPLOYMENT_PERMISSIONS
 
     def validate_individual_current_host_deployment(self, request):
         """

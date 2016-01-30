@@ -9,6 +9,7 @@ import tagopsdb
 from .base import BaseView, init_view
 from . import types as obj_types, descriptions
 from .urls import ALL_URLS
+from .permissions import TIER_HIPCHAT_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['tier_hipchat_collection'],
@@ -36,6 +37,8 @@ class TierHipchatView(BaseView):
     param_routes = {
         'name': 'room_name',
     }
+
+    permissions = TIER_HIPCHAT_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get a HipChat associated with the tier."),

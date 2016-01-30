@@ -8,6 +8,7 @@ import tagopsdb
 
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import APPLICATION_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['application_collection'],
@@ -50,8 +51,4 @@ class ApplicationView(BaseView):
 
     required_post_fields = ("name", "job")
 
-    permissions = {
-        'put': 'admin',
-        'delete': 'admin',
-        'collection_post': 'admin',
-    }
+    permissions = APPLICATION_PERMISSIONS

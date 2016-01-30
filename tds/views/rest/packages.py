@@ -12,6 +12,7 @@ except ImportError:
 import tds.model
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import PACKAGE_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['package_collection'],
@@ -33,6 +34,8 @@ class PackageView(BaseView):
     }
 
     required_post_fields = ('version', 'revision')
+
+    permissions = PACKAGE_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get package for an application with version and "

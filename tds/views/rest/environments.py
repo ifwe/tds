@@ -7,6 +7,7 @@ from cornice.resource import resource, view
 import tagopsdb
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import ENVIRONMENT_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['environment_collection'],
@@ -25,11 +26,7 @@ class EnvironmentView(BaseView):
 
     required_post_fields = ("name", "short_name", "domain", "zone_id")
 
-    permissions = {
-        'put': 'admin',
-        'delete': 'admin',
-        'collection_post': 'admin',
-    }
+    permissions = ENVIRONMENT_PERMISSIONS
 
     unique = ('short_name', 'domain', 'prefix')
 
