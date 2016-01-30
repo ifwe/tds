@@ -7,6 +7,7 @@ from cornice.resource import resource
 import tagopsdb
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import GANGLIA_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['ganglia_collection'],
@@ -31,11 +32,7 @@ class GangliaView(BaseView):
 
     required_post_fields = ("name",)
 
-    permissions = {
-        'put': 'admin',
-        'delete': 'admin',
-        'collection_post': 'admin',
-    }
+    permissions = GANGLIA_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get Ganglia matching name or ID."),

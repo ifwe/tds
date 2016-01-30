@@ -13,6 +13,7 @@ import tds.model
 from .base import BaseView, init_view
 from . import types as obj_types, descriptions
 from .urls import ALL_URLS
+from .permissions import PACKAGE_BY_ID_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['package_by_id_collection'],
@@ -55,6 +56,8 @@ class PackageByIDView(BaseView):
     defaults = {
         'status': 'pending',
     }
+
+    permissions = PACKAGE_BY_ID_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get package matching ID."),

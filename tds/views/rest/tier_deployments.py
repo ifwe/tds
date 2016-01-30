@@ -8,6 +8,7 @@ import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import TIER_DEPLOYMENT_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['tier_deployment_collection'],
@@ -32,6 +33,8 @@ class TierDeploymentView(BaseView):
     unique_together = (
         ('deployment_id', 'tier_id', 'package_id'),
     )
+
+    permissions = TIER_DEPLOYMENT_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get tier deployment matching ID."),

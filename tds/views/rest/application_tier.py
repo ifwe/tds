@@ -10,6 +10,7 @@ import tagopsdb
 from .base import BaseView, init_view
 from . import types as obj_types, descriptions
 from .urls import ALL_URLS
+from .permissions import APPLICATION_TIER_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['application_tier_collection'],
@@ -59,6 +60,8 @@ class ApplicationTierView(BaseView):
         'application_id': 'pkg_def_id',
         'tier_id': 'app_id',
     }
+
+    permissions = APPLICATION_TIER_PERMISSIONS
 
     def validate_individual_application_tier(self, request):
         """

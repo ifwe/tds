@@ -10,6 +10,7 @@ import tagopsdb
 from . import utils
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import TIER_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['tier_collection'], path=ALL_URLS['tier'])
@@ -33,11 +34,7 @@ class TierView(BaseView):
 
     required_post_fields = ("name", "distribution")
 
-    permissions = {
-        'put': 'admin',
-        'delete': 'admin',
-        'collection_post': 'admin',
-    }
+    permissions = TIER_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get tier matching name or ID."),

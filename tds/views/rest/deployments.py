@@ -8,6 +8,7 @@ import tagopsdb.model
 import tds.model
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import DEPLOYMENT_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['deployment_collection'],
@@ -33,6 +34,8 @@ class DeploymentView(BaseView):
                  "and/or start."),
         POST=dict(description="Add a new deployment."),
     )
+
+    permissions = DEPLOYMENT_PERMISSIONS
 
     def _add_additional_individual_options(self, _request):
         """

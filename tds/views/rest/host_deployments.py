@@ -8,6 +8,7 @@ import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import HOST_DEPLOYMENT_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['host_deployment_collection'],
@@ -29,6 +30,8 @@ class HostDeploymentView(BaseView):
     unique_together = (
         ('deployment_id', 'host_id', 'package_id'),
     )
+
+    permissions = HOST_DEPLOYMENT_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get host deployment matching ID."),

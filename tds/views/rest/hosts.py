@@ -9,6 +9,7 @@ import tds
 from . import utils
 from .base import BaseView, init_view
 from .urls import ALL_URLS
+from .permissions import HOST_PERMISSIONS
 
 
 @resource(collection_path=ALL_URLS['host_collection'], path=ALL_URLS['host'])
@@ -41,11 +42,7 @@ class HostView(BaseView):
 
     required_post_fields = ("name", "tier_id")
 
-    permissions = {
-        'put': 'admin',
-        'delete': 'admin',
-        'collection_post': 'admin',
-    }
+    permissions = HOST_PERMISSIONS
 
     individual_allowed_methods = dict(
         GET=dict(description="Get host matching name or ID."),
