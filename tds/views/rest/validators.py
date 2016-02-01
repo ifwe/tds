@@ -360,7 +360,6 @@ class ValidatedView(JSONValidatedView):
             # this request is the collection path.
             if collection_path is not None:
                 url_placeholder = re.compile(r'\{[a-zA-Z0-9_-]*\}')
-                print url_placeholder.sub('[a-zA-Z0-9_-]*', collection_path)
                 url_matcher = re.compile(
                     url_placeholder.sub('[a-zA-Z0-9_-]*', collection_path) +
                     '$'
