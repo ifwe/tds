@@ -9,7 +9,6 @@ APPLICATION_TIER_PERMISSIONS = dict(
     collection_get='user',
     collection_post='user',
     get='user',
-    put='user',
     delete='user',
 )
 

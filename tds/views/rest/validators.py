@@ -5,6 +5,7 @@ Its only intended use is as a base class for the BaseView; directly importing
 and using this view is discouraged.
 """
 
+import logging
 import re
 
 import tds.exceptions
@@ -359,21 +360,25 @@ class ValidatedView(JSONValidatedView):
             # this request is the collection path.
             url_placeholder = re.compile(r'\{[a-zA-Z0-9_-]*\}')
             url_matcher = re.compile(
-                url_placeholder.sub('[a-zA-Z0-9_-]*', collection_path)
+                url_placeholder.sub('[a-zA-Z0-9_-]*', collection_path) + '$'
             )
             prefix = "collection_" if url_matcher.match(request.path) else ''
             if not getattr(self, 'permissions', None):
-                raise tds.exceptions.ConfigurationError(
+                logging.warning(
                     "Permissions dictionary is required, could not be found."
                 )
+                return self.method_not_allowed(request)
             permissions_key = prefix + request.method.lower()
             if permissions_key not in self.permissions:
-                raise tds.exceptions.ConfigurationError(
+                logging.warning(
                     "Could not find permissions entry for {perm_key}.".format(
                         perm_key=permissions_key,
                     )
                 )
-            if self.permissions[permissions_key] == 'admin':
+                return self.method_not_allowed(request)
+            if self.permissions[permissions_key] == 'not allowed':
+                return self.method_not_allowed(request)
+            elif self.permissions[permissions_key] == 'admin':
                 if not request.is_admin:
                     request.errors.add(
                         'header', 'cookie',
