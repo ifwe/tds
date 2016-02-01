@@ -17,7 +17,7 @@ Feature: DELETE application-tier association(s) from the REST API
             | app2  |
 
     @rest
-    Scenario Outline: attempt to POST for a project that doesn't exist
+    Scenario Outline: attempt to DELETE for a project that doesn't exist
         When I query DELETE "/projects/<select>/applications/<app_select>/tiers/2"
         Then the response code is 404
         And the response contains errors:

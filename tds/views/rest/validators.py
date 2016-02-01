@@ -358,11 +358,17 @@ class ValidatedView(JSONValidatedView):
             # Change URL parameters to regexes and check if the actual path
             # matches the newly constructed regex to determine if the path of
             # this request is the collection path.
-            url_placeholder = re.compile(r'\{[a-zA-Z0-9_-]*\}')
-            url_matcher = re.compile(
-                url_placeholder.sub('[a-zA-Z0-9_-]*', collection_path) + '$'
-            )
-            prefix = "collection_" if url_matcher.match(request.path) else ''
+            if collection_path is not None:
+                url_placeholder = re.compile(r'\{[a-zA-Z0-9_-]*\}')
+                print url_placeholder.sub('[a-zA-Z0-9_-]*', collection_path)
+                url_matcher = re.compile(
+                    url_placeholder.sub('[a-zA-Z0-9_-]*', collection_path) +
+                    '$'
+                )
+                prefix = "collection_" if url_matcher.match(request.path) \
+                    else ''
+            else:
+                prefix = ''
             if not getattr(self, 'permissions', None):
                 logging.warning(
                     "Permissions dictionary is required, could not be found."
