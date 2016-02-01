@@ -1,15 +1,14 @@
 #!/bin/sh
 #
-#  Created 2012-06-27 by klareau@ifwe.co
-#  Updated 2014-02-28 by klareau@ifwe.co
+#  Created 2016-01-30 by klareau@ifwe.co
 #
-# update_deploy_repo    This shell script takes care of starting and stopping
-#                       the update_deploy_repo daemon.
+# tds_installer    This shell script takes care of starting and stopping
+#                  the installer daemon for TDS.
 #
 # chkconfig: - 97 03
-# description: update_deploy_repo is a daemon for updating \
-#              the Tagged deployment repository.
-# processname: update_deploy_repo
+# description: tds_install is a daemon for managing installations \
+#              for TDS.
+# processname: tds_installer
 
 
 # Source function library
@@ -24,7 +23,7 @@ fi
 # Source networking configuration.
 . /etc/sysconfig/network
 
-prog=/usr/bin/update_deploy_repo
+prog=/usr/bin/tds_installer
 
 RETVAL=0
 
@@ -33,14 +32,14 @@ case "$1" in
     start)
         # Start daemon
         [ ${NETWORKING} = "no" ] && exit 4
-        echo -n "Starting update_deploy_repo: "
+        echo -n "Starting tds_installer: "
         $prog start
         RETVAL=$?
         echo
         ;;
     stop)
         # Stop daemon
-        echo -n "Shutting down update_deploy_repo: "
+        echo -n "Shutting down tds_installer: "
         $prog stop
         RETVAL=$?
         echo
@@ -48,17 +47,17 @@ case "$1" in
     restart)
         # Restart daemon
         [ ${NETWORKING} = "no" ] && exit 4
-        echo -n "Restarting update_deploy_repo: "
+        echo -n "Restarting tds_installer: "
         $prog restart
         RETVAL=$?
         echo
         ;;
     status)
-        status update_deploy_repo
+        status tds_installer
         RETVAL=$?
         ;;
     *)
-        echo "Usage: update_deploy_repo {start|stop|restart|status}"
+        echo "Usage: tds_installer {start|stop|restart|status}"
         RETVAL=2
 esac
 
