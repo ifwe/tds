@@ -124,21 +124,27 @@ class Installer(TDSProgramBase):
         """
         Join processes that have finished and terminate stalled processes.
         """
+        to_delete = list()
+        # Join all done deployment processes
         for dep_id in self.ongoing_deployments:
-            if self.ongoing_deployments[dep_id][2] == True:
+            if self.ongoing_deployments[dep_id][-1] == True:
                 self.ongoing_processes[dep_id].join()
-                del self.ongoing_processes[dep_id]
-                del self.ongoing_deployments[dep_id]
-        for dep_id, _start, _finished in self.get_stalled_deployments():
-            proc = self.ongoing_processes[dep_id]
+                to_delete.append(dep_id)
+        for done_dep_id in to_delete:
+            del self.ongoing_processes[done_dep_id]
+            del self.ongoing_deployments[done_dep_id]
+
+        # Halt all deployments taking too long.
+        for stalled_dep_id, _start, _done in self.get_stalled_deployments():
+            proc = self.ongoing_processes[stalled_dep_id]
             proc.terminate()
             proc.join()
-            dep = tds.model.Deployment.get(id=dep_id)
+            dep = tds.model.Deployment.get(id=stalled_dep_id)
             self._refresh(dep)
             dep.status = 'failed'
             tagopsdb.session.commit()
-            del self.ongoing_processes[dep_id]
-            del self.ongoing_deployments[dep_id]
+            del self.ongoing_processes[stalled_dep_id]
+            del self.ongoing_deployments[stalled_dep_id]
 
     def get_stalled_deployments(self):
         """
