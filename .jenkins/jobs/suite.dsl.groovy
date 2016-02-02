@@ -105,7 +105,7 @@ def tds_update_repo = new FPMPython([
 ])
 
 def matrixRPMs = project.pythonFPMMatrixJob([
-    'fpmsteps': [tds_update_repo]
+    'fpmsteps': [tds_installer, tds_update_repo]
 ]) {
     name 'build'
     logRotator(-1, 50)
