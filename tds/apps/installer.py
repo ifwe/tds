@@ -9,7 +9,6 @@ import sys
 
 import time
 from datetime import datetime, timedelta
-from multiprocessing import Process, Manager
 
 import tagopsdb
 import tds.deploy_strategy
@@ -36,17 +35,7 @@ class Installer(TDSProgramBase):
         """
         Determine deployment strategy and initialize some parameters.
         """
-        self.info_manager = Manager()
-        # ongoing_deployments is a dict with ID keys and values of form:
-        # [deployment_id, time_of_deployment_start, finished_boolean]
-        self.ongoing_deployments = self.info_manager.dict()
-
-        # ongoing_processes is a dict with deployment ID keys and values
-        # pointing to the process running that deployment
-        self.ongoing_processes = dict()
         self.retry = kwargs.pop('retry') if 'retry' in kwargs else 4
-        self.threshold = kwargs.pop('threshold') if 'threshold' in kwargs \
-            else timedelta(minutes=30)
 
         super(Installer, self).__init__(*args, **kwargs)
 
@@ -85,13 +74,21 @@ class Installer(TDSProgramBase):
         tagopsdb.Session.commit()
         obj.refresh()
 
-    def find_deployments(self):
+    @staticmethod
+    def get_deployment(dep_id):
+        return tds.model.Deployment.get(id=dep_id)
+
+    @staticmethod
+    def commit_session():
+        tagopsdb.Session.commit()
+
+    def find_deployment(self):
         """
         Find host and tier deployments with status == 'queued'.
         Returns the tuple that was appended to ongoing_deployments, False
         otherwise.
         """
-        deps = tds.model.Deployment.find(status='queued')
+        deps = tds.model.Deployment.find(status='queued', order_by='declared')
 
         while deps:
             deployment = deps[0]
@@ -104,55 +101,9 @@ class Installer(TDSProgramBase):
             ):
                 deps.pop(0)
                 continue
-            deployment.status = 'inprogress'
-            tagopsdb.Session.commit()
-            deployment_process = Process(
-                target=self.do_serial_deployment,
-                args=(deployment,),
-            )
-            self.ongoing_deployments[deployment.id] = self.info_manager.list([
-                deployment.id, datetime.now(), False
-            ])
-            self.ongoing_processes[deployment.id] = deployment_process
-            deployment_process.start()
+            return deployment
 
-            return tup
-
-        return False
-
-    def clean_up_processes(self):
-        """
-        Join processes that have finished and terminate stalled processes.
-        """
-        to_delete = list()
-        # Join all done deployment processes
-        for dep_id in self.ongoing_deployments:
-            if self.ongoing_deployments[dep_id][-1] == True:
-                self.ongoing_processes[dep_id].join()
-                to_delete.append(dep_id)
-        for done_dep_id in to_delete:
-            del self.ongoing_processes[done_dep_id]
-            del self.ongoing_deployments[done_dep_id]
-
-        # Halt all deployments taking too long.
-        for stalled_dep_id, _start, _done in self.get_stalled_deployments():
-            proc = self.ongoing_processes[stalled_dep_id]
-            proc.terminate()
-            proc.join()
-            dep = tds.model.Deployment.get(id=stalled_dep_id)
-            self._refresh(dep)
-            dep.status = 'failed'
-            tagopsdb.session.commit()
-            del self.ongoing_processes[stalled_dep_id]
-            del self.ongoing_deployments[stalled_dep_id]
-
-    def get_stalled_deployments(self):
-        """
-        Return the list of ongoing deployments that were started more than
-        self.threshold ago.
-        """
-        return [dep for dep in self.ongoing_deployments.itervalues()
-                if datetime.now() > dep[1] + self.threshold]
+        return None
 
     def _do_host_deployment(self, host_deployment, first_dep=True):
         """
@@ -272,15 +223,14 @@ class Installer(TDSProgramBase):
             deployment.status = 'complete'
         tagopsdb.Session.commit()
 
-        self.ongoing_deployments[deployment.id][-1] = True
-
     def run(self):
         """
         Find a deployment in need of being done (which spawns a process
         that handles the actual deployment)
         """
-        self.find_deployments()
-        self.clean_up_processes()
+        deployment = self.find_deployment()
+        if deployment is not None:
+            self.do_serial_deployment(deployment)
 
 
 if __name__ == '__main__':
