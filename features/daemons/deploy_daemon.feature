@@ -40,7 +40,7 @@ Feature: deploy daemon
             | 4     | 4             | pending       | foo   | 1         | 1             |
             | 5     | 5             | pending       | foo   | 1         | 1             |
 
-    Scenario Outline: run deamon with no queued deployments
+    Scenario Outline: run daemon with no queued deployments
         Given the deploy strategy is "<strategy>"
         When I run "deploy_daemon"
         Then there were no deployments run
@@ -114,7 +114,7 @@ Feature: deploy daemon
             | salt      |
             | mco       |
 
-    Scenario Outline: run deamon with a tier deployment with no hosts
+    Scenario Outline: run daemon with a tier deployment with no hosts
         Given there is a deploy target with name="tier2"
         And there are deployments:
             | id    | user  | status    |
@@ -134,7 +134,7 @@ Feature: deploy daemon
             | mco       | pending       |
             | mco       | incomplete    |
 
-    Scenario Outline: run deamon with a tier deployment with hosts
+    Scenario Outline: run daemon with a tier deployment with hosts
         Given there are deployments:
             | id    | user  | status    |
             | 6     | foo   | queued    |
@@ -160,7 +160,7 @@ Feature: deploy daemon
             | mco       | incomplete    | failed    |
             | mco       | incomplete    | pending   |
 
-    Scenario Outline: run deamon with multiple tier & host deployments
+    Scenario Outline: run daemon with multiple tier & host deployments
         Given there is a deploy target with name="tier2"
         And there are hosts:
             | name  | env   | app_id    |
@@ -199,7 +199,7 @@ Feature: deploy daemon
             | mco       | incomplete    | failed    |
             | mco       | incomplete    | pending   |
 
-    Scenario Outline: run deamon with a tier & host deployment each, with one host missing
+    Scenario Outline: run daemon with a tier & host deployment each, with one host missing
         Given there is a deploy target with name="tier2"
         And there are hosts:
             | name  | env   | app_id    |
