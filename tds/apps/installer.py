@@ -76,10 +76,16 @@ class Installer(TDSProgramBase):
 
     @staticmethod
     def get_deployment(dep_id):
+        """
+        Get a deployment by the given ID.
+        """
         return tds.model.Deployment.get(id=dep_id)
 
     @staticmethod
     def commit_session():
+        """
+        Commit tagopsdb.Session.
+        """
         tagopsdb.Session.commit()
 
     def find_deployment(self):
@@ -225,8 +231,8 @@ class Installer(TDSProgramBase):
 
     def run(self):
         """
-        Find a deployment in need of being done (which spawns a process
-        that handles the actual deployment)
+        Find a deployment in need of being done, for use if being run as a
+        script rather than in tandem with TDSInstallerDaemon.
         """
         deployment = self.find_deployment()
         if deployment is not None:
