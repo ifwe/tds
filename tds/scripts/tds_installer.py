@@ -59,7 +59,6 @@ class TDSInstallerDaemon(Daemon):
         to process queued deployments if single system or
         zookeeper leader in multi-system configuration.
         """
-        self.app.initialize()
         zookeeper_config = self.app.config.get('zookeeper', None)
 
         if zookeeper_config is not None:
@@ -94,12 +93,11 @@ class TDSInstallerDaemon(Daemon):
 
     def handle_incoming_deployments(self):
         """Look for files in 'incoming' directory and handle them."""
-        log.info('Checking for queued deployments...')
-
         deployment = self.app.find_deployment()
         if deployment is None:
             return
 
+        log.info('Found deployment with ID %s', deployment.id)
         deployment.status = 'inprogress'
         tagopsdb.Session.commit()
         deployment_process = Process(
