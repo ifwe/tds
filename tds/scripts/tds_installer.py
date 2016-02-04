@@ -10,10 +10,10 @@ from datetime import datetime, timedelta
 import logging
 import os.path
 import socket
-import sys
-import time
 import signal
 import subprocess
+import sys
+import time
 import traceback
 
 from kazoo.client import KazooClient   # , KazooState
@@ -78,9 +78,8 @@ class TDSInstallerDaemon(Daemon):
     def halt_all_processes(self):
         to_delete = list()
         for dep_id in self.ongoing_processes:
-            proc = self.ongoing_processes[dep_id]
+            proc = self.ongoing_processes[dep_id][0]
             proc.terminate()
-            proc.join()
             dep = self.app.get_deployment(dep_id=dep_id)
             self.app._refresh(dep)
             if dep.status not in ('complete', 'failed', 'stopped'):
@@ -89,10 +88,10 @@ class TDSInstallerDaemon(Daemon):
             to_delete.append(dep_id)
         for halted_dep_id in to_delete:
             del self.ongoing_processes[halted_dep_id]
-            del self.ongoing_deployments[halted_dep_id]
 
     def handle_incoming_deployments(self):
         """Look for files in 'incoming' directory and handle them."""
+        tagopsdb.Session.close()
         deployment = self.app.find_deployment()
         if deployment is None:
             return
@@ -103,13 +102,18 @@ class TDSInstallerDaemon(Daemon):
         installer_file_path = os.path.abspath(tds.apps.installer.__file__)
         if installer_file_path.endswith('.pyc'):
             installer_file_path = installer_file_path[:-1]
-        deployment_process = tds.utils.processes.start_process([
-            installer_file_path,
-            deployment.id,
-        ])
-        self.ongoing_processes[deployment.id] = (
-            deployment_process, datetime.now()
-        )
+        try:
+            deployment_process = tds.utils.processes.start_process([
+                sys.executable,
+                installer_file_path,
+                deployment.id,
+            ])
+        except Exception as exc:
+            log.error('Exception: %r', exc.stderr)
+        else:
+            self.ongoing_processes[deployment.id] = (
+                deployment_process, datetime.now()
+            )
 
     def clean_up_processes(self):
         """
@@ -127,7 +131,7 @@ class TDSInstallerDaemon(Daemon):
 
         # Halt all deployments taking too long.
         for stalled_dep_id in self.get_stalled_deployments():
-            self.ongoing_processes[stalled_dep_id].terminate()
+            self.ongoing_processes[stalled_dep_id][0].terminate()
             dep = self.app.get_deployment(dep_id=stalled_dep_id)
             self.app._refresh(dep)
             dep.status = 'failed'
