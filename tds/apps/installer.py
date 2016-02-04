@@ -36,6 +36,8 @@ class Installer(TDSProgramBase):
         Determine deployment strategy and initialize some parameters.
         """
         self.retry = kwargs.pop('retry') if 'retry' in kwargs else 4
+        self.deployment_id = kwargs.pop('deployment_id') if 'deployment_id' \
+            in kwargs else None
 
         super(Installer, self).__init__(*args, **kwargs)
 
@@ -234,7 +236,10 @@ class Installer(TDSProgramBase):
         Find a deployment in need of being done, for use if being run as a
         script rather than in tandem with TDSInstallerDaemon.
         """
-        deployment = self.find_deployment()
+        if self.deployment_id is not None:
+            deployment = tds.model.Deployment.get(id=self.deployment_id)
+        else:
+            deployment = self.find_deployment()
         if deployment is not None:
             self.do_serial_deployment(deployment)
 
@@ -245,19 +250,27 @@ if __name__ == '__main__':
         Parse command line and return dict.
         """
         # TODO implement parser thing?
-        return {
-            'config_dir': cl_args[1]
-        }
+        try:
+            int(cl_args[1])
+        except ValueError:
+            return {
+                'config_dir': cl_args[1],
+            }
+        else:
+            return {
+                'deployment_id': cl_args[1],
+            }
     parsed_args = parse_command_line(sys.argv[1:])
 
-    log.setLevel(logging.DEBUG)
-    logfile = os.path.join(parsed_args['config_dir'], 'tds_installer.log')
-    handler = logging.FileHandler(logfile, 'a')
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
-                                  "%b %e %H:%M:%S")
-    handler.setFormatter(formatter)
-    log.addHandler(handler)
+    if 'config_dir' in parsed_args:
+        log.setLevel(logging.DEBUG)
+        logfile = os.path.join(parsed_args['config_dir'], 'tds_installer.log')
+        handler = logging.FileHandler(logfile, 'a')
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
+                                      "%b %e %H:%M:%S")
+        handler.setFormatter(formatter)
+        log.addHandler(handler)
 
     prog = Installer(parsed_args)
     prog.run()
