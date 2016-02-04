@@ -31,15 +31,15 @@ class Installer(TDSProgramBase):
     Daemon class that launches new processes to deploy packages to targets.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, params, *args, **kwargs):
         """
         Determine deployment strategy and initialize some parameters.
         """
-        self.retry = kwargs.pop('retry') if 'retry' in kwargs else 4
-        self.deployment_id = kwargs.pop('deployment_id') if 'deployment_id' \
-            in kwargs else None
+        self.retry = params.pop('retry') if 'retry' in params else 4
+        self.deployment_id = params.pop('deployment_id') if 'deployment_id' \
+            in params else None
 
-        super(Installer, self).__init__(*args, **kwargs)
+        super(Installer, self).__init__(params, *args, **kwargs)
 
         log.info('Initializing database session')
         self.initialize_db()
@@ -250,27 +250,34 @@ if __name__ == '__main__':
         Parse command line and return dict.
         """
         # TODO implement parser thing?
+        # Be sure to pass '--config-dir' for testing
         try:
-            int(cl_args[1])
+            int(cl_args[-1])
         except ValueError:
             return {
-                'config_dir': cl_args[1],
+                'config_dir': cl_args[-1],
             }
         else:
             return {
-                'deployment_id': cl_args[1],
+                'deployment_id': cl_args[-1],
             }
     parsed_args = parse_command_line(sys.argv[1:])
+    parsed_args['user_level'] = 'admin'
 
     if 'config_dir' in parsed_args:
-        log.setLevel(logging.DEBUG)
         logfile = os.path.join(parsed_args['config_dir'], 'tds_installer.log')
-        handler = logging.FileHandler(logfile, 'a')
-        handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
-                                      "%b %e %H:%M:%S")
-        handler.setFormatter(formatter)
-        log.addHandler(handler)
+    else:
+        logfile = '/var/log/tds_installer.log'
+        # 'logger' set at top of program
+        log = logging.getLogger('')
+
+    log.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(logfile, 'a')
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s",
+                                  "%b %e %H:%M:%S")
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
 
     prog = Installer(parsed_args)
     prog.run()
