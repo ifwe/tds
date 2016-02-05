@@ -4,8 +4,8 @@ Steps for the REST API.
 
 from os.path import join as opj
 
+import json
 import requests
-import yaml
 
 from behave import given, then, when
 
@@ -24,7 +24,7 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
                 addr=context.rest_server.server_name,
                 port=context.rest_server.server_port,
             ),
-            json=dict(username="testuser", password="secret"),
+            data=json.dumps(dict(username="testuser", password="secret")),
         )
         context.cookie = response.cookies['session']
     elif perm_type == 'admin':
@@ -33,7 +33,7 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
                 addr=context.rest_server.server_name,
                 port=context.rest_server.server_port,
             ),
-            json=dict(username="testadmin", password="removed"),
+            data=json.dumps(dict(username="testadmin", password="removed")),
         )
         context.cookie = response.cookies['session']
     else:
