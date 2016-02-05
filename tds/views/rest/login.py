@@ -61,9 +61,8 @@ class LoginView(BaseView):
             )
             try:
                 self.request.is_admin = (
-                    self.request.validated_params['user'] in
-                    [member for result in results for member in
-                     result[1]['memberUid']]
+                    username in [member for result in results for member in
+                                 result[1]['memberUid']]
                 )
             except (KeyError, IndexError):
                 self.request.is_admin = False
