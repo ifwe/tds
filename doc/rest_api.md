@@ -19,7 +19,7 @@ Some quick notes:
 This API integrates with LDAP for authentication and authorization.
 Post to `/login` with your LDAP login credentials to receive a session cookie
 to be used for the duration of your session.
-Session cookies are valid, as of 2015-08-10, for 15 days since time of issuance.
+Session cookies are valid, as of 2016-02-04, for 15 days since time of issuance.
 All requests other than to `/login` throw a `401: Unauthorized` without LDAP
 authentication.
 
@@ -227,8 +227,8 @@ URLs and methods will also be the same for `/projects/NAME` as for
         <td>/login</td>
         <td>POST</td>
         <td>Get an auth cookie.</td>
-        <td>'user': The username for the authenticating LDAP user.<br />
-            'pw': Password for the authenticating LDAP user.<br />
+        <td>None, but body must be a valid JSON object with attributes
+            "username" and "password".
         </td>
         <td>
             <b>200</b>: Success. Cookie attached to response with name 'session'.<br />

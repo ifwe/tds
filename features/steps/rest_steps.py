@@ -20,18 +20,20 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
     """
     if perm_type == 'user':
         response = requests.post(
-            "http://{addr}:{port}/login?user=testuser&password=secret".format(
+            "http://{addr}:{port}/login".format(
                 addr=context.rest_server.server_name,
                 port=context.rest_server.server_port,
-            )
+            ),
+            json=dict(username="testuser", password="secret"),
         )
         context.cookie = response.cookies['session']
     elif perm_type == 'admin':
         response = requests.post(
-            "http://{addr}:{port}/login?user=testadmin&password=itzhNTk(".format(
+            "http://{addr}:{port}/login".format(
                 addr=context.rest_server.server_name,
                 port=context.rest_server.server_port,
-            )
+            ),
+            json=dict(username="testadmin", password="itzhNTk("),
         )
         context.cookie = response.cookies['session']
     else:
@@ -57,6 +59,14 @@ def when_i_query_on_the_root_url(context, method):
 
 @when(u'I query {method} "{path}"')
 def when_i_query(context, method, path):
+    _execute_query(context, method, path)
+
+
+@when(u'I POST "{body}" to "{path}"')
+def when_i_query_with_body(context, path, body):
+    _execute_query(context, 'POST', path, body)
+
+def _execute_query(context, method, path, body=None):
     """
     Query the rest API at the given URL path with the given method.
     """
@@ -77,6 +87,7 @@ def when_i_query(context, method, path):
                 port=context.rest_server.server_port,
                 path=path,
             ),
+            data=body if body is not None else '',
             allow_redirects=context.follow_redirects,
             headers=context.request_headers,
             cookies=dict(session=context.cookie),
@@ -88,6 +99,7 @@ def when_i_query(context, method, path):
                 port=context.rest_server.server_port,
                 path=path,
             ),
+            data=body if body is not None else '',
             allow_redirects=context.follow_redirects,
             headers=context.request_headers,
         )
