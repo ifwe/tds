@@ -5,26 +5,21 @@ Feature: Login
 
     @rest
     Scenario Outline: insufficient parameters
-        When I query POST "/login?<params>"
+        When I POST "{<body>}" to "/login"
         Then the response code is 400
         And the response contains errors:
-            | location  | name  | description                   |
-            | query     |       | <name> is a required field.   |
+            | location  | name  | description                                                                                               |
+            | body      |       | Could not parse body as valid JSON. Body must be a JSON object with attributes "username" and "password". |
 
         Examples:
-            | params                | name      |
-            |                       | user      |
-            |                       | password  |
-            | password=bar          | user      |
-            | user=foo              | password  |
-            | user=&password=bar    | user      |
-            | user=foo&password=    | password  |
-            | user=&password=       | user      |
-            | user=&password=       | password  |
+            | body              |
+            |                   |
+            | "password": "bar" |
+            | "username": "foo" |
 
     @rest
     Scenario: invalid credentials
-        When I query POST "/login?user=horsefeathers&password=hensteeth"
+        When I POST "{"username": "horsefeathers", "password": "hensteeth"}" to "/login"
         Then the response code is 401
         And the response does not contain a cookie
         And the response contains errors:
@@ -33,7 +28,7 @@ Feature: Login
 
     @rest @ldap_off
     Scenario: LDAP server not accessible
-        When I query POST "/login?user=horsefeathers&password=hensteeth"
+        When I POST "{"username": "horsefeathers", "password": "hensteeth"}" to "/login"
         Then the response code is 500
         And the response contains errors:
             | location  | name  | description                       |
@@ -41,6 +36,6 @@ Feature: Login
 
     @rest
     Scenario: valid credentials
-        When I query POST "/login?user=testuser&password=secret"
+        When I POST "{"username": "testuser", "password": "secret"}" to "/login"
         Then the response code is 200
         And the response contains a cookie

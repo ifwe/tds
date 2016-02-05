@@ -2,6 +2,7 @@
 The login URL for the TDS REST API.
 """
 
+import json
 import ldap
 
 from cornice.resource import resource, view
@@ -19,25 +20,15 @@ class LoginView(BaseView):
 
     name = 'login'
 
-    types = {
-        'user': 'string',
-        'password': 'string',
-    }
+    types = {}
 
     individual_allowed_methods = dict(
         POST=dict(
-            description="Authenticate and get a session cookie.",
+            description="Authenticate and get a session cookie using a JSON body with attributes 'username' and 'password'.",
             returns="Session cookie attached at cookies->session.",
             permissions='none',
         ),
     )
-
-    param_descriptions = {
-        'user': 'LDAP username to use for authentication',
-        'password': 'String password to use for authentication',
-    }
-
-    required_post_fields = ('user', 'password')
 
     def validate_login(self, _request):
         """
@@ -46,10 +37,22 @@ class LoginView(BaseView):
         if self.request.errors:
             return
         try:
+            body = json.loads(self.request.body)
+            password = body['password']
+            username = body['username']
+            self.user = username
+        except (ValueError, KeyError):
+            self.request.errors.add(
+                'body', '',
+                'Could not parse body as valid JSON. Body must be a JSON '
+                'object with attributes "username" and "password".'
+            )
+            self.request.errors.status = 400
+            return
+        try:
             ldap_conn = ldap.initialize(self.settings['ldap_server'])
-            password = self.request.validated_params['password']
             domain_name = "uid={username},ou=People,dc=tagged,dc=com".format(
-                username=self.request.validated_params['user']
+                username=username,
             )
             ldap_conn.bind_s(domain_name, password)
             results = ldap_conn.search_s(
@@ -91,7 +94,7 @@ class LoginView(BaseView):
         response = self.make_response("SUCCESS")
         utils.set_cookie(
             response,
-            self.request.validated_params['user'],
+            self.user,
             remote_addr,
             self.settings,
             self.request.is_admin,
