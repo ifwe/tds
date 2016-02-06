@@ -31,15 +31,15 @@ def pylint = project.downstreamJob {
 }
 
 // Run python unit tests and record results
-def pyunit = project.downstreamJob {
-    name 'pyunit'
-    label 'python27 && centos6'
-    steps { shell '.jenkins/scripts/pyunit.sh' }
-    publishers {
-        archiveJunit "reports/pyunit.xml"
-        cobertura('coverage.xml')
-    }
-}
+//def pyunit = project.downstreamJob {
+//    name 'pyunit'
+//    label 'python27 && centos6'
+//    steps { shell '.jenkins/scripts/pyunit.sh' }
+//    publishers {
+//        archiveJunit "reports/pyunit.xml"
+//        cobertura('coverage.xml')
+//    }
+//}
 
 // Run behave tests and record results
 def features = project.downstreamJob {
@@ -120,7 +120,8 @@ def matrixRPMs = project.pythonFPMMatrixJob([
 }
 
 def gauntlet = project.gauntlet([
-    ['Gauntlet', [pylint, pyunit, features]],
+//    ['Gauntlet', [pylint, pyunit, features]],
+    ['Gauntlet', [pylint, features]],
     ['Build', [matrixRPMs]],
 ])
 
