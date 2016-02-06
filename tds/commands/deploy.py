@@ -9,6 +9,8 @@ from collections import OrderedDict
 
 import tagopsdb
 import tagopsdb.deploy.deploy as tagopsdb_deploy
+import tds.deploy_strategy
+import tds.exceptions
 import tds.model
 import tds.notifications
 
