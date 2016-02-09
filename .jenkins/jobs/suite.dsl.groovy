@@ -9,7 +9,7 @@ import com.tagged.build.fpm.FPMPythonScripts
 def project = new PythonFPMMatrixProject(
     jobFactory,
     [
-        scm: new StashSCM(project: "tds", name: "tds"),
+        scm: new StashSCM(project: "tds", name: "tds", defaultRef: "origin/master"),
         hipchatRoom: 'Tagged Deployment System',
         email: 'devtools@tagged.com',
         interpreters:['python27'],
@@ -129,7 +129,13 @@ def (tds, branches) = project.branchBuilders(gauntlet.name)
 
 // Override default 30m timeout
 jobFactory.referencedJobs.each {
-    it.with {
+    it.with() {
+        parameters {
+            stringParam('UPSTREAM_GIT_COMMIT', 'origin/master', 'The commit to build')
+        }
+        triggers {
+            scm('')
+        }
         wrappers {
             timeout(180, false)
         }
