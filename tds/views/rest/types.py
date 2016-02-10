@@ -102,4 +102,5 @@ TIER_DEPLOYMENT_TYPES = {
     'status': 'choice',
     'environment_id': 'integer',
     'user': 'string',
+    'skewed': 'boolean',
 }
