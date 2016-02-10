@@ -103,4 +103,5 @@ TIER_DEPLOYMENT_DESCRIPTIONS = {
     'status': 'Current status',
     'environment_id': 'ID of environment location for deployment',
     'user': 'Username of creator',
+    'skewed': "Whether the application has different host deployment versions",
 }
