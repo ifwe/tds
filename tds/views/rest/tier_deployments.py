@@ -147,26 +147,62 @@ class TierDeploymentView(BaseView):
                 )
                 self.request.errors.status = 409
 
+    def _validate_status_change(self):
+        """
+        Validate that the status change of the tier deployment is valid.
+        """
+        if self.request.validated[self.name].status == \
+                self.request.validated_params['status']:
+            return
+        if self.request.validated[self.name].status in (
+            'pending', 'inprogress', 'incomplete',
+        ):
+            self.request.errors.add(
+                'query', 'status',
+                "Users cannot change the status of tier deployments from "
+                "pending, inprogress, or incomplete."
+            )
+            self.request.errors.status = 403
+        elif self.request.validated_params['status'] in (
+            'pending', 'inprogress', 'incomplete',
+        ):
+            self.request.errors.add(
+                'query', 'status',
+                "Users cannot change the status of tier deployments to pending,"
+                " inprogress, or incomplete."
+            )
+            self.request.errors.status = 403
+
     def validate_tier_deployment_put(self):
         """
         Validate a PUT request for a tier deployment.
         """
         if self.name not in self.request.validated:
             return
-        if self.request.validated[self.name].deployment.status != 'pending':
+        if self.request.validated[self.name].deployment.status in (
+            'queued', 'inprogress',
+        ):
             self.request.errors.add(
                 'path', 'id',
-                'Users cannot modify tier deployments whose deployments are no'
-                ' longer pending.'
+                'Users cannot modify tier deployments whose deployments are'
+                ' in progress or queued.'
             )
             self.request.errors.status = 403
             return
+        if self.request.validated[self.name].deployment.status != 'pending' \
+                and any(key != 'status' for key in
+                        self.request.validated_params):
+            for key in self.request.validated_params:
+                if key != 'status':
+                    self.request.errors.add(
+                        'query', key,
+                        'Users can only modify status for tier deployments '
+                        'whose deployments are non-pending.'
+                    )
+                    self.request.errors.status = 403
+                    return
         if 'status' in self.request.validated_params:
-            self.request.errors.add(
-                'query', 'status',
-                "Users cannot change the status of tier deployments."
-            )
-            self.request.errors.status = 403
+            self._validate_status_change()
         self.validate_conflicting_env('PUT')
         self._validate_foreign_key('tier_id', 'tier', tds.model.AppTarget)
         self._validate_foreign_key('environment_id', 'environment',

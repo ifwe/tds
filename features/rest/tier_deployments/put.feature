@@ -142,7 +142,7 @@ Feature: PUT tier deployment(s) from the REST API
         And there is no host deployment with host_id=2,deployment_id=1
 
     @rest
-    Scenario Outline: attempt to modify a tier deployment whose deployment is non-pending
+    Scenario Outline: attempt to modify a tier deployment whose deployment is queued or inprogress
         Given there are deployments:
             | id    | user  | status    |
             | 2     | foo   | <status>  |
@@ -152,8 +152,8 @@ Feature: PUT tier deployment(s) from the REST API
         When I query PUT "/tier_deployments/2?tier_id=2"
         Then the response code is 403
         And the response contains errors:
-            | location  | name  | description                                                                   |
-            | path      | id    | Users cannot modify tier deployments whose deployments are no longer pending. |
+            | location  | name  | description                                                                       |
+            | path      | id    | Users cannot modify tier deployments whose deployments are in progress or queued. |
         And there is no tier deployment with id=2,app_id=2
         And there is a tier deployment with id=2,app_id=3
 
@@ -161,18 +161,73 @@ Feature: PUT tier deployment(s) from the REST API
             | status        |
             | queued        |
             | inprogress    |
-            | complete      |
-            | failed        |
-            | canceled      |
-            | stopped       |
 
     @rest
-    Scenario: attempt to modify status
-        When I query PUT "/tier_deployments/1?status=inprogress"
+    Scenario Outline: attempt to change attribute other than status for tier deployment whose deployment is non-pending
+        Given there are deployments:
+            | id    | user  | status    |
+            | 2     | foo   | <status>  |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 2     | 2             | 3         | pending   | foo   | 1                 | 1             |
+        When I query PUT "/tier_deployments/2?tier_id=2"
         Then the response code is 403
         And the response contains errors:
-            | location  | name      | description                                           |
-            | query     | status    | Users cannot change the status of tier deployments.   |
+            | location  | name      | description                                                                           |
+            | query     | tier_id   | Users can only modify status for tier deployments whose deployments are non-pending.  |
+        And there is no tier deployment with id=2,app_id=2
+        And there is a tier deployment with id=2,app_id=3
+
+        Examples:
+            | status    |
+            | complete  |
+            | canceled  |
+            | canceled  |
+            | stopped   |
+
+    @rest
+    Scenario Outline: attempt to modify a tier deployment status from pending, inprogress, or incomplete
+        Given there are deployments:
+            | id    | user  | status    |
+            | 2     | foo   | complete  |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 2     | 2             | 3         | <status>  | foo   | 1                 | 1             |
+        When I query PUT "/tier_deployments/2?status=validated"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                                                                   |
+            | query     | status    | Users cannot change the status of tier deployments from pending, inprogress, or incomplete.   |
+        And there is no tier deployment with id=2,app_id=2
+        And there is a tier deployment with id=2,app_id=3
+
+        Examples:
+            | status        |
+            | pending       |
+            | inprogress    |
+            | incomplete    |
+
+    @rest
+    Scenario Outline: attempt to modify a tier deployment status from pending, inprogress, or incomplete
+        Given there are deployments:
+            | id    | user  | status    |
+            | 2     | foo   | complete  |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status    | user  | environment_id    | package_id    |
+            | 2     | 2             | 3         | complete  | foo   | 1                 | 1             |
+        When I query PUT "/tier_deployments/2?status=<status>"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                                                               |
+            | query     | status    | Users cannot change the status of tier deployments to pending, inprogress, or incomplete. |
+        And there is no tier deployment with id=2,app_id=2
+        And there is a tier deployment with id=2,app_id=3
+
+        Examples:
+            | status        |
+            | pending       |
+            | inprogress    |
+            | incomplete    |
 
     @rest
     Scenario: attempt to violate (deployment_id, tier_id, package_id) unique together constraint
