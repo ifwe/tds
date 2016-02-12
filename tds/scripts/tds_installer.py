@@ -6,7 +6,6 @@ self.app is passed in during initialization and should be of type Installer,
 from tds.apps.installer.
 """
 
-from datetime import datetime, timedelta
 import logging
 import os.path
 import socket
@@ -15,11 +14,14 @@ import sys
 import time
 import traceback
 
+from datetime import datetime, timedelta
+
 from kazoo.client import KazooClient   # , KazooState
 from simpledaemon import Daemon
 
 import tagopsdb
 import tds.apps
+import tds.exceptions
 import tds.model
 import tds.utils.processes
 
@@ -107,7 +109,7 @@ class TDSInstallerDaemon(Daemon):
                 installer_file_path,
                 deployment.id,
             ])
-        except Exception as exc:
+        except tds.exceptions.RunProcessError as exc:
             log.error('Exception: %r', exc.stderr)
         else:
             self.ongoing_processes[deployment.id] = (
