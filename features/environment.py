@@ -13,7 +13,6 @@ import os.path
 from os.path import dirname, join as opj
 
 from wsgiref.simple_server import make_server
-from subprocess import CalledProcessError
 from multiprocessing import Process
 
 import tds.authorize
