@@ -7,6 +7,7 @@ import sys
 import subprocess
 
 import tds
+import tds.exceptions
 import tds.scripts.tds_prog
 import tds.scripts.unvalidated_deploy_check
 import tds.utils.processes as processes
@@ -84,7 +85,7 @@ def when_i_start_to_run(context, command):
             cwd=context.PROJECT_ROOT,
             env=env
         )
-    except subprocess.CalledProcessError:
+    except tds.exceptions.RunProcessError:
         pass
 
     context.process = proc

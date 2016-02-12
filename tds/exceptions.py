@@ -156,6 +156,26 @@ class ProgrammingError(TDSException):
     pass
 
 
+class RunProcessError(TDSException):
+    """
+    Extends subprocess's CalledProcessError exception to include additional
+    information used by TDS (stdout, stderr, duration - output is unused).
+    """
+
+    def __init__(self, returncode, cmd, output=None, stdout=None, stderr=None,
+                 duration=None):
+        self.returncode = returncode
+        self.cmd = cmd
+        self.output = output
+        self.stdout = stdout
+        self.stderr = stderr
+        self.duration = duration
+
+    def __str__(self):
+        return "Command '%s' returned non-zero exit status %d" % \
+               (self.cmd, self.returncode)
+
+
 class WrongEnvironmentError(TDSException):
     """Exception for command attempts in incorrect environment"""
 

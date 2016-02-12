@@ -17,6 +17,7 @@ from subprocess import CalledProcessError
 from multiprocessing import Process
 
 import tds.authorize
+import tds.exceptions
 import tds.utils.processes as processes
 import tds.utils.merge as merge
 import tds.views.rest as rest
@@ -480,7 +481,7 @@ def setup_temp_db(context):
                     ]
                 )
             # Expecting CalledProcessError from tds.process.wait_for_process
-            except CalledProcessError as exc:
+            except tds.exceptions.RunProcessError as exc:
                 # assume it's a host problem
                 if db_hosts:
                     exc = None
