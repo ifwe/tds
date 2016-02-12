@@ -11,7 +11,6 @@ import logging
 import os.path
 import socket
 import signal
-import subprocess
 import sys
 import time
 import traceback
