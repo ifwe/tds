@@ -4,11 +4,10 @@ REST API view for packages.
 
 from cornice.resource import resource, view
 import jenkinsapi.jenkins
-try:
-    from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
-except ImportError:
-    from jenkinsapi.exceptions import JenkinsAPIException, NotFound
 
+from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
+
+import tds.exceptions
 import tds.model
 from .base import BaseView, init_view
 from .urls import ALL_URLS

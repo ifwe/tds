@@ -85,6 +85,7 @@ class DeployController(BaseController):
         self.deployment = None
         self.deploy_hosts = set()
         self.deploy_tiers = set()
+        self.application = None
         self.environment = None
         self.package = None
         self.user = None
