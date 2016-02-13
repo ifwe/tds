@@ -7,7 +7,6 @@ import logging
 import os
 import os.path
 import smtplib
-import subprocess
 import sys
 import time
 import hashlib
@@ -391,13 +390,13 @@ class RepoUpdater(TDSProgramBase):
 
         try:
             utils.run(['make', '-C', self.repo_dir])
-        except subprocess.CalledProcessError as exc:
+        except exceptions.RunProcessError as exc:
             log.error('yum database update failed, retrying: %s', exc)
             time.sleep(5)   # Short delay before re-attempting
 
             try:
                 utils.run(['make', '-C', self.repo_dir])
-            except subprocess.CalledProcessError as exc:
+            except exceptions.RunProcessError as exc:
                 log.error('yum database update failed, aborting: %s', exc)
                 final_status = 'failed'
 
