@@ -972,6 +972,9 @@ class DeployController(BaseController):
         if not apptypes:
             apptypes = application.targets
 
+        env_id = tagopsdb.Environment.get(
+            environment=self.envs[params['env']],
+        ).id
         package_deployment_info = dict(
             package=package,
             environment=params['env'],
@@ -986,15 +989,24 @@ class DeployController(BaseController):
             ]
 
             current_app_deployment = \
-                tagopsdb_deploy.find_specific_app_deployment(
-                    *func_args, version=package.version
+                application.get_latest_completed_tier_deployment(
+                    tier_id=target.id,
+                    environment_id=env_id,
                 )
             previous_app_deployment = None
             host_deployment_version = package.version
 
             if params.get('version') is None:
-                previous_app_deployment = \
-                    tagopsdb_deploy.find_previous_app_deployment(*func_args)
+                if current_app_deployment is not None:
+                    previous_app_deployment = \
+                        application.get_latest_completed_tier_deployment(
+                            tier_id=target.id,
+                            environment_id=env_id,
+                            must_be_validated=True,
+                            exclude_package_ids=[
+                                current_app_deployment.package_id
+                            ],
+                        )
                 host_deployment_version = None
 
             host_deployments = \
