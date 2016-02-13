@@ -83,6 +83,7 @@ APP_DEPLOY_TEMPLATE = (
     'App type: {app_dep.application.name}\n'
     'Environment: {app_dep.environment}\n'
     'Install state: {app_dep.status}\n'
+    'Skewed: {app_dep.skewed}\n'
 )
 HOST_DEPLOY_HEADER_TEMPLATE = (
     'Deployment of {host_dep[pkg_def].name} to hosts '
@@ -112,6 +113,8 @@ PACKAGE_TEMPLATE = (
     'Version: {self.version}\n'
     'Revision: {self.revision}\n'
 )
+
+ROLLBACK_DEPLOYMENT_MESSAGE = "Rollback deployment version:\n"
 
 
 def format_access_error(_exc):
@@ -289,6 +292,7 @@ def format_deployments(deployments):
 
                     if target['previous_app_deployment'] is not None:
                         prev_app_dep = target['previous_app_deployment']
+                        output.append(ROLLBACK_DEPLOYMENT_MESSAGE)
                         output.append(
                             APP_DEPLOY_TEMPLATE.format(app_dep=prev_app_dep)
                         )
