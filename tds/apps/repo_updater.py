@@ -17,10 +17,8 @@ import requests
 import requests.exceptions
 import lxml.html
 import jenkinsapi.jenkins
-try:
-    from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
-except ImportError:
-    from jenkinsapi.exceptions import JenkinsAPIException, NotFound
+
+from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
 
 import tagopsdb
 import tagopsdb.exceptions
@@ -175,7 +173,7 @@ class RepoUpdater(TDSProgramBase):
         job = jenkins[job_name]
         try:
             build = job.get_build(int(pkg.version))
-        except KeyError as exc:
+        except KeyError:
             raise exceptions.JenkinsJobNotFoundError(
                 'Artifact', job_name, pkg.version, self.jenkins_url,
             )
