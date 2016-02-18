@@ -136,13 +136,14 @@ class BaseView(ValidatedView):
             model = getattr(tds.model, obj_type.title(), None)
             if model is None:
                 raise tds.exceptions.NotFoundError('Model', [obj_type])
+        model_query = self.session.query(model)
 
         if not param_name:
             param_name = 'name_or_id'
 
         try:
             obj_id = int(self.request.matchdict[param_name])
-            obj = model.get(id=obj_id)
+            obj = model_query.get(id=obj_id)
             name = False
         except ValueError:
             if can_be_name:
@@ -155,7 +156,7 @@ class BaseView(ValidatedView):
                     obj_dict[self.param_routes['name']] = name
                 else:
                     obj_dict['name'] = name
-                obj = model.get(**obj_dict)
+                obj = model_query.get(**obj_dict)
             else:
                 obj_id = self.request.matchdict[param_name]
                 obj = None
@@ -200,6 +201,7 @@ class BaseView(ValidatedView):
 
         if obj_cls is None:
             raise tds.exceptions.NotFoundError('Model', [obj_type])
+        obj_cls_query = self.session.query(obj_cls)
 
         self._validate_params(('limit', 'start', 'select'))
         self._validate_json_params(
@@ -207,7 +209,7 @@ class BaseView(ValidatedView):
         )
 
         if plural not in self.request.validated:
-            self.request.validated[plural] = obj_cls.query().order_by(
+            self.request.validated[plural] = obj_cls_query.order_by(
                 obj_cls.id
             )
 

@@ -58,7 +58,9 @@ class CurrentTierDeployment(BaseView):
                                                     'environment')):
             return
 
-        found_assoc = tagopsdb.model.ProjectPackage.find(
+        found_assoc = self.session.query(
+            tagopsdb.model.ProjectPackage
+        ).filter_by(
             pkg_def_id=request.validated['application'].id,
             app_id=request.validated['tier'].id,
         )

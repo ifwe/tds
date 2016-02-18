@@ -79,7 +79,7 @@ class ApplicationTierView(BaseView):
             x in request.validated for x in ('project', 'application', 'tier')
         ):
             return
-        found = self.model.get(
+        found = self.session.query(self.model).get(
             project_id=request.validated['project'].id,
             pkg_def_id=request.validated['application'].id,
             app_id=request.validated['tier'].id,
@@ -115,7 +115,9 @@ class ApplicationTierView(BaseView):
                                    'pkg_name',
                                    param_name='application_name_or_id')
         if all(x in request.validated for x in ('project', 'application')):
-            request.validated[self.plural] = self.model.find(
+            request.validated[self.plural] = self.session.query(
+                self.model
+            ).filter_by(
                 project_id=request.validated['project'].id,
                 pkg_def_id=request.validated['application'].id,
             )
@@ -132,11 +134,11 @@ class ApplicationTierView(BaseView):
         if not all(x in request.validated for x in ('project', 'application')):
             return
         if 'id' in request.validated_params:
-            found = tds.model.AppTarget.get(
+            found = self.session.query(tds.model.AppTarget).get(
                 id=request.validated_params['id']
             )
         elif 'name' in request.validated_params:
-            found = tds.model.AppTarget.get(
+            found = self.session.query(tds.model.AppTarget).get(
                 name=request.validated_params['name']
             )
         else:
@@ -160,7 +162,7 @@ class ApplicationTierView(BaseView):
             request.errors.status = 400
             return
 
-        already_exists = tagopsdb.model.ProjectPackage.get(
+        already_exists = self.session.query(tagopsdb.model.ProjectPackage).get(
             project_id=request.validated['project'].id,
             pkg_def_id=request.validated['application'].id,
             app_id=found.id,
