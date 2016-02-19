@@ -98,7 +98,7 @@ class JSONValidatedView(object):
                             "Got exception {e}.".format(param=param, e=exc)
                         )
 
-        self.session = tagopsdb.Session()
+        self.session = tagopsdb.model.Base.Session()
         super(JSONValidatedView, self).__init__(*args, **kwargs)
 
     def _validate_json_params(self, types=None):
