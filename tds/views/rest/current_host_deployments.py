@@ -50,7 +50,7 @@ class CurrentHostDeployment(BaseView):
         if not all(x in request.validated for x in ('application', 'host')):
             return
 
-        found_assoc = self.session.query(
+        found_assoc = self.query(
             tagopsdb.model.ProjectPackage
         ).filter_by(
             pkg_def_id=request.validated['application'].id,

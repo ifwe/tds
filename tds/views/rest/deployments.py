@@ -179,7 +179,7 @@ class DeploymentView(BaseView):
         else:
             for dep in host_deployments:
                 conflicting_deps = [host_dep for host_dep in
-                    tds.model.HostDeployment.find(
+                    self.query(tds.model.HostDeployment).filter_by(
                         host_id=dep.host_id,
                     ) if host_dep.id != dep.id and host_dep.deployment.status
                     in ('queued', 'inprogress')
@@ -228,13 +228,17 @@ class DeploymentView(BaseView):
                 previous_env_short = env_map[tier_dep.environment_obj.env]
                 if previous_env_short is None:
                     continue
-                previous_env = tagopsdb.Environment.get(env=previous_env_short)
+                previous_env = self.query(tagopsdb.Environment).get(
+                    env=previous_env_short
+                )
                 if previous_env is None:
                     raise tds.exceptions.ProgrammingError(
                         "Could not find environment with short name {env}."
                         .format(env=previous_env_short)
                     )
-                previous_tier_dep = tds.model.AppDeployment.find(
+                previous_tier_dep = self.query(
+                    tds.model.AppDeployment
+                ).filter_by(
                     environment_id=previous_env.id,
                     app_id=tier_dep.app_id,
                     package_id=tier_dep.package_id,

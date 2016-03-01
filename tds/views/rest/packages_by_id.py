@@ -89,8 +89,8 @@ class PackageByIDView(BaseView):
 
         if any(x in self.request.validated_params for x in
                ('version', 'revision', 'name')):
-            found_pkg = self.model.get(
-                application=tds.model.Application.get(
+            found_pkg = self.query(self.model).get(
+                application=self.query(tds.model.Application).get(
                     pkg_name=self.request.validated_params['name']
                 ) if 'name' in self.request.validated_params else
                     self.request.validated[self.name].application,
@@ -139,7 +139,7 @@ class PackageByIDView(BaseView):
         """
         if 'name' not in self.request.validated_params:
             return
-        found_app = tds.model.Application.get(
+        found_app = self.query(tds.model.Application).get(
             pkg_name=self.request.validated_params['name']
         )
         ver_check = 'version' in self.request.validated_params
@@ -158,7 +158,7 @@ class PackageByIDView(BaseView):
             return
         else:
             self.request.validated_params['application'] = found_app
-        found_pkg = self.model.get(
+        found_pkg = self.query(self.model).get(
             application=found_app,
             version=self.request.validated_params['version'],
             revision=self.request.validated_params['revision'],
@@ -216,7 +216,7 @@ class PackageByIDView(BaseView):
 
         application = None
         if 'name' in self.request.validated_params:
-            app = tds.model.Application.get(
+            app = self.query(tds.model.Application).get(
                 pkg_name=self.request.validated_params['name']
             )
             if app is None:

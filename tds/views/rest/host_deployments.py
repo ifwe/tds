@@ -60,7 +60,7 @@ class HostDeploymentView(BaseView):
             )
             self.request.errors.status = 403
             return
-        found_app_dep = tds.model.AppDeployment.get(
+        found_app_dep = self.query(tds.model.AppDeployment).get(
             deployment_id=self.request.validated[self.name].deployment_id,
             app_id=self.request.validated[self.name].host.app_id,
         )
@@ -98,10 +98,10 @@ class HostDeploymentView(BaseView):
             if 'host_id' not in self.request.validated_params or \
                     'deployment_id' not in self.request.validated_params:
                 return
-            own_host = tds.model.HostTarget.get(
+            own_host = self.query(tds.model.HostTarget).get(
                 id=self.request.validated_params['host_id']
             )
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'host_id'
@@ -112,21 +112,21 @@ class HostDeploymentView(BaseView):
             return
         elif 'host_id' not in self.request.validated_params:
             own_host = self.request.validated[self.name].host
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'deployment_id'
         elif 'deployment_id' not in self.request.validated_params:
-            own_host = tds.model.HostTarget.get(
+            own_host = self.query(tds.model.HostTarget).get(
                 id=self.request.validated_params['host_id']
             )
             deployment = self.request.validated[self.name].deployment
             name = 'host_id'
         else:
-            own_host = tds.model.HostTarget.get(
+            own_host = self.query(tds.model.HostTarget).get(
                 id=self.request.validated_params['host_id']
             )
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'host_id'
@@ -211,11 +211,13 @@ class HostDeploymentView(BaseView):
         the application for the package with ID pkg_id for some project.
         If it isn't, add an error.
         """
-        found_pkg = tds.model.Package.get(id=pkg_id)
-        found_host = tds.model.HostTarget.get(id=host_id)
+        found_pkg = self.query(tds.model.Package).get(id=pkg_id)
+        found_host = self.query(tds.model.HostTarget).get(id=host_id)
         if not (found_pkg and found_host):
             return
-        found_project_pkg = tagopsdb.model.ProjectPackage.find(
+        found_project_pkg = self.query(
+            tagopsdb.model.ProjectPackage
+        ).filter_by(
             pkg_def_id=found_pkg.pkg_def_id,
             app_id=found_host.app_id,
         )

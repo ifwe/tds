@@ -5,6 +5,7 @@ Its only intended use is as a base class for the BaseView; directly importing
 and using this view is discouraged.
 """
 
+import types
 import logging
 import re
 
@@ -17,6 +18,20 @@ class ValidatedView(JSONValidatedView):
     """
     This class implements common non-JSON validators.
     """
+
+    def query(self, model):
+        """
+        Convenience method for creating a query over the model or its delegate
+        if creating a query over the model fails.
+        Adds a get method for convenience, as well.
+        """
+        try:
+            query = self.query(model)
+        except:
+            query = self.query(model.delegate)
+        def get(query, *args, **kwargs):
+            return query.filter_by(*args, **kwargs).one_or_none()
+        query.get = types.MethodType(get, a)
 
     def _validate_params(self, valid_params):
         """
@@ -216,7 +231,7 @@ class ValidatedView(JSONValidatedView):
                 tup_dict[key] = self.request.validated_params[item] if item \
                     in self.request.validated_params else \
                     getattr(self.request.validated[self.name], key)
-            found = self.session.query(self.model).get(**tup_dict)
+            found = self.query(self.model).get(**tup_dict)
             if found is not None:
                 if request_type == "POST":
                     self.request.errors.add(
@@ -275,7 +290,7 @@ class ValidatedView(JSONValidatedView):
         if param_name in self.request.validated_params:
             dict_key = self.param_routes[param_name] if param_name in \
                 self.param_routes else param_name
-            found_obj = self.session.query(self.model).get(
+            found_obj = self.query(self.model).get(
                 **{dict_key: self.request.validated_params[param_name]}
             )
             if not found_obj:
@@ -424,7 +439,7 @@ class ValidatedView(JSONValidatedView):
         """
         try:
             obj_id = int(param)
-            found = self.session.query(model).get(id=obj_id)
+            found = self.query(model).get(id=obj_id)
             if found is None:
                 self.request.errors.add(
                     'query', param_name,
@@ -439,7 +454,7 @@ class ValidatedView(JSONValidatedView):
         except ValueError:
             name = param
             attrs = {attr_name: name} if attr_name else {'name': name}
-            found = self.session.query(model).get(**attrs)
+            found = self.query(model).get(**attrs)
             if found is None:
                 self.request.errors.add(
                     'query', param_name,
