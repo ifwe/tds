@@ -126,9 +126,9 @@ class TierHipchatView(BaseView):
             return
 
         if 'id' in request.params:
-            found = self.model.get(id=request.params['id'])
+            found = self.query(self.model).get(id=request.params['id'])
         elif 'name' in request.params:
-            found = self.model.get(room_name=request.params['name'])
+            found = self.query(self.model).get(room_name=request.params['name'])
         else:
             request.errors.add(
                 'query', '',

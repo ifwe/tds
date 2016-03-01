@@ -105,7 +105,7 @@ class PackageView(BaseView):
             )
             return
         try:
-            pkg = tds.model.Package.get(
+            pkg = self.query(tds.model.Package).get(
                 application=self.request.validated['application'],
                 version=self.request.matchdict['version'],
                 revision=self.request.matchdict['revision'],
@@ -157,7 +157,7 @@ class PackageView(BaseView):
 
         if 'version' in self.request.validated_params or 'revision' in \
                 self.request.validated_params:
-            found_pkg = self.model.get(
+            found_pkg = self.query(self.model).get(
                 application=self.request.validated['application'],
                 version=self.request.validated_params['version'] if 'version'
                     in self.request.validated_params else
@@ -202,7 +202,7 @@ class PackageView(BaseView):
         rev_check = 'revision' in self.request.validated_params
         if not (app_check and ver_check and rev_check):
             return
-        found_pkg = self.model.get(
+        found_pkg = self.query(self.model).get(
             application=self.request.validated['application'],
             version=self.request.validated_params['version'],
             revision=self.request.validated_params['revision'],
