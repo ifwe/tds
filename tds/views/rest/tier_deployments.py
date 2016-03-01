@@ -299,13 +299,15 @@ class TierDeploymentView(BaseView):
             app_id=self.request.validated_params['tier_id'],
             environment_id=self.request.validated_params['environment_id']
         ):
-            tds.model.HostDeployment.create(
+            host_dep = tds.model.HostDeployment(
                 host_id=host.id,
                 deployment_id=self.request.validated_params['deployment_id'],
                 user=self.request.validated['user'],
                 status='pending',
                 package_id=self.request.validated_params['package_id'],
             )
+            self.session.add(host_dep)
+            self.session.commit()
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
 
@@ -347,25 +349,27 @@ class TierDeploymentView(BaseView):
         if env_id_different or tier_id_different or package_id_different:
             for host_dep in curr_dep.deployment.host_deployments:
                 if host_dep.host.app_id == curr_dep.app_id:
-                    tagopsdb.Session.delete(host_dep)
+                    self.session.delete(host_dep)
             for host in self.query(tds.model.HostTarget).filter_by(
                 app_id=new_tier_id,
                 environment_id=new_env_id,
             ):
-                host_dep = tds.model.HostDeployment.create(
+                host_dep = tds.model.HostDeployment(
                     host_id=host.id,
                     deployment_id=new_dep_id,
                     user=self.request.validated['user'],
                     status='pending',
                     package_id=new_package_id
                 )
+                self.session.add(host_dep)
+                self.session.commit()
         for attr in self.request.validated_params:
             setattr(
                 curr_dep,
                 self.param_routes[attr] if attr in self.param_routes else attr,
                 self.request.validated_params[attr],
             )
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

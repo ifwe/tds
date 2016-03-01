@@ -7,7 +7,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
-from . import types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import CURRENT_HOST_DEPLOYMENT_PERMISSIONS
 
@@ -27,7 +27,7 @@ class CurrentHostDeployment(BaseView):
                  "for an application and host."),
     )
 
-    full_types = types.HOST_DEPLOYMENT_TYPES
+    full_types = obj_types.HOST_DEPLOYMENT_TYPES
 
     full_descriptions = descriptions.HOST_DEPLOYMENT_DESCRIPTIONS
 
@@ -81,8 +81,8 @@ class CurrentHostDeployment(BaseView):
         if not request.validated[self.name]:
             request.errors.add(
                 'path', 'host_name_or_id',
-                'Completed deployment of application {a_name} on host {h_name} '
-                'does not exist.'.format(
+                'Completed deployment of application {a_name} on host {h_name}'
+                ' does not exist.'.format(
                     a_name=request.validated['application'].name,
                     h_name=request.validated['host'].name,
                 )
