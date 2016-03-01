@@ -530,6 +530,12 @@ def seed_db():
         cluster_name='some-ganglia-thing'
     ))
 
+    tagopsdb.Datacenter.update_or_create(dict(
+        dc_name='sf_drt_1',
+        physical_location='365 Main St, San Francisco, CA',
+        priority='10',
+    ))
+
     app_name = tagopsdb.Application.dummy
     tagopsdb.Application.update_or_create(dict(
         app_type=app_name,
