@@ -85,14 +85,14 @@ class Application(Base):
         defaults.update(attrs)
         return Package.create(**defaults)
 
-    def get_latest_tier_deployment(self, tier_id, environment_id):
+    def get_latest_tier_deployment(self, tier_id, environment_id, query=None):
         """
         Return latest tier deployment of this application on tier with ID
         tier_id in environment with ID environment_id.
         """
-        return tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
-            tagopsdb.model.AppDeployment.package
-        ).filter(
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.AppDeployment)
+        return query.join(tagopsdb.model.AppDeployment.package).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.AppDeployment.app_id == tier_id,
             tagopsdb.model.AppDeployment.environment_id == environment_id,
@@ -100,7 +100,8 @@ class Application(Base):
 
     def get_latest_completed_tier_deployment(self, tier_id, environment_id,
                                              must_be_validated=False,
-                                             exclude_package_ids=None):
+                                             exclude_package_ids=None,
+                                             query=None):
         """
         Return latest completed tier deployment of this application on tier
         with ID tier_id in environment with ID environment_id.
@@ -111,7 +112,9 @@ class Application(Base):
         """
         in_list = ['validated'] if must_be_validated else ['validated',
                                                            'complete']
-        query = tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.AppDeployment)
+        query = query.join(
             tagopsdb.model.AppDeployment.package
         ).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
@@ -128,26 +131,26 @@ class Application(Base):
             desc(tagopsdb.model.AppDeployment.realized)
         ).first()
 
-    def get_latest_host_deployment(self, host_id):
+    def get_latest_host_deployment(self, host_id, query=None):
         """
         Return latest host deployment of this application on host with ID
         host_id.
         """
-        return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
-            tagopsdb.model.HostDeployment.package
-        ).filter(
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        return query.join(tagopsdb.model.HostDeployment.package).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.HostDeployment.host_id == host_id,
         ).order_by(desc(tagopsdb.model.HostDeployment.realized)).first()
 
-    def get_latest_completed_host_deployment(self, host_id):
+    def get_latest_completed_host_deployment(self, host_id, query=None):
         """
         Return latest completed host_deployment (status == 'ok') of this
         application on host with ID host_id.
         """
-        return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
-            tagopsdb.model.HostDeployment.package
-        ).filter(
+        if query is None:
+            tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        return query.join(tagopsdb.model.HostDeployment.package).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.HostDeployment.host_id == host_id,
             tagopsdb.model.HostDeployment.status == 'ok',

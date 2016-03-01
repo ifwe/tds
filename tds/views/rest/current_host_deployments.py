@@ -74,7 +74,10 @@ class CurrentHostDeployment(BaseView):
         self._validate_json_params({'select': 'string'})
 
         request.validated[self.name] = request.validated['application'] \
-            .get_latest_completed_host_deployment(request.validated['host'].id)
+            .get_latest_completed_host_deployment(
+                request.validated['host'].id,
+                query=self.query(tagopsdb.model.HostDeployment),
+            )
         if not request.validated[self.name]:
             request.errors.add(
                 'path', 'host_name_or_id',
