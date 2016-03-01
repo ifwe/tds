@@ -14,7 +14,7 @@ pytz>=2012j
 requests==1.2.3
 socketcache==0.1.0
 tabulate==0.7.2
-git+ssh://git@code.tagged.com/tagopsdb/tagopsdb.git@master#egg=tagopsdb-0.9.16
+git+ssh://git@code.tagged.com/tagopsdb/tagopsdb.git@update-sqlalchemy#egg=tagopsdb-0.9.18
 git+ssh://git@code.tagged.com/lib-python/python-simpledaemon.git@master#egg=simpledaemon-1.0
 cornice==1.1.0
 python-ldap==2.4.20
