@@ -58,9 +58,7 @@ class CurrentTierDeployment(BaseView):
                                                     'environment')):
             return
 
-        found_assoc = self.query(
-            tagopsdb.model.ProjectPackage
-        ).filter_by(
+        found_assoc = self.query(tagopsdb.model.ProjectPackage).filter_by(
             pkg_def_id=request.validated['application'].id,
             app_id=request.validated['tier'].id,
         )
@@ -90,6 +88,7 @@ class CurrentTierDeployment(BaseView):
                 request.validated['tier'].id,
                 request.validated['environment'].id,
                 must_be_validated=validated,
+                query=self.query(tagopsdb.model.AppDeployment),
             )
         if not request.validated[self.name]:
             request.errors.add(

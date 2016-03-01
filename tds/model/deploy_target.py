@@ -72,28 +72,30 @@ class AppTarget(DeployTarget):
 
         tagopsdb.Session.commit()
 
-    def get_ongoing_deployments(self, environment_id):
+    def get_ongoing_deployments(self, environment_id, query=None):
         """
         Return all ongoing tier deployments on this tier in the environment
         with ID environment_id.
         """
-        return tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
-            tagopsdb.model.AppDeployment.deployment
-        ).filter(
+        if query is None:
+            tagopsdb.Session.query(tagopsdb.model.AppDeployment)
+        return query.join(tagopsdb.model.AppDeployment.deployment).filter(
             tagopsdb.model.AppDeployment.app_id == self.id,
             tagopsdb.model.AppDeployment.environment_id == environment_id,
             tagopsdb.model.AppDeployment.status.in_(('pending', 'inprogress')),
             tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
         ).all()
 
-    def get_ongoing_host_deployments(self, environment_id):
+    def get_ongoing_host_deployments(self, environment_id, query=None):
         """
         Return all ongoing host deployments for hosts associated with this tier
         in the environment with ID environment_id
         """
-        return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
-            tagopsdb.model.HostDeployment.deployment
-        ).join(tagopsdb.model.HostDeployment.host).filter(
+        if query is None:
+            tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        return query.join(tagopsdb.model.HostDeployment.deployment).join(
+            tagopsdb.model.HostDeployment.host
+        ).filter(
             tagopsdb.model.Host.app_id == self.id,
             tagopsdb.model.Host.environment_id == environment_id,
             tagopsdb.model.HostDeployment.status.in_(
@@ -131,13 +133,13 @@ class HostTarget(DeployTarget):
         return [Application(delegate=x)
                 for x in self.target.package_definitions]
 
-    def get_ongoing_deployments(self):
+    def get_ongoing_deployments(self, query=None):
         """
         Return all ongoing deployments on this host.
         """
-        return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
-            tagopsdb.model.HostDeployment.host
-        ).filter(
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        return query.join(tagopsdb.model.HostDeployment.host).filter(
             tagopsdb.model.HostDeployment.id == self.id,
             tagopsdb.model.HostDeployment.status.in_(
                 ('pending', 'inprogress')

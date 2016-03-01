@@ -134,7 +134,7 @@ class PackageView(BaseView):
         request.params['start'] if those are non-null.
         """
         try:
-            pkgs = tds.model.Package.query().filter(
+            pkgs = self.query(tds.model.Package).filter(
                 tds.model.Package.application == self.request.validated[
                     'application'
                 ],
