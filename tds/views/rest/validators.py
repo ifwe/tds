@@ -9,6 +9,7 @@ import types
 import logging
 import re
 
+import sqlalchemy.orm.query
 import tds.exceptions
 from . import utils
 from .json_validators import JSONValidatedView
@@ -26,12 +27,13 @@ class ValidatedView(JSONValidatedView):
         Adds a get method for convenience, as well.
         """
         try:
-            query = self.query(model)
+            query = self.session.query(model)
         except:
-            query = self.query(model.delegate)
+            query = self.session.query(model.delegate)
         def get(query, *args, **kwargs):
             return query.filter_by(*args, **kwargs).one_or_none()
-        query.get = types.MethodType(get, a)
+        query.get = types.MethodType(get, query, sqlalchemy.orm.query.Query)
+        return query
 
     def _validate_params(self, valid_params):
         """

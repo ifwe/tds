@@ -15,7 +15,7 @@ import tds.model
 import tds.exceptions
 
 from .validators import ValidatedView
-from . import types, descriptions
+from . import obj_types, descriptions
 
 
 def init_view(_view_cls=None, name=None, plural=None, model=None,
@@ -56,7 +56,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
 
         if set_obj_params:
             json_types = getattr(
-                types, "{name}_TYPES".format(
+                obj_types, "{name}_TYPES".format(
                     name=obj_name.upper().replace('-', '_')
                 )
             )
@@ -303,15 +303,11 @@ class BaseView(ValidatedView):
         Create and return the HTTP response.
         """
         self._route_params()
-        if getattr(self.model, 'create', None):
-            self.request.validated[self.name] = self.model.create(
-                **self.request.validated_params
-            )
-        else:
-            self.request.validated[self.name] = self.model.update_or_create(
-                self.request.validated_params
-            )
-            tagopsdb.Session.commit()
+        self.request.validated[self.name] = self.model(
+            **self.request.validated_params
+        )
+        self.session.add(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             "201 Created",
@@ -340,10 +336,10 @@ class BaseView(ValidatedView):
         """
         if 'delete_cascade' in self.request.validated:
             for obj in self.request.validated['delete_cascade']:
-                tagopsdb.Session.delete(obj)
-            tagopsdb.Session.commit()
-        tagopsdb.Session.delete(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+                self.session.delete(obj)
+            self.session.commit()
+        self.session.delete(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )
@@ -369,7 +365,7 @@ class BaseView(ValidatedView):
                 self.param_routes[attr] if attr in self.param_routes else attr,
                 self.request.validated_params[attr],
             )
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

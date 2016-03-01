@@ -11,7 +11,7 @@ except ImportError:
 
 import tds.model
 from .base import BaseView, init_view
-from . import types as obj_types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import PACKAGE_BY_ID_PERMISSIONS
 

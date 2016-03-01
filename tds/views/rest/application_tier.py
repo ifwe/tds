@@ -8,7 +8,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb
 from .base import BaseView, init_view
-from . import types as obj_types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import APPLICATION_TIER_PERMISSIONS
 
@@ -183,8 +183,8 @@ class ApplicationTierView(BaseView):
         """
         Handle collection POST after all validation has passed.
         """
-        tagopsdb.Session.add(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+        self.session.add(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             self.response_code,
@@ -195,8 +195,8 @@ class ApplicationTierView(BaseView):
         """
         Handle DELETE after all validation has passed.
         """
-        tagopsdb.Session.delete(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+        self.session.delete(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

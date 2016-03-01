@@ -8,7 +8,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
-from . import types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import CURRENT_TIER_DEPLOYMENT_PERMISSIONS
 
@@ -33,7 +33,7 @@ class CurrentTierDeployment(BaseView):
                  "for an application, tier, and environment."),
     )
 
-    full_types = types.TIER_DEPLOYMENT_TYPES
+    full_types = obj_types.TIER_DEPLOYMENT_TYPES
 
     full_descriptions = descriptions.TIER_DEPLOYMENT_DESCRIPTIONS
 
