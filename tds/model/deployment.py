@@ -32,7 +32,7 @@ class AppDeployment(Deployment):
         deployment (and therefore also associated with its deployment).
         """
         if query is None:
-            tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
         return query.join(tagopsdb.model.HostDeployment.host).filter(
             tagopsdb.model.HostDeployment.deployment_id == self.deployment_id,
             tagopsdb.model.Host.app_id == self.app_id,

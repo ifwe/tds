@@ -149,7 +149,7 @@ class Application(Base):
         application on host with ID host_id.
         """
         if query is None:
-            tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
         return query.join(tagopsdb.model.HostDeployment.package).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.HostDeployment.host_id == host_id,
