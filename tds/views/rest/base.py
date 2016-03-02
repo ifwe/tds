@@ -303,11 +303,17 @@ class BaseView(ValidatedView):
         Create and return the HTTP response.
         """
         self._route_params()
-        self.request.validated[self.name] = self.model(
-            **self.request.validated_params
-        )
-        self.session.add(self.request.validated[self.name])
-        self.session.commit()
+        if getattr(self.model, 'create', None) is not None:
+            self.request.validated[self.name] = self.model.create(
+                True, self.session,
+                **self.request.validated_params
+            )
+        else:
+            self.request.validated[self.name] = self.model(
+                **self.request.validated_params
+            )
+            self.session.add(self.request.validated[self.name])
+            self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             "201 Created",

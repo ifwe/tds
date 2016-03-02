@@ -299,15 +299,14 @@ class TierDeploymentView(BaseView):
             app_id=self.request.validated_params['tier_id'],
             environment_id=self.request.validated_params['environment_id']
         ):
-            host_dep = tds.model.HostDeployment(
+            tds.model.HostDeployment.create(
+                session=self.session,
                 host_id=host.id,
                 deployment_id=self.request.validated_params['deployment_id'],
                 user=self.request.validated['user'],
                 status='pending',
                 package_id=self.request.validated_params['package_id'],
             )
-            self.session.add(host_dep)
-            self.session.commit()
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
 
@@ -354,7 +353,8 @@ class TierDeploymentView(BaseView):
                 app_id=new_tier_id,
                 environment_id=new_env_id,
             ):
-                host_dep = tds.model.HostDeployment(
+                host_dep = tds.model.HostDeployment.create(
+                    session=self.session,
                     host_id=host.id,
                     deployment_id=new_dep_id,
                     user=self.request.validated['user'],
