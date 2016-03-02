@@ -217,7 +217,7 @@ class HostDeploymentView(BaseView):
             return
         found_project_pkg = self.query(
             tagopsdb.model.ProjectPackage
-        ).filter_by(
+        ).find(
             pkg_def_id=found_pkg.pkg_def_id,
             app_id=found_host.app_id,
         )

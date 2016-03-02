@@ -179,7 +179,7 @@ class DeploymentView(BaseView):
         else:
             for dep in host_deployments:
                 conflicting_deps = [host_dep for host_dep in
-                    self.query(tds.model.HostDeployment).filter_by(
+                    self.query(tds.model.HostDeployment).find(
                         host_id=dep.host_id,
                     ) if host_dep.id != dep.id and host_dep.deployment.status
                     in ('queued', 'inprogress')
@@ -238,7 +238,7 @@ class DeploymentView(BaseView):
                     )
                 previous_tier_dep = self.query(
                     tds.model.AppDeployment
-                ).filter_by(
+                ).find(
                     environment_id=previous_env.id,
                     app_id=tier_dep.app_id,
                     package_id=tier_dep.package_id,

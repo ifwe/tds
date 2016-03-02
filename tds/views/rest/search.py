@@ -156,7 +156,7 @@ class SearchView(base.BaseView):
             self.results = self.model.all()
             return
 
-        self.results = self.model.query().filter_by(
+        self.results = self.model.query().find(
             **self.request.validated_params
         )
 

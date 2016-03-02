@@ -117,7 +117,7 @@ class ApplicationTierView(BaseView):
         if all(x in request.validated for x in ('project', 'application')):
             request.validated[self.plural] = self.query(
                 self.model
-            ).filter_by(
+            ).find(
                 project_id=request.validated['project'].id,
                 pkg_def_id=request.validated['application'].id,
             )
