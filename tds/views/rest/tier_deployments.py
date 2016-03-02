@@ -246,7 +246,7 @@ class TierDeploymentView(BaseView):
             return
         found_project_pkg = self.query(
             tagopsdb.model.ProjectPackage
-        ).filter_by(
+        ).find(
             pkg_def_id=found_pkg.pkg_def_id,
             app_id=tier_id,
         )
@@ -295,7 +295,7 @@ class TierDeploymentView(BaseView):
         """
         Handle a collection POST request after all validation has passed.
         """
-        for host in self.query(tds.model.HostTarget).filter_by(
+        for host in self.query(tds.model.HostTarget).find(
             app_id=self.request.validated_params['tier_id'],
             environment_id=self.request.validated_params['environment_id']
         ):
@@ -349,7 +349,7 @@ class TierDeploymentView(BaseView):
             for host_dep in curr_dep.deployment.host_deployments:
                 if host_dep.host.app_id == curr_dep.app_id:
                     self.session.delete(host_dep)
-            for host in self.query(tds.model.HostTarget).filter_by(
+            for host in self.query(tds.model.HostTarget).find(
                 app_id=new_tier_id,
                 environment_id=new_env_id,
             ):

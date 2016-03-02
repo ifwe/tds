@@ -33,6 +33,9 @@ class ValidatedView(JSONValidatedView):
         def get(query, *args, **kwargs):
             return query.filter_by(*args, **kwargs).one_or_none()
         query.get = types.MethodType(get, query, sqlalchemy.orm.query.Query)
+        def find(query, *args, **kwargs):
+            return query.filter_by(*args, **kwargs).all()
+        query.find = types.MethodType(find, query, sqlalchemy.orm.query.Query)
         return query
 
     def _validate_params(self, valid_params):

@@ -52,7 +52,7 @@ class CurrentHostDeployment(BaseView):
 
         found_assoc = self.query(
             tagopsdb.model.ProjectPackage
-        ).filter_by(
+        ).find(
             pkg_def_id=request.validated['application'].id,
             app_id=request.validated['host'].app_id,
         )
