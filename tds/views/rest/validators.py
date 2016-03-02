@@ -28,13 +28,22 @@ class ValidatedView(JSONValidatedView):
         """
         try:
             query = self.session.query(model)
+            has_delegate = False
         except:
             query = self.session.query(model.delegate)
+            has_delegate = True
         def get(query, *args, **kwargs):
-            return query.filter_by(*args, **kwargs).one_or_none()
+            if not has_delegate:
+                return query.filter_by(*args, **kwargs).one_or_none()
+            return model(
+                delegate=query.filter_by(*args, **kwargs).one_or_none()
+            )
         query.get = types.MethodType(get, query, sqlalchemy.orm.query.Query)
         def find(query, *args, **kwargs):
-            return query.filter_by(*args, **kwargs).all()
+            if not has_delegate:
+                return query.filter_by(*args, **kwargs).all()
+            return [model(delegate=obj) for obj in
+                    query.filter_by(*args, **kwargs).all()]
         query.find = types.MethodType(find, query, sqlalchemy.orm.query.Query)
         return query
 
