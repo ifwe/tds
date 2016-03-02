@@ -35,9 +35,10 @@ class ValidatedView(JSONValidatedView):
         def get(query, *args, **kwargs):
             if not has_delegate:
                 return query.filter_by(*args, **kwargs).one_or_none()
-            return model(
-                delegate=query.filter_by(*args, **kwargs).one_or_none()
-            )
+            delegate = query.filter_by(*args, **kwargs).one_or_none()
+            if delegate is not None:
+                return model(delegate=delegate)
+            return delegate
         query.get = types.MethodType(get, query, sqlalchemy.orm.query.Query)
         def find(query, *args, **kwargs):
             if not has_delegate:
