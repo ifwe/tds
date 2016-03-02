@@ -78,7 +78,7 @@ class AppTarget(DeployTarget):
         with ID environment_id.
         """
         if query is None:
-            tagopsdb.Session.query(tagopsdb.model.AppDeployment)
+            query = tagopsdb.Session.query(tagopsdb.model.AppDeployment)
         return query.join(tagopsdb.model.AppDeployment.deployment).filter(
             tagopsdb.model.AppDeployment.app_id == self.id,
             tagopsdb.model.AppDeployment.environment_id == environment_id,
@@ -92,7 +92,7 @@ class AppTarget(DeployTarget):
         in the environment with ID environment_id
         """
         if query is None:
-            tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
         return query.join(tagopsdb.model.HostDeployment.deployment).join(
             tagopsdb.model.HostDeployment.host
         ).filter(
