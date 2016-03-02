@@ -153,10 +153,10 @@ class SearchView(base.BaseView):
         self.request.validated_params.
         """
         if not self.request.validated_params:
-            self.results = self.model.all()
+            self.results = self.query(self.model).all()
             return
 
-        self.results = self.model.query().find(
+        self.results = self.query(self.model).filter_by(
             **self.request.validated_params
         )
 
