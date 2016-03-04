@@ -26,6 +26,30 @@ function update_page(element_names, data_dict) {
     }
 }
 
+$.postJSON = function(url, data, callback) {
+    return jQuery.ajax({
+        'type': 'POST',
+        'url': url,
+        'contentType': 'application/json',
+        'data': JSON.stringify(data),
+        'dataType': 'json',
+        'success': callback,
+        'xhrFields': {
+            withCredentials: true
+        },
+        'crossDomain': true
+    });
+};
+
+function serialize_form(form) {
+    var data = form.serializeArray();
+    var json = {};
+    for (i = 0; i < data.length; i++) {
+        json[data[i]['name']] = data[i]['value'];
+    }
+    return json;
+}
+
 function get_response(url) {
     url = ROOT_URL + url;
     var obj = {};
