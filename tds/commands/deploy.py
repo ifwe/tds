@@ -995,7 +995,7 @@ class DeployController(BaseController):
                     environment_id=env_id,
                 )
             previous_app_deployment = None
-            host_deployment_version = package.version
+            package_id = package.id
 
             if params.get('version') is None:
                 if current_app_deployment is not None:
@@ -1008,11 +1008,13 @@ class DeployController(BaseController):
                                 current_app_deployment.package_id
                             ],
                         )
-                host_deployment_version = None
+                package_id = None
 
             host_deployments = \
-                tagopsdb_deploy.find_current_host_deployments(
-                    *func_args, version=host_deployment_version
+                application.get_latest_completed_host_deployments_for_tier(
+                    tier_id=target.id,
+                    environment_id=env_id,
+                    package_id=package_id,
                 )
 
             package_deployment_info['by_apptype'].append(

@@ -155,3 +155,28 @@ class Application(Base):
             tagopsdb.model.HostDeployment.host_id == host_id,
             tagopsdb.model.HostDeployment.status == 'ok',
         ).order_by(desc(tagopsdb.model.HostDeployment.realized)).first()
+
+    def get_latest_completed_host_deployments_for_tier(
+        self, tier_id, environment_id, package_id=None, query=None
+    ):
+        """
+        Return latest completed host_deployments (status == 'ok') of this
+        application on hosts with given tier_id and environment_id.
+        package_id is an optional inclusive filter.
+        """
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        query = query.join(tagopsdb.model.HostDeployment.package).join(
+            tagopsdb.model.HostDeployment.host
+        ).filter(
+            tagopsdb.model.Package.pkg_def_id == self.id,
+            tagopsdb.model.Host.app_id == tier_id,
+            tagopsdb.model.Host.environment_id == environment_id,
+            tagopsdb.model.HostDeployment.status == 'ok',
+        )
+        if package_id is not None:
+            query = query.filter(tagopsdb.model.Package.id == package_id)
+        return query.order_by(
+            tagopsdb.model.Host.hostname,
+            tagopsdb.model.HostDeployment.realized.asc()
+        ).all()
