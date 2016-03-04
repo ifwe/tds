@@ -60,3 +60,6 @@ work*/
 
 # REST API settings file
 tds/views/rest/settings.yml
+
+# Compiled JS
+tds/web/js/app.js

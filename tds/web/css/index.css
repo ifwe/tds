@@ -1,0 +1,15 @@
+* {
+    font-family: 'Source Sans Pro', Tahoma, sans-serif;
+    font-weight: 400;
+}
+
+.tds-divider-line {
+    margin-top: 2px;
+    margin-bottom: 5px;
+}
+
+.tds-title {
+    font-weight: 300;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
