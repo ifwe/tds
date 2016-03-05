@@ -60,20 +60,25 @@ class Base(_Base):
         else:
             _Base.__setattr__(self, key, val)
 
-    def delete(self, commit=True, *args, **kwargs):
+    def delete(self, commit=True, session=None, *args, **kwargs):
         """Delete action with default auto-commit."""
         self.delegate.delete(*args, **kwargs)
         if commit:
-            tagopsdb.Session.commit()
+            if session is None:
+                tagopsdb.Session.commit()
+            else:
+                session.commit()
 
     @classmethod
-    def create(cls, commit=True, **kwargs):
+    def create(cls, commit=True, session=None, **kwargs):
         """Create action with default auto-commit."""
+        if session is None:
+            session = tagopsdb.Session
         delegate = cls.delegate(**kwargs)
-        tagopsdb.Session.add(delegate)
+        session.add(delegate)
         self = cls(delegate=delegate)
         if commit:
-            tagopsdb.Session.commit()
+            session.commit()
         return self
 
     @classmethod
@@ -96,7 +101,6 @@ class Base(_Base):
         Return a list of cls instances with each instance's delegate populated
         by an instance of cls's delegate type
         """
-
         delegates = cls.delegate.all(**kwargs)
         return [cls(delegate=d) for d in delegates]
 
@@ -106,6 +110,5 @@ class Base(_Base):
         Return a list of cls instances with each instance's delegate populated
         by an instance of cls's delegate type matching the provided kwargs
         """
-
         delegates = cls.delegate.find(**kwargs)
         return [cls(delegate=d) for d in delegates]

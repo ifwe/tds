@@ -7,7 +7,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb
 from .base import BaseView, init_view
-from . import types as obj_types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import TIER_HIPCHAT_PERMISSIONS
 
@@ -111,7 +111,7 @@ class TierHipchatView(BaseView):
         self.request.validated['tier'].hipchats.remove(self.request.validated[
             'HipChat'
         ])
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated['HipChat'])
         )
@@ -126,9 +126,9 @@ class TierHipchatView(BaseView):
             return
 
         if 'id' in request.params:
-            found = self.model.get(id=request.params['id'])
+            found = self.query(self.model).get(id=request.params['id'])
         elif 'name' in request.params:
-            found = self.model.get(room_name=request.params['name'])
+            found = self.query(self.model).get(room_name=request.params['name'])
         else:
             request.errors.add(
                 'query', '',
@@ -161,7 +161,7 @@ class TierHipchatView(BaseView):
         """
         Handle collection POST after all validation has passed.
         """
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             self.response_code,

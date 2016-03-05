@@ -6,7 +6,7 @@ from cornice.resource import resource, view
 
 import tagopsdb.model
 import tds.model
-from . import types, descriptions, base
+from . import obj_types, descriptions, base
 from .urls import ALL_URLS
 from .permissions import SEARCH_PERMISSIONS
 
@@ -24,7 +24,7 @@ class SearchView(base.BaseView):
 
     APPLICATION_DICT = {
         'model': tds.model.Application,
-        'params': types.APPLICATION_TYPES,
+        'params': obj_types.APPLICATION_TYPES,
         'param_routes': {
             'name': 'pkg_name',
             'job': 'path',
@@ -34,7 +34,7 @@ class SearchView(base.BaseView):
 
     APPLICATION_TIER_DICT = {
         'model': tagopsdb.model.ProjectPackage,
-        'params': types.APPLICATION_TIER_TYPES,
+        'params': obj_types.APPLICATION_TIER_TYPES,
         'param_routes': {
             'application_id': 'pkg_def_id',
             'tier_id': 'app_id',
@@ -44,14 +44,14 @@ class SearchView(base.BaseView):
 
     DEPLOYMENT_DICT = {
         'model': tds.model.Deployment,
-        'params': types.DEPLOYMENT_TYPES,
+        'params': obj_types.DEPLOYMENT_TYPES,
         'param_routes': {},
         'descriptions': descriptions.DEPLOYMENT_DESCRIPTIONS,
     }
 
     ENVIRONMENT_DICT = {
         'model': tagopsdb.model.Environment,
-        'params': types.ENVIRONMENT_TYPES,
+        'params': obj_types.ENVIRONMENT_TYPES,
         'param_routes': {
             'name': 'environment',
             'short_name': 'env',
@@ -61,7 +61,7 @@ class SearchView(base.BaseView):
 
     GANGLIA_DICT = {
         'model': tagopsdb.model.Ganglia,
-        'params': types.GANGLIA_TYPES,
+        'params': obj_types.GANGLIA_TYPES,
         'param_routes': {
             'name': 'cluster_name',
         },
@@ -70,7 +70,7 @@ class SearchView(base.BaseView):
 
     HIPCHAT_DICT = {
         'model': tagopsdb.model.Hipchat,
-        'params': types.HIPCHAT_TYPES,
+        'params': obj_types.HIPCHAT_TYPES,
         'param_routes': {
             'name': 'room_name',
         },
@@ -79,7 +79,7 @@ class SearchView(base.BaseView):
 
     HOST_DICT = {
         'model': tds.model.HostTarget,
-        'params': types.HOST_TYPES,
+        'params': obj_types.HOST_TYPES,
         'param_routes': {
             'name': 'hostname',
             'cage': 'cage_location',
@@ -92,14 +92,14 @@ class SearchView(base.BaseView):
 
     HOST_DEPLOYMENT_DICT = {
         'model': tds.model.HostDeployment,
-        'params': types.HOST_DEPLOYMENT_TYPES,
+        'params': obj_types.HOST_DEPLOYMENT_TYPES,
         'param_routes': {},
         'descriptions': descriptions.HOST_DEPLOYMENT_DESCRIPTIONS,
     }
 
     PACKAGE_DICT = {
         'model': tds.model.Package,
-        'params': types.PACKAGE_TYPES,
+        'params': obj_types.PACKAGE_TYPES,
         'param_routes': {
             'application_id': 'pkg_def_id',
         },
@@ -108,14 +108,14 @@ class SearchView(base.BaseView):
 
     PROJECT_DICT = {
         'model': tds.model.Project,
-        'params': types.PROJECT_TYPES,
+        'params': obj_types.PROJECT_TYPES,
         'param_routes': {},
         'descriptions': descriptions.PROJECT_DESCRIPTIONS,
     }
 
     TIER_DICT = {
         'model': tds.model.AppTarget,
-        'params': types.TIER_TYPES,
+        'params': obj_types.TIER_TYPES,
         'param_routes': {
             'name': 'app_type',
             'ganglia_name': 'ganglia_group_name',
@@ -125,7 +125,7 @@ class SearchView(base.BaseView):
 
     TIER_DEPLOYMENT_DICT = {
         'model': tds.model.AppDeployment,
-        'params': types.TIER_DEPLOYMENT_TYPES,
+        'params': obj_types.TIER_DEPLOYMENT_TYPES,
         'param_routes': {
             'tier_id': 'app_id',
         },
@@ -153,10 +153,10 @@ class SearchView(base.BaseView):
         self.request.validated_params.
         """
         if not self.request.validated_params:
-            self.results = self.model.all()
+            self.results = self.query(self.model).all()
             return
 
-        self.results = self.model.query().filter_by(
+        self.results = self.query(self.model).filter_by(
             **self.request.validated_params
         )
 

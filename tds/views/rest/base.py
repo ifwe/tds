@@ -15,7 +15,7 @@ import tds.model
 import tds.exceptions
 
 from .validators import ValidatedView
-from . import types, descriptions
+from . import obj_types, descriptions
 
 
 def init_view(_view_cls=None, name=None, plural=None, model=None,
@@ -56,7 +56,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
 
         if set_obj_params:
             json_types = getattr(
-                types, "{name}_TYPES".format(
+                obj_types, "{name}_TYPES".format(
                     name=obj_name.upper().replace('-', '_')
                 )
             )
@@ -136,13 +136,14 @@ class BaseView(ValidatedView):
             model = getattr(tds.model, obj_type.title(), None)
             if model is None:
                 raise tds.exceptions.NotFoundError('Model', [obj_type])
+        model_query = self.query(model)
 
         if not param_name:
             param_name = 'name_or_id'
 
         try:
             obj_id = int(self.request.matchdict[param_name])
-            obj = model.get(id=obj_id)
+            obj = model_query.get(id=obj_id)
             name = False
         except ValueError:
             if can_be_name:
@@ -155,7 +156,7 @@ class BaseView(ValidatedView):
                     obj_dict[self.param_routes['name']] = name
                 else:
                     obj_dict['name'] = name
-                obj = model.get(**obj_dict)
+                obj = model_query.get(**obj_dict)
             else:
                 obj_id = self.request.matchdict[param_name]
                 obj = None
@@ -200,6 +201,7 @@ class BaseView(ValidatedView):
 
         if obj_cls is None:
             raise tds.exceptions.NotFoundError('Model', [obj_type])
+        obj_cls_query = self.query(obj_cls)
 
         self._validate_params(('limit', 'start', 'select'))
         self._validate_json_params(
@@ -207,7 +209,7 @@ class BaseView(ValidatedView):
         )
 
         if plural not in self.request.validated:
-            self.request.validated[plural] = obj_cls.query().order_by(
+            self.request.validated[plural] = obj_cls_query.order_by(
                 obj_cls.id
             )
 
@@ -301,15 +303,17 @@ class BaseView(ValidatedView):
         Create and return the HTTP response.
         """
         self._route_params()
-        if getattr(self.model, 'create', None):
+        if getattr(self.model, 'create', None) is not None:
             self.request.validated[self.name] = self.model.create(
+                True, self.session,
                 **self.request.validated_params
             )
         else:
-            self.request.validated[self.name] = self.model.update_or_create(
-                self.request.validated_params
+            self.request.validated[self.name] = self.model(
+                **self.request.validated_params
             )
-            tagopsdb.Session.commit()
+            self.session.add(self.request.validated[self.name])
+            self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             "201 Created",
@@ -338,10 +342,10 @@ class BaseView(ValidatedView):
         """
         if 'delete_cascade' in self.request.validated:
             for obj in self.request.validated['delete_cascade']:
-                tagopsdb.Session.delete(obj)
-            tagopsdb.Session.commit()
-        tagopsdb.Session.delete(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+                self.session.delete(obj)
+            self.session.commit()
+        self.session.delete(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )
@@ -367,7 +371,7 @@ class BaseView(ValidatedView):
                 self.param_routes[attr] if attr in self.param_routes else attr,
                 self.request.validated_params[attr],
             )
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )
