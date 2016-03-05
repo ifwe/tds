@@ -8,7 +8,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb
 from .base import BaseView, init_view
-from . import types as obj_types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import APPLICATION_TIER_PERMISSIONS
 
@@ -79,7 +79,7 @@ class ApplicationTierView(BaseView):
             x in request.validated for x in ('project', 'application', 'tier')
         ):
             return
-        found = self.model.get(
+        found = self.query(self.model).get(
             project_id=request.validated['project'].id,
             pkg_def_id=request.validated['application'].id,
             app_id=request.validated['tier'].id,
@@ -115,7 +115,9 @@ class ApplicationTierView(BaseView):
                                    'pkg_name',
                                    param_name='application_name_or_id')
         if all(x in request.validated for x in ('project', 'application')):
-            request.validated[self.plural] = self.model.find(
+            request.validated[self.plural] = self.query(
+                self.model
+            ).find(
                 project_id=request.validated['project'].id,
                 pkg_def_id=request.validated['application'].id,
             )
@@ -132,11 +134,11 @@ class ApplicationTierView(BaseView):
         if not all(x in request.validated for x in ('project', 'application')):
             return
         if 'id' in request.validated_params:
-            found = tds.model.AppTarget.get(
+            found = self.query(tds.model.AppTarget).get(
                 id=request.validated_params['id']
             )
         elif 'name' in request.validated_params:
-            found = tds.model.AppTarget.get(
+            found = self.query(tds.model.AppTarget).get(
                 name=request.validated_params['name']
             )
         else:
@@ -160,7 +162,7 @@ class ApplicationTierView(BaseView):
             request.errors.status = 400
             return
 
-        already_exists = tagopsdb.model.ProjectPackage.get(
+        already_exists = self.query(tagopsdb.model.ProjectPackage).get(
             project_id=request.validated['project'].id,
             pkg_def_id=request.validated['application'].id,
             app_id=found.id,
@@ -181,8 +183,8 @@ class ApplicationTierView(BaseView):
         """
         Handle collection POST after all validation has passed.
         """
-        tagopsdb.Session.add(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+        self.session.add(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             self.response_code,
@@ -193,8 +195,8 @@ class ApplicationTierView(BaseView):
         """
         Handle DELETE after all validation has passed.
         """
-        tagopsdb.Session.delete(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+        self.session.delete(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

@@ -83,10 +83,10 @@ class TierDeploymentView(BaseView):
             if 'environment_id' not in self.request.validated_params or \
                     'deployment_id' not in self.request.validated_params:
                 return
-            own_environment = tagopsdb.model.Environment.get(
+            own_environment = self.query(tagopsdb.model.Environment).get(
                 id=self.request.validated_params['environment_id']
             )
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'environment_id'
@@ -97,21 +97,21 @@ class TierDeploymentView(BaseView):
             return
         elif 'environment_id' not in self.request.validated_params:
             own_environment = self.request.validated[self.name].environment_obj
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'deployment_id'
         elif 'deployment_id' not in self.request.validated_params:
-            own_environment = tagopsdb.model.Environment.get(
+            own_environment = self.query(tagopsdb.model.Environment).get(
                 id=self.request.validated_params['environment_id']
             )
             deployment = self.request.validated[self.name].deployment
             name = 'environment_id'
         else:
-            own_environment = tagopsdb.model.Environment.get(
+            own_environment = self.query(tagopsdb.model.Environment).get(
                 id=self.request.validated_params['environment_id']
             )
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'environment_id'
@@ -240,11 +240,13 @@ class TierDeploymentView(BaseView):
         application package.application for package with ID pkg_id for some
         project. If it isn't, add an error and set status to 403 (Forbidden).
         """
-        found_pkg = tds.model.Package.get(id=pkg_id)
-        found_tier = tds.model.AppTarget.get(id=tier_id)
+        found_pkg = self.query(tds.model.Package).get(id=pkg_id)
+        found_tier = self.query(tds.model.AppTarget).get(id=tier_id)
         if not (found_pkg and found_tier):
             return
-        found_project_pkg = tagopsdb.model.ProjectPackage.find(
+        found_project_pkg = self.query(
+            tagopsdb.model.ProjectPackage
+        ).find(
             pkg_def_id=found_pkg.pkg_def_id,
             app_id=tier_id,
         )
@@ -293,11 +295,12 @@ class TierDeploymentView(BaseView):
         """
         Handle a collection POST request after all validation has passed.
         """
-        for host in tds.model.HostTarget.find(
+        for host in self.query(tds.model.HostTarget).find(
             app_id=self.request.validated_params['tier_id'],
             environment_id=self.request.validated_params['environment_id']
         ):
             tds.model.HostDeployment.create(
+                session=self.session,
                 host_id=host.id,
                 deployment_id=self.request.validated_params['deployment_id'],
                 user=self.request.validated['user'],
@@ -345,25 +348,28 @@ class TierDeploymentView(BaseView):
         if env_id_different or tier_id_different or package_id_different:
             for host_dep in curr_dep.deployment.host_deployments:
                 if host_dep.host.app_id == curr_dep.app_id:
-                    tagopsdb.Session.delete(host_dep)
-            for host in tds.model.HostTarget.find(
+                    self.session.delete(host_dep)
+            for host in self.query(tds.model.HostTarget).find(
                 app_id=new_tier_id,
                 environment_id=new_env_id,
             ):
                 host_dep = tds.model.HostDeployment.create(
+                    session=self.session,
                     host_id=host.id,
                     deployment_id=new_dep_id,
                     user=self.request.validated['user'],
                     status='pending',
                     package_id=new_package_id
                 )
+                self.session.add(host_dep)
+                self.session.commit()
         for attr in self.request.validated_params:
             setattr(
                 curr_dep,
                 self.param_routes[attr] if attr in self.param_routes else attr,
                 self.request.validated_params[attr],
             )
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

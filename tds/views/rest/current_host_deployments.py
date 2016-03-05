@@ -7,7 +7,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb.model
 from .base import BaseView, init_view
-from . import types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import CURRENT_HOST_DEPLOYMENT_PERMISSIONS
 
@@ -27,7 +27,7 @@ class CurrentHostDeployment(BaseView):
                  "for an application and host."),
     )
 
-    full_types = types.HOST_DEPLOYMENT_TYPES
+    full_types = obj_types.HOST_DEPLOYMENT_TYPES
 
     full_descriptions = descriptions.HOST_DEPLOYMENT_DESCRIPTIONS
 
@@ -50,7 +50,9 @@ class CurrentHostDeployment(BaseView):
         if not all(x in request.validated for x in ('application', 'host')):
             return
 
-        found_assoc = tagopsdb.model.ProjectPackage.find(
+        found_assoc = self.query(
+            tagopsdb.model.ProjectPackage
+        ).find(
             pkg_def_id=request.validated['application'].id,
             app_id=request.validated['host'].app_id,
         )
@@ -72,12 +74,15 @@ class CurrentHostDeployment(BaseView):
         self._validate_json_params({'select': 'string'})
 
         request.validated[self.name] = request.validated['application'] \
-            .get_latest_completed_host_deployment(request.validated['host'].id)
+            .get_latest_completed_host_deployment(
+                request.validated['host'].id,
+                query=self.query(tagopsdb.model.HostDeployment),
+            )
         if not request.validated[self.name]:
             request.errors.add(
                 'path', 'host_name_or_id',
-                'Completed deployment of application {a_name} on host {h_name} '
-                'does not exist.'.format(
+                'Completed deployment of application {a_name} on host {h_name}'
+                ' does not exist.'.format(
                     a_name=request.validated['application'].name,
                     h_name=request.validated['host'].name,
                 )

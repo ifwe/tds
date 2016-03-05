@@ -9,6 +9,7 @@ import yaml
 
 from os.path import join as opj
 
+import tagopsdb
 import tds
 import tds.utils.config
 
@@ -97,6 +98,7 @@ class JSONValidatedView(object):
                             "Got exception {e}.".format(param=param, e=exc)
                         )
 
+        self.session = tagopsdb.model.Base.Session()
         super(JSONValidatedView, self).__init__(*args, **kwargs)
 
     def _validate_json_params(self, types=None):
