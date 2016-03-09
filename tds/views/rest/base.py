@@ -240,8 +240,8 @@ class BaseView(ValidatedView):
                 )
             )
 
-    def make_response(self, body, status="200 OK", renderer="json",
-                      headers=None):
+    @staticmethod
+    def make_response(body, status="200 OK", renderer="json", headers=None):
         """
         Make and return a Response with the given body and HTTP status code.
         """
