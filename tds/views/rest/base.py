@@ -240,8 +240,8 @@ class BaseView(ValidatedView):
                 )
             )
 
-    @staticmethod
-    def make_response(body, status="200 OK", renderer="json", headers=None):
+    def make_response(self, body, status="200 OK", renderer="json",
+                      headers=None):
         """
         Make and return a Response with the given body and HTTP status code.
         """
@@ -255,8 +255,10 @@ class BaseView(ValidatedView):
                 status=status,
                 headers=headers,
             )
+            tagopsdb.model.Base.Session.remove()
             return resp
         else:
+            tagopsdb.model.Base.Session.remove()
             raise NotImplementedError(
                 "REST renderer not implemented: {renderer}.".format(
                     renderer=renderer,
