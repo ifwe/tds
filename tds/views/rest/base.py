@@ -255,10 +255,10 @@ class BaseView(ValidatedView):
                 status=status,
                 headers=headers,
             )
-            tagopsdb.model.Base.Session.remove()
+            tagopsdb.Session.remove()
             return resp
         else:
-            tagopsdb.model.Base.Session.remove()
+            tagopsdb.Session.remove()
             raise NotImplementedError(
                 "REST renderer not implemented: {renderer}.".format(
                     renderer=renderer,
