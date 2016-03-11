@@ -35,9 +35,8 @@ class Installer(TDSProgramBase):
         """
         Determine deployment strategy and initialize some parameters.
         """
-        self.retry = params.pop('retry') if 'retry' in params else 4
-        self.deployment_id = params.pop('deployment_id') if 'deployment_id' \
-            in params else None
+        self.retry = params.pop('retry', 4)
+        self.deployment_id = params.pop('deployment_id', None)
 
         super(Installer, self).__init__(params, *args, **kwargs)
 

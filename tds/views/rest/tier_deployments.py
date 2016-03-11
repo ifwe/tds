@@ -193,6 +193,11 @@ class TierDeploymentView(BaseView):
                 and any(key != 'status' for key in
                         self.request.validated_params):
             for key in self.request.validated_params:
+                if self.request.validated_params[key] == \
+                        getattr(self.request.validated[self.name],
+                                self.param_routes.get(key, key)):
+                    self.request.validated_params.pop(key)
+                    continue
                 if key != 'status':
                     self.request.errors.add(
                         'query', key,
@@ -366,7 +371,7 @@ class TierDeploymentView(BaseView):
         for attr in self.request.validated_params:
             setattr(
                 curr_dep,
-                self.param_routes[attr] if attr in self.param_routes else attr,
+                self.param_routes.get(attr, attr),
                 self.request.validated_params[attr],
             )
         self.session.commit()

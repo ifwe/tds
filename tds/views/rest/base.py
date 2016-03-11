@@ -152,10 +152,8 @@ class BaseView(ValidatedView):
                 obj_dict = dict()
                 if name_attr:
                     obj_dict[name_attr] = name
-                elif 'name' in self.param_routes:
-                    obj_dict[self.param_routes['name']] = name
                 else:
-                    obj_dict['name'] = name
+                    obj_dict[self.param_routes.get('name', 'name')] = name
                 obj = model_query.get(**obj_dict)
             else:
                 obj_id = self.request.matchdict[param_name]
@@ -370,7 +368,7 @@ class BaseView(ValidatedView):
         for attr in self.request.validated_params:
             setattr(
                 self.request.validated[self.name],
-                self.param_routes[attr] if attr in self.param_routes else attr,
+                self.param_routes.get(attr, attr),
                 self.request.validated_params[attr],
             )
         self.session.commit()

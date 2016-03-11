@@ -24,7 +24,7 @@ class ValidatedView(JSONValidatedView):
         """
         Convenience method for creating a query over the model or its delegate
         if creating a query over the model fails.
-        Adds a get method for convenience, as well.
+        Do some duck punching by adding get and find methods to query.
         """
         try:
             query = self.session.query(model)
@@ -238,8 +238,7 @@ class ValidatedView(JSONValidatedView):
         for tup in self.unique_together:
             tup_dict = dict()
             for item in tup:
-                key = self.param_routes[item] if item in self.param_routes \
-                    else item
+                key = self.param_routes.get(item, item)
                 if request_type == "POST" and item not in \
                         self.request.validated_params:
                     continue

@@ -84,9 +84,7 @@ class JSONValidatedView(object):
                             table = self.model.delegate.__table__
                         else:
                             table = self.model.__table__
-                        col_name = param
-                        if param in self.param_routes:
-                            col_name = self.param_routes[param]
+                        col_name = self.param_routes.get(param, param)
                         setattr(
                             self,
                             '{param}_choices'.format(param=param),
