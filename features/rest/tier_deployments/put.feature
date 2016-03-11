@@ -142,6 +142,58 @@ Feature: PUT tier deployment(s) from the REST API
         And there is no host deployment with host_id=2,deployment_id=1
 
     @rest
+    Scenario: change status to validated/invalidated/complete from validated/invalidated/complete
+        Given there are deployments:
+            | id    | user  | status    |
+            | 2     | foo   | <status>  |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status            | user  | environment_id    | package_id    |
+            | 2     | 2             | 3         | <app_dep_status>  | foo   | 1                 | 1             |
+        When I query PUT "/tier_deployments?2?status=<change_status>"
+        Then the response code is 200
+        And there is a tier deployment with id=2,status="<change_status>"
+        And there is no tier deployment with id=2,status="<app_dep_status>"
+
+        Examples:
+            | status    | app_dep_status    | change_status |
+            | complete  | complete          | complete      |
+            | complete  | complete          | invalidated   |
+            | complete  | complete          | validated     |
+            | complete  | validated         | complete      |
+            | complete  | validated         | invalidated   |
+            | complete  | validated         | validated     |
+            | complete  | invalidated       | complete      |
+            | complete  | invalidated       | invalidated   |
+            | complete  | invalidated       | validated     |
+            | canceled  | complete          | complete      |
+            | canceled  | complete          | invalidated   |
+            | canceled  | complete          | validated     |
+            | canceled  | validated         | complete      |
+            | canceled  | validated         | invalidated   |
+            | canceled  | validated         | validated     |
+            | canceled  | invalidated       | complete      |
+            | canceled  | invalidated       | invalidated   |
+            | canceled  | invalidated       | validated     |
+            | failed    | complete          | complete      |
+            | failed    | complete          | invalidated   |
+            | failed    | complete          | validated     |
+            | failed    | validated         | complete      |
+            | failed    | validated         | invalidated   |
+            | failed    | validated         | validated     |
+            | failed    | invalidated       | complete      |
+            | failed    | invalidated       | invalidated   |
+            | failed    | invalidated       | validated     |
+            | stopped   | complete          | complete      |
+            | stopped   | complete          | invalidated   |
+            | stopped   | complete          | validated     |
+            | stopped   | validated         | complete      |
+            | stopped   | validated         | invalidated   |
+            | stopped   | validated         | validated     |
+            | stopped   | invalidated       | complete      |
+            | stopped   | invalidated       | invalidated   |
+            | stopped   | invalidated       | validated     |
+
+    @rest
     Scenario Outline: attempt to modify a tier deployment whose deployment is queued or inprogress
         Given there are deployments:
             | id    | user  | status    |
