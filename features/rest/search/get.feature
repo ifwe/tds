@@ -230,7 +230,30 @@ Feature: REST API search GET
             | 303 See Other |
 
     @rest
-    Scenario Outline: specify limit and/or start queries
+    Scenario Outline: specify limit and/or start queries without filter query
+        Given there is a deploy target with name="tier1"
+        And there is an environment with name="dev"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+            | host2 | dev   |
+            | host3 | dev   |
+            | host4 | dev   |
+            | host5 | dev   |
+        When I query GET "/search/hosts?limit=<limit>&start=<start>"
+        Then the response code is 200
+        And the response is a list of <num> items
+        And the response list contains id range <min> to <max>
+
+        Examples:
+            | limit | start | num   | min   | max   |
+            |       |       | 5     | 1     | 5     |
+            |       | 3     | 3     | 3     | 5     |
+            | 2     |       | 2     | 1     | 2     |
+            | 2     | 3     | 2     | 3     | 4     |
+
+    @rest
+    Scenario Outline: specify limit and/or start queries with filter query
         Given there is a deploy target with name="tier1"
         And there is an environment with name="dev"
         And there are hosts:
