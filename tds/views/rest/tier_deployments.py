@@ -192,11 +192,13 @@ class TierDeploymentView(BaseView):
         if self.request.validated[self.name].deployment.status != 'pending' \
                 and any(key != 'status' for key in
                         self.request.validated_params):
+            to_remove = list()
             for key in self.request.validated_params:
-                if self.request.validated_params[key] == \
-                        getattr(self.request.validated[self.name],
-                                self.param_routes.get(key, key)):
-                    self.request.validated_params.pop(key)
+                if self._get_param_value(key) == getattr(
+                    self.request.validated[self.name],
+                    self.param_routes.get(key, key)
+                ):
+                    to_remove.append(key)
                     continue
                 if key != 'status':
                     self.request.errors.add(
@@ -206,6 +208,8 @@ class TierDeploymentView(BaseView):
                     )
                     self.request.errors.status = 403
                     return
+            for key in to_remove:
+                self.request.validated_params.pop(key)
         if 'status' in self.request.validated_params:
             self._validate_status_change()
         self.validate_conflicting_env('PUT')

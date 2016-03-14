@@ -19,6 +19,13 @@ class JSONValidatedView(object):
     This class implements JSON validators for parameters given in requests.
     """
 
+    VALID_BOOLEAN_TRUE_VALUES = ('1', 'true', 'True')
+    VALID_BOOLEAN_FALSE_VALUES = ('0', 'false', 'False')
+    VALID_BOOLEAN_VALUES = tuple(
+        list(VALID_BOOLEAN_TRUE_VALUES) +
+        list(VALID_BOOLEAN_FALSE_VALUES)
+    )
+
     def __init__(self, request, *args, **kwargs):
         """
         Set params for this request.
@@ -128,6 +135,31 @@ class JSONValidatedView(object):
                 )
                 self.request.errors.status = 400
 
+    def _get_param_value(self, param_name, types=None):
+        """
+        Return the value of the param with name param_name from
+        self.request.validated_params, cast as its type declared in types, if
+        present in types. Otherwise, just return
+        self.request.validated_params[param_name].
+        param_name should be the name of the param and should be a key in
+        self.request.validated_params.
+        types should be a dict mapping param names to their types. If types is
+        None, self.types is used instead.
+        """
+        if types is None:
+            types = self.types
+        if param_name not in types:
+            return self.request.validated_params.get(param_name)
+        param_type = types[param_name]
+        raw_value = self.request.validated_params[param_name]
+        if param_type == 'number':
+            return float(raw_value)
+        elif param_type == 'integer':
+            return int(raw_value)
+        elif param_type == 'boolean':
+            return raw_value in self.VALID_BOOLEAN_TRUE_VALUES
+        return raw_value
+
     def _validate_number(self, param_name):
         """
         Validate that the given param_name argument value in the query is a
@@ -198,9 +230,9 @@ class JSONValidatedView(object):
         string and return False if it is; return an error message if it isn't.
         """
         given = self.request.validated_params[param_name]
-        if given in ('0', '1', 'true', 'false', 'True', 'False'):
-            self.request.validated_params[param_name] = given in ('1', 'true',
-                                                                  'True')
+        if given in self.VALID_BOOLEAN_VALUES:
+            self.request.validated_params[param_name] = given in \
+                self.VALID_BOOLEAN_TRUE_VALUES
             return False
         return (
             "Value {val} for argument {param} is not a Boolean. Valid Boolean"

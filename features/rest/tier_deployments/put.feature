@@ -142,56 +142,109 @@ Feature: PUT tier deployment(s) from the REST API
         And there is no host deployment with host_id=2,deployment_id=1
 
     @rest
-    Scenario: change status to validated/invalidated/complete from validated/invalidated/complete
+    Scenario Outline: no-change status PUT
         Given there are deployments:
             | id    | user  | status    |
             | 2     | foo   | <status>  |
         And there are tier deployments:
             | id    | deployment_id | app_id    | status            | user  | environment_id    | package_id    |
             | 2     | 2             | 3         | <app_dep_status>  | foo   | 1                 | 1             |
-        When I query PUT "/tier_deployments?2?status=<change_status>"
+        When I query PUT "/tier_deployments/2?status=<app_dep_status><extra_params>"
         Then the response code is 200
-        And there is a tier deployment with id=2,status="<change_status>"
-        And there is no tier deployment with id=2,status="<app_dep_status>"
+        And the response is an object with id=2,deployment_id=2,status="<app_dep_status>",package_id=1,tier_id=3,environment_id=1,user="foo"
+        And there is a tier deployment with id=2,deployment_id=2,status="<app_dep_status>",package_id=1,app_id=3,environment_id=1,user="foo"
 
         Examples:
-            | status    | app_dep_status    | change_status |
-            | complete  | complete          | complete      |
-            | complete  | complete          | invalidated   |
-            | complete  | complete          | validated     |
-            | complete  | validated         | complete      |
-            | complete  | validated         | invalidated   |
-            | complete  | validated         | validated     |
-            | complete  | invalidated       | complete      |
-            | complete  | invalidated       | invalidated   |
-            | complete  | invalidated       | validated     |
-            | canceled  | complete          | complete      |
-            | canceled  | complete          | invalidated   |
-            | canceled  | complete          | validated     |
-            | canceled  | validated         | complete      |
-            | canceled  | validated         | invalidated   |
-            | canceled  | validated         | validated     |
-            | canceled  | invalidated       | complete      |
-            | canceled  | invalidated       | invalidated   |
-            | canceled  | invalidated       | validated     |
-            | failed    | complete          | complete      |
-            | failed    | complete          | invalidated   |
-            | failed    | complete          | validated     |
-            | failed    | validated         | complete      |
-            | failed    | validated         | invalidated   |
-            | failed    | validated         | validated     |
-            | failed    | invalidated       | complete      |
-            | failed    | invalidated       | invalidated   |
-            | failed    | invalidated       | validated     |
-            | stopped   | complete          | complete      |
-            | stopped   | complete          | invalidated   |
-            | stopped   | complete          | validated     |
-            | stopped   | validated         | complete      |
-            | stopped   | validated         | invalidated   |
-            | stopped   | validated         | validated     |
-            | stopped   | invalidated       | complete      |
-            | stopped   | invalidated       | invalidated   |
-            | stopped   | invalidated       | validated     |
+            | status    | app_dep_status    | extra_params              |
+            | complete  | complete          |                           |
+            | complete  | validated         |                           |
+            | complete  | invalidated       |                           |
+            | canceled  | complete          |                           |
+            | canceled  | validated         |                           |
+            | canceled  | invalidated       |                           |
+            | failed    | complete          |                           |
+            | failed    | validated         |                           |
+            | failed    | invalidated       |                           |
+            | stopped   | complete          |                           |
+            | stopped   | validated         |                           |
+            | stopped   | invalidated       |                           |
+            | complete  | complete          | &package_id=1&tier_id=3   |
+            | complete  | validated         | &package_id=1&tier_id=3   |
+            | complete  | invalidated       | &package_id=1&tier_id=3   |
+            | canceled  | complete          | &package_id=1&tier_id=3   |
+            | canceled  | validated         | &package_id=1&tier_id=3   |
+            | canceled  | invalidated       | &package_id=1&tier_id=3   |
+            | failed    | complete          | &package_id=1&tier_id=3   |
+            | failed    | validated         | &package_id=1&tier_id=3   |
+            | failed    | invalidated       | &package_id=1&tier_id=3   |
+            | stopped   | complete          | &package_id=1&tier_id=3   |
+            | stopped   | validated         | &package_id=1&tier_id=3   |
+            | stopped   | invalidated       | &package_id=1&tier_id=3   |
+
+    @rest
+    Scenario Outline: change status to validated/invalidated/complete from validated/invalidated/complete
+        Given there are deployments:
+            | id    | user  | status    |
+            | 2     | foo   | <status>  |
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status            | user  | environment_id    | package_id    |
+            | 2     | 2             | 3         | <app_dep_status>  | foo   | 1                 | 1             |
+        When I query PUT "/tier_deployments/2?status=<change_status><extra_params>"
+        Then the response code is 200
+        And the response is an object with id=2,deployment_id=2,status="<change_status>",package_id=1,tier_id=3,environment_id=1,user="foo"
+        And there is a tier deployment with id=2,deployment_id=2,status="<change_status>",package_id=1,app_id=3,environment_id=1,user="foo"
+        And there is no tier deployment with id=2,deployment_id=2,status="<app_dep_status>"
+
+        Examples:
+            | status    | app_dep_status    | change_status | extra_params              |
+            | complete  | complete          | invalidated   |                           |
+            | complete  | complete          | validated     |                           |
+            | complete  | validated         | complete      |                           |
+            | complete  | validated         | invalidated   |                           |
+            | complete  | invalidated       | complete      |                           |
+            | complete  | invalidated       | validated     |                           |
+            | canceled  | complete          | invalidated   |                           |
+            | canceled  | complete          | validated     |                           |
+            | canceled  | validated         | complete      |                           |
+            | canceled  | validated         | invalidated   |                           |
+            | canceled  | invalidated       | complete      |                           |
+            | canceled  | invalidated       | validated     |                           |
+            | failed    | complete          | invalidated   |                           |
+            | failed    | complete          | validated     |                           |
+            | failed    | validated         | complete      |                           |
+            | failed    | validated         | invalidated   |                           |
+            | failed    | invalidated       | complete      |                           |
+            | failed    | invalidated       | validated     |                           |
+            | stopped   | complete          | invalidated   |                           |
+            | stopped   | complete          | validated     |                           |
+            | stopped   | validated         | complete      |                           |
+            | stopped   | validated         | invalidated   |                           |
+            | stopped   | invalidated       | complete      |                           |
+            | stopped   | invalidated       | validated     |                           |
+            | complete  | complete          | invalidated   | &package_id=1&tier_id=3   |
+            | complete  | complete          | validated     | &package_id=1&tier_id=3   |
+            | complete  | validated         | complete      | &package_id=1&tier_id=3   |
+            | complete  | validated         | invalidated   | &package_id=1&tier_id=3   |
+            | complete  | invalidated       | complete      | &package_id=1&tier_id=3   |
+            | complete  | invalidated       | validated     | &package_id=1&tier_id=3   |
+            | canceled  | complete          | invalidated   | &package_id=1&tier_id=3   |
+            | canceled  | complete          | validated     | &package_id=1&tier_id=3   |
+            | canceled  | validated         | complete      | &package_id=1&tier_id=3   |
+            | canceled  | validated         | invalidated   | &package_id=1&tier_id=3   |
+            | canceled  | invalidated       | complete      | &package_id=1&tier_id=3   |
+            | canceled  | invalidated       | validated     | &package_id=1&tier_id=3   |
+            | failed    | complete          | invalidated   | &package_id=1&tier_id=3   |
+            | failed    | complete          | validated     | &package_id=1&tier_id=3   |
+            | failed    | validated         | complete      | &package_id=1&tier_id=3   |
+            | failed    | validated         | invalidated   | &package_id=1&tier_id=3   |
+            | failed    | invalidated       | complete      | &package_id=1&tier_id=3   |
+            | failed    | invalidated       | validated     | &package_id=1&tier_id=3   |
+            | stopped   | complete          | invalidated   | &package_id=1&tier_id=3   |
+            | stopped   | complete          | validated     | &package_id=1&tier_id=3   |
+            | stopped   | validated         | complete      | &package_id=1&tier_id=3   |
+            | stopped   | validated         | invalidated   | &package_id=1&tier_id=3   |
+            | stopped   | invalidated       | complete      | &package_id=1&tier_id=3   |
+            | stopped   | invalidated       | validated     | &package_id=1&tier_id=3   |
 
     @rest
     Scenario Outline: attempt to modify a tier deployment whose deployment is queued or inprogress
@@ -236,6 +289,7 @@ Feature: PUT tier deployment(s) from the REST API
             | canceled  |
             | canceled  |
             | stopped   |
+            | failed    |
 
     @rest
     Scenario Outline: attempt to modify a tier deployment status from pending, inprogress, or incomplete
@@ -260,7 +314,7 @@ Feature: PUT tier deployment(s) from the REST API
             | incomplete    |
 
     @rest
-    Scenario Outline: attempt to modify a tier deployment status from pending, inprogress, or incomplete
+    Scenario Outline: attempt to modify a tier deployment status to pending, inprogress, or incomplete
         Given there are deployments:
             | id    | user  | status    |
             | 2     | foo   | complete  |
