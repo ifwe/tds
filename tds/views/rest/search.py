@@ -152,6 +152,8 @@ class SearchView(base.BaseView):
         Set self.results to the results of the query in
         self.request.validated_params.
         """
+        if self.request.errors:
+            return
         self.results = self.query(self.model)
         if self.request.validated_params:
             self.results = self.results.filter_by(
@@ -165,8 +167,6 @@ class SearchView(base.BaseView):
 
         if self.limit is not None:
             self.results = self.results.limit(self.limit)
-
-        self.results = self.results.all()
 
     def _validate_obj_type_exists(self):
         """
