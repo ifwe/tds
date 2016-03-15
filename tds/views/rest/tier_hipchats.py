@@ -142,7 +142,7 @@ class TierHipchatView(BaseView):
                 'query', 'id' if 'id' in request.params else 'name',
                 "Hipchat with {param} {val} does not exist.".format(
                     param='ID' if 'id' in request.params else 'name',
-                    val=request.params.get('id', request.params['name']),
+                    val=request.params.get('id', request.params.get('name')),
                 )
             )
             request.errors.status = 404
