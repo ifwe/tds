@@ -29,7 +29,7 @@ Feature: POST host deployment(s) from the REST API
         When I query POST "/host_deployments?deployment_id=1&host_id=1&package_id=1"
         Then the response code is 201
         And the response is an object with deployment_id=1,host_id=1,id=1,user="testuser",package_id=1
-        And there is a host deployment with deployment_id=1,host_id=1,id=1,user="testuser",package_id=1
+        And there is a host deployment with deployment_id=1,host_id=1,id=1,user="testuser",package_id=1,duration=0
 
     @rest
     Scenario: omit required field

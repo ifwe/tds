@@ -1750,3 +1750,21 @@ def when_the_status_of_deployment_changes_to(context, obj_type, props, status):
 
     instance.status = status
     tagopsdb.Session.commit()
+
+
+@then(u'the {obj_type} with {props} has duration greater than {duration}')
+def the_obj_has_duration_greater_than(context, obj_type, props, duration):
+    properties = parse_properties(props)
+    obj_mapping = {
+        'deployment': tagopsdb.model.Deployment,
+        'host deployment': tagopsdb.model.HostDeployment,
+        'tier deployment': tagopsdb.model.AppDeployment,
+    }
+    assert obj_type in obj_mapping
+
+    model = obj_mapping[obj_type]
+    tagopsdb.Session.close()
+    instance = model.get(**properties)
+    assert instance is not None
+
+    assert instance.duration > float(duration), (instance.duration, duration)

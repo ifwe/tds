@@ -125,7 +125,9 @@ Feature: deploy daemon
         And the deploy strategy is "<strategy>"
         When I run "deploy_daemon"
         Then there is a deployment with id=6,status="complete"
+        And the deployment with id=6 has duration greater than 0
         And there is a tier deployment with id=6,deployment_id=6,status="complete"
+        And the tier deployment with id=6 has duration greater than 0
 
         Examples:
             | strategy  | tier_st       |
@@ -147,8 +149,11 @@ Feature: deploy daemon
         And the deploy strategy is "<strategy>"
         When I run "deploy_daemon"
         Then there is a deployment with id=6,status="complete"
+        And the deployment with id=6 has duration greater than 0
         And there is a tier deployment with id=6,deployment_id=6,status="complete"
+        And the tier deployment with id=6 has duration greater than 0
         And there is a host deployment with id=6,deployment_id=6,status="ok"
+        And the host deployment with id=6 has duration greater than 0
         And package "myapp" version "121" was deployed to the deploy target with name="tier1"
 
         Examples:
@@ -181,11 +186,16 @@ Feature: deploy daemon
         And the deploy strategy is "<strategy>"
         When I run "deploy_daemon"
         Then there is a deployment with id=6,status="complete"
+        And the deployment with id=6 has duration greater than 0
         And there is a tier deployment with id=6,deployment_id=6,status="complete"
+        And the tier deployment with id=6 has duration greater than 0
         And there is a tier deployment with id=7,deployment_id=6,status="complete"
+        And the tier deployment with id=7 has duration greater than 0
         And there is a host deployment with id=6,deployment_id=6,status="ok"
+        And the host deployment with id=6 has duration greater than 0
         And there is a host deployment with id=7,deployment_id=6,status="ok"
-        And there is a host deployment with id=8,deployment_id=6,status="ok"
+        And the host deployment with id=7 has duration greater than 0
+        And there is a host deployment with id=8,deployment_id=6,status="ok",duration=0
         And package "myapp" version "121" was deployed to the deploy target with name="tier1"
         And package "myapp" version "121" was deployed to host "host2"
         And package "myapp" version "121" was not deployed to host "host3"
@@ -219,10 +229,15 @@ Feature: deploy daemon
         And the deploy strategy is "<strategy>"
         When I run "deploy_daemon"
         Then there is a deployment with id=6,status="complete"
+        And the deployment with id=6 has duration greater than 0
         And there is a tier deployment with id=6,deployment_id=6,status="complete"
+        And the tier deployment with id=6 has duration greater than 0
         And there is a tier deployment with id=7,deployment_id=6,status="complete"
+        And the tier deployment with id=7 has duration greater than 0
         And there is a host deployment with id=6,deployment_id=6,status="ok"
+        And the host deployment with id=6 has duration greater than 0
         And there is a host deployment with id=7,deployment_id=6,status="ok"
+        And the host deployment with id=7 has duration greater than 0
         And package "myapp" version "121" was deployed to the deploy target with name="tier1"
         And package "myapp" version "121" was deployed to host "host2"
         And package "myapp" version "121" was not deployed to host "host3"
@@ -261,11 +276,14 @@ Feature: deploy daemon
         And I wait 20 seconds
         And the command finishes
         Then there is a deployment with id=6,status="stopped"
+        And the deployment with id=6 has duration greater than 20
         And there is a tier deployment with id=6,deployment_id=6,status="incomplete"
-        And there is a tier deployment with id=7,deployment_id=6,status="<tier_st>"
+        And the tier deployment with id=6 has duration greater than 20
+        And there is a tier deployment with id=7,deployment_id=6,status="<tier_st>",duration=0
         And there is a host deployment with id=6,deployment_id=6,status="ok"
-        And there is a host deployment with id=7,deployment_id=6,status="<host_st>"
-        And there is a host deployment with id=8,deployment_id=6,status="ok"
+        And the host deployment with id=6 has duration greater than 0
+        And there is a host deployment with id=7,deployment_id=6,status="<host_st>",duration=0
+        And there is a host deployment with id=8,deployment_id=6,status="ok",duration=0
         And package "myapp" version "121" was deployed to host "host1"
         And package "myapp" version "121" was not deployed to host "host2"
         And package "myapp" version "121" was not deployed to host "host3"
@@ -279,7 +297,7 @@ Feature: deploy daemon
             | mco       | incomplete    | failed    |
             | mco       | incomplete    | pending   |
 
-    Scenario Outline: cancel tier deployment partway through
+    Scenario Outline: cancel host deployments partway through
         Given there is a deploy target with name="tier2"
         And there are hosts:
             | name  | env   | app_id    |
@@ -300,9 +318,11 @@ Feature: deploy daemon
         And I wait 20 seconds
         And the command finishes
         Then there is a deployment with id=6,status="stopped"
+        And the deployment with id=6 has duration greater than 20
         And there is a host deployment with id=6,deployment_id=6,status="ok"
-        And there is a host deployment with id=7,deployment_id=6,status="<host_st>"
-        And there is a host deployment with id=8,deployment_id=6,status="ok"
+        And the host deployment with id=6 has duration greater than 0
+        And there is a host deployment with id=7,deployment_id=6,status="<host_st>",duration=0
+        And there is a host deployment with id=8,deployment_id=6,status="ok",duration=0
         And package "myapp" version "121" was deployed to host "host1"
         And package "myapp" version "121" was not deployed to host "host2"
         And package "myapp" version "121" was not deployed to host "host3"
