@@ -11,14 +11,14 @@ Feature: POST deployment(s) from the REST API
         When I query POST "/deployments"
         Then the response code is 201
         And the response is an object with id=1,status="pending",user="testuser"
-        And there is a deployment with id=1,status="pending",user="testuser"
+        And there is a deployment with id=1,status="pending",user="testuser",duration=0
 
     @rest
     Scenario: pass delay option
         When I query POST "/deployments?delay=10"
         Then the response code is 201
         And the response is an object with id=1,status="pending",user="testuser",delay=10
-        And there is a deployment with id=1,status="pending",user="testuser",delay=10
+        And there is a deployment with id=1,status="pending",user="testuser",delay=10,duration=0
 
     @rest
     Scenario: attempt to set the status while posting

@@ -70,24 +70,24 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
     Scenario: promote version to hosts
         When I run "deploy promote myapp 123 --hosts sprojhost01 sprojhost02 --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
-        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3,duration=0
 
     Scenario: promote older version to hosts
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02 --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=1
-        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=1
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=1,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=1,duration=0
 
     Scenario: promote version to apptype
         When I run "deploy promote myapp 123 --apptype the-apptype --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2
-        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
-        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3,duration=0
         And there is no tier deployment with deployment_id=3,environment_id=1
         And there is no host deployment with deployment_id=3,host_id=1
         And there is no host deployment with deployment_id=3,host_id=2
@@ -95,8 +95,8 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
     Scenario: promote olders version to apptype
         When I run "deploy promote myapp 121 --apptype the-apptype --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=1,environment_id=2
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=1,environment_id=2,duration=0
 
     Scenario: promote version to all apptypes
         Given there is a deploy target with name="another-apptype"
@@ -108,12 +108,12 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | 4     | 2             | 1                 | validated | foo   | 3         | 3             |
         When I run "deploy promote myapp 123 --all-apptypes --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=3,package_id=3,environment_id=2
-        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3
-        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3
-        And there is a host deployment with status="pending",deployment_id=3,host_id=5,package_id=3
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=3,environment_id=2,duration=0
+        And there is a tier deployment with status="pending",deployment_id=3,app_id=3,package_id=3,environment_id=2,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=3,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=3,duration=0
+        And there is a host deployment with status="pending",deployment_id=3,host_id=5,package_id=3,duration=0
         And there is no tier deployment with deployment_id=3,environment_id=1
         And there is no host deployment with deployment_id=3,host_id=1
         And there is no host deployment with deployment_id=3,host_id=2
@@ -127,22 +127,22 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the package "121" has been validated in the "development" environment
         When I run "deploy promote myapp 121 --all-apptypes --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a tier deployment with status="pending",deployment_id=4,app_id=2,package_id=1,environment_id=2
-        And there is a tier deployment with status="pending",deployment_id=4,app_id=3,package_id=1,environment_id=2
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a tier deployment with status="pending",deployment_id=4,app_id=2,package_id=1,environment_id=2,duration=0
+        And there is a tier deployment with status="pending",deployment_id=4,app_id=3,package_id=1,environment_id=2,duration=0
 
     Scenario: promote version to all apptypes with delay option
         When I run "deploy promote myapp 123 --delay 10 --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with id=3,status="queued",delay=10
-        And there is a tier deployment with deployment_id=3,status="pending",app_id=2,package_id=3,environment_id=2
+        And there is a deployment with id=3,status="queued",delay=10,duration=0
+        And there is a tier deployment with deployment_id=3,status="pending",app_id=2,package_id=3,environment_id=2,duration=0
 
     Scenario Outline: promote version that isn't validated in previous env with force option
         Given there is a package with version="124"
         When I run "deploy promote <switch> myapp 124 --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=4,environment_id=2
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=4,environment_id=2,duration=0
 
         Examples:
             | switch    |
@@ -175,10 +175,10 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the package has been validated in the "development" environment
         When I run "deploy promote myapp 124 --hosts sprojhost01 sprojhost02 sother01 --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=4
-        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=4
-        And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=4
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=4,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=4,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=4,duration=0
 
     Scenario: deploying older version to multiple hosts of different apptypes
         Given there is a deploy target with name="other-apptype"
@@ -194,10 +194,10 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And the package "121" has been validated in the "development" environment
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02 sother01 --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=1
-        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=1
-        And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=1
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=1,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=1,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=1,duration=0
 
     Scenario: promote to an apptype with version already deployed to hosts
         Given there are deployments:
@@ -210,6 +210,6 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
             | 2     | 3             | 4         | ok        | foo   | 3             |
         When I run "deploy promote myapp 123 --apptype the-apptype --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with status="queued",delay=0
-        And there is a tier deployment with status="pending",deployment_id=4,app_id=2,package_id=3,environment_id=2
+        And there is a deployment with status="queued",delay=0,duration=0
+        And there is a tier deployment with status="pending",deployment_id=4,app_id=2,package_id=3,environment_id=2,duration=0
         And there is no host deployment with deployment_id=4

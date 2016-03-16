@@ -46,19 +46,19 @@ Feature: Real-life application usage
     Scenario: other app to deploy target with tagconfig and another app
         When I run "deploy promote solr-app 124 --apptypes solrsearch --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with id=2,status="queued"
-        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=2,environment_id=1
-        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=2
-        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=2
-        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=2
+        And there is a deployment with id=2,status="queued",duration=0
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=2,environment_id=1,duration=0
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=2,duration=0
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=2,duration=0
+        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=2,duration=0
 
     Scenario: tagconfig to deploy target with tagconfig and another app
         When I run "deploy promote tagconfig 457 --apptypes solrsearch --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with id=2,status="queued"
-        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=5,environment_id=1
-        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=5
-        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=5
-        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=5
+        And there is a deployment with id=2,status="queued",duration=0
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=5,environment_id=1,duration=0
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=5,duration=0
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=5,duration=0
+        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=5,duration=0
 
     # TODO: Definitely need more tests here!!!

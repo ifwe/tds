@@ -68,10 +68,10 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes] [-
     Scenario: fix to apptype
         When I run "deploy fix myapp --apptype the-apptype --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with id=4,status="queued",delay=0
-        And there is a tier deployment with deployment_id=4,app_id=2,status="pending",package_id=2,environment_id=2
+        And there is a deployment with id=4,status="queued",delay=0,duration=0
+        And there is a tier deployment with deployment_id=4,app_id=2,status="pending",package_id=2,environment_id=2,duration=0
         And there is no host deployment with deployment_id=4,host_id=3
-        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=2
+        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=2,duration=0
 
     Scenario: fix to all apptypes
         Given there is a deploy target with name="another-apptype"
@@ -91,16 +91,16 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes] [-
             | 3     | 4             | failed    | foo   | 5         | 2             |
         When I run "deploy fix myapp --all-apptypes --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with id=5,status="queued",delay=0
+        And there is a deployment with id=5,status="queued",delay=0,duration=0
         And there is no tier deployment with deployment_id=5,environment_id=1
         And there is no tier deployment with deployment_id=5,app_id=2,environment_id=1
         And there is no host deployment with deployment_id=5,host_id=1
         And there is no host deployment with deployment_id=5,host_id=2
         And there is no host deployment with deployment_id=5,host_id=3
-        And there is a tier deployment with deployment_id=5,app_id=2,status="pending",package_id=2,environment_id=2
-        And there is a tier deployment with deployment_id=5,app_id=3,status="pending",package_id=2,environment_id=2
-        And there is a host deployment with deployment_id=5,host_id=4,package_id=2,status="pending"
-        And there is a host deployment with deployment_id=5,host_id=5,package_id=2,status="pending"
+        And there is a tier deployment with deployment_id=5,app_id=2,status="pending",package_id=2,environment_id=2,duration=0
+        And there is a tier deployment with deployment_id=5,app_id=3,status="pending",package_id=2,environment_id=2,duration=0
+        And there is a host deployment with deployment_id=5,host_id=4,package_id=2,status="pending",duration=0
+        And there is a host deployment with deployment_id=5,host_id=5,package_id=2,status="pending",duration=0
 
     #TODO: Figure out what to do with these tests
     # Scenario: fix to host with a failure
@@ -124,9 +124,9 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes] [-
     Scenario: fix with delay option
         When I run "deploy fix myapp --delay 10 --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with id=4,status="queued",delay=10
-        And there is a tier deployment with deployment_id=4,status="pending",app_id=2,package_id=2,environment_id=2
-        And there is a host deployment with deployment_id=4,status="pending",host_id=4,package_id=2
+        And there is a deployment with id=4,status="queued",delay=10,duration=0
+        And there is a tier deployment with deployment_id=4,status="pending",app_id=2,package_id=2,environment_id=2,duration=0
+        And there is a host deployment with deployment_id=4,status="pending",host_id=4,package_id=2,duration=0
 
     Scenario: TDS-51
         Given I am in the "dev" environment
@@ -144,10 +144,10 @@ Feature: deploy fix application [--delay] [--hosts|--apptypes|--all-apptypes] [-
             | 4     | 4             | ok        | foo   | 2         | 3             |
         When I run "deploy fix myapp --apptypes the-apptype --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
-        And there is a deployment with id=5,status="queued",delay=0
-        And there is a tier deployment with deployment_id=5,status="pending",app_id=2,package_id=3,environment_id=1
+        And there is a deployment with id=5,status="queued",delay=0,duration=0
+        And there is a tier deployment with deployment_id=5,status="pending",app_id=2,package_id=3,environment_id=1,duration=0
         And there is no tier deployment with deployment_id=5,environment_id=2
-        And there is a host deployment with deployment_id=5,status="pending",host_id=1,package_id=3
+        And there is a host deployment with deployment_id=5,status="pending",host_id=1,package_id=3,duration=0
         And there is no host deployment with deployment_id=5,host_id=2
         And there is no host deployment with deployment_id=5,host_id=3
         And there is no host deployment with deployment_id=5,host_id=4

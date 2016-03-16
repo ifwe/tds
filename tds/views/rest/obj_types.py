@@ -25,6 +25,7 @@ DEPLOYMENT_TYPES = {
     'user': 'string',
     'status': 'choice',
     'delay': 'integer',
+    'duration': 'number',
 }
 
 ENVIRONMENT_TYPES = {
@@ -67,6 +68,7 @@ HOST_DEPLOYMENT_TYPES = {
     'package_id': 'integer',
     'status': 'choice',
     'user': 'string',
+    'duration': 'number',
 }
 
 PACKAGE_TYPES = {
@@ -103,4 +105,5 @@ TIER_DEPLOYMENT_TYPES = {
     'environment_id': 'integer',
     'user': 'string',
     'skewed': 'boolean',
+    'duration': 'number',
 }
