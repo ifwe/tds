@@ -26,6 +26,7 @@ DEPLOYMENT_DESCRIPTIONS = {
     'status': 'Current status of the deployment',
     'delay': 'Delay in integer seconds between restarts',
     'duration': 'Float seconds the installer daemon worked on this deployment',
+    'declared': 'When this deployment was created',
 }
 
 ENVIRONMENT_DESCRIPTIONS = {
@@ -70,6 +71,7 @@ HOST_DEPLOYMENT_DESCRIPTIONS = {
     'user': 'Username of creator',
     'duration': 'Float seconds the installer daemon worked on this host '
         'deployment',
+    'realized': 'When this host deployment was created',
 }
 
 PACKAGE_DESCRIPTIONS = {
@@ -109,4 +111,5 @@ TIER_DEPLOYMENT_DESCRIPTIONS = {
     'skewed': "Whether the application has different host deployment versions",
     'duration': 'Float seconds the installer daemon worked on this tier '
         'deployment',
+    'realized': 'When this tier deployment was created',
 }

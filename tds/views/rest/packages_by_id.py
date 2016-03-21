@@ -37,6 +37,7 @@ class PackageByIDView(BaseView):
     param_routes = {
         'name': 'pkg_name',
         'application_id': 'pkg_def_id',
+        'user': 'creator',
     }
 
     full_types = obj_types.PACKAGE_TYPES
