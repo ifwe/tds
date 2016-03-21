@@ -26,6 +26,7 @@ DEPLOYMENT_TYPES = {
     'status': 'choice',
     'delay': 'integer',
     'duration': 'number',
+    'declared': 'timestamp',
 }
 
 ENVIRONMENT_TYPES = {
@@ -69,6 +70,7 @@ HOST_DEPLOYMENT_TYPES = {
     'status': 'choice',
     'user': 'string',
     'duration': 'number',
+    'realized': 'timestamp',
 }
 
 PACKAGE_TYPES = {
@@ -79,6 +81,8 @@ PACKAGE_TYPES = {
     'builder': 'choice',
     'job': 'string',
     'application_id': 'integer',
+    'created': 'timestamp',
+    'creator': 'string',
 }
 
 PROJECT_TYPES = {
@@ -106,4 +110,5 @@ TIER_DEPLOYMENT_TYPES = {
     'user': 'string',
     'skewed': 'boolean',
     'duration': 'number',
+    'realized': 'timestamp',
 }

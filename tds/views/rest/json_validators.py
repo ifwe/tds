@@ -250,17 +250,12 @@ class JSONValidatedView(object):
         """
         given = self.request.validated_params[param_name]
         try:
-            date_format = "%Y-%m-%dT%H:%M:%S"
-            date = datetime.datetime.strptime(given[:19], date_format)
-            rem = float(given[19:26]) + int(given[26:29]) * 3600 \
-                + int(given[29:31]) * 60
-            date += datetime.timedelta(seconds=rem)
-        except:     #TODO: Figure out which exceptions will be thrown here.
+            date = datetime.datetime.fromtimestamp(given)
+            self.request.validated[param_name] = date
+            return False
+        except ValueError:
             return "Could not parse {val} for {param} as a valid timestamp."\
                 .format(val=given, param=param_name)
-        else:
-            self.request.validated_params[param_name] = date
-            return False
 
     def _validate_choice(self, param_name):
         """
