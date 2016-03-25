@@ -313,6 +313,28 @@ class SearchView(base.BaseView):
             self.results
         ])
 
+    @view(validators=('validate_search_get', 'validate_cookie'))
+    def head(self):
+        """
+        Same as get above except returns empty body.
+        """
+        if 'Expect' in self.request.headers:
+            if self.request.headers['Expect'] in ("302 Found",
+                                                  "303 See Other"):
+                if len(self.results.all()) == 1:
+                    return self.make_response(renderer="empty")
+                else:
+                    return self.make_response(
+                        renderer="empty",
+                        status="417 Expectation Failed",
+                    )
+            elif self.request.headers['Expect'] != "200 OK":
+                return self.make_response(
+                    renderer="empty",
+                    status="417 Expectation Failed",
+                )
+        return self.make_response(renderer="empty")
+
     @view(validators=('validate_search_options',))
     def options(self):
         """
