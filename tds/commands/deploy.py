@@ -993,6 +993,7 @@ class DeployController(BaseController):
                 application.get_latest_tier_deployment(
                     tier_id=target.id,
                     environment_id=env_id,
+                    exclude_statuses=['pending', 'inprogress', 'invalidated'],
                 )
             previous_app_deployment = None
             package_id = package.id
