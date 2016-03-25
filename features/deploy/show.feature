@@ -226,3 +226,27 @@ Feature: deploy show application version [--apptypes] [--all-apptypes]
         When I run "deploy show myapp --apptypes bar"
         Then the output has "Rollback deployment version:"
         And the output describes an app deployment with version="201"
+
+    Scenario: with the most recent deployment invalidated
+        Given the package is deployed on the deploy target
+        And the package has been validated
+        And there is a package with version="124"
+        And the package is deployed on the deploy target
+        And the package has been validated
+        And there is a deploy target with name="bar"
+        And the deploy target is a part of the project-application pair
+        And there are hosts:
+            | name          | env   | app_id    |
+            | otherhost01   | dev   | 3         |
+            | otherhost02   | dev   | 3         |
+        And there is a package with version="200"
+        And the package is deployed on the deploy target
+        And the package is validated
+        And there is a package with version="201"
+        And the package is deployed on the deploy target
+        And the package is invalidated
+        When I run "deploy show myapp --all-apptypes"
+        Then the output describes an app deployment with version="124"
+        And the output has "Rollback deployment version:"
+        And the output describes an app deployment with version="123"
+        And the output describes an app deployment with version="200"
