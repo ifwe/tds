@@ -192,6 +192,13 @@ class RootView(BaseView):
         """
         return self.make_response([self.to_json_obj(x) for x in self.results])
 
+    @view(validators=('validate_root_get',))
+    def head(self):
+        """
+        Same as get above except returns empty body.
+        """
+        return self.make_response(renderer="empty")
+
     @view(validators=('validate_root_options',))
     def options(self):
         """
