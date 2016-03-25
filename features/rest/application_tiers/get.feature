@@ -1,6 +1,6 @@
 Feature: GET application-tier association(s) from the REST API
     As a user
-    I want to know the which tiers are associated with which applications for which projects
+    I want to know which tiers are associated with which applications for which projects
     So that I can act accordingly
 
     Background:
