@@ -25,6 +25,7 @@ class ApplicationTierView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get project-application-tier association."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         DELETE=dict(
             description="Delete project-application-tier association.",
             returns="Deleted project-application-tier association.",
@@ -35,6 +36,7 @@ class ApplicationTierView(BaseView):
         GET=dict(
             description="Get all project-application-tier associations."
         ),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(
             description="Create new association for project-application "
                 "of tier with given ID or name (ID given precedence).",

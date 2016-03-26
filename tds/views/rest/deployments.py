@@ -25,6 +25,7 @@ class DeploymentView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get deployment matching ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update deployment matching ID."),
         DELETE=dict(description="Delete deployment matching ID."),
     )
@@ -32,6 +33,7 @@ class DeploymentView(BaseView):
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of deployments, optionally by limit "
                  "and/or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new deployment."),
     )
 

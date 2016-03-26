@@ -35,6 +35,7 @@ class HostDeploymentView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get host deployment matching ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update host deployment matching ID."),
         DELETE=dict(description="Delete host deployment matching ID."),
     )
@@ -42,6 +43,7 @@ class HostDeploymentView(BaseView):
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of host deployments, optionally by "
                  "limit and/or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new host deployment."),
     )
 

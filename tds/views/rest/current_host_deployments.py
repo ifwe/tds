@@ -25,6 +25,7 @@ class CurrentHostDeployment(BaseView):
     individual_allowed_methods = dict(
         GET=dict(description="Get the most recent completed host deployment "
                  "for an application and host."),
+        HEAD=dict(description="Do a GET query without a body returned."),
     )
 
     full_types = obj_types.HOST_DEPLOYMENT_TYPES

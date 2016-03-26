@@ -36,11 +36,13 @@ class HipchatView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get HipChat matching name or ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update HipChat matching name or ID."),
     )
 
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of HipChats, optionally by limit and/"
                  "or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new HipChat."),
     )

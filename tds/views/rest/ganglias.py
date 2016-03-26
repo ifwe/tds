@@ -36,11 +36,13 @@ class GangliaView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get Ganglia matching name or ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update Ganglia matching name or ID."),
     )
 
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of Ganglias, optionally by limit and/"
                  "or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new Ganglia."),
     )

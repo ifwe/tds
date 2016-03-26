@@ -42,6 +42,7 @@ class TierHipchatView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get a HipChat associated with the tier."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         DELETE=dict(
             description="Disassociate a HipChat from the tier.",
             returns="Disassociated HipChat",
@@ -53,6 +54,7 @@ class TierHipchatView(BaseView):
             description="Get a list of HipChats associated with the tier, "
             "optionally by limit and/or start."
         ),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(
             description="Associate a HipChat with the tier by name or "
                 "ID (ID given precedence).",

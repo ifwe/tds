@@ -176,9 +176,8 @@ class RootView(BaseView):
         Construct the OPTIONS response dict and set it to self.results.
         """
         self.result = dict(
-            GET=dict(
-                description="Get all supported URLS.",
-            ),
+            GET=dict(description="Get all supported URLS."),
+            HEAD=dict(description="Do a GET query without a body returned."),
             OPTIONS=dict(
                 description="Get HTTP method options and parameters for this "
                     "URL endpoint.",

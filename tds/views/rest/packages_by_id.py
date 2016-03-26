@@ -62,12 +62,14 @@ class PackageByIDView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get package matching ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update package matching ID."),
     )
 
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of packages, optionally by limit and/"
                  "or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new package."),
     )
 
@@ -77,6 +79,10 @@ class PackageByIDView(BaseView):
         """
         Validate that the package being retrieved by ID actually exists.
         """
+        if self.request.method == 'GET':
+            self._validate_params(['select'])
+            self._validate_json_params({'select': 'string'})
+            self._validate_select_attributes(self.request)
         self.get_obj_by_name_or_id(obj_type='Package', model=self.model,
                                    param_name='id', can_be_name=False,
                                    dict_name=self.name)

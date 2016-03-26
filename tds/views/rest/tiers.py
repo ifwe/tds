@@ -38,12 +38,14 @@ class TierView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get tier matching name or ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update tier matching name or ID."),
     )
 
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of tiers, optionally by limit and/"
                  "or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new tier."),
     )
 

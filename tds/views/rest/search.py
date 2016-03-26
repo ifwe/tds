@@ -264,6 +264,7 @@ class SearchView(base.BaseView):
                     ),
                 parameters=dict(),
             ),
+            HEAD=dict(description="Do a GET query without a body returned."),
             OPTIONS=dict(
                 description="Get HTTP method options and parameters for this "
                     "URL endpoint.",
