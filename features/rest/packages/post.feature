@@ -18,7 +18,7 @@ Feature: Add (POST) package on REST API
         And the job has a build with number="2"
         When I query POST "/applications/<select>/packages?version=<ver>&revision=<rev>"
         Then the response code is 201
-        And the response is an object with version="<ver>",revision="<rev>",creator="testuser",job="myjob"
+        And the response is an object with version="<ver>",revision="<rev>",user="testuser",job="myjob"
         And there is a package with version="<ver>",revision="<rev>",creator="testuser",job="myjob"
 
         Examples:
@@ -43,7 +43,7 @@ Feature: Add (POST) package on REST API
         And the job has a build with number="2"
         When I query POST "/applications/4/packages?version=2&revision=2&job=somejob"
         Then the response code is 201
-        And the response is an object with version="2",revision="2",creator="testuser",job="somejob"
+        And the response is an object with version="2",revision="2",user="testuser",job="somejob"
         And there is a package with version="2",revision="2",creator="testuser",job="somejob"
 
     @rest @jenkins_server

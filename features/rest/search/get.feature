@@ -163,8 +163,8 @@ Feature: REST API search GET
         When I query GET "/search/hosts?status=operational"
         Then the response code is 422
         And the response contains errors:
-            | location  | name      | description                                                                                                                                                                           |
-            | query     | status    | Unsupported query: status. Valid parameters: ['cab', 'cage', 'console_port', 'distribution', 'environment_id', 'id', 'limit', 'name', 'rack', 'select', 'start', 'state', 'tier_id']. |
+            | location  | name      | description                                                                                                                                                                                               |
+            | query     | status    | Unsupported query: status. Valid parameters: ['cab', 'cage', 'console_port', 'dc_id', 'distribution', 'environment_id', 'id', 'limit', 'name', 'rack', 'select', 'spec_id', 'start', 'state', 'tier_id']. |
 
     @rest
     Scenario: pass a param that is routed to the ORM name

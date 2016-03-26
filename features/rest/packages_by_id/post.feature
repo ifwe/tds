@@ -18,7 +18,7 @@ Feature: POST package(s) from the REST API by ID
         And the job has a build with number="2"
         When I query POST "/packages?name=app3&version=2&revision=2"
         Then the response code is 201
-        And the response is an object with version="2",revision="2",creator="testuser"
+        And the response is an object with version="2",revision="2",user="testuser"
         And there is a package with version="2",revision="2",creator="testuser"
 
     @rest @jenkins_server
