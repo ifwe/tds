@@ -86,6 +86,9 @@ PACKAGE_DESCRIPTIONS = {
     'job': 'Name of Jenkins job',
     'application_id': "Unique integer identifier for the package's "
         "application",
+    'created': 'When this package was created',
+    'user': 'User who added this package',
+    'name': 'Name of the application of this package',
     'project_type': 'The type of project to which this package belongs',
 }
 

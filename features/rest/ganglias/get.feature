@@ -32,10 +32,33 @@ Feature: GET Ganglia(s) from the REST API
             | ganglia2  |
 
     @rest
+    Scenario: get all Ganglias with select query
+        When I query GET "/ganglias?select=name"
+        Then the response code is 200
+        And the response is a list of 3 items
+        And the response list contains objects:
+            | name      |
+            | ganglia1  |
+            | ganglia2  |
+        And the response list objects do not contain attributes id,port
+
+    @rest
     Scenario Outline: get a single Ganglia
         When I query GET "/ganglias/<select>"
         Then the response code is 200
         And the response is an object with name="ganglia1"
+
+        Examples:
+            | select    |
+            | ganglia1  |
+            | 2         |
+
+    @rest
+    Scenario Outline: get a single Ganglia with select query
+        When I query GET "/ganglias/<select>?select=name"
+        Then the response code is 200
+        And the response is an object with name="ganglia1"
+        And the response object does not contain attributes id,port
 
         Examples:
             | select    |

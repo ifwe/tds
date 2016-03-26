@@ -120,8 +120,8 @@ Feature: REST API search GET
         When I query GET "/search/projects?limit=<limit>&start=<start>"
         Then the response code is 400
         And the response contains errors:
-            | location  | name      | description                                                               |
-            | query     | <param>   | Validation failed: Value 2.3 for argument <param> is not an integer.    |
+            | location  | name      | description                                                           |
+            | query     | <param>   | Validation failed: Value 2.3 for argument <param> is not an integer.  |
 
         Examples:
             | limit | start | param |

@@ -74,7 +74,7 @@ Feature: GET package(s) from the REST API
             | 2         | 2         |
             | 2         | 3         |
             | 3         | 1         |
-        And the response list objects do not contain attributes id,application_id,status,created,builder,user
+        And the response list objects do not contain attributes id,application_id,status,created,builder,user,name
 
         Examples:
             | select    |

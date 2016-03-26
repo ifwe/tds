@@ -128,12 +128,10 @@ Feature: GET application-tier association(s) from the REST API
         When I query GET "/projects/proj1/applications/app1/tiers?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name      | description                                                               |
-            | query     | <name>    | Unsupported query: <name>. There are no valid parameters for this method. |
+            | location  | name      | description                                                       |
+            | query     | <name>    | Unsupported query: <name>. Valid parameters: ['limit', 'select']. |
 
         Examples:
             | query             | name  |
-            | limit=10          | limit |
-            | limit=10&start=1  | limit |
             | limit=10&start=1  | start |
             | start=1           | start |

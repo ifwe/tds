@@ -41,34 +41,54 @@ Feature: GET host(s) from the REST API
             | host2 |
 
     @rest
-    Scenario Outline: get a single host by name
+    Scenario: get all hosts with select query
+        Given there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+            | host2 | dev   |
+        When I query GET "/hosts?select=name"
+        Then the response code is 200
+        And the response is a list of 2 items
+        And the response list contains objects:
+            | name  |
+            | host1 |
+            | host2 |
+        And the response list objects do not contain attributes id,cage,environment_id,dc_id,rack,state,console_port,cab,distribution,tier_id,spec_id
+
+    @rest
+    Scenario Outline: get a single host
         Given there are hosts:
             | name  | env   |
             | host1 | dev   |
             | host2 | dev   |
         When I query GET "/hosts/<host>"
         Then the response code is 200
-        And the response is an object with name="<host>"
+        And the response is an object with name="<name>"
 
         Examples:
-            | host  |
-            | host1 |
-            | host2 |
+            | host  | name  |
+            | host1 | host1 |
+            | host2 | host2 |
+            | 1     | host1 |
+            | 2     | host2 |
 
     @rest
-    Scenario Outline: get a single host by ID
+    Scenario Outline: get a single host with select query
         Given there are hosts:
             | name  | env   |
             | host1 | dev   |
             | host2 | dev   |
-        When I query GET "/hosts/<id>"
+        When I query GET "/hosts/<host>?select=name"
         Then the response code is 200
-        And the response is an object with id=<id>
+        And the response is an object with name="<name>"
+        And the response list objects do not contain attributes id,cage,environment_id,dc_id,rack,state,console_port,cab,distribution,tier_id,spec_id
 
         Examples:
-            | id    |
-            | 1     |
-            | 2     |
+            | host  | name  |
+            | host1 | host1 |
+            | host2 | host2 |
+            | 1     | host1 |
+            | 2     | host2 |
 
     @rest
     Scenario Outline: specify limit and/or last queries

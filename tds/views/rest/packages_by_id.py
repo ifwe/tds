@@ -79,10 +79,6 @@ class PackageByIDView(BaseView):
         """
         Validate that the package being retrieved by ID actually exists.
         """
-        if self.request.method == 'GET':
-            self._validate_params(['select'])
-            self._validate_json_params({'select': 'string'})
-            self._validate_select_attributes(self.request)
         self.get_obj_by_name_or_id(obj_type='Package', model=self.model,
                                    param_name='id', can_be_name=False,
                                    dict_name=self.name)

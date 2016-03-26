@@ -27,6 +27,17 @@ Feature: Add (POST) package on REST API
             | 4         | 2     | 2     |
 
     @rest @jenkins_server
+    Scenario: attempt to pass name
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
+        When I query POST "/applications/app3/packages?version=2&revision=2&name=noexist"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name  | description                                                                                       |
+            | query     | name  | Unsupported query: name. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].   |
+        And there is no package with version="2",revision="2",creator="testuser",job="myjob",pkg_name="noexist"
+
+    @rest @jenkins_server
     Scenario: specify job
         Given there is a jenkins job with name="somejob"
         And the job has a build with number="2"
