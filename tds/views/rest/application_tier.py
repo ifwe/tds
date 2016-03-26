@@ -71,9 +71,6 @@ class ApplicationTierView(BaseView):
         referenced exists. If one is found, assing it to
         request.validated_params[self.name].
         """
-        self._validate_params(['select'])
-        self._validate_json_params({'select': 'string'})
-        self._validate_select_attributes(request)
         self.get_obj_by_name_or_id('project', tds.model.Project)
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name',

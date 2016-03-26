@@ -38,12 +38,39 @@ Feature: GET app tier(s) from the REST API
             | tier2 |
 
     @rest
+    Scenario: get all tiers with select query
+        Given there is a deploy target with name="tier1"
+        And there is a deploy target with name="tier2"
+        When I query GET "/tiers?select=name"
+        Then the response code is 200
+        And the response is a list of 2 items
+        And the response list contains objects:
+            | name  |
+            | tier1 |
+            | tier2 |
+        And the response list objects do not contain attributes id,status,puppet_class,description,host_base,distribution,ganglia_id
+
+    @rest
     Scenario Outline: get a single tier by name
         Given there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
         When I query GET "/tiers/<tier>"
         Then the response code is 200
         And the response is an object with name="<tier>"
+
+        Examples:
+            | tier  |
+            | tier1 |
+            | tier2 |
+
+    @rest
+    Scenario Outline: get a single tier by name with select query
+        Given there is a deploy target with name="tier1"
+        And there is a deploy target with name="tier2"
+        When I query GET "/tiers/<tier>?select=name"
+        Then the response code is 200
+        And the response is an object with name="<tier>"
+        And the response object does not contain attributes id,status,puppet_class,description,host_base,distribution,ganglia_id
 
         Examples:
             | tier  |

@@ -90,14 +90,9 @@ class TierHipchatView(BaseView):
         """
         Validate the tier being referenced and HipChat being referenced exist.
         """
-        if len(request.params) > 0:
-            for key in request.params:
-                request.errors.add(
-                    'query', key,
-                    "Unsupported query: {key}. There are no valid "
-                    "parameters for this method.".format(key=key),
-                )
-            request.errors.status = 422
+        self._validate_params(['select'])
+        self._validate_json_params({'select': 'string'})
+        self._validate_select_attributes(request)
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
                                    'app_type')
         if 'tier' in request.validated:

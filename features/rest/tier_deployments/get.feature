@@ -43,6 +43,19 @@ Feature: GET tier deployment(s) from the REST API
         And the response list contains an object with id=2,deployment_id=1,tier_id=2,status="inprogress",user="foo",environment_id=1,package_id=1,duration=20
 
     @rest
+    Scenario: get all tier deployments with select query
+        Given there are tier deployments:
+            | id    | deployment_id | environment_id    | status        | user  | app_id    | package_id    | duration  |
+            | 1     | 1             | 1                 | pending       | foo   | 1         | 1             | 2         |
+            | 2     | 1             | 1                 | inprogress    | foo   | 2         | 1             | 20        |
+        When I query GET "/tier_deployments?select=id,deployment_id"
+        Then the response code is 200
+        And the response is a list of 2 items
+        And the response list contains an object with id=1,deployment_id=1
+        And the response list contains an object with id=2,deployment_id=1
+        And the response list objects do not contain attributes tier_id,status,user,environment_id,package_id,duration
+
+    @rest
     Scenario: get a specific tier deployment
         Given there are tier deployments:
             | id    | deployment_id | environment_id    | status        | user  | app_id    | package_id    | duration  |
@@ -51,6 +64,17 @@ Feature: GET tier deployment(s) from the REST API
         When I query GET "/tier_deployments/1"
         Then the response code is 200
         And the response is an object with id=1,deployment_id=1,tier_id=1,status="pending",user="foo",environment_id=1,package_id=1,duration=2
+
+    @rest
+    Scenario: get a specific tier deployment with select query
+        Given there are tier deployments:
+            | id    | deployment_id | environment_id    | status        | user  | app_id    | package_id    | duration  |
+            | 1     | 1             | 1                 | pending       | foo   | 1         | 1             | 2         |
+            | 2     | 1             | 1                 | inprogress    | foo   | 2         | 1             | 20        |
+        When I query GET "/tier_deployments/1?select=id,deployment_id"
+        Then the response code is 200
+        And the response is an object with id=1,deployment_id=1
+        And the response object does not contain attributes tier_id,status,user,environment_id,package_id,duration
 
     @rest
     Scenario Outline: specify limit and/or last queries

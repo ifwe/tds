@@ -82,6 +82,8 @@ class ValidatedView(JSONValidatedView):
             ),
             None,
         )
+        self._validate_params(['select'])
+        self._validate_json_params({'select': 'string'})
         if validator:
             validator(request)
         else:

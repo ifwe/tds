@@ -61,6 +61,18 @@ Feature: GET deployment(s) from the REST API
         And the response is an object with id=2,user="bar",status="queued",duration=0
 
     @rest
+    Scenario: get a specific deployment with select query
+        Given there are deployments:
+            | id    | user  | status        | duration  |
+            | 1     | foo   | pending       | 1         |
+            | 2     | bar   | queued        | 0         |
+            | 3     | baz   | inprogress    | 20        |
+        When I query GET "/deployments/2?select=id,user"
+        Then the response code is 200
+        And the response is an object with id=2,user="bar"
+        And the response object does not contain attributes status,duration
+
+    @rest
     Scenario Outline: specify limit and/or last queries
         Given there are deployments:
             | id    | user  | status        |

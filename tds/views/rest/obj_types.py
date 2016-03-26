@@ -85,7 +85,8 @@ PACKAGE_TYPES = {
     'job': 'string',
     'application_id': 'integer',
     'created': 'timestamp',
-    'creator': 'string',
+    'user': 'string',
+    'name': 'string',
     'project_type': 'choice',
 }
 

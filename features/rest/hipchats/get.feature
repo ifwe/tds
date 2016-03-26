@@ -32,10 +32,33 @@ Feature: GET HipChat(s) from the REST API
             | hipchat2  |
 
     @rest
+    Scenario: get all HipChats with select query
+        When I query GET "/hipchats?select=name"
+        Then the response code is 200
+        And the response is a list of 2 items
+        And the response list contains objects:
+            | name      |
+            | hipchat1  |
+            | hipchat2  |
+        And the response list objects do not contain attributes id
+
+    @rest
     Scenario Outline: get a single HipChat
         When I query GET "/hipchats/<select>"
         Then the response code is 200
         And the response is an object with name="hipchat1"
+
+        Examples:
+            | select    |
+            | hipchat1  |
+            | 1         |
+
+    @rest
+    Scenario Outline: get a single HipChat with select query
+        When I query GET "/hipchats/<select>?select=name"
+        Then the response code is 200
+        And the response is an object with name="hipchat1"
+        And the response object does not contain attributes id
 
         Examples:
             | select    |
