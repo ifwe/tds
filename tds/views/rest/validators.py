@@ -524,12 +524,13 @@ class ValidatedView(JSONValidatedView):
         )
 
         if 'GET' in self.result:
-            self.result['GET']['attributes'] = dict(
+            self.result['GET']['parameters'] = dict(
                 select=dict(
                     type='CSV',
-                    description="Comma-separated list of attributes",
+                    description="Comma-separated list of attributes to return",
                 )
             )
+            self.result['GET']['attributes'] = dict()
             for attr in self.full_types:
                 self.result['GET']['attributes'][attr] = dict(
                     type=self.full_types[attr],
@@ -637,7 +638,7 @@ class ValidatedView(JSONValidatedView):
                 ),
                 select=dict(
                     type='CSV',
-                    description="Comma-separated list of attributes",
+                    description="Comma-separated list of attributes to return",
                 )
             )
 
