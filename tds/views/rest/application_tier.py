@@ -69,6 +69,9 @@ class ApplicationTierView(BaseView):
         referenced exists. If one is found, assing it to
         request.validated_params[self.name].
         """
+        self._validate_params(['select'])
+        self._validate_json_params({'select': 'string'})
+        self._validate_select_attributes(request)
         self.get_obj_by_name_or_id('project', tds.model.Project)
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name',
@@ -102,25 +105,21 @@ class ApplicationTierView(BaseView):
         Validate application and project being referenced exist and return
         all associated tiers for that application-project pair.
         """
-        if len(request.params) > 0:
-            for key in request.params:
-                request.errors.add(
-                    'query', key,
-                    "Unsupported query: {key}. There are no valid "
-                    "parameters for this method.".format(key=key),
-                )
-            request.errors.status = 422
+        self._validate_params(['limit', 'select'])
+        self._validate_json_params({'limit': 'integer', 'select': 'string'})
+        self._validate_select_attributes(request)
         self.get_obj_by_name_or_id('project', tds.model.Project)
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name',
                                    param_name='application_name_or_id')
         if all(x in request.validated for x in ('project', 'application')):
-            request.validated[self.plural] = self.query(
-                self.model
-            ).find(
-                project_id=request.validated['project'].id,
-                pkg_def_id=request.validated['application'].id,
+            query = self.query(self.model).filter(
+                self.model.project_id == request.validated['project'].id,
+                self.model.pkg_def_id == request.validated['application'].id,
             )
+            if 'limit' in request.validated_params:
+                query = query.limit(self.request.validated_params['limit'])
+            request.validated[self.plural] = query.all()
 
     def validate_application_tier_post(self, request):
         """
