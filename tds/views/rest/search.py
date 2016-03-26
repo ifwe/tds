@@ -321,7 +321,7 @@ class SearchView(base.BaseView):
         """
         return self.make_response(
             body=self.to_json_obj(self.result),
-            headers=dict(Allows="GET, OPTIONS"),
+            headers=dict(Allows="GET, HEAD, OPTIONS"),
         )
 
     @view(validators=('method_not_allowed'))

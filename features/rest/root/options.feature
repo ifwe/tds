@@ -7,9 +7,10 @@ Feature: REST API root OPTIONS
     Scenario: get options for root URL
         When I query OPTIONS on the root url
         Then the response code is 200
-        And the response header contains "Allows" set to "GET, OPTIONS"
+        And the response header contains "Allows" set to "GET, HEAD, OPTIONS"
         And the response body contains "Get all supported URLS."
         And the response body contains "Get HTTP method options and parameters for this URL endpoint."
+        And the response body contains "Do a GET query without a body returned."
         And the response body contains "description"
         And the response body contains "GET"
         And the response body contains "OPTIONS"
