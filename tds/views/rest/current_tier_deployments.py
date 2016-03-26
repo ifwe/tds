@@ -31,6 +31,7 @@ class CurrentTierDeployment(BaseView):
     individual_allowed_methods = dict(
         GET=dict(description="Get the most recent completed tier deployment "
                  "for an application, tier, and environment."),
+        HEAD=dict(description="Do a GET query without a body returned."),
     )
 
     full_types = obj_types.TIER_DEPLOYMENT_TYPES

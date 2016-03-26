@@ -26,7 +26,11 @@ class PackageView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
-    param_routes = {}
+    param_routes = {
+        'name': 'pkg_name',
+        'application_id': 'pkg_def_id',
+        'user': 'creator',
+    }
 
     defaults = {
         'status': 'pending',
@@ -39,6 +43,7 @@ class PackageView(BaseView):
     individual_allowed_methods = dict(
         GET=dict(description="Get package for an application with version and "
                  "revision."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update package for an application with version "
                  "and revision."),
     )
@@ -46,6 +51,7 @@ class PackageView(BaseView):
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of packages for an application, "
                  "optionally by limit and/or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new package for an application."),
     )
 
@@ -104,6 +110,9 @@ class PackageView(BaseView):
                 'Revision must be an integer'
             )
             return
+        self._validate_params(['select'])
+        self._validate_json_params({'select': 'string'})
+        self._validate_select_attributes(self.request)
         try:
             pkg = self.query(tds.model.Package).get(
                 application=self.request.validated['application'],
