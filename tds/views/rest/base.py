@@ -61,12 +61,14 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                 )
             )
             cls.full_types = json_types
-            if 'user' in json_types or 'id' in json_types:
+            selectables_only = ('user', 'id', 'realized', 'created', 'spec_id',
+                                'dc_id', 'declared', 'project_type',
+                                'description', 'host_base',)
+            if any(x in json_types for x in selectables_only):
                 json_types = json_types.copy()
-            if 'user' in json_types:
-                del json_types['user']
-            if 'id' in json_types:
-                del json_types['id']
+            for attr_name in selectables_only:
+                if attr_name in json_types:
+                    del json_types[attr_name]
             cls.types = json_types
 
             param_descripts = getattr(

@@ -169,7 +169,7 @@ Feature: GET most recent deployment of an application on a given tier and enviro
         And there are tier deployments:
             | id    | deployment_id | environment_id    | status    | user  | app_id    | package_id    |
             | 4     | 2             | 2                 | validated | foo   | 2         | 1             |
-        When I query GET "/applications/app1/tiers/tier1/environments/1?select=id,deployment_id,status&<query>"
+        When I query GET "/applications/app1/tiers/tier1/environments/1?select=id,deployment_id,status,realized&<query>"
         Then the response code is 200
         And the response is an object with id=<id>,deployment_id=1,status="<status>"
         And the response object does not contain attributes environment_id,user,tier_id,package_id

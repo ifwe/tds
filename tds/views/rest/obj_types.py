@@ -12,6 +12,7 @@ APPLICATION_TYPES = {
     'arch': 'choice',
     'validation_type': 'string',
     'env_specific': 'boolean',
+    'created': 'timestamp',
 }
 
 APPLICATION_TIER_TYPES = {
@@ -60,6 +61,8 @@ HOST_TYPES = {
     'state': 'choice',
     'distribution': 'string',
     'environment_id': 'integer',
+    'spec_id': 'integer',
+    'dc_id': 'integer',
 }
 
 HOST_DEPLOYMENT_TYPES = {
@@ -83,6 +86,7 @@ PACKAGE_TYPES = {
     'application_id': 'integer',
     'created': 'timestamp',
     'creator': 'string',
+    'project_type': 'choice',
 }
 
 PROJECT_TYPES = {
@@ -98,6 +102,8 @@ TIER_TYPES = {
     'ganglia_id': 'integer',
     'ganglia_name': 'string',
     'status': 'choice',
+    'description': 'string',
+    'host_base': 'string',
 }
 
 TIER_DEPLOYMENT_TYPES = {

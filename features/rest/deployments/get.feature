@@ -35,6 +35,21 @@ Feature: GET deployment(s) from the REST API
         And the response list contains an object with id=3,user="baz",status="inprogress",duration=20
 
     @rest
+    Scenario: get all deployments with select query
+        Given there are deployments:
+            | id    | user  | status        | duration  |
+            | 1     | foo   | pending       | 1         |
+            | 2     | bar   | queued        | 0         |
+            | 3     | baz   | inprogress    | 20        |
+        When I query GET "/deployments?select=duration,declared"
+        Then the response code is 200
+        And the response is a list of 3 items
+        And the response list contains an object with duration=1
+        And the response list contains an object with duration=0
+        And the response list contains an object with duration=20
+        And the response list objects do not contain attributes id,user,status
+
+    @rest
     Scenario: get a specific deployment
         Given there are deployments:
             | id    | user  | status        | duration  |

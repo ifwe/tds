@@ -90,12 +90,36 @@ Feature: GET application-tier association(s) from the REST API
         And the response list contains an object with project_id=1,application_id=2,tier_id=3
 
     @rest
+    Scenario Outline: get all application-tier associations with select and limit queries
+        Given the tier "tier1" is associated with the application "app1" for the project "proj1"
+        And the tier "tier2" is associated with the application "app1" for the project "proj1"
+        When I query GET "/projects/proj1/applications/app1/tiers?limit=<limit>&select=project_id,tier_id"
+        Then the response code is 200
+        And the response is a list of <limit> items
+        And the response list contains an object with project_id=1,tier_id=2
+        And the response list objects do not contain attributes application_id
+
+        Examples:
+            | limit |
+            | 1     |
+            | 2     |
+
+    @rest
     Scenario: get a specific application-tier association
         Given the tier "tier1" is associated with the application "app1" for the project "proj1"
         And the tier "tier2" is associated with the application "app1" for the project "proj1"
         When I query GET "/projects/proj1/applications/app1/tiers/tier1"
         Then the response code is 200
         And the response is an object with project_id=1,application_id=2,tier_id=2
+
+    @rest
+    Scenario: get a specific application-tier association with select query
+        Given the tier "tier1" is associated with the application "app1" for the project "proj1"
+        And the tier "tier2" is associated with the application "app1" for the project "proj1"
+        When I query GET "/projects/proj1/applications/app1/tiers/tier1?select=application_id"
+        Then the response code is 200
+        And the response is an object with application_id=2
+        And the response object does not contain attributes project_id,tier_id
 
     @rest
     Scenario Outline: attempt to use start and/or limit queries

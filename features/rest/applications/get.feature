@@ -110,9 +110,10 @@ Feature: GET application(s) from the REST API
         And the response list objects do not contain attributes <attrs>
 
         Examples:
-            | select    | attrs                                                                 |
-            | name      | job,arch,build_type,build_host,validation_type,env_specific,created   |
-            | name,job  | arch,build_type,build_host,validation_type,env_specific,created       |
+            | select        | attrs                                                                 |
+            | name          | job,arch,build_type,build_host,validation_type,env_specific,created   |
+            | name,job      | arch,build_type,build_host,validation_type,env_specific,created       |
+            | name,created  | job,arch,build_type,build_host,validation_type,env_specific           |
 
     @rest
     Scenario: pass invalid attr to select
