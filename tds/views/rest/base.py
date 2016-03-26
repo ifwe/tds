@@ -257,6 +257,11 @@ class BaseView(ValidatedView):
             )
             tagopsdb.Session.remove()
             return resp
+        elif renderer == "empty":
+            return Response(
+                status=status,
+                headers=headers,
+            )
         else:
             tagopsdb.Session.remove()
             raise NotImplementedError(
@@ -297,6 +302,13 @@ class BaseView(ValidatedView):
         return self.make_response(
             [self.to_json_obj(x) for x in self.request.validated[self.plural]]
         )
+
+    @view(validators=('validate_collection_get', 'validate_cookie'))
+    def collection_head(self):
+        """
+        Same as collection_get above, except returns empty body.
+        """
+        return self.make_response(renderer="empty")
 
     def _handle_collection_post(self):
         """
@@ -360,6 +372,13 @@ class BaseView(ValidatedView):
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )
+
+    @view(validators=('validate_individual', 'validate_cookie'))
+    def head(self):
+        """
+        Same as get above except returns empty body.
+        """
+        return self.make_response(renderer="empty")
 
     @view(validators=('validate_individual', 'validate_put_post',
                       'validate_obj_put', 'validate_cookie'))
