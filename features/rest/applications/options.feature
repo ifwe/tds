@@ -7,8 +7,9 @@ Feature: OPTIONS for applications
     Scenario: get options for the collection endpoint
         When I query OPTIONS "/applications"
         Then the response code is 200
-        And the response header contains "Allows" set to "GET, OPTIONS, POST"
+        And the response header contains "Allows" set to "GET, HEAD, OPTIONS, POST"
         And the response body contains "Get HTTP method options and parameters"
+        And the response body contains "Do a GET query without a body returned."
         And the response body contains "Unique integer identifier"
         And the response body contains "type"
         And the response body contains "description"
@@ -22,10 +23,11 @@ Feature: OPTIONS for applications
     Scenario: get options for the individual endpoint
         When I query OPTIONS "/applications/foo"
         Then the response code is 200
-        And the response header contains "Allows" set to "GET, OPTIONS, PUT"
+        And the response header contains "Allows" set to "GET, HEAD, OPTIONS, PUT"
         And the response body contains "Get HTTP method options and parameters"
         And the response body contains "Update application matching name or ID."
         And the response body contains "Get application matching name or ID."
+        And the response body contains "Do a GET query without a body returned."
         And the response body contains "type"
         And the response body contains "description"
         And the response body contains "id"

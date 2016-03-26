@@ -7,10 +7,11 @@ Feature: OPTIONS for projects
     Scenario: get options for the collection endpoint
         When I query OPTIONS "/projects"
         Then the response code is 200
-        And the response header contains "Allows" set to "GET, OPTIONS, POST"
+        And the response header contains "Allows" set to "GET, HEAD, OPTIONS, POST"
         And the response body contains "Get HTTP method options and parameters for this URL endpoint."
         And the response body contains "Get a list of projects, optionally by limit and/or start."
         And the response body contains "Add a new project."
+        And the response body contains "Do a GET query without a body returned."
         And the response body contains "permissions"
         And the response body contains "user"
         And the response body contains "admin"
@@ -24,10 +25,11 @@ Feature: OPTIONS for projects
     Scenario: get options for the individual endpoint
         When I query OPTIONS "/projects/foo"
         Then the response code is 200
-        And the response header contains "Allows" set to "GET, OPTIONS, PUT"
+        And the response header contains "Allows" set to "GET, HEAD, OPTIONS, PUT"
         And the response body contains "Get HTTP method options and parameters for this URL endpoint."
         And the response body contains "Get project matching name or ID."
         And the response body contains "Update project matching name or ID."
+        And the response body contains "Do a GET query without a body returned."
         And the response body contains "permissions"
         And the response body contains "user"
         And the response body contains "admin"
