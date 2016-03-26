@@ -194,6 +194,11 @@ def then_the_response_body_does_not_contain(context, message):
                                                   context.response.text)
 
 
+@then(u'the response body is empty')
+def then_the_response_body_is_empty(context):
+    assert len(context.response.text) == 0, context.response.text
+
+
 @then(u'the response contains a cookie')
 def then_the_response_contains_a_cookie(context):
     assert len(context.response.cookies) > 0, context.response.cookies

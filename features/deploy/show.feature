@@ -177,10 +177,9 @@ Feature: deploy show application version [--apptypes] [--all-apptypes]
         And there is a deploy target with name="bar"
         And the deploy target is a part of the project-application pair
         And there are hosts:
-            | name          | env   |
-            | otherhost01   | dev   |
-            | otherhost02   | dev   |
-        And the hosts are associated with the deploy target
+            | name          | env   | app_id    |
+            | otherhost01   | dev   | 3         |
+            | otherhost02   | dev   | 3         |
         And there is a package with version="200"
         And the package is deployed on the deploy target
         And the package is validated
@@ -193,3 +192,61 @@ Feature: deploy show application version [--apptypes] [--all-apptypes]
         And the output describes an app deployment with version="123"
         And the output describes an app deployment with version="200"
         And the output describes an app deployment with version="201"
+
+    Scenario: with the current version as incomplete
+        Given the package is deployed on the deploy target
+        And the package has been validated
+        And there is a package with version="124"
+        And the package is deployed on the deploy target
+        And the package has been validated
+        And there is a deploy target with name="bar"
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the deploy target
+        And the package is validated
+        And I wait 1 seconds
+        And there are hosts:
+            | name          | env   | app_id    |
+            | otherhost01   | dev   | 3         |
+            | otherhost02   | dev   | 3         |
+        And there is a package with version="200"
+        And the package is deployed on the deploy target
+        And the package is validated
+        And I wait 1 seconds
+        And there is a package with version="201"
+        And there are deployments:
+            | id    | user  | status    |
+            | 2     | foo   | failed    |
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status        | user  | app_id    | package_id    |
+            | 5     | 2             | 1                 | incomplete    | foo   | 3         | 4             |
+        And there are host deployments:
+            | id    | deployment_id | status    | user  | host_id   | package_id    |
+            | 7     | 2             | ok        | foo   | 3         | 4             |
+            | 8     | 2             | failed    | foo   | 4         | 4             |
+        When I run "deploy show myapp --apptypes bar"
+        Then the output has "Rollback deployment version:"
+        And the output describes an app deployment with version="201"
+
+    Scenario: with the most recent deployment invalidated
+        Given the package is deployed on the deploy target
+        And the package has been validated
+        And there is a package with version="124"
+        And the package is deployed on the deploy target
+        And the package has been validated
+        And there is a deploy target with name="bar"
+        And the deploy target is a part of the project-application pair
+        And there are hosts:
+            | name          | env   | app_id    |
+            | otherhost01   | dev   | 3         |
+            | otherhost02   | dev   | 3         |
+        And there is a package with version="200"
+        And the package is deployed on the deploy target
+        And the package is validated
+        And there is a package with version="201"
+        And the package is deployed on the deploy target
+        And the package is invalidated
+        When I run "deploy show myapp --all-apptypes"
+        Then the output describes an app deployment with version="124"
+        And the output has "Rollback deployment version:"
+        And the output describes an app deployment with version="123"
+        And the output describes an app deployment with version="200"

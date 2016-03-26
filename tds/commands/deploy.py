@@ -990,9 +990,10 @@ class DeployController(BaseController):
             ]
 
             current_app_deployment = \
-                application.get_latest_completed_tier_deployment(
+                application.get_latest_tier_deployment(
                     tier_id=target.id,
                     environment_id=env_id,
+                    exclude_statuses=['pending', 'invalidated'],
                 )
             previous_app_deployment = None
             package_id = package.id
@@ -1010,12 +1011,16 @@ class DeployController(BaseController):
                         )
                 package_id = None
 
-            host_deployments = \
-                application.get_latest_completed_host_deployments_for_tier(
-                    tier_id=target.id,
-                    environment_id=env_id,
+            host_deployments = list()
+            for host in tagopsdb.model.Host.find(
+                app_id=target.id, environment_id=env_id
+            ):
+                host_dep = application.get_latest_host_deployment(
+                    host_id=host.id,
                     package_id=package_id,
                 )
+                if host_dep is not None:
+                    host_deployments.append(host_dep)
 
             package_deployment_info['by_apptype'].append(
                 dict(
