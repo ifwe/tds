@@ -151,7 +151,7 @@ class PackageController(BaseController):
         if job is None:
             job = application.path
 
-        revision = self._validate_jenkins_build(
+        commit_hash = self._validate_jenkins_build(
             application, version, revision, job
         )
 
@@ -216,8 +216,8 @@ class PackageController(BaseController):
                     )
                 )
 
-        if revision is not None:
-            package.commit_hash = revision
+        if commit_hash is not None:
+            package.commit_hash = commit_hash
 
         package.status = 'pending'
         tagopsdb.Session.commit()
