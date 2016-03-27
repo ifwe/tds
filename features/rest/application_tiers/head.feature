@@ -88,16 +88,13 @@ Feature: HEAD application-tier association(s) from the REST API
         And the response body is empty
 
     @rest
-    Scenario Outline: attempt to use start and/or limit queries
+    Scenario Outline: attempt to use start query
         Given the tier "tier1" is associated with the application "app1" for the project "proj1"
         And the tier "tier2" is associated with the application "app1" for the project "proj1"
-        When I query HEAD "/projects/proj1/applications/app1/tiers?<query>"
+        When I query GET "/projects/proj1/applications/app1/tiers?<query>"
         Then the response code is 422
-        And the response body is empty
 
         Examples:
-            | query             |
-            | limit=10          |
-            | limit=10&start=1  |
-            | limit=10&start=1  |
-            | start=1           |
+            | query             | name  |
+            | limit=10&start=1  | start |
+            | start=1           | start |
