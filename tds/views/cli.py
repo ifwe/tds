@@ -84,6 +84,7 @@ APP_DEPLOY_TEMPLATE = (
     'Environment: {app_dep.environment}\n'
     'Install state: {app_dep.status}\n'
     'Skewed: {app_dep.skewed}\n'
+    'Duration: {app_dep.duration} seconds\n'
 )
 HOST_DEPLOY_HEADER_TEMPLATE = (
     'Deployment of {host_dep[pkg_def].name} to hosts '
@@ -106,12 +107,15 @@ HOST_DEPLOY_TEMPLATE = (
     'Realizing user: {host_dep.user}\n'
     'Hostname: {host_dep.host.name}\n'
     'Install state: {host_dep.status}\n'
+    'Duration: {host_dep.duration} seconds\n'
+    'Salt output: {host_dep.deploy_result}\n'
 )
 
 PACKAGE_TEMPLATE = (
     'Project: {self.name}\n'
     'Version: {self.version}\n'
     'Revision: {self.revision}\n'
+    'Commit hash: {self.commit_hash}\n'
 )
 
 ROLLBACK_DEPLOYMENT_MESSAGE = "Rollback deployment version:\n"

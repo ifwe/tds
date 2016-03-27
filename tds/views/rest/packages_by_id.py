@@ -118,7 +118,9 @@ class PackageByIDView(BaseView):
 
         if any(x in self.request.validated_params for x in
                ('version', 'revision', 'job')):
-            self._validate_jenkins_build()
+            commit_hash = self._validate_jenkins_build()
+            if commit_hash is not None:
+                self.request.validated['commit_hash'] = commit_hash
 
         if self.name not in self.request.validated:
             return
@@ -182,7 +184,9 @@ class PackageByIDView(BaseView):
             )
             self.request.errors.status = 403
 
-        self._validate_jenkins_build()
+        commit_hash = self._validate_jenkins_build()
+        if commit_hash is not None:
+            self.request.validated['commit_hash'] = commit_hash
 
     def _add_jenkins_error(self, message):
         """
@@ -282,6 +286,13 @@ class PackageByIDView(BaseView):
                     .format(matrix=matrix_name, job=job_name)
                 )
                 self.request.errors.status = 400
+
+        if self.request.errors.status == 400:
+            return None
+        try:
+            return build.get_revision()
+        except:             # Unkown exception type --KN
+            return None
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))

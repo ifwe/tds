@@ -189,7 +189,9 @@ class PackageView(BaseView):
                     " exists."
                 )
                 self.request.errors.status = 409
-            self._validate_jenkins_build()
+            commit_hash = self._validate_jenkins_build()
+            if commit_hash is not None:
+                self.request.validated['commit_hash'] = commit_hash
 
         if 'status' in self.request.validated_params and \
                 self.request.validated_params['status'] != \
@@ -237,7 +239,9 @@ class PackageView(BaseView):
             )
             self.request.errors.status = 403
 
-        self._validate_jenkins_build()
+        commit_hash = self._validate_jenkins_build()
+        if commit_hash is not None:
+            self.request.validated['commit_hash'] = commit_hash
 
         if 'job' not in self.request.validated_params:
             self.request.validated_params['job'] = self.request.validated[
@@ -330,6 +334,13 @@ class PackageView(BaseView):
                     .format(matrix=matrix_name, job=job_name)
                 )
                 self.request.errors.status = 400
+
+        if self.request.errors.status == 400:
+            return None
+        try:
+            return build.get_revision()
+        except:                 # Exception type unknown --KN
+            return None
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))

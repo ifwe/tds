@@ -75,6 +75,7 @@ HOST_DEPLOYMENT_DESCRIPTIONS = {
     'duration': 'Float seconds the installer daemon worked on this host '
         'deployment',
     'realized': 'When this host deployment was created',
+    'deploy_result': 'Salt output for deployment',
 }
 
 PACKAGE_DESCRIPTIONS = {
@@ -90,6 +91,7 @@ PACKAGE_DESCRIPTIONS = {
     'user': 'User who added this package',
     'name': 'Name of the application of this package',
     'project_type': 'The type of project to which this package belongs',
+    'commit_hash': 'The commit hash of the build',
 }
 
 PROJECT_DESCRIPTIONS = {
