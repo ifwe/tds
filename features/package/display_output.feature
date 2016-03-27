@@ -25,7 +25,7 @@ Feature: package add display output
         And the output has "Status:		[completed]"
 
     @jenkins_server
-    Scenario: add a package
+    Scenario: add a package with a failure
         When I start to run "package add myapp 123"
         And I wait 10 seconds
         And the status of the package with version="123" changes to "processing"
