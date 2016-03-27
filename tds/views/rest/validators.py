@@ -82,7 +82,7 @@ class ValidatedView(JSONValidatedView):
             ),
             None,
         )
-        if request.method == 'GET':
+        if request.method in ('GET', 'HEAD'):
             param_dict = {'select': 'string'}
             if getattr(self, 'extra_individual_get_params', None) is not None:
                 for param in self.extra_individual_get_params:
@@ -92,7 +92,7 @@ class ValidatedView(JSONValidatedView):
         if validator:
             validator(request)
         else:
-            if request.method == "GET":
+            if request.method in ("GET", "HEAD"):
                 self._validate_params(['select'])
                 self._validate_json_params({'select': 'string'})
             self.get_obj_by_name_or_id()

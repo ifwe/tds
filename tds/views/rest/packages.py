@@ -114,7 +114,7 @@ class PackageView(BaseView):
                 'Revision must be an integer'
             )
             return
-        if self.request.method == 'GET':
+        if self.request.method in ('GET', 'HEAD'):
             self._validate_params(['select'])
             self._validate_json_params({'select': 'string'})
             self._validate_select_attributes(self.request)
