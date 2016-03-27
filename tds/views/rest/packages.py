@@ -114,9 +114,10 @@ class PackageView(BaseView):
                 'Revision must be an integer'
             )
             return
-        self._validate_params(['select'])
-        self._validate_json_params({'select': 'string'})
-        self._validate_select_attributes(self.request)
+        if self.request.method == 'GET':
+            self._validate_params(['select'])
+            self._validate_json_params({'select': 'string'})
+            self._validate_select_attributes(self.request)
         try:
             pkg = self.query(tds.model.Package).get(
                 application=self.request.validated['application'],

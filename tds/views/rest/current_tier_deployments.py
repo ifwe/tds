@@ -26,6 +26,8 @@ class CurrentTierDeployment(BaseView):
         'tier_id': 'app_id',
     }
 
+    extra_individual_get_params = {'must_be_validated': 'boolean'}
+
     defaults = {}
 
     individual_allowed_methods = dict(
@@ -76,11 +78,6 @@ class CurrentTierDeployment(BaseView):
             request.errors.status = 403
             return
 
-        self._validate_params(['must_be_validated', 'select'])
-        self._validate_json_params({
-            'must_be_validated': 'boolean',
-            'select': 'string',
-        })
         validated = 'must_be_validated' in request.validated_params and \
             request.validated_params['must_be_validated']
 

@@ -83,8 +83,12 @@ class ValidatedView(JSONValidatedView):
             None,
         )
         if request.method == 'GET':
-            self._validate_params(['select'])
-            self._validate_json_params({'select': 'string'})
+            param_dict = {'select': 'string'}
+            if getattr(self, 'extra_individual_get_params', None) is not None:
+                for param in self.extra_individual_get_params:
+                    param_dict[param] = self.extra_individual_get_params[param]
+            self._validate_params(param_dict.keys())
+            self._validate_json_params(param_dict)
         if validator:
             validator(request)
         else:
