@@ -61,15 +61,6 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                 )
             )
             cls.full_types = json_types
-            selectables_only = ('user', 'id', 'realized', 'created', 'spec_id',
-                                'dc_id', 'declared', 'project_type',
-                                'description', 'host_base',)
-            if any(x in json_types for x in selectables_only):
-                json_types = json_types.copy()
-            for attr_name in selectables_only:
-                if attr_name in json_types:
-                    del json_types[attr_name]
-            cls.types = json_types
 
             param_descripts = getattr(
                 descriptions, "{name}_DESCRIPTIONS".format(
@@ -77,12 +68,18 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                 )
             )
             cls.full_descriptions = param_descripts
-            if 'user' in param_descripts or 'id' in param_descripts:
-                param_descripts = param_descripts.copy()
-            if 'user' in param_descripts:
-                del param_descripts['user']
-            if 'id' in param_descripts:
-                del param_descripts['id']
+
+            selectables_only = ('user', 'id', 'realized', 'created', 'spec_id',
+                                'dc_id', 'declared', 'project_type',
+                                'description', 'host_base', 'commit_hash',
+                                'deploy_result',)
+            for param_dict in (json_types, param_descripts):
+                if any(x in param_dict for x in selectables_only):
+                    param_dict = param_dict.copy()
+                for attr_name in selectables_only:
+                    if attr_name in param_dict:
+                        del param_dict[attr_name]
+            cls.types = json_types
             cls.param_descriptions = param_descripts
 
         return cls

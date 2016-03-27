@@ -74,6 +74,7 @@ HOST_DEPLOYMENT_TYPES = {
     'user': 'string',
     'duration': 'number',
     'realized': 'timestamp',
+    'deploy_result': 'string',
 }
 
 PACKAGE_TYPES = {
@@ -88,6 +89,7 @@ PACKAGE_TYPES = {
     'user': 'string',
     'name': 'string',
     'project_type': 'choice',
+    'commit_hash': 'string',
 }
 
 PROJECT_TYPES = {
