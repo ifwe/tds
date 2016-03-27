@@ -73,12 +73,14 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                                 'dc_id', 'declared', 'project_type',
                                 'description', 'host_base', 'commit_hash',
                                 'deploy_result',)
-            for param_dict in (json_types, param_descripts):
-                if any(x in param_dict for x in selectables_only):
-                    param_dict = param_dict.copy()
-                for attr_name in selectables_only:
-                    if attr_name in param_dict:
-                        del param_dict[attr_name]
+            if any(x in json_types for x in selectables_only):
+                json_types = json_types.copy()
+                param_descripts = param_descripts.copy()
+            for attr_name in selectables_only:
+                if attr_name in json_types:
+                    del json_types[attr_name]
+                if attr_name in param_descripts:
+                    del param_descripts[attr_name]
             cls.types = json_types
             cls.param_descriptions = param_descripts
 
