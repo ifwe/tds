@@ -76,6 +76,7 @@ APP_DEPLOY_MISSING_TEMPLATE = (
 APP_DEPLOY_TEMPLATE = (
     'Version: {app_dep.package.version}-'
     '{app_dep.package.revision}\n'
+    'Commit hash: {app_dep.package.commit_hash}\n'
     'Declared: {app_dep.deployment.declared}\n'
     'Declaring user: {app_dep.deployment.user}\n'
     'Realized: {app_dep.realized}\n'
@@ -101,6 +102,7 @@ HOST_DEPLOY_MISSING_TEMPLATE = (
 HOST_DEPLOY_TEMPLATE = (
     'Version: {host_dep.package.version}-'
     '{host_dep.package.revision}\n'
+    'Commit hash: {host_dep.package.commit_hash}\n'
     'Declared: {host_dep.deployment.declared}\n'
     'Declaring user: {host_dep.deployment.user}\n'
     'Realized: {host_dep.realized}\n'
