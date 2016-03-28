@@ -224,8 +224,11 @@ class DeployController(BaseController):
                 host_name=dep.host.name,
                 status=dep.status,
             ))
-            return
-        if getattr(dep, 'app_id', None) is not None:
+            if dep.status == 'failed':
+                log.info('Salt output: {output}'.format(
+                    output=dep.deploy_result,
+                ))
+        elif getattr(dep, 'app_id', None) is not None:
             log.info('{tier_name}:\t\t[{status}]'.format(
                 tier_name=dep.target.name,
                 status=dep.status,
@@ -235,6 +238,10 @@ class DeployController(BaseController):
                 host_name=dep.host.name,
                 status=dep.status,
             ))
+            if dep.status == 'failed':
+                log.info('Salt output: {output}'.format(
+                    output=dep.deploy_result,
+                ))
 
     def find_current_app_deployments(self, package, apptypes, params):
         """
