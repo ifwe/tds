@@ -54,6 +54,12 @@ class DeployStrategyHelper(object):
             []
         )
 
+    def load_input(self):
+        return self._load_json(
+            os.path.join(self.context.WORK_DIR, self.INPUT_FILE),
+            []
+        )
+
     def set_input(self, info):
         input_file = os.path.join(self.context.WORK_DIR, self.INPUT_FILE)
         old_data = self._load_json(input_file, {})
@@ -281,7 +287,15 @@ def given_the_host_will_fail_to_deploy(context, hostname, action):
         hostname: {
             'hostname': hostname,
             'exitcode': 1,
-            'stderr': 'its broken!',
-            'result': 'Something failed',
+            'stderr': 'It done broked!',
+            'result': 'It done broked!',
         }
     })
+
+
+@then(u'there were no deployments run')
+def then_there_were_no_deployments_run(context):
+    helper = get_strat_helper(context)
+    results = helper.load_results()
+    inp = helper.load_input()
+    assert not (results or inp), (results, inp)

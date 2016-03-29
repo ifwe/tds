@@ -68,7 +68,7 @@ def load_requirements(fname):
 
 REQUIREMENTS = {}
 REQUIREMENTS['install'] = load_requirements('requirements.txt')
-REQUIREMENTS['install'].append('tagopsdb>=0.9.14')
+REQUIREMENTS['install'].append('tagopsdb>=0.9.18')
 REQUIREMENTS['tests'] = load_requirements('requirements-dev.txt')
 
 def load_github_dependency_links(fname):
@@ -96,14 +96,11 @@ setup_args = dict(
     entry_points={
         'console_scripts': [
             'tds = tds.scripts.tds_prog:main',
-            'tds_install = tds.scripts.tds_install:main',
+            'tds_installer = tds.scripts.tds_installer:daemon_main',
             'unvalidated_deploy_check = tds.scripts.unvalidated_deploy_check:main',
             'update_deploy_repo = tds.scripts.update_deploy_repo:daemon_main',
         ]
     },
-    data_files=[
-        ('share/tds/salt', ['share/salt/tds.py']),
-    ],
     test_suite='tests',
     tests_require=REQUIREMENTS['install'] + REQUIREMENTS['tests'],
     dependency_links=DEPENDENCY_LINKS,

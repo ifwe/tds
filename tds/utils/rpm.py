@@ -2,7 +2,8 @@
 
 import logging
 import os.path
-import subprocess
+
+import tds.exceptions
 
 from . import run
 
@@ -29,14 +30,14 @@ class RPMQueryProvider(object):
                 rpm_format,
                 filename
             ])
-        except subprocess.CalledProcessError as exc:
+        except tds.exceptions.RunProcessError as exc:
             log.error('rpm command failed: %s', exc)
 
             return None
         else:
             return zip(
                 fields,
-                rpm_query_result.stdout.splitlines()
+                rpm_query_result.stdout.splitlines(),
             )
 
 

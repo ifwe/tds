@@ -57,3 +57,6 @@ target/
 
 # behave test work directory
 work*/
+
+# REST API settings file
+tds/views/rest/settings.yml

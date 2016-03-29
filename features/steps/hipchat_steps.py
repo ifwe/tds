@@ -13,7 +13,7 @@ def given_hipchat_notifications_are_enabled(context):
                    use_list=True)
 
 
-@then(u'there is a hipchat notification with {properties}')
+@then(u'there was a hipchat notification with {properties}')
 def then_there_is_a_hipchat_notification_with(context, properties):
     notifications = context.hipchat_server.get_notifications()
     assert notifications is not None

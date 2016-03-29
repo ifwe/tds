@@ -11,7 +11,7 @@ def given_graphite_notifications_are_enabled(context):
                    dict(enabled_methods=['graphite']))
 
 
-@then(u'there is a graphite notification with {snippets}')
+@then(u'there is a graphite notification containing {snippets}')
 def then_there_is_a_graphite_notification_with(context, snippets):
     notifications = context.graphite_server.get_notifications()
     assert notifications is not None

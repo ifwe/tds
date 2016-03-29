@@ -17,16 +17,20 @@ except ImportError:
     from UTFFixedSysLogHandler import UTFFixedSysLogHandler
 
 
-def _create_facilities(handler, facilities=dict()):
+def _create_facilities(handler, facilities=None):
     """Initialize a facilities dictionary."""
+    if facilities is None:
+        facilities = dict()
     for facility in handler.facility_names.keys():
         if getattr(handler, 'LOG_%s' % facility.upper(), None) is not None:
             facilities[facility] = handler.facility_names[facility]
     return facilities
 
 
-def _create_priorities(handler, priorities=dict()):
+def _create_priorities(handler, priorities=None):
     """Initialize a priorities dictionary."""
+    if priorities is None:
+        priorities = dict()
     for priority in handler.priority_names.keys():
         if getattr(handler, 'LOG_%s' % priority.upper(), None) is not None:
             priorities[priority] = handler.priority_names[priority]

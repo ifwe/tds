@@ -79,10 +79,10 @@ class TestNotifierClass(AppConfigProvider):
         (
             AllApptypesDeploymentFactory,
             'Promote of version badf00d of fake_package on app tier(s)'
-            ' fake_apptype, fake_apptype in fakedev',
+            ' fake_apptype1, fake_apptype2 in fakedev',
             'fake_user performed a "tds deploy promote" for the following app'
             ' tier(s) in fakedev:\n'
-            '    fake_apptype, fake_apptype'
+            '    fake_apptype1, fake_apptype2'
         ),
     ]
 
