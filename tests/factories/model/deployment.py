@@ -3,10 +3,12 @@ Factories to create various tds.model.deployment.Deployment instances
 '''
 import datetime
 import factory
-import tds.model.deployment as d
+import tds.model.deploy_info as deploy_info
+import tds.model.deployment as deployment
 
 from .actor import ActorFactory
 from .package import PackageFactory
+from .project import ProjectFactory
 from .deploy_target import AppTargetFactory, HostTargetFactory, HipchatFactory
 
 
@@ -17,10 +19,11 @@ class DeploymentFactory(factory.Factory):
     `tds deploy promote fake_project --apptype=fake_apptype`
     by user 'fake_user' in the 'test' tier.
     '''
-    FACTORY_FOR = d.Deployment
+    FACTORY_FOR = deploy_info.DeployInfo
 
     actor = factory.SubFactory(ActorFactory)
     package = factory.SubFactory(PackageFactory)
+    project = factory.SubFactory(ProjectFactory)
 
     action = dict(
         command='deploy',
@@ -99,7 +102,7 @@ class AppDeploymentFactory(factory.Factory):
     """
     Factory for creating app deployments.
     """
-    FACTORY_FOR = d.AppDeployment
+    FACTORY_FOR = deployment.AppDeployment
     FACTORY_STRATEGY = factory.STUB_STRATEGY
 
     environment = 'test'

@@ -188,6 +188,10 @@ DEPLOY_DATA = odict([
                 ('help', 'Time delay (in seconds) between each redeploy'),
                 ('type', int),
             ])),
+            (('--detach',), odict([
+                ('help', 'Disconnect client after preparing deployments'),
+                ('action', 'store_true'),
+            ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for correction'),
                 ('metavar', 'HOST'),
@@ -245,6 +249,10 @@ DEPLOY_DATA = odict([
                 ('help', 'Time delay (in seconds) between each deploy'),
                 ('type', int),
             ])),
+            (('--detach',), odict([
+                ('help', 'Disconnect client after preparing deployments'),
+                ('action', 'store_true'),
+            ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for deployment'),
                 ('metavar', 'HOST'),
@@ -257,32 +265,6 @@ DEPLOY_DATA = odict([
             ])),
             (('--all-apptypes',), odict([
                 ('help', 'Handle all app types for deployment'),
-                ('action', 'store_true'),
-            ])),
-        ])),
-    ])),
-    ('redeploy', odict([
-        ('help', 'Redeploy application to current environment - DEPRECATED'),
-        ('subargs', odict([
-            (('application',), odict([
-                ('help', 'Name of application'),
-            ])),
-            (('--delay',), odict([
-                ('help', 'Time delay (in seconds) between each redeploy'),
-                ('type', int),
-            ])),
-            (('--hosts',), odict([
-                ('help', 'Specific host(s) for redeployment'),
-                ('metavar', 'HOST'),
-                ('nargs', '*'),
-            ])),
-            (('--apptypes',), odict([
-                ('help', 'Specific app type(s) for redeployment'),
-                ('metavar', 'APPTYPE'),
-                ('nargs', '*'),
-            ])),
-            (('--all-apptypes',), odict([
-                ('help', 'Handle all app types for redeployment'),
                 ('action', 'store_true'),
             ])),
         ])),
@@ -322,6 +304,10 @@ DEPLOY_DATA = odict([
             (('--delay',), odict([
                 ('help', 'Time delay (in seconds) between each rollback'),
                 ('type', int),
+            ])),
+            (('--detach',), odict([
+                ('help', 'Disconnect client after preparing deployments'),
+                ('action', 'store_true'),
             ])),
             (('--hosts',), odict([
                 ('help', 'Specific host(s) for rollback'),

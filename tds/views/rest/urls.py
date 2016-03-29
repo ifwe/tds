@@ -1,0 +1,42 @@
+"""
+All URLs supported.
+"""
+
+ALL_URLS = dict(
+    application_tier_collection='/projects/{name_or_id}/applications/'
+        '{application_name_or_id}/tiers',
+    application_tier='/projects/{name_or_id}/applications/'
+        '{application_name_or_id}/tiers/{tier_name_or_id}',
+    application_collection='/applications',
+    application='/applications/{name_or_id}',
+    current_host_deployment='/applications/{name_or_id}/hosts/'
+        '{host_name_or_id}',
+    current_tier_deployment='/applications/{name_or_id}/tiers/'
+        '{tier_name_or_id}/environments/{environment_name_or_id}',
+    deployment_collection='/deployments',
+    deployment='/deployments/{id}',
+    environment_collection='/environments',
+    environment='/environments/{name_or_id}',
+    ganglia_collection='/ganglias',
+    ganglia='/ganglias/{name_or_id}',
+    hipchat_collection='/hipchats',
+    hipchat='/hipchats/{name_or_id}',
+    host_deployment_collection='/host_deployments',
+    host_deployment='/host_deployments/{id}',
+    host_collection='/hosts',
+    host='/hosts/{name_or_id}',
+    login='/login',
+    package_by_id_collection='/packages',
+    package_by_id='/packages/{id}',
+    package_collection='/applications/{name_or_id}/packages',
+    package='/applications/{name_or_id}/packages/{version}/{revision}',
+    project_collection='/projects',
+    project='/projects/{name_or_id}',
+    search='/search/{obj_type}',
+    tier_deployment_collection='/tier_deployments',
+    tier_deployment='/tier_deployments/{id}',
+    tier_hipchat_collection='/tiers/{name_or_id}/hipchats',
+    tier_hipchat='/tiers/{name_or_id}/hipchats/{hipchat_name_or_id}',
+    tier_collection='/tiers',
+    tier='/tiers/{name_or_id}',
+)

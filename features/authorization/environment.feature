@@ -17,7 +17,6 @@ Feature: Authorization roles - environment
             | deploy show foo           |
             | deploy validate foo 123   |
             | deploy promote foo 123    |
-            | deploy redeploy foo       |
             | deploy rollback foo       |
             | deploy restart foo        |
             | package list              |

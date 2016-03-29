@@ -6,6 +6,7 @@ import tds.utils.script_helpers as SH
 
 from tests.factories.model.actor import ActorFactory
 from tests.factories.model.package import PackageFactory
+from tests.factories.model.project import ProjectFactory
 from tests.factories.model.deployment import AppDeploymentFactory
 from tests.factories.utils.config import (
     DatabaseTestConfigFactory,
@@ -16,7 +17,7 @@ from datetime import datetime, timedelta
 
 
 class TestUnvalidatedDeploymentNotifier(unittest.TestCase):
-    def get_mock_app_dep(self, actor, package):
+    def get_mock_app_dep(self, actor, package, project):
         tds_deployment = Mock(
             environment='test',
             package=package
@@ -25,17 +26,24 @@ class TestUnvalidatedDeploymentNotifier(unittest.TestCase):
         application = Mock(
             app_type='fake_app_type'
         )
+
+        project = Mock(
+            project=project,
+        )
+
         return Mock(
             application=application,
             deployment=tds_deployment,
+            project=project,
             user=actor.name,
         )
 
     def test_convert_deployment(self):
         actor = ActorFactory()
         package = PackageFactory()
+        project = ProjectFactory()
 
-        app_deployment = self.get_mock_app_dep(actor, package)
+        app_deployment = self.get_mock_app_dep(actor, package, project)
         deployment = app_deployment.deployment
         application = app_deployment.application
 
@@ -59,7 +67,10 @@ class TestUnvalidatedDeploymentNotifier(unittest.TestCase):
         n = 2
         actor = ActorFactory()
         packages = [PackageFactory() for _ in range(n)]
-        deployments = [self.get_mock_app_dep(actor, p) for p in packages]
+        project = ProjectFactory()
+        deployments = [
+            self.get_mock_app_dep(actor, p, project) for p in packages
+        ]
 
         base = SH.UnvalidatedDeploymentNotifier.__bases__[0]
         with patch.object(base, 'notify'):

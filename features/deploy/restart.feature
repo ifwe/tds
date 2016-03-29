@@ -52,6 +52,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp <option>"
         Then package "myapp" was restarted on the deploy target
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | option            | strategy |
@@ -60,7 +62,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         |                   | salt     |
         | --apptypes appfoo | salt     |
 
-    Scenario Outline: restart an application with a multiple apptypes with no option
+    Scenario Outline: restart an application with multiple apptypes with no option
         Given there is a deploy target with name="appbar"
         And the deploy strategy is "<strategy>"
         And the deploy target is a part of the project-application pair
@@ -72,7 +74,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         | mco      |
         | salt     |
 
-    Scenario Outline: restart an application with a multiple apptypes with apptypes option
+    Scenario Outline: restart an application with multiple apptypes with apptypes option
         Given there is a deploy target with name="appbar"
         And the deploy strategy is "<strategy>"
         And the deploy target is a part of the project-application pair
@@ -80,13 +82,15 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         And the host is associated with the deploy target
         When I run "deploy restart myapp --apptypes appfoo"
         Then package "myapp" was restarted on the deploy target with name="appfoo"
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
         | mco      |
         | salt     |
 
-    Scenario Outline: restart an application with a multiple apptypes with all-apptypes option
+    Scenario Outline: restart an application with multiple apptypes with all-apptypes option
         Given there is a deploy target with name="appbar"
         And the deploy strategy is "<strategy>"
         And there are hosts:
@@ -99,6 +103,10 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         And the package has been validated in the "development" environment
         When I run "deploy restart myapp --all-apptypes"
         Then package "myapp" was restarted on the deploy targets
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
+        And the output has "appbar01:		[success]"
+        And the output has "appbar02:		[success]"
 
         Examples:
         | strategy |
@@ -109,6 +117,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp --hosts appfoo01"
         Then package "myapp" was restarted on the host with name="appfoo01"
+        And the output has "appfoo01:		[success]"
 
         Examples:
         | strategy |
@@ -119,6 +128,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp --hosts appfoo01 appfoo02"
         Then package "myapp" was restarted on the hosts
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
@@ -134,6 +145,7 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp --delay 10 --hosts appfoo01"
         Then package "myapp" was restarted on the host with name="appfoo01"
+        And the output has "appfoo01:		[success]"
 
         Examples:
         | strategy |
@@ -165,6 +177,8 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         When I run "deploy restart myapp --delay 10 --apptypes appfoo"
         Then package "myapp" was restarted on the deploy target
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
         And it took at least 10 seconds
 
         Examples:
@@ -176,7 +190,9 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         And the host "appfoo01" will fail to restart
         When I run "deploy restart myapp"
-        Then the output has "Some hosts had failures"
+        Then the output has "appfoo01:		[failed]"
+        And the output has "It done broked!"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
@@ -187,9 +203,62 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
         Given the deploy strategy is "<strategy>"
         And the host "appfoo01" will fail to restart
         When I run "deploy restart myapp --hosts appfoo01 appfoo02"
-        Then the output has "Some hosts had failures"
+        Then the output has "appfoo01:		[failed]"
+        And the output has "It done broked!"
+        And the output has "appfoo02:		[success]"
 
         Examples:
         | strategy |
         | mco      |
         | salt     |
+
+    Scenario Outline: restart on a tier with no hosts
+        Given there is a deploy target with name="anotherapp"
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the deploy targets in the "dev" env
+        And the deploy strategy is "<strategy>"
+        When I run "deploy restart myapp --apptypes anotherapp"
+        Then the output has "No hosts for tier anotherapp in environment development. Continuing..."
+        And the output has "Nothing to restart for application myapp in development environment."
+
+        Examples:
+        | strategy |
+        | mco      |
+        | salt     |
+
+    Scenario Outline: restart all tiers, including a tier with no hosts
+        Given there is a deploy target with name="anotherapp"
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the deploy targets in the "dev" env
+        And the deploy strategy is "<strategy>"
+        When I run "deploy restart myapp --all-apptypes"
+        Then the output has "No hosts for tier anotherapp in environment development. Continuing..."
+        And package "myapp" was restarted on the host with name="appfoo01"
+        And package "myapp" was restarted on the host with name="appfoo02"
+        And the output has "appfoo01:		[success]"
+        And the output has "appfoo02:		[success]"
+
+        Examples:
+        | strategy |
+        | mco      |
+        | salt     |
+
+    Scenario Outline: restart on hosts with just a host deployment
+        Given there is a deploy target with name="anotherapp"
+        And there are hosts:
+            | name          | env   | app_id    |
+            | anotherhost01 | dev   | 3         |
+            | anotherhost02 | dev   | 3         |
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the hosts
+        And the deploy strategy is "<strategy>"
+        When I run "deploy restart myapp --hosts anotherhost01 anotherhost02"
+        Then package "myapp" was restarted on the host with name="anotherhost01"
+        And package "myapp" was restarted on the host with name="anotherhost02"
+        And the output has "anotherhost01:		[success]"
+        And the output has "anotherhost02:		[success]"
+
+        Examples:
+        | strategy  |
+        | mco       |
+        | salt      |

@@ -76,6 +76,7 @@ APP_DEPLOY_MISSING_TEMPLATE = (
 APP_DEPLOY_TEMPLATE = (
     'Version: {app_dep.package.version}-'
     '{app_dep.package.revision}\n'
+    'Commit hash: {app_dep.package.commit_hash}\n'
     'Declared: {app_dep.deployment.declared}\n'
     'Declaring user: {app_dep.deployment.user}\n'
     'Realized: {app_dep.realized}\n'
@@ -83,6 +84,8 @@ APP_DEPLOY_TEMPLATE = (
     'App type: {app_dep.application.name}\n'
     'Environment: {app_dep.environment}\n'
     'Install state: {app_dep.status}\n'
+    'Skewed: {app_dep.skewed}\n'
+    'Duration: {app_dep.duration} seconds\n'
 )
 HOST_DEPLOY_HEADER_TEMPLATE = (
     'Deployment of {host_dep[pkg_def].name} to hosts '
@@ -99,19 +102,25 @@ HOST_DEPLOY_MISSING_TEMPLATE = (
 HOST_DEPLOY_TEMPLATE = (
     'Version: {host_dep.package.version}-'
     '{host_dep.package.revision}\n'
+    'Commit hash: {host_dep.package.commit_hash}\n'
     'Declared: {host_dep.deployment.declared}\n'
     'Declaring user: {host_dep.deployment.user}\n'
     'Realized: {host_dep.realized}\n'
     'Realizing user: {host_dep.user}\n'
     'Hostname: {host_dep.host.name}\n'
     'Install state: {host_dep.status}\n'
+    'Duration: {host_dep.duration} seconds\n'
+    'Salt output: {host_dep.deploy_result}\n'
 )
 
 PACKAGE_TEMPLATE = (
     'Project: {self.name}\n'
     'Version: {self.version}\n'
     'Revision: {self.revision}\n'
+    'Commit hash: {self.commit_hash}\n'
 )
+
+ROLLBACK_DEPLOYMENT_MESSAGE = "Rollback deployment version:\n"
 
 
 def format_access_error(_exc):
@@ -289,6 +298,7 @@ def format_deployments(deployments):
 
                     if target['previous_app_deployment'] is not None:
                         prev_app_dep = target['previous_app_deployment']
+                        output.append(ROLLBACK_DEPLOYMENT_MESSAGE)
                         output.append(
                             APP_DEPLOY_TEMPLATE.format(app_dep=prev_app_dep)
                         )
@@ -474,27 +484,11 @@ class CLI(Base):
 
         print format_package(result, self.output_format)
 
-    def generate_deploy_restart_result(self, result=None, error=None, **kwds):
-        """Format the result of a "deploy restart" action."""
-        if error is not None:
-            return self.generate_default_result(
-                result=result, error=error, **kwds
-            )
-
-        keys = sorted(result.keys())
-        printed_fail_message = False
-        for key in keys:
-            if not result[key]:
-                if not printed_fail_message:
-                    print "Some hosts had failures:\n"
-                    printed_fail_message = True
-                host, pkg = key
-                print "%s (%s)" % (host.name, pkg.name)
-
     generate_deploy_invalidate_result = \
         generate_deploy_promote_result = \
         generate_deploy_validate_result = \
         generate_deploy_rollback_result = \
         generate_deploy_fix_result = \
+        generate_deploy_restart_result = \
         generate_package_add_result = \
         silence(NotImplementedError)(generate_default_result)

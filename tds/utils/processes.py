@@ -1,9 +1,11 @@
 """Utilities to run subprocesses."""
 
-import time
+import collections
 import shlex
 import subprocess
-import collections
+import time
+
+from tds.exceptions import RunProcessError
 
 
 def run(cmd, expect_return_code=0, shell=False, **kwds):
@@ -35,9 +37,7 @@ def start_process(cmd, shell=False, **kwds):
         proc.cmd = args
         proc.start_time = start
     except OSError as e:
-        exc = subprocess.CalledProcessError(1, args)
-        exc.stderr = 'Error using Popen: %s' % e
-        exc.stdout = None
+        exc = RunProcessError(1, args, stderr='Error using Popen: %s' % e)
         raise exc
 
     return proc
@@ -58,10 +58,8 @@ def wait_for_process(proc, expect_return_code=0, **_kwds):
 
     if not (expect_return_code is None or
             expect_return_code == proc.returncode):
-        exc = subprocess.CalledProcessError(proc.returncode, proc.cmd)
-        exc.stderr = stderr
-        exc.stdout = stdout
-        exc.duration = duration
+        exc = RunProcessError(proc.returncode, proc.cmd, stdout=stdout,
+                              stderr=stderr, duration=duration)
         raise exc
 
     process = collections.namedtuple(

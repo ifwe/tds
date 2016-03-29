@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+#  Created 2012-06-27 by klareau@ifwe.co
+#  Updated 2014-02-28 by klareau@ifwe.co
+#
+# update_deploy_repo    This shell script takes care of starting and stopping
+#                       the update_deploy_repo daemon.
+#
+# chkconfig: - 97 03
+# description: update_deploy_repo is a daemon for updating \
+#              the Tagged deployment repository.
+# processname: update_deploy_repo
+
+
+# Source function library
+if [ -f /etc/rc.d/init.d/functions ]; then
+. /etc/rc.d/init.d/functions
+elif [ -f /etc/init.d/functions ]; then
+. /etc/init.d/functions
+elif [ -f /etc/rc.d/functions ]; then
+. /etc/rc.d/functions
+fi
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+prog=/usr/bin/update_deploy_repo
+
+RETVAL=0
+
+# See how we were called.
+case "$1" in
+    start)
+        # Start daemon
+        [ ${NETWORKING} = "no" ] && exit 4
+        echo -n "Starting update_deploy_repo: "
+        $prog start
+        RETVAL=$?
+        echo
+        ;;
+    stop)
+        # Stop daemon
+        echo -n "Shutting down update_deploy_repo: "
+        $prog stop
+        RETVAL=$?
+        echo
+        ;;
+    restart)
+        # Restart daemon
+        [ ${NETWORKING} = "no" ] && exit 4
+        echo -n "Restarting update_deploy_repo: "
+        $prog restart
+        RETVAL=$?
+        echo
+        ;;
+    status)
+        status update_deploy_repo
+        RETVAL=$?
+        ;;
+    *)
+        echo "Usage: update_deploy_repo {start|stop|restart|status}"
+        RETVAL=2
+esac
+
+exit $RETVAL

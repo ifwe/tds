@@ -28,7 +28,6 @@ Feature: Help switches
             | deploy                     | -h        |
             | deploy invalidate          | -h        |
             | deploy promote             | -h        |
-            | deploy redeploy            | -h        |
             | deploy restart             | -h        |
             | deploy rollback            | -h        |
             | deploy show                | -h        |
@@ -51,7 +50,6 @@ Feature: Help switches
             | deploy                     | --help    |
             | deploy invalidate          | --help    |
             | deploy promote             | --help    |
-            | deploy redeploy            | --help    |
             | deploy restart             | --help    |
             | deploy rollback            | --help    |
             | deploy show                | --help    |

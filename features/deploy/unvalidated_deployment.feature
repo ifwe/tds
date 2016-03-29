@@ -26,4 +26,16 @@ Feature: attempt promote with unvalidated deployment in previous env
 
     Scenario: Attempt promote for a single host
         When I run "deploy promote myapp 121 --hosts sprojhost01"
-        Then the output is "Application u'myapp' with version '121' not fully deployed or validated to previous environment (dev) for apptype u'the-apptype'"
+        Then the output has "Application "myapp", version "121" is not validated in the previous environment for tier "the-apptype", skipping..."
+        And the output has "Nothing to do."
+        And there is no deployment with id=2
+        And there is no tier deployment with deployment_id=2
+        And there is no host deployment with deployment_id=2
+
+    Scenario: Attempt to promote for a tier
+        When I run "deploy promote myapp 121 --apptypes the-apptype"
+        Then the output has "Application "myapp", version "121" is not validated in the previous environment for tier "the-apptype", skipping..."
+        And the output has "Nothing to do."
+        And there is no deployment with id=2
+        And there is no tier deployment with deployment_id=2
+        And there is no host deployment with deployment_id=2

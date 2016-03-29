@@ -140,6 +140,60 @@ class PackageController(BaseController):
         """
         revision = '1'
 
+        if package is not None:
+            if package.status == 'failed':
+                log.info("Package already exists with failed status. Changing "
+                         "status to pending for daemon to attempt "
+                         "re-adding...")
+            elif not force:
+                log.info("Package already exists with status {status}.".format(
+                    status=package.status,
+                ))
+                return dict()
+            elif package.status in ('pending', 'processing'):
+                log.info("Package already {stat} by daemon. Added {added} by "
+                         "{user}.".format(
+                            stat="pending addition" if package.status ==
+                                "pending" else "being processed",
+                            added=package.created,
+                            user=package.creator,
+                         ))
+                return dict()
+            elif package.status in ('removed', 'completed'):
+                log.info("Package was previously {status}. Changing status to "
+                         "pending again for daemon to attempt re-adding..."
+                         .format(status=package.status))
+
+        else:
+            try:
+                package = application.create_version(
+                    version=version,
+                    revision=revision,
+                    job=job,
+                    creator=user,
+                )
+            except tagopsdb.exceptions.PackageException as e:
+                log.error(e)
+                raise tds.exceptions.TDSException(
+                    'Failed to add package {name}@{version}.'.format(
+                        name=application.name,
+                        version=version,
+                    )
+                )
+
+        package.status = 'pending'
+        tagopsdb.Session.commit()
+        if params['detach']:
+            log.info('Package ready for repo updater daemon. Disconnecting '
+                     'now.')
+            return dict()
+        return self._manage_attached_session(package)
+
+    def _validate_jenkins_build(self, application, version, revision,
+                                job_name):
+        """
+        Validate that a Jenkins build exists for a package being added.
+        """
         try:
             int(version)
         except ValueError:
@@ -151,7 +205,9 @@ class PackageController(BaseController):
         if job is None:
             job = application.path
 
-        self._validate_jenkins_build(application, version, revision, job)
+        commit_hash = self._validate_jenkins_build(
+            application, version, revision, job
+        )
 
         rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
             name=application.pkg_name,
@@ -214,6 +270,9 @@ class PackageController(BaseController):
                     )
                 )
 
+        if commit_hash is not None:
+            package.commit_hash = commit_hash
+
         package.status = 'pending'
         tagopsdb.Session.commit()
         if params['detach']:
@@ -226,6 +285,8 @@ class PackageController(BaseController):
                                 job_name):
         """
         Validate that a Jenkins build exists for a package being added.
+        Return the revision (e.g., git commit hash) if the build exists and is
+        valid.
         """
         try:
             jenkins = jenkinsapi.jenkins.Jenkins(self.jenkins_url)
@@ -263,6 +324,10 @@ class PackageController(BaseController):
                 raise tds.exceptions.JenkinsJobNotFoundError(
                     "Matrix build", job_name, version, self.jenkins_url,
                 )
+        try:
+            return build.get_revision()
+        except:             # Not sure what exception will be raise --KN
+            return None
 
     @validate('package')
     def delete(self, package, **params):
