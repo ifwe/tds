@@ -38,6 +38,17 @@ Feature: Add (POST) package on REST API
         And there is no package with version="2",revision="2",creator="testuser",job="myjob",pkg_name="noexist"
 
     @rest @jenkins_server
+    Scenario: attempt to set commit_hash
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
+        When I query POST "/applications/app3/packages?version=2&revision=2&commit_hash=asdfsad"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name          | description                                                                                               |
+            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
+        And there is no package with version="2",revision="2",creator="testuser",job="myjob",pkg_name="noexist"
+
+    @rest @jenkins_server
     Scenario: specify job
         Given there is a jenkins job with name="somejob"
         And the job has a build with number="2"

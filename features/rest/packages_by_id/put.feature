@@ -40,6 +40,17 @@ Feature: Update (PUT) package on REST API by ID
         And there is no package with version="500"
 
     @rest @jenkins_server
+    Scenario: attempt to set commit_hash
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="500"
+        When I query PUT "/packages/1?commit_hash=bar&version=500"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name          | description                                                                                                           |
+            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'id', 'job', 'name', 'revision', 'status', 'version'].  |
+        And there is no package with version="500"
+
+    @rest @jenkins_server
     Scenario: update a package
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="1"

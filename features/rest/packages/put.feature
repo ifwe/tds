@@ -84,6 +84,22 @@ Feature: Update (PUT) package on REST API
             | 3         |
 
     @rest @jenkins_server
+    Scenario Outline: attempt to set commit_hash
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="10"
+        When I query PUT "/applications/<select>/packages/2/3?version=10&revision=50&commit_hash=2312312"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name          | description                                                                                               |
+            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
+        And there is a package with version=2,revision=3
+
+        Examples:
+            | select    |
+            | app2      |
+            | 3         |
+
+    @rest @jenkins_server
     Scenario Outline: attempt to violate a unique constraint
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="2"
