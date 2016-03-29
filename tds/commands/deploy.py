@@ -243,30 +243,6 @@ class DeployController(BaseController):
                     output=dep.deploy_result,
                 ))
 
-    def find_current_app_deployments(self, package, apptypes, params):
-        """
-        Given a specific package, determine current deployments of that
-        package for a given set of apptypes in a given environment.
-        """
-        environment = tagopsdb.Environment.get(
-            environment=self.envs[params['env']]
-        )
-
-        app_deployments = {}
-
-        for apptype in apptypes:
-            app_deployments[apptype.id] = (apptype.name, None)
-
-            for app_deployment in apptype.app_deployments:
-                if app_deployment.environment_obj != environment:
-                    continue
-                if app_deployment.package != package.delegate:
-                    break
-
-                app_deployments[apptype.id] = (apptype.name, app_deployment)
-
-        return app_deployments
-
     def get_previous_env(self, env):
         """
         Find the previous environment (short name).
@@ -581,12 +557,17 @@ class DeployController(BaseController):
         If so, update tier to 'invalidated', otherwise do nothing
         (and mention nothing has been done).
         """
-        app_deployments = self.find_current_app_deployments(
-            package, apptypes, params
+        environment = tagopsdb.Environment.get(
+            environment=self.envs[params['env']]
         )
 
         for apptype in apptypes:
-            tier_name, curr_app_dep = app_deployments[apptype.id]
+            tier_name = apptype.name
+            curr_app_dep = application.get_latest_tier_deployment(
+                tier_id=apptype.id,
+                environment_id=environment.id,
+                exclude_statuses=['pending'],
+            )
 
             if (curr_app_dep is not None and
                 curr_app_dep.package == package.delegate):
@@ -618,13 +599,15 @@ class DeployController(BaseController):
         self.package = package
         self.application = application
         self.user = params['user']
-
-        app_deployments = self.find_current_app_deployments(
-            package, apptypes, params
-        )
         previous_env = self.get_previous_env(params['env'])
 
         for apptype in apptypes:
+            tier_name = apptype.name
+            curr_app_dep = application.get_latest_tier_deployment(
+                tier_id=apptype.id,
+                environment_id=self.environment.id,
+                exclude_statuses=['pending'],
+            )
             if (previous_env and
                 not package.check_app_deployments(apptype, previous_env) and
                 not params.get('force')):
@@ -650,8 +633,6 @@ class DeployController(BaseController):
                     )
                 )
                 continue
-
-            tier_name, curr_app_dep = app_deployments[apptype.id]
 
             if (curr_app_dep is not None and
                 curr_app_dep.package == package.delegate):
@@ -1052,12 +1033,17 @@ class DeployController(BaseController):
         If so, update tier to 'validated' and remove host deployments.
         Otherwise, throw appropriate error.
         """
-        app_deployments = self.find_current_app_deployments(
-            package, apptypes, params
+        environment = tagopsdb.Environment.get(
+            environment=self.envs[params['env']]
         )
 
-        for apptype_id in app_deployments:
-            tier_name, app_deployment = app_deployments[apptype_id]
+        for apptype in apptypes:
+            tier_name = apptype.name
+            app_deployment = application.get_latest_tier_deployment(
+                tier_id=apptype.id,
+                environment_id=environment.id,
+                exclude_statuses=['pending'],
+            )
 
             if app_deployment is None:
                 log.info('Tier "%s" has no current deployment for '
