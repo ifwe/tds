@@ -335,7 +335,7 @@ def deploy_package_to_target(package, target, env, status='complete',
 
     app_dep = tagopsdb.AppDeployment(
         package_id=package.id,
-        deployment_id=dep.id,
+        deployment_id=found_dep.id,
         app_id=target.id,
         user=dep.user,
         status=status,
@@ -347,7 +347,7 @@ def deploy_package_to_target(package, target, env, status='complete',
 
     deploy_to_hosts(
         tagopsdb.Host.find(app_id=target.id, environment_id=env_id),
-        dep,
+        found_dep,
         package.id,
     )
 
@@ -1239,7 +1239,7 @@ def then_the_package_is_validated_for_deploy_target(context, properties):
     assert check_package_validation(
         context,
         context.tds_packages[-1],
-        [target.app_deployments[-1]],
+        [target.app_deployments[0]],
         'validated'
     )
 
