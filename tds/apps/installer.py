@@ -129,6 +129,8 @@ class Installer(TDSProgramBase):
         if host_deployment.deployment.status == 'canceled':
             return 'canceled'
 
+        host_deployment.status = 'inprogress'
+        tagopsdb.Session.commit()
         success, host_result = self.deploy_strategy.deploy_to_host(
             host_deployment.host.name,
             host_deployment.package.name,
@@ -161,6 +163,8 @@ class Installer(TDSProgramBase):
 
         done_host_dep_ids = set()
         canceled = False
+        tier_deployment.status = 'inprogress'
+        tagopsdb.Session.commit()
         for dep_host in dep_hosts:
             host_deployment = tds.model.HostDeployment.get(
                 host_id=dep_host.id,
