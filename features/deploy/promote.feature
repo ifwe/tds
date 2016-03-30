@@ -128,8 +128,8 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         When I run "deploy promote myapp 121 --all-apptypes --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with status="queued",delay=0,duration=0
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=2,package_id=1,environment_id=2,duration=0
-        And there is a tier deployment with status="pending",deployment_id=3,app_id=3,package_id=1,environment_id=2,duration=0
+        And there is a tier deployment with status="pending",deployment_id=4,app_id=2,package_id=1,environment_id=2,duration=0
+        And there is a tier deployment with status="pending",deployment_id=4,app_id=3,package_id=1,environment_id=2,duration=0
 
     Scenario: promote version to all apptypes with delay option
         When I run "deploy promote myapp 123 --delay 10 --detach"
@@ -195,9 +195,9 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         When I run "deploy promote myapp 121 --hosts sprojhost01 sprojhost02 sother01 --detach"
         Then the output has "Deployment ready for installer daemon, disconnecting now."
         And there is a deployment with status="queued",delay=0,duration=0
-        And there is a host deployment with status="pending",deployment_id=3,host_id=3,package_id=1,duration=0
-        And there is a host deployment with status="pending",deployment_id=3,host_id=4,package_id=1,duration=0
-        And there is a host deployment with status="pending",deployment_id=3,host_id=7,package_id=1,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=3,package_id=1,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=4,package_id=1,duration=0
+        And there is a host deployment with status="pending",deployment_id=4,host_id=7,package_id=1,duration=0
 
     Scenario: promote to an apptype with version already deployed to hosts
         Given there are deployments:
