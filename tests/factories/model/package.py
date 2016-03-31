@@ -16,4 +16,5 @@ class PackageFactory(factory.Factory):
 
     name = 'fake_package'
     version = 'badf00d'
-    revision = "tums"
+    revision = 'tums'
+    status = 'completed'

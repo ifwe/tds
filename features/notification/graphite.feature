@@ -40,8 +40,8 @@ Feature: Graphite notifications
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         And graphite notifications are enabled
-        When I run "deploy promote myapp 124 --hosts sprojhost01"
-        And I run "deploy promote myapp 124 --hosts sprojhost02"
-        And I run "deploy promote myapp 124 --hosts sother01"
+        When I run "deploy promote myapp 124 --hosts sprojhost01 --detach"
+        And I run "deploy promote myapp 124 --hosts sprojhost02 --detach"
+        And I run "deploy promote myapp 124 --hosts sother01 --detach"
         Then there are 3 graphite notifications
-        And there is a graphite notification with "tagged.deploy.myapp"
+        And there is a graphite notification containing "tagged.deploy.myapp"

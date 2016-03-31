@@ -3,8 +3,6 @@
 Scripts to do various actions.
 
 ## Navigation
-* [./tds_install.py](./tds_install.py) -
-Install a given application.
 * [./tds_prog.py](./tds_prog.py) -
 Main TDS application.
 * [./unvalidated_deploy_check.py](./unvalidated_deploy_check.py) -

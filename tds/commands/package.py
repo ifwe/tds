@@ -151,7 +151,9 @@ class PackageController(BaseController):
         if job is None:
             job = application.path
 
-        self._validate_jenkins_build(application, version, revision, job)
+        commit_hash = self._validate_jenkins_build(
+            application, version, revision, job
+        )
 
         rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
             name=application.pkg_name,
@@ -214,6 +216,9 @@ class PackageController(BaseController):
                     )
                 )
 
+        if commit_hash is not None:
+            package.commit_hash = commit_hash
+
         package.status = 'pending'
         tagopsdb.Session.commit()
         if params['detach']:
@@ -226,6 +231,8 @@ class PackageController(BaseController):
                                 job_name):
         """
         Validate that a Jenkins build exists for a package being added.
+        Return the revision (e.g., git commit hash) if the build exists and is
+        valid.
         """
         try:
             jenkins = jenkinsapi.jenkins.Jenkins(self.jenkins_url)
@@ -263,6 +270,10 @@ class PackageController(BaseController):
                 raise tds.exceptions.JenkinsJobNotFoundError(
                     "Matrix build", job_name, version, self.jenkins_url,
                 )
+        try:
+            return build.get_revision()
+        except:             # Not sure what exception will be raise --KN
+            return None
 
     @validate('package')
     def delete(self, package, **params):

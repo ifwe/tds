@@ -35,7 +35,8 @@ def get_model_factory(name):
 
     return None
 
-def tier_factory(_context, **kwargs):
+
+def tier_factory(context, **kwargs):
     if kwargs.get('distribution', None) is None:
         kwargs['distribution'] = 'centos6.5'
     return tds.model.AppTarget.create(**kwargs)
@@ -62,17 +63,20 @@ def rpm_factory(context, **kwargs):
         f.write(yaml.dump(kwargs))
 
 
-def host_factory(context, name, env=None, **_kwargs):
+def host_factory(context, name, env=None, **kwargs):
     env = env or context.tds_env
     env_obj = tagopsdb.Environment.get(env=env)
     assert env_obj is not None
     env_id = env_obj.id
 
     host = tagopsdb.Host(
-        state='operational',
+        state=kwargs.get('state', 'operational'),
         hostname=name,
-        distribution='Centos 6.4',
-        app_id=tagopsdb.Application.get(name=tagopsdb.Application.dummy).id,
+        distribution=kwargs.get('distribution', 'Centos 6.4'),
+        app_id=kwargs.get(
+            'app_id',
+            tagopsdb.Application.get(name=tagopsdb.Application.dummy).id
+        ),
         cage_location=len(tagopsdb.Host.all()),
         cab_location=name[:10],
         rack_location=1,
@@ -130,7 +134,7 @@ def application_factory(context, **kwargs):
     fields = dict(
         deploy_type='rpm',
         validation_type='matching',
-        path='job',
+        path=kwargs.get('job', 'job'),
         arch='noarch',
         build_type='jenkins',
         build_host='fakeci.example.org',
@@ -273,21 +277,6 @@ model_builder(
 )
 
 
-@then(u'there is a project with {properties}')
-def then_there_is_a_project(context, properties):
-    attrs = parse_properties(properties)
-    proj = tds.model.Project.get(**attrs)
-
-    assert proj is not None
-
-@then(u'there is a package with {properties}')
-def then_there_is_a_package(context, properties):
-    tagopsdb.Session.close()
-    attrs = parse_properties(properties)
-    package = tds.model.Package.get(**attrs)
-
-    assert package is not None
-
 def add_target_to_proj_app(project, application, target):
     tagopsdb.Session.add(tagopsdb.ProjectPackage(
         project_id=project.id,
@@ -328,39 +317,29 @@ def given_the_deploy_targets_are_a_part_of_the_proj_app_pairs(context):
                 )
 
 
-def deploy_package_to_target(package, target, env, status='complete'):
+def deploy_package_to_target(package, target, env, status='complete',
+                             dep_status='pending'):
     env_id = tagopsdb.Environment.get(env=env).id
 
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
         user=curr_user,
-        status=status
+        status=dep_status,
     )
+    dep = tagopsdb.Deployment.get(**dep_props)
+    if dep is None:
+        dep = tagopsdb.Deployment(**dep_props)
 
-    found_dep = None
-    for dep in tagopsdb.Deployment.all():
-        if any(app_dep.package_id == package.id
-               for app_dep in dep.app_deployments):
-            found_dep = dep
-            break
-        elif any(host_dep.package_id == package.id
-                 for host_dep in dep.host_deployments):
-            found_dep = dep
-            break
-
-    if found_dep is None:
-        found_dep = tagopsdb.Deployment(**dep_props)
-
-    tagopsdb.Session.add(found_dep)
+    tagopsdb.Session.add(dep)
     tagopsdb.Session.commit()
 
     app_dep = tagopsdb.AppDeployment(
-        deployment_id=found_dep.id,
+        package_id=package.id,
+        deployment_id=dep.id,
         app_id=target.id,
-        user=found_dep.user,
+        user=dep.user,
         status=status,
         environment_id=env_id,
-        package_id=package.id,
     )
 
     tagopsdb.Session.add(app_dep)
@@ -368,7 +347,7 @@ def deploy_package_to_target(package, target, env, status='complete'):
 
     deploy_to_hosts(
         tagopsdb.Host.find(app_id=target.id, environment_id=env_id),
-        found_dep,
+        dep,
         package.id,
     )
 
@@ -484,31 +463,20 @@ def given_the_package_is_deployed_on_host(context, properties):
     # XXX: fix update_or_create so it can be used here
     dep_props = dict(
         user=curr_user,
-        status='complete'
     )
 
-    found_dep = None
-    for dep in tagopsdb.Deployment.all():
-        if any(app_dep.package_id == package.id
-               for app_dep in dep.app_deployments):
-            found_dep = dep
-            break
-        elif any(host_dep.package_id == package.id
-                 for host_dep in dep.host_deployments):
-            found_dep = dep
-            break
-
-    if found_dep is None:
-        found_dep = tagopsdb.Deployment(**dep_props)
-        tagopsdb.Session.add(found_dep)
+    deployment = tagopsdb.Deployment.get(**dep_props)
+    if deployment is None:
+        deployment = tagopsdb.Deployment(**dep_props)
+        tagopsdb.Session.add(deployment)
         tagopsdb.Session.commit()
 
-    assert found_dep
+    assert deployment
 
     host_deployment = tagopsdb.HostDeployment(
         host_id=host.id,
-        deployment_id=found_dep.id,
-        user=found_dep.user,
+        deployment_id=deployment.id,
+        user=deployment.user,
         status='ok',
         package_id=package.id,
     )
@@ -540,16 +508,17 @@ def given_the_package_failed_to_deploy_on_host(context, properties):
     tagopsdb.Session.add(host_dep)
     tagopsdb.Session.commit()
 
+    given_the_package_has_status_set_with_properties(
+        context,
+        package.version,
+        context.tds_environment,
+        'incomplete'
+    )
 
 def set_status_for_package(package, status):
     for app_dep in package.app_deployments:
         app_dep.status = status
         tagopsdb.Session.add(app_dep)
-
-        for host_dep in package.host_deployments:
-            if host_dep.host.app_id == app_dep.app_id and \
-                    host_dep.host.environment_id == app_dep.environment_id:
-                tagopsdb.Session.delete(host_dep)
 
     tagopsdb.Session.commit()
 
@@ -1236,12 +1205,23 @@ def then_the_package_is_validated(context):
         package,
         package.app_deployments,
         'validated'
-    ), package.app_deployments
+    ), (package.deployments[-1].app_deployments, package.deployments[-1])
 
 
 @then(u'the package is invalidated')
 def then_the_package_is_invalidated(context):
     package = context.tds_packages[-1]
+    assert check_package_validation(
+        context,
+        package,
+        package.deployments[-1].app_deployments,
+        'invalidated'
+    )
+
+
+@then(u'the package version "{version}" is invalidated')
+def then_the_package_version_is_invalidated(context, version):
+    package = check_if_package_exists(context, version)
     assert check_package_validation(
         context,
         package,
@@ -1259,7 +1239,7 @@ def then_the_package_is_validated_for_deploy_target(context, properties):
     assert check_package_validation(
         context,
         context.tds_packages[-1],
-        [target.app_deployments[-1]],
+        [target.app_deployments[0]],
         'validated'
     )
 
@@ -1295,6 +1275,35 @@ def then_the_package_is_invalidated_for_deploy_target(context, properties):
     )
 
 
+def check_if_app_deployment_exists(context, package, app_deployments):
+    for app_deployment in app_deployments:
+        if app_deployment.package == package:
+            break
+    else:
+        app_deployment = None
+
+    assert app_deployment is not None
+    return app_deployment
+
+
+@then(u'the package version "{version}" is invalidated for deploy target with {properties}')
+def then_the_package_is_invalidated_for_deploy_target(context, version, properties):
+    package = check_if_package_exists(context, version)
+    attrs = parse_properties(properties)
+    target = tds.model.AppTarget.get(**attrs)
+    app_deployment = check_if_app_deployment_exists(
+        context, package, target.app_deployments
+    )
+
+    # TODO: get only target.app_deployments where package matches.
+    assert check_package_validation(
+        context,
+        package,
+        [app_deployment],
+        'invalidated'
+    )
+
+
 @then(u'there is no project with {properties}')
 def then_there_is_no_project_with_properties(context, properties):
     attrs = parse_properties(properties)
@@ -1302,13 +1311,6 @@ def then_there_is_no_project_with_properties(context, properties):
     if 'name' in attrs:
         assert tagopsdb.PackageLocation.get(name='%s-name' % attrs['name']) is None
         assert tagopsdb.PackageDefinition.get(name='%s-name' % attrs['name']) is None
-
-
-@then(u'there is no application with {properties}')
-def then_there_is_no_application_with_properties(context, properties):
-    attrs = parse_properties(properties)
-    returned = tds.model.Application.get(**attrs)
-    assert returned is None, returned
 
 
 @then(u'the package is invalidated for deploy targets')
@@ -1320,8 +1322,22 @@ def then_the_package_is_invalidated_for_deploy_targets(context):
 
     for attr_set in attr_sets:
         context.execute_steps('''
-            Then the package is invalidated for deploy target with name="%(name)s"
-        ''' % attr_set)
+            Then the package is invalidated for deploy target with name="%s"
+        ''' % attr_set['name'])
+
+
+
+@then(u'the package version "{version}" is invalidated for deploy targets')
+def then_the_package_is_invalidated_for_deploy_targets(context, version):
+    attr_sets = [
+        dict(zip(context.table.headings, row))
+        for row in context.table
+    ]
+
+    for attr_set in attr_sets:
+        context.execute_steps('''
+            Then the package version "%s" is invalidated for deploy target with name="%s"
+        ''' % (version, attr_set['name']))
 
 
 @then(u'the output describes no deployments')
@@ -1357,18 +1373,16 @@ def given_the_package_has_status_set_with_properties(
     for app_dep in tagopsdb.AppDeployment.find(package_id=package.id):
         if app_dep.app_id not in target_ids:
             continue
-
         if app_dep.environment != environment:
             continue
-
         app_dep.status = status
         tagopsdb.Session.add(app_dep)
 
-    for host_dep in tagopsdb.HostDeployment.find(package_id=package.id):
-        if host_dep.host.environment != environment:
-            continue
-
-        tagopsdb.Session.delete(host_dep)
+    if status in ('validated', 'invalidated'):
+        for host_dep in tagopsdb.HostDeployment.find(package_id=package.id):
+            if host_dep.host.environment != environment:
+                continue
+            tagopsdb.Session.delete(host_dep)
 
     tagopsdb.Session.commit()
 
@@ -1463,29 +1477,19 @@ def give_there_is_an_ongoing_deployment_on_the_hosts(context, hosts):
 
     dep_props = dict(
         user=curr_user,
-        status='complete'
     )
 
-    found_dep = None
-    for dep in tagopsdb.Deployment.all():
-        if any(app_dep.package_id == package_id
-               for app_dep in dep.app_deployments):
-            found_dep = dep
-            break
-        elif any(host_dep.package_id == package_id
-                 for host_dep in dep.host_deployments):
-            found_dep = dep
-            break
-
-    if found_dep is None:
-        found_dep = tagopsdb.Deployment(**dep_props)
-        tagopsdb.Session.add(found_dep)
+    deployment = tagopsdb.Deployment.get(**dep_props)
+    if deployment is None:
+        deployment = tagopsdb.Deployment(**dep_props)
+        deployment.status = 'inprogress'
+        tagopsdb.Session.add(deployment)
         tagopsdb.Session.commit()
 
     hosts = [tagopsdb.Host.get(hostname=host_name)
              for host_name in host_names]
 
-    deploy_to_hosts(hosts, found_dep, package_id, 'inprogress')
+    deploy_to_hosts(hosts, deployment, package_id, 'inprogress')
 
 
 @given(u'there is an ongoing deployment on the deploy target')
@@ -1494,6 +1498,7 @@ def given_there_is_an_ongoing_deployment_on_the_deploy_target(context):
         context.tds_packages[-1],
         context.tds_targets[-1],
         context.tds_env,
+        'inprogress',
         'inprogress',
     )
 
@@ -1533,6 +1538,7 @@ def the_package_with_name_is_removed_from_the_directory(context, properties, dir
     rpm_name = '{name}-{version}-{revision}.{arch}.rpm'.format(
         parse_properties(properties)
     )
+    file_name = os.path.join(dir_name, rpm_name)
     assert os.path.isdir(dir_name)
     assert not any(name == rpm_name for name in os.listdir(dir_name))
     assert not os.path.isfile(file_name) , "{file_name} should not exist".format(
@@ -1553,6 +1559,89 @@ def then_update_repo_log_file_has(context, text):
         assert text in actual, (text, actual)
 
 
+@given(u'there is a Ganglia with {properties}')
+def given_there_is_a_ganglia_with(context, properties):
+    properties = parse_properties(properties)
+    created = tagopsdb.model.Ganglia.update_or_create(properties)
+    tagopsdb.Session.commit()
+
+
+@given(u'there is a HipChat with {properties}')
+def given_there_is_a_hipchat_with(context, properties):
+    properties = parse_properties(properties)
+    created = tagopsdb.model.Hipchat.update_or_create(properties)
+    tagopsdb.Session.commit()
+
+
+@given(u'there are hipchat rooms')
+def given_there_are_hipchat_rooms(context):
+    hipchats = getattr(context, 'hipchats', list())
+    for row in context.table:
+        hipchat = tagopsdb.Hipchat(
+            room_name=row['room_name'],
+        )
+        hipchats.append(hipchat)
+        tagopsdb.Session.add(hipchat)
+    tagopsdb.Session.commit()
+    context.hipchats = hipchats
+
+
+@given(u'the deploy target "{targ}" is associated with the hipchat "{room}"')
+def given_the_deploy_target_is_associated_with_the_hipchat(context, targ,
+                                                           room):
+    hipchat = tagopsdb.Hipchat.get(room_name=room)
+    target = tagopsdb.AppDefinition.get(name=targ)
+    if hipchat is None:
+        assert False, "HipChat %s doesn't exist" % room
+    if target is None:
+        assert False, "Target %s doesn't exist" % targ
+    if target not in hipchat.app_definitions:
+        hipchat.app_definitions.append(target)
+    tagopsdb.Session.commit()
+
+
+def targ_room_associated(targ, room):
+    """
+    Return true if the application type with name targ is associated with the
+    HipChat room with name room, false otherwise.
+    Raise exception if either targ or room doesn't resolve to a tier or
+    HipChat room, respectively
+    """
+    hipchat = tagopsdb.Hipchat.get(room_name=room)
+    target = tagopsdb.AppDefinition.get(name=targ)
+    if hipchat is None:
+        assert False, "HipChat %s doesn't exist" % room
+    if target is None:
+        assert False, "Target %s doesn't exist" % targ
+    return target in hipchat.app_definitions
+
+
+@then(u'the deploy target "{targ}" is associated with the hipchat "{room}"')
+def then_the_deploy_target_is_associated_with_the_hipchat(context, targ,
+                                                          room):
+    assert targ_room_associated(targ, room)
+
+
+@then(u'the deploy target "{targ}" is not associated with the hipchat "{room}"')
+def then_the_deploy_target_is_not_associated_with_the_hipchat(context, targ,
+                                                              room):
+    assert not targ_room_associated(targ, room)
+
+
+@given(u'there are deployments')
+def given_there_are_deployments(context):
+    deployments = getattr(context, 'deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        deployment = tagopsdb.Deployment(**attrs)
+        tagopsdb.Session.add(deployment)
+        deployments.append(deployment)
+    tagopsdb.Session.commit()
+    context.deployments = deployments
+
+
 NAME_OBJ_MAPPINGS = {
     'application': tds.model.Application,
     'package': tds.model.Package,
@@ -1570,8 +1659,8 @@ NAME_OBJ_MAPPINGS = {
 }
 
 
-@then(u'there exists a {model} with {properties}')
-def then_there_exists_a_model_with(context, model, properties):
+@then(u'there is a {model} with {properties}')
+def then_there_is_a_model_with(context, model, properties):
     model = NAME_OBJ_MAPPINGS[model.lower()]
     tagopsdb.Session.close()
     properties = parse_properties(properties)
@@ -1579,8 +1668,8 @@ def then_there_exists_a_model_with(context, model, properties):
     assert found is not None, (found, model.all())
 
 
-@then(u'there exists an {obj_type} with {properties}')
-def then_there_exists_an_obj_type_with(context, obj_type, properties):
+@then(u'there is an {obj_type} with {properties}')
+def then_there_is_an_obj_type_with(context, obj_type, properties):
     model = NAME_OBJ_MAPPINGS[obj_type.lower()]
     tagopsdb.Session.close()
     properties = parse_properties(properties)
@@ -1588,14 +1677,60 @@ def then_there_exists_an_obj_type_with(context, obj_type, properties):
     assert found is not None, (found, model.all())
 
 
-@then(u'there exists no {model} with {properties}')
-def then_there_exists_no_model_with(context, model, properties):
+@then(u'there is no {model} with {properties}')
+def then_there_is_no_model_with(context, model, properties):
     model = NAME_OBJ_MAPPINGS[model.lower()]
     tagopsdb.Session.close()
     properties = parse_properties(properties)
     found = model.get(**properties)
     assert found is None, found
 
+
+@given(u'there are host deployments')
+def given_there_are_host_deployments(context):
+    host_deps = getattr(context, 'host_deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        dep = tagopsdb.HostDeployment(**attrs)
+        tagopsdb.Session.add(dep)
+        host_deps.append(dep)
+    tagopsdb.Session.commit()
+    context.host_deployments = host_deps
+
+
+@given(u'there are tier deployments')
+def given_there_are_tier_deployments(context):
+    tier_deps = getattr(context, 'host_deployments', list())
+    for row in context.table:
+        attrs = dict()
+        for heading in context.table.headings:
+            attrs[heading] = row[heading]
+        dep = tagopsdb.AppDeployment(**attrs)
+        tagopsdb.Session.add(dep)
+        tier_deps.append(dep)
+    tagopsdb.Session.commit()
+    context.host_deployments = tier_deps
+
+
+@given(u'the tier "{tier}" is associated with the application "{app}" for the project "{proj}"')
+def given_the_tier_is_associated_with_the_application_for_the_project(
+    context, tier, app, proj
+):
+    found_tier = tds.model.AppTarget.get(name=tier)
+    found_app = tds.model.Application.get(name=app)
+    found_proj = tds.model.Project.get(name=proj)
+    assert None not in (found_tier, found_app, found_proj), (
+        found_tier, found_app, found_proj,
+    )
+    proj_pkg = tagopsdb.model.ProjectPackage(
+        project_id=found_proj.id,
+        pkg_def_id=found_app.id,
+        app_id=found_tier.id,
+    )
+    tagopsdb.Session.add(proj_pkg)
+    tagopsdb.Session.commit()
 
 @when(u'the status of the {obj_type} with {props} changes to "{status}"')
 def when_the_status_of_deployment_changes_to(context, obj_type, props, status):
@@ -1615,3 +1750,21 @@ def when_the_status_of_deployment_changes_to(context, obj_type, props, status):
 
     instance.status = status
     tagopsdb.Session.commit()
+
+
+@then(u'the {obj_type} with {props} has duration greater than {duration}')
+def the_obj_has_duration_greater_than(context, obj_type, props, duration):
+    properties = parse_properties(props)
+    obj_mapping = {
+        'deployment': tagopsdb.model.Deployment,
+        'host deployment': tagopsdb.model.HostDeployment,
+        'tier deployment': tagopsdb.model.AppDeployment,
+    }
+    assert obj_type in obj_mapping
+
+    model = obj_mapping[obj_type]
+    tagopsdb.Session.close()
+    instance = model.get(**properties)
+    assert instance is not None
+
+    assert instance.duration > float(duration), (instance.duration, duration)

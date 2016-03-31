@@ -40,10 +40,10 @@ Feature: HipChat notifications
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         And hipchat notifications are enabled
-        When I run "deploy promote myapp 124 --hosts sprojhost01"
-        And I run "deploy promote myapp 124 --hosts sprojhost02"
-        And I run "deploy promote myapp 124 --hosts sother01"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        When I run "deploy promote myapp 124 --hosts sprojhost01 --detach"
+        And I run "deploy promote myapp 124 --hosts sprojhost02 --detach"
+        And I run "deploy promote myapp 124 --hosts sother01 --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "promote","of+version+124+of+myapp+on+hosts+sprojhost01"
         And there are 3 hipchat notifications
 
@@ -53,8 +53,8 @@ Feature: HipChat notifications
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         And hipchat notifications are enabled
-        When I run "deploy promote myapp 124 --all-apptypes"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        When I run "deploy promote myapp 124 --all-apptypes --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "promote","of+version+124+of+myapp+on+app+tier","the-apptype+in+stage"
         And there are 1 hipchat notifications
 
@@ -64,13 +64,13 @@ Feature: HipChat notifications
         And the package is deployed on the deploy targets in the "dev" env
         And the package has been validated in the "development" environment
         And hipchat notifications are enabled
-        When I run "deploy promote myapp 124 --apptypes the-apptype"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        When I run "deploy promote myapp 124 --apptypes the-apptype --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "promote","of+version+124+of+myapp+on+app+tier","the-apptype+in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: fix to all apptypes
+    Scenario: fix on all apptypes
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -78,27 +78,13 @@ Feature: HipChat notifications
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
-        When I run "deploy fix myapp --all-apptypes"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","the-apptype","another-apptype","in+stage"
-        And there are 1 hipchat notifications
-
-    @hipchat_server
-    Scenario: fix to specific apptypes
-        Given there is a deploy target with name="another-apptype"
-        And there is a host with name="anotherhost01"
-        And the host is associated with the deploy target
-        And the deploy target is a part of the project-application pair
-        And the package is deployed on the deploy target
-        And the package failed to deploy on the host with name="anotherhost01"
-        And hipchat notifications are enabled
-        When I run "deploy fix myapp --apptypes another-apptype"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        When I run "deploy fix myapp --all-apptypes --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: fix to specific host
+    Scenario: fix on specific apptypes
         Given there is a deploy target with name="another-apptype"
         And there is a host with name="anotherhost01"
         And the host is associated with the deploy target
@@ -106,75 +92,89 @@ Feature: HipChat notifications
         And the package is deployed on the deploy target
         And the package failed to deploy on the host with name="anotherhost01"
         And hipchat notifications are enabled
-        When I run "deploy fix myapp --hosts anotherhost01"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        When I run "deploy fix myapp --apptypes another-apptype --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        And a hipchat notification message contains "fix","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
+        And there are 1 hipchat notifications
+
+    @hipchat_server
+    Scenario: fix on specific host
+        Given there is a deploy target with name="another-apptype"
+        And there is a host with name="anotherhost01"
+        And the host is associated with the deploy target
+        And the deploy target is a part of the project-application pair
+        And the package is deployed on the deploy target
+        And the package failed to deploy on the host with name="anotherhost01"
+        And hipchat notifications are enabled
+        When I run "deploy fix myapp --hosts anotherhost01 --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "fix","of+version+123+of+myapp+on+hosts+anotherhost01","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: rollback version to apptype
+    Scenario: rollback version on apptype
         Given the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="121"
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="122"
         And the package is deployed on the deploy target
         And the package has been invalidated
 
         And hipchat notifications are enabled
 
-        When I run "deploy rollback myapp --apptype the-apptype"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        When I run "deploy rollback myapp --apptype the-apptype --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "rollback","of+version+121+of+myapp+on+app+tier","the-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: rollback version to all apptypes
+    Scenario: rollback version on all apptypes
         Given the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="121"
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="122"
         And the package is deployed on the deploy target
         And the package has been invalidated
 
         And hipchat notifications are enabled
 
-        When I run "deploy rollback myapp --all-apptypes"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        When I run "deploy rollback myapp --all-apptypes --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
         And a hipchat notification message contains "rollback","of+version+121+of+myapp+on+app+tier","the-apptype","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
-    Scenario: rollback version to specific host
+    Scenario: rollback version on specific host
         Given the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
-        And there is a package with version="121"
+        And I wait 1 seconds
+        And there is a package with version="124"
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
-        And there is a package with version="122"
+        And I wait 1 seconds
+        And there is a package with version="125"
         And the package is deployed on the deploy target
         And the package has been invalidated
 
         And hipchat notifications are enabled
 
-        When I run "deploy rollback myapp --hosts sprojhost01"
-        Then there is a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
-        And a hipchat notification message contains "rollback","of+version+121+of+myapp+on+hosts","sprojhost01","in+stage"
+        When I run "deploy rollback myapp --hosts sprojhost01 --detach"
+        Then there was a hipchat notification with room_id="fakeroom",auth_token="deadbeef"
+        And a hipchat notification message contains "rollback","of+version+124+of+myapp+on+hosts","sprojhost01","in+stage"
         And there are 1 hipchat notifications
 
     @hipchat_server
@@ -182,19 +182,19 @@ Feature: HipChat notifications
         Given the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="200"
         And the package is deployed on the deploy target
         And the package has been validated
 
-        And I wait 2 seconds
+        And I wait 1 seconds
         And there is a package with version="201"
         And the package is deployed on the deploy target
         And the package has been invalidated
 
         And hipchat notifications are enabled
 
-        When I run "deploy rollback myapp --hosts sprojhost01"
+        When I run "deploy rollback myapp --hosts sprojhost01 --detach"
         Then there is a hipchat failure
         And the output has "Deployment was successful. However, notification to HipChat failed, status code is: 403"
 
@@ -206,5 +206,5 @@ Feature: HipChat notifications
 
         And hipchat notifications are enabled
 
-        When I run "deploy promote myapp 500 --all-apptypes"
+        When I run "deploy promote myapp 500 --all-apptypes --detach"
         Then the output has "Deployment was successful. However, notification to HipChat failed, message is: "

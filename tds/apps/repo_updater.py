@@ -7,7 +7,6 @@ import logging
 import os
 import os.path
 import smtplib
-import subprocess
 import sys
 import time
 import hashlib
@@ -18,10 +17,8 @@ import requests
 import requests.exceptions
 import lxml.html
 import jenkinsapi.jenkins
-try:
-    from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
-except ImportError:
-    from jenkinsapi.exceptions import JenkinsAPIException, NotFound
+
+from jenkinsapi.custom_exceptions import JenkinsAPIException, NotFound
 
 import tagopsdb
 import tagopsdb.exceptions
@@ -176,7 +173,7 @@ class RepoUpdater(TDSProgramBase):
         job = jenkins[job_name]
         try:
             build = job.get_build(int(pkg.version))
-        except KeyError as exc:
+        except KeyError:
             raise exceptions.JenkinsJobNotFoundError(
                 'Artifact', job_name, pkg.version, self.jenkins_url,
             )
@@ -391,13 +388,13 @@ class RepoUpdater(TDSProgramBase):
 
         try:
             utils.run(['make', '-C', self.repo_dir])
-        except subprocess.CalledProcessError as exc:
+        except exceptions.RunProcessError as exc:
             log.error('yum database update failed, retrying: %s', exc)
             time.sleep(5)   # Short delay before re-attempting
 
             try:
                 utils.run(['make', '-C', self.repo_dir])
-            except subprocess.CalledProcessError as exc:
+            except exceptions.RunProcessError as exc:
                 log.error('yum database update failed, aborting: %s', exc)
                 final_status = 'failed'
 
