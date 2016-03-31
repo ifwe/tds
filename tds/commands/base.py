@@ -10,6 +10,10 @@ import tds.exceptions
 
 # TODO: these two functions should be methods on tds.model.*Target classes
 def latest_deployed_package_for_app_target(environment, app, app_target):
+    """
+    Return the latest deployed package for the given application app and tier
+    app_target in the given environment.
+    """
     if isinstance(app, tds.model.Application):
         app = app.delegate
 
@@ -30,6 +34,10 @@ def latest_deployed_package_for_app_target(environment, app, app_target):
 
 
 def latest_deployed_version_for_host_target(environment, app, host_target):
+    """
+    Return the latest deployed package for the given application app and host
+    host_target in the given environment.
+    """
     if isinstance(app, tds.model.Application):
         app = app.delegate
 
@@ -72,6 +80,9 @@ class BaseController(object):
     access_levels = {}
 
     def __init__(self, config):
+        """
+        Set app_config to config.
+        """
         self.app_config = config
 
     def action(self, action, **params):
@@ -94,7 +105,6 @@ class BaseController(object):
                 return dict(error=exc)
 
         handler = getattr(self, action, None)
-
         try:
             if handler is None:
                 raise tds.exceptions.InvalidInputError(
@@ -122,6 +132,9 @@ class BaseController(object):
         """
         if not validate_attrs:
             return params
+
+        if 'hosts' in params:
+            params['hostonly'] = True
 
         result = params.copy()
 
@@ -172,6 +185,9 @@ class BaseController(object):
 
     def validate_application(self, application=None, applications=None,
                              **_params):
+        """
+        Validate application(s) from command line params.
+        """
         if applications is None:
             applications = []
 
@@ -275,6 +291,8 @@ class BaseController(object):
                     bad_hosts.append(host.name)
                 else:
                     host_targets.append(host)
+                    if host.application not in app_targets:
+                        app_targets.append(host.application)
 
             if no_exist_hosts:
                 raise tds.exceptions.NotFoundError("Host",
@@ -294,12 +312,15 @@ class BaseController(object):
                             app.name, host_target.name
                         )
 
-            return dict(hosts=host_targets, apptypes=None)
+            return dict(apptypes=app_targets, hosts=host_targets)
 
         raise NotImplementedError
 
     def validate_package(self, version=None, hostonly=False, show_cmd=False,
                          **params):
+        """
+        Validate a package from the command line params.
+        """
         params.update(self.validate_application(**params))
         application = params.pop('application')
 
@@ -309,9 +330,20 @@ class BaseController(object):
             )
             if package is None:
                 raise Exception("Couldn't determine latest version")
+            else:
+                package = tds.model.Package.get(
+                    name=package.name,
+                    version=package.version,
+                    revision=package.revision,
+                )
         elif application is not None and len(application.packages) > 0:
             for package in application.packages:
                 if version == package.version:
+                    package = tds.model.Package.get(
+                        name=package.name,
+                        version=package.version,
+                        revision=package.revision,
+                    )
                     break
             else:
                 package = None
@@ -328,13 +360,22 @@ class BaseController(object):
 
     def validate_package_hostonly(self, version=None, hostonly=True,
                                   **params):
+        """
+        Validate a package for a host only deployment.
+        """
         return self.validate_package(version, hostonly, **params)
 
     def validate_package_show(self, version=None, hostonly=False,
                               show_cmd=True, **params):
+        """
+        Validate package show command.
+        """
         return self.validate_package(version, hostonly, show_cmd, **params)
 
     def get_latest_app_version(self, app, hostonly, show_cmd, env, **params):
+        """
+        Return the latest package version for the given application app.
+        """
         # TODO: possibly move this to tds.model.Application ?
         targets = self.validate_targets(
             env=env,
@@ -385,8 +426,8 @@ class BaseController(object):
 
                     app_target_ids = app_target_ids.union(common_targets)
 
-                app_targets = [tds.model.AppTarget.get(id=id)
-                               for id in app_target_ids]
+                app_targets = [tds.model.AppTarget.get(id=targ_id)
+                               for targ_id in app_target_ids]
 
             for app_target in app_targets:
                 app_deployments[app_target.id] = \

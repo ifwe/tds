@@ -24,10 +24,16 @@ class UpdateDeployRepoDaemon(Daemon):
     election = None
 
     def __init__(self, app, *args, **kwargs):
+        """
+        Initialize daemon.
+        """
         self.app = app
         super(UpdateDeployRepoDaemon, self).__init__(*args, **kwargs)
 
     def sigterm_handler(self, signum, frame):
+        """
+        Shut down daemon.
+        """
         log.fatal('Received SIGTERM. Beginning shutdown...')
         if self.election is not None:
             self.election.cancel()
@@ -65,6 +71,9 @@ class UpdateDeployRepoDaemon(Daemon):
 
     @staticmethod
     def create_zoo(zoo_config):
+        """
+        Create and return a new zoo.
+        """
         hostname = socket.gethostname()
 
         zoo = KazooClient('hosts=%s' % ','.join(zoo_config))

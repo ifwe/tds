@@ -52,15 +52,50 @@ Feature: deploy validate application version [-f|--force] [--apptypes|--all-appt
         And the deploy target is a part of the project-application pair
         And the hosts are associated with the deploy target
         When I run "deploy validate myapp 123 --apptype bar"
-        Then the output is "No deployments to validate for application "myapp" in development environment"
+        Then the output is "Tier "bar" has no current deployment for application "myapp", version "123" to validate"
+
+    Scenario: validate a package from an application for an apptype with the deployment in progress
+        Given there is a deploy target with name="bar"
+        And there are hosts:
+            | name           |
+            | anotherhost01  |
+            | anotherhost02  |
+        And the deploy target is a part of the project-application pair
+        And the hosts are associated with the deploy target
+        And there is an ongoing deployment on the deploy target
+        When I run "deploy validate myapp 123 --apptype bar"
+        Then the output is "Tier "bar" has a current deployment that is in progress, skipping..."
+
+    Scenario: validate a package from an application for an apptype with the deployment in invalidated state
+        Given the package has been invalidated
+        When I run "deploy validate myapp 123 --apptype foo"
+        Then the output is "Application "myapp", version "123" has been validated on tier "foo""
+        And the package is validated
+
+    Scenario: validate a package from an application for an apptype with the deployment already validated
+        Given the package has been validated
+        When I run "deploy validate myapp 123 --apptype foo"
+        Then the output is "Tier "foo" has a current deployment that is already validated, skipping..."
+
+    Scenario: validate a package from an application for an apptype with the deployment in incomplete state
+        Given the package failed to deploy on the host with name="projhost02"
+        When I run "deploy validate myapp 123 --apptype foo"
+        Then the output is "Tier "foo" has a current deployment that is incomplete, please use "--force" option to override"
+
+    Scenario: validate a package from an application for an apptype with the deployment in incomplete state with force option
+        Given the package failed to deploy on the host with name="projhost02"
+        When I run "deploy validate myapp 123 --apptype foo --force"
+        Then the output is "Application "myapp", version "123" has been validated on tier "foo""
+        And the package is validated
 
     Scenario: validate a package from an application with single apptype
         When I run "deploy validate myapp 123"
-        Then the output is empty
+        Then the output is "Application "myapp", version "123" has been validated on tier "foo""
         And the package is validated
 
     Scenario: validate a package from an application with single apptype with apptype option
         When I run "deploy validate myapp 123 --apptype foo"
+        Then the output is "Application "myapp", version "123" has been validated on tier "foo""
         Then the package is validated
 
     Scenario: validate a package from an application with multiple apptypes with no options
@@ -84,6 +119,7 @@ Feature: deploy validate application version [-f|--force] [--apptypes|--all-appt
         And the deploy target is a part of the project-application pair
         And the package is deployed on the deploy target
         When I run "deploy validate myapp 123 --apptype foo"
+        Then the output is "Application "myapp", version "123" has been validated on tier "foo""
         Then the package is validated for deploy target with name="foo"
 
     Scenario: validate a package from an application with multiple apptypes with all-apptypes option
@@ -97,4 +133,19 @@ Feature: deploy validate application version [-f|--force] [--apptypes|--all-appt
         When I run "deploy validate myapp 123 --all-apptypes"
         Then the package is validated for the deploy targets
 
-    # TODO: Need tests for '--force'!
+    Scenario: validate after a fix
+        Given there is a package with version="124"
+        And there are deployments:
+            | id    | user  | status    |
+            | 2     | foo   | failed    |
+            | 3     | foo   | complete  |
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status        | user  | app_id    | package_id    |
+            | 2     | 2             | 1                 | incomplete    | foo   | 2         | 2             |
+        And I wait 1 seconds
+        And there are tier deployments:
+            | id    | deployment_id | environment_id    | status        | user  | app_id    | package_id    |
+            | 3     | 3             | 1                 | complete      | foo   | 2         | 2             |
+        When I run "deploy validate myapp 124 --apptypes foo"
+        Then the output is "Application "myapp", version "124" has been validated on tier "foo""
+        Then the package is validated for deploy target with name="foo"

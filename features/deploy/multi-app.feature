@@ -43,26 +43,22 @@ Feature: Real-life application usage
         And the package with name="solr-app",version="123" is deployed on the deploy target with name="solrsearch"
         And the package with name="solr-app",version="124" is deployed on the deploy target with name="solrbrowse"
 
-    Scenario Outline: other app to deploy target with tagconfig and another app
-        Given the deploy strategy is "<strategy>"
-        When I run "deploy promote solr-app 124 --apptypes solrsearch"
-        Then the output has "Completed: 3 out of 3 hosts"
-        And package "solr-app" version "124" was deployed to the deploy target with name="solrsearch"
+    Scenario: other app to deploy target with tagconfig and another app
+        When I run "deploy promote solr-app 124 --apptypes solrsearch --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
+        And there is a deployment with id=2,status="queued",duration=0
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=2,environment_id=1,duration=0
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=2,duration=0
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=2,duration=0
+        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=2,duration=0
 
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
-
-    Scenario Outline: tagconfig to deploy target with tagconfig and another app
-        Given the deploy strategy is "<strategy>"
-        When I run "deploy promote tagconfig 457 --apptypes solrsearch"
-        Then the output has "Completed: 3 out of 3 hosts"
-        And package "tagconfig" version "457" was deployed to the deploy target with name="solrsearch"
-
-        Examples:
-            | strategy |
-            | mco      |
-            | salt     |
+    Scenario: tagconfig to deploy target with tagconfig and another app
+        When I run "deploy promote tagconfig 457 --apptypes solrsearch --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
+        And there is a deployment with id=2,status="queued",duration=0
+        And there is a tier deployment with deployment_id=2,app_id=2,status="pending",package_id=5,environment_id=1,duration=0
+        And there is a host deployment with deployment_id=2,host_id=1,status="pending",package_id=5,duration=0
+        And there is a host deployment with deployment_id=2,host_id=2,status="pending",package_id=5,duration=0
+        And there is a host deployment with deployment_id=2,host_id=3,status="pending",package_id=5,duration=0
 
     # TODO: Definitely need more tests here!!!

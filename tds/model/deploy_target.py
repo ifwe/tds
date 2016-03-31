@@ -47,6 +47,9 @@ class AppTarget(DeployTarget):
 
     @property
     def hosts(self):
+        """
+        Return all hosts associated with this tier.
+        """
         return [HostTarget(delegate=x) for x in self.delegate.hosts]
 
     def remove_application(self, application, project=None):
@@ -69,6 +72,38 @@ class AppTarget(DeployTarget):
 
         tagopsdb.Session.commit()
 
+    def get_ongoing_deployments(self, environment_id, query=None):
+        """
+        Return all ongoing tier deployments on this tier in the environment
+        with ID environment_id.
+        """
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.AppDeployment)
+        return query.join(tagopsdb.model.AppDeployment.deployment).filter(
+            tagopsdb.model.AppDeployment.app_id == self.id,
+            tagopsdb.model.AppDeployment.environment_id == environment_id,
+            tagopsdb.model.AppDeployment.status.in_(('pending', 'inprogress')),
+            tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
+        ).all()
+
+    def get_ongoing_host_deployments(self, environment_id, query=None):
+        """
+        Return all ongoing host deployments for hosts associated with this tier
+        in the environment with ID environment_id
+        """
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        return query.join(tagopsdb.model.HostDeployment.deployment).join(
+            tagopsdb.model.HostDeployment.host
+        ).filter(
+            tagopsdb.model.Host.app_id == self.id,
+            tagopsdb.model.Host.environment_id == environment_id,
+            tagopsdb.model.HostDeployment.status.in_(
+                ('pending', 'inprogress')
+            ),
+            tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
+        ).all()
+
 
 class HostTarget(DeployTarget):
     """A host target."""
@@ -77,13 +112,37 @@ class HostTarget(DeployTarget):
 
     @property
     def hosts(self):
+        """
+        Return a list containing just this host.
+        Convenience property to mirror AppTarget.hosts property.
+        """
         return [self]
 
     @property
     def application(self):
+        """
+        Return own tier.
+        """
         return AppTarget(delegate=self.delegate.application)
 
     @property
     def package_definitions(self):
+        """
+        Return all applications associated with this.
+        """
         return [Application(delegate=x)
                 for x in self.target.package_definitions]
+
+    def get_ongoing_deployments(self, query=None):
+        """
+        Return all ongoing deployments on this host.
+        """
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        return query.join(tagopsdb.model.HostDeployment.host).filter(
+            tagopsdb.model.HostDeployment.id == self.id,
+            tagopsdb.model.HostDeployment.status.in_(
+                ('pending', 'inprogress')
+            ),
+            tagopsdb.model.Deployment.status.in_(('queued', 'inprogress')),
+        ).all()
