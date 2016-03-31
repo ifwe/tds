@@ -134,7 +134,7 @@ jobFactory.referencedJobs.each {
             scm('')
         }
         wrappers {
-            timeout(180, false)
+            timeout(240, false)
         }
     }
 }
