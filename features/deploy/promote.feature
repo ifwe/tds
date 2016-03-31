@@ -213,3 +213,27 @@ Feature: deploy promote application version [-f|--force] [--delay] [--hosts|--ap
         And there is a deployment with status="queued",delay=0,duration=0
         And there is a tier deployment with status="pending",deployment_id=4,app_id=2,package_id=3,environment_id=2,duration=0
         And there is no host deployment with deployment_id=4
+
+    Scenario: with the most recent tier dep invalidated
+        Given there are deployments:
+            | id    | user  | status    |
+            | 3     | foo   | complete  |
+            | 4     | foo   | failed    |
+        And there are packages:
+            | version   | revision  |
+            | 124       | 1         |
+        And I wait 1 seconds
+        And there are tier deployments:
+            | id    | deployment_id | app_id    | status        | user  | package_id    | environment_id    |
+            | 4     | 3             | 2         | validated     | foo   | 4             | 1                 |
+            | 5     | 4             | 2         | invalidated   | foo   | 4             | 2                 |
+        And there are host deployments:
+            | id    | deployment_id | host_id   | status    | user  | package_id    |
+            | 1     | 4             | 3         | ok        | foo   | 4             |
+            | 2     | 4             | 4         | failed    | foo   | 4             |
+        When I run "deploy promote myapp 124 --apptype the-apptype --detach"
+        Then the output has "Deployment ready for installer daemon, disconnecting now."
+        And there is a deployment with id=5,status="queued",delay=0,duration=0
+        And there is a tier deployment with status="pending",deployment_id=5,app_id=2,package_id=4,environment_id=2,duration=0
+        And there is a host deployment with status="pending",deployment_id=5,host_id=4,package_id=4,duration=0
+        And there is no host deployment with host_id=3,deployment_id=5
