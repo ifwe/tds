@@ -207,6 +207,25 @@ class HostDeploymentView(BaseView):
             self.request.validated[self.name].host_id
         self._validate_project_package(pkg_id, host_id)
 
+        if 'environments' in self.request.restrictions:
+            if 'host_id' in self.request.validated_params:
+                host = self.query(tds.model.HostTarget).get(
+                    id=self.request.validated_params['host_id'],
+                )
+                if host is not None and host.environment_id not in \
+                        self.request.restrictions['environments']:
+                    self.request.errors.add(
+                        'header', 'cookie',
+                        "Insufficient authorization. This cookie only has "
+                        "permissions for the following environment IDs: "
+                        "{environments}.".format(
+                            environments=self.request.restrictions[
+                                'environments'
+                            ],
+                        )
+                    )
+                    self.request.errors.status = 403
+
     def _validate_project_package(self, pkg_id, host_id):
         """
         Validate that the tier for the host with ID host_id is associated with
@@ -260,6 +279,25 @@ class HostDeploymentView(BaseView):
             self.request.validated_params['package_id'],
             self.request.validated_params['host_id'],
         )
+
+        if 'environments' in self.request.restrictions:
+            if 'host_id' in self.request.validated_params:
+                host = self.query(tds.model.HostTarget).get(
+                    id=self.request.validated_params['host_id'],
+                )
+                if host is not None and host.environment_id not in \
+                        self.request.restrictions['environments']:
+                    self.request.errors.add(
+                        'header', 'cookie',
+                        "Insufficient authorization. This cookie only has "
+                        "permissions for the following environment IDs: "
+                        "{environments}.".format(
+                            environments=self.request.restrictions[
+                                'environments'
+                            ],
+                        )
+                    )
+                    self.request.errors.status = 403
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
