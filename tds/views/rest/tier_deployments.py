@@ -245,6 +245,22 @@ class TierDeploymentView(BaseView):
             self.request.validated[self.name].app_id
         self._validate_project_package(pkg_id, tier_id)
 
+        if 'environments' in self.request.restrictions:
+            if 'environment_id' in self.request.validated_params:
+                if self.request.validated_params['environment_id'] not in \
+                        self.request.restrictions['environments']:
+                    self.request.errors.add(
+                        'header', 'cookie',
+                        "Insufficient authorization. This cookie only has "
+                        "permissions for the following environment IDs: "
+                        "{environments}.".format(
+                            environments=self.request.restrictions[
+                                'environments'
+                            ],
+                        )
+                    )
+                    self.request.errors.status = 403
+
     def _validate_project_package(self, pkg_id, tier_id):
         """
         Validate that the tier with ID tier_id is associated with the
@@ -299,6 +315,22 @@ class TierDeploymentView(BaseView):
             self.request.validated_params['package_id'],
             self.request.validated_params['tier_id'],
         )
+
+        if 'environments' in self.request.restrictions:
+            if 'environment_id' in self.request.validated_params:
+                if self.request.validated_params['environment_id'] not in \
+                        self.request.restrictions['environments']:
+                    self.request.errors.add(
+                        'header', 'cookie',
+                        "Insufficient authorization. This cookie only has "
+                        "permissions for the following environment IDs: "
+                        "{environments}.".format(
+                            environments=self.request.restrictions[
+                                'environments'
+                            ],
+                        )
+                    )
+                    self.request.errors.status = 403
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
