@@ -384,7 +384,7 @@ class ValidatedView(JSONValidatedView):
             request.validated['user'] = username
             request.is_admin = is_admin
             for key in restrictions:
-                restrictions[key] = restrictions[key].split(',')
+                restrictions[key] = restrictions[key].split('+')
             request.restrictions = restrictions
             try:
                 collection_path = self.settings['url_prefix'] + \
@@ -433,14 +433,19 @@ class ValidatedView(JSONValidatedView):
                     )
                     request.errors.status = 403
             if 'methods' in request.restrictions:
-                if not any(request.method.lower() == method.lower() for method
+                request_method = 'get' if request.method == 'HEAD' else \
+                    request.method
+                if not any(request_method.lower() == method.lower() for method
                            in request.restrictions['methods']):
                     request.errors.add(
                         'header', 'cookie',
                         'Insufficient authorization. This cookie only has '
                         'permissions for the following privileged methods: '
                         '{methods}.'.format(
-                            methods=sorted(request.restrictions['methods']),
+                            methods=sorted(
+                                str(method) for method in
+                                request.restrictions['methods']
+                            ),
                         )
                     )
                     request.errors.status = 403

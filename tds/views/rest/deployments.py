@@ -305,3 +305,52 @@ class DeploymentView(BaseView):
         """
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
+
+    def validate_env_restrictions(self, request):
+        """
+        Validate that the cookie is authorized to deploy to environment of this
+        deployment.
+        """
+        if self.name not in request.validated or 'environments' not in \
+                request.restrictions:
+            return
+        dep = request.validated[self.name]
+        if any(
+            str(host_dep.host.environment_id) not in request.restrictions[
+                'environments'
+            ] for host_dep in dep.host_deployments
+        ) or any(
+            str(tier_dep.environment_id) not in request.restrictions[
+                'environments'
+            ] for tier_dep in dep.app_deployments
+        ):
+            request.errors.add(
+                'header', 'cookie',
+                "Insufficient authorization. This cookie only has permissions "
+                "for the following environment IDs: {environments}.".format(
+                    environments=sorted(
+                        int(env_id) for env_id in request.restrictions[
+                            'environments'
+                        ]
+                    )
+                )
+            )
+            request.errors.status = 403
+
+    @view(validators=('validate_individual', 'validate_put_post',
+                      'validate_obj_put', 'validate_cookie',
+                      'validate_env_restrictions'))
+    def put(self):
+        """
+        Handle a PUT request after the parameters are marked valid JSON.
+        """
+        for attr in self.request.validated_params:
+            setattr(
+                self.request.validated[self.name],
+                self.param_routes.get(attr, attr),
+                self.request.validated_params[attr],
+            )
+        self.session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )

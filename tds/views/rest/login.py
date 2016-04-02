@@ -26,9 +26,18 @@ class LoginView(BaseView):
 
     individual_allowed_methods = dict(
         POST=dict(
-            description="Authenticate and get a session cookie using a JSON body with attributes 'username' and 'password'.",
+            description="Authenticate and get a session cookie using a JSON "
+                "body with attributes 'username' and 'password'.",
             returns="Session cookie attached at cookies->session.",
             permissions='none',
+            parameters=dict(
+                username="LDAP username",
+                password="LDAP password",
+                wildcard="Whether you would like an IP-wildcard cookie (if "
+                    "authorized)",
+                environments="List of environment IDs separated by + signs of "
+                    "environments that the cookie will be allowed to modify",
+            )
         ),
     )
 
@@ -98,7 +107,7 @@ class LoginView(BaseView):
             elif key == 'methods':
                 valid_methods = ('DELETE', 'GET', 'POST', 'PUT',)
                 invalid_method = False
-                for method in self.body[key].split(','):
+                for method in self.body[key].split('+'):
                     if method not in valid_methods:
                         request.errors.add(
                             "body", key,
@@ -113,12 +122,11 @@ class LoginView(BaseView):
                 if not invalid_method:
                     self.restrictions[key] = self.body[key]
             elif key == 'wildcard':
-                if self.body[key] not in self.VALID_BOOLEAN_VALUES:
+                if self.body[key] not in (True, 1):
                     request.errors.add(
                         'body', key,
                         "Value {val} for argument {key} is not a Boolean. Valid"
-                        " Boolean formats: (0, 1, 'true', 'false', 'True', "
-                        "'False').".format(
+                        " Boolean formats: (true, 1).".format(
                             val=self.body[key],
                             key=key,
                         )
@@ -132,8 +140,7 @@ class LoginView(BaseView):
                         "YOU!"
                     )
                     request.errors.status = 403
-                request.wildcard = \
-                    self.body[key] in self.VALID_BOOLEAN_TRUE_VALUES
+                request.wildcard = self.body[key]
             else:
                 self._validate_id_list(key, self.body[key])
 
@@ -160,7 +167,7 @@ class LoginView(BaseView):
             self.request.errors.status = 422
             return
         model = obj_mapping[obj_type]
-        parsed_id_list = id_list.split(',')
+        parsed_id_list = id_list.split('+')
         bad_entry = False
         for obj_id in parsed_id_list:
             try:

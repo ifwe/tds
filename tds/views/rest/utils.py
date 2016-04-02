@@ -32,7 +32,8 @@ def _create_digest(username, addr, seconds, settings, is_admin, prepend):
 def _create_cookie(username, addr, settings, is_admin, prepend=None):
     """
     Create a cookie with the given username and remote client address.
-    prepend should be a string containing CSVs of restrictions separated by &s.
+    prepend should be a string containing values separated by +s of
+    restrictions separated by &s.
     """
     seconds = int(
         (

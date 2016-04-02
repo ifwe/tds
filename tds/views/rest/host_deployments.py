@@ -207,25 +207,6 @@ class HostDeploymentView(BaseView):
             self.request.validated[self.name].host_id
         self._validate_project_package(pkg_id, host_id)
 
-        if 'environments' in self.request.restrictions:
-            if 'host_id' in self.request.validated_params:
-                host = self.query(tds.model.HostTarget).get(
-                    id=self.request.validated_params['host_id'],
-                )
-                if host is not None and host.environment_id not in \
-                        self.request.restrictions['environments']:
-                    self.request.errors.add(
-                        'header', 'cookie',
-                        "Insufficient authorization. This cookie only has "
-                        "permissions for the following environment IDs: "
-                        "{environments}.".format(
-                            environments=self.request.restrictions[
-                                'environments'
-                            ],
-                        )
-                    )
-                    self.request.errors.status = 403
-
     def _validate_project_package(self, pkg_id, host_id):
         """
         Validate that the tier for the host with ID host_id is associated with
@@ -280,30 +261,61 @@ class HostDeploymentView(BaseView):
             self.request.validated_params['host_id'],
         )
 
-        if 'environments' in self.request.restrictions:
-            if 'host_id' in self.request.validated_params:
+    def validate_env_restrictions(self, request):
+        """
+        Validate that the cookie is authorized to deploy to environment of this
+        host dep.
+        """
+        if 'environments' in request.restrictions:
+            if 'host_id' in request.validated_params:
                 host = self.query(tds.model.HostTarget).get(
-                    id=self.request.validated_params['host_id'],
+                    id=request.validated_params['host_id'],
                 )
-                if host is not None and host.environment_id not in \
-                        self.request.restrictions['environments']:
-                    self.request.errors.add(
-                        'header', 'cookie',
-                        "Insufficient authorization. This cookie only has "
-                        "permissions for the following environment IDs: "
-                        "{environments}.".format(
-                            environments=self.request.restrictions[
+            elif self.name in request.validated:
+                host = request.validated[self.name]
+            else:
+                return
+
+            if host is not None and str(host.environment_id) not in \
+                    request.restrictions['environments']:
+                request.errors.add(
+                    'header', 'cookie',
+                    "Insufficient authorization. This cookie only has "
+                    "permissions for the following environment IDs: "
+                    "{environments}.".format(
+                        environments=sorted(
+                            int(env_id) for env_id in request.restrictions[
                                 'environments'
-                            ],
-                        )
+                            ]
+                        ),
                     )
-                    self.request.errors.status = 403
+                )
+                request.errors.status = 403
 
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_obj_post', 'validate_cookie'))
+                      'validate_obj_post', 'validate_cookie',
+                      'validate_env_restrictions'))
     def collection_post(self):
         """
         Perform a collection POST after all validation has passed.
         """
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
+
+    @view(validators=('validate_individual', 'validate_put_post',
+                      'validate_obj_put', 'validate_cookie',
+                      'validate_env_restrictions'))
+    def put(self):
+        """
+        Handle a PUT request after the parameters are marked valid JSON.
+        """
+        for attr in self.request.validated_params:
+            setattr(
+                self.request.validated[self.name],
+                self.param_routes.get(attr, attr),
+                self.request.validated_params[attr],
+            )
+        self.session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )
