@@ -6,11 +6,27 @@ from os.path import join as opj
 
 import json
 import requests
+import yaml
 
 from behave import given, then, when
 
 from tds.views.rest import utils
 from .model_steps import parse_properties
+
+
+def _set_cookie(context, username, password, query_dict=None):
+    if query_dict is None:
+        query_dict = dict()
+    query_dict['username'] = username
+    query_dict['password'] = password
+    response = requests.post(
+        "http://{addr}:{port}/login".format(
+            addr=context.rest_server.server_name,
+            port=context.rest_server.server_port,
+        ),
+        data=json.dumps(query_dict),
+    )
+    context.cookie = response.cookies['session']
 
 
 @given(u'I have a cookie with {perm_type} permissions')
@@ -19,23 +35,28 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
     Add a cookie at context.cookie with the permission type perm_type.
     """
     if perm_type == 'user':
-        response = requests.post(
-            "http://{addr}:{port}/login".format(
-                addr=context.rest_server.server_name,
-                port=context.rest_server.server_port,
-            ),
-            data=json.dumps(dict(username="testuser", password="secret")),
-        )
-        context.cookie = response.cookies['session']
+        _set_cookie(context, 'testuser', 'secret')
     elif perm_type == 'admin':
-        response = requests.post(
-            "http://{addr}:{port}/login".format(
-                addr=context.rest_server.server_name,
-                port=context.rest_server.server_port,
-            ),
-            data=json.dumps(dict(username="testadmin", password="removed")),
-        )
-        context.cookie = response.cookies['session']
+        _set_cookie(context, 'testadmin', 'removed')
+    else:
+        assert False, ("Unknown permission type: {p}. "
+                       "Valid options: user, admin.".format(p=perm_type))
+
+
+@given(u'I have a cookie with {perm_type} permissions and {restrictions}')
+def given_i_have_a_cookie_with_restrictions(context, perm_type, restrictions):
+    """
+    Add a cookie at context.cookie with the given permission type and
+    restrictions.
+    """
+    pairs = [pair.split('=', 1) for pair in restrictions.split(',')]
+    query_dict = dict()
+    for key, val in pairs:
+        query_dict[key] = val
+    if perm_type == 'user':
+        _set_cookie(context, 'testuser', 'secret', query_dict)
+    elif perm_type == 'admin':
+        _set_cookie(context, 'testadmin', 'removed', query_dict)
     else:
         assert False, ("Unknown permission type: {p}. "
                        "Valid options: user, admin.".format(p=perm_type))
@@ -204,6 +225,14 @@ def then_the_response_contains_a_cookie(context):
     assert len(context.response.cookies) > 0, context.response.cookies
 
 
+@then(u'the response contains a cookie with {properties}')
+def then_the_response_contains_a_cookie_with(context, properties):
+    assert len(context.response.cookies) > 0, context.response.cookies
+    assert properties in context.response.cookies['session'], (
+        context.response.cookies['session']
+    )
+
+
 @then(u'the response does not contain a cookie')
 def then_the_response_does_not_contain_a_cookie(context):
     assert len(context.response.cookies) == 0, context.response.cookies
@@ -234,3 +263,16 @@ def then_the_response_list_contains_object_property_listing(context, prop):
                 matched = True
                 break
     assert matched, context.response.text
+
+
+@given(u'"{username}" is a wildcard user in the REST API')
+def given_username_is_a_wildcard_user_in_the_rest_api(context, username):
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'), 'r+') as f:
+        if 'wildcard_users' not in context.rest_settings:
+            context.rest_settings['wildcard_users'] = list()
+        context.rest_settings['wildcard_users'].append(username)
+        f.truncate()
+        f.write(
+            yaml.dump(context.rest_settings, default_flow_style=False)
+        )
