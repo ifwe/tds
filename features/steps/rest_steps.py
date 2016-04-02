@@ -26,6 +26,9 @@ def _set_cookie(context, username, password, query_dict=None):
         ),
         data=json.dumps(query_dict),
     )
+    assert 'session' in response.cookies, (
+        "Authentication failed: {resp}".format(resp=response)
+    )
     context.cookie = response.cookies['session']
 
 
@@ -60,6 +63,28 @@ def given_i_have_a_cookie_with_restrictions(context, perm_type, restrictions):
     else:
         assert False, ("Unknown permission type: {p}. "
                        "Valid options: user, admin.".format(p=perm_type))
+
+
+@given(u'I set the cookie {prop} to {value}')
+def given_i_set_the_cookie_prop_to_value(context, prop, value):
+    pairs = [pair.split('=', 1) for pair in context.cookie.split('&')]
+    cookie_string = ''
+    for key, val in pairs:
+        if key == prop:
+            val = value
+        cookie_string += '{key}={val}&'.format(key=key, val=val)
+    context.cookie = cookie_string[:-1]
+
+
+@given(u'I remove {prop} from the cookie')
+def given_i_remove_prop_from_the_cookie(context, prop):
+    pairs = [pair.split('=', 1) for pair in context.cookie.split('&')]
+    cookie_string = ''
+    for key, val in pairs:
+        if key == prop:
+            continue
+        cookie_string += '{key}={val}&'.format(key=key, val=val)
+    context.cookie = cookie_string[:-1]
 
 
 @given(u'I have set the request headers {properties}')
