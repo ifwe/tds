@@ -606,7 +606,7 @@ class DeployController(BaseController):
             curr_app_dep = application.get_latest_tier_deployment(
                 tier_id=apptype.id,
                 environment_id=self.environment.id,
-                exclude_statuses=['pending'],
+                exclude_statuses=['pending', 'invalidated'],
             )
             if (previous_env and
                 not package.check_app_deployments(apptype, previous_env) and
