@@ -300,8 +300,37 @@ class TierDeploymentView(BaseView):
             self.request.validated_params['tier_id'],
         )
 
+    def validate_env_restrictions(self, request):
+        """
+        Validate that the cookie is authorized to deploy to environment of this
+        tier dep.
+        """
+        if 'environments' in request.restrictions:
+            if 'environment_id' in request.validated_params:
+                environment_id = request.validated_params['environment_id']
+            elif self.name is request.validated:
+                environment_id = request.validated[self.name].environment_id
+            else:
+                return
+
+            if str(environment_id) not in request.restrictions['environments']:
+                request.errors.add(
+                    'header', 'cookie',
+                    "Insufficient authorization. This cookie only has "
+                    "permissions for the following environment IDs: "
+                    "{environments}.".format(
+                        environments=sorted(
+                            int(env_id) for env_id in request.restrictions[
+                                'environments'
+                            ]
+                        ),
+                    )
+                )
+                request.errors.status = 403
+
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_obj_post', 'validate_cookie'))
+                      'validate_obj_post', 'validate_cookie',
+                      'validate_env_restrictions'))
     def collection_post(self):
         """
         Handle a collection POST request after all validation has passed.
@@ -322,7 +351,8 @@ class TierDeploymentView(BaseView):
         return self._handle_collection_post()
 
     @view(validators=('validate_individual', 'validate_put_post',
-                      'validate_obj_put', 'validate_cookie'))
+                      'validate_obj_put', 'validate_cookie',
+                      'validate_env_restrictions'))
     def put(self):
         """
         Handle a PUT request after all validation has passed.
