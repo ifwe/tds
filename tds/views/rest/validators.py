@@ -362,8 +362,10 @@ class ValidatedView(JSONValidatedView):
         If the user is not authorized to do the current action, add the
         corresponding error.
         """
-        (present, username, is_admin) = utils.validate_cookie(request,
-                                                              self.settings)
+        (present, username, is_admin, restrictions) = utils.validate_cookie(
+            request,
+            self.settings
+        )
         if not present:
             request.errors.add(
                 'header', 'cookie',
@@ -381,6 +383,9 @@ class ValidatedView(JSONValidatedView):
         else:
             request.validated['user'] = username
             request.is_admin = is_admin
+            for key in restrictions:
+                restrictions[key] = restrictions[key].split('+')
+            request.restrictions = restrictions
             try:
                 collection_path = self.settings['url_prefix'] + \
                     self._services[
@@ -425,6 +430,23 @@ class ValidatedView(JSONValidatedView):
                         'header', 'cookie',
                         'Admin authorization required. Please contact someone '
                         'in SiteOps to perform this operation for you.'
+                    )
+                    request.errors.status = 403
+            if 'methods' in request.restrictions:
+                request_method = 'get' if request.method == 'HEAD' else \
+                    request.method
+                if not any(request_method.lower() == method.lower() for method
+                           in request.restrictions['methods']):
+                    request.errors.add(
+                        'header', 'cookie',
+                        'Insufficient authorization. This cookie only has '
+                        'permissions for the following privileged methods: '
+                        '{methods}.'.format(
+                            methods=sorted(
+                                str(method) for method in
+                                request.restrictions['methods']
+                            ),
+                        )
                     )
                     request.errors.status = 403
 
