@@ -39,3 +39,58 @@ Feature: Login
         When I POST "{"username": "testuser", "password": "secret"}" to "/login"
         Then the response code is 200
         And the response contains a cookie
+
+    @rest
+    Scenario Outline: specify method permissions
+        When I POST "{"username": "testuser", "password": "secret", "methods": "<methods>"}" to "/login"
+        Then the response code is 200
+        And the response contains a cookie with methods=<methods>
+
+        Examples:
+            | methods           |
+            | GET               |
+            | GET+POST          |
+            | GET+POST+DELETE   |
+
+    @rest
+    Scenario: attempt to get a wildcard cookie without authorization
+        When I POST "{"username": "testuser", "password": "secret", "wildcard": true}" to "/login"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                               |
+            | body      | wildcard  | Insufficient authorization. NO WILDCARD COOKIES FOR YOU!  |
+
+    @rest
+    Scenario Outline: get a wildcard cookie
+        Given "testuser" is a wildcard user in the REST API
+        When I POST "{"username": "testuser", "password": "secret", "wildcard": <bool>}" to "/login"
+        Then the response code is 200
+        And the response contains a cookie
+
+        Examples:
+            | bool  |
+            | true  |
+            | 1     |
+
+    @rest
+    Scenario: attempt to get an env-specific cookie for an environment that doesn't exist
+        When I POST "{"username": "testuser", "password": "secret", "environments": "1"}" to "/login"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name          | description                           |
+            | body      | environments  | Could not find environment with ID 1. |
+
+    @rest
+    Scenario Outline: get an env-specific cookie
+        Given there is an environment with name="dev"
+        And there is an environment with name="stage"
+        And there is an environment with name="prod"
+        When I POST "{"username": "testuser", "password": "secret", "environments": "<envs>"}" to "/login"
+        Then the response code is 200
+        And the response contains a cookie with environments=<envs>
+
+        Examples:
+            | envs  |
+            | 1     |
+            | 1+2   |
+            | 1+2+3 |
