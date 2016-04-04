@@ -64,3 +64,24 @@ Feature: Malformed cookie detection
         And the response contains errors:
             | location  | name      | description                                               |
             | header    | cookie    | Cookie has expired or is invalid. Please reauthenticate.  |
+
+    @rest
+    Scenario: attempt to overwrite issued stamp
+        Given I have a cookie with user permissions
+        And I wait 1 seconds
+        And I increment the cookie issued stamp by 1
+        When I query GET "/projects"
+        Then the response code is 419
+        And the response contains errors:
+            | location  | name      | description                                               |
+            | header    | cookie    | Cookie has expired or is invalid. Please reauthenticate.  |
+
+    @rest
+    Scenario: attempt to remove issued stamp
+        Given I have a cookie with user permissions
+        And I remove issued from the cookie
+        When I query GET "/projects"
+        Then the response code is 419
+        And the response contains errors:
+            | location  | name      | description                                               |
+            | header    | cookie    | Cookie has expired or is invalid. Please reauthenticate.  |
