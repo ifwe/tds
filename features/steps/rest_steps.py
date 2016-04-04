@@ -76,6 +76,17 @@ def given_i_set_the_cookie_prop_to_value(context, prop, value):
     context.cookie = cookie_string[:-1]
 
 
+@given(u'I increment the cookie issued stamp by {increment}')
+def given_i_increment_the_cookie_issued_stamp_by(context, increment):
+    pairs = [pair.split('=', 1) for pair in context.cookie.split('&')]
+    cookie_string = ''
+    for key, val in pairs:
+        if key == 'issued':
+            val = str(int(val) + int(increment))
+        cookie_string += '{key}={val}&'.format(key=key, val=val)
+    context.cookie = cookie_string[:-1]
+
+
 @given(u'I remove {prop} from the cookie')
 def given_i_remove_prop_from_the_cookie(context, prop):
     pairs = [pair.split('=', 1) for pair in context.cookie.split('&')]
