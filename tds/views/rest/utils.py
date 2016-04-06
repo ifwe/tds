@@ -8,18 +8,20 @@ import base64
 from datetime import datetime
 
 
-def _create_digest(username, addr, seconds, settings, is_admin, prepend):
+def _create_digest(username, addr, seconds, settings, is_admin, prepend,
+                   eternal):
     """
     Create a digest for the given user, remote client address, and integer
     seconds since epoch when the created digest's cookie was created.
     """
     seconds = int(seconds)
-    msg = "{prepend}{username}&{addr}&{seconds}&{admin}".format(
+    msg = "{prepend}{username}&{addr}&{seconds}&{admin}&{eternal}".format(
         prepend=prepend,
         username=username,
         addr=addr,
         seconds=seconds,
         admin=is_admin,
+        eternal=eternal,
     )
     dig = hmac.new(
         settings['secret_key'],
@@ -29,7 +31,8 @@ def _create_digest(username, addr, seconds, settings, is_admin, prepend):
     return base64.b64encode(dig).decode()
 
 
-def _create_cookie(username, addr, settings, is_admin, prepend=None):
+def _create_cookie(username, addr, settings, is_admin, prepend=None,
+                   eternal=False):
     """
     Create a cookie with the given username and remote client address.
     prepend should be a string containing values separated by +s of
@@ -42,19 +45,23 @@ def _create_cookie(username, addr, settings, is_admin, prepend=None):
         ).total_seconds()
     )
     digest = _create_digest(
-        username, addr, seconds, settings, is_admin, prepend
+        username, addr, seconds, settings, is_admin, prepend, eternal
     )
 
-    return "{prepend}issued={issued}&user={user}&digest={digest}".format(
-        prepend=prepend,
-        issued=seconds,
-        user=username,
-        digest=digest,
+    return (
+        "{prepend}issued={issued}&user={user}&eternal={eternal}&"
+        "digest={digest}".format(
+            prepend=prepend,
+            issued=seconds,
+            user=username,
+            digest=digest,
+            eternal=eternal,
+        )
     )
 
 
 def set_cookie(response, username, addr, settings, is_admin,
-               restrictions=None):
+               restrictions=None, eternal=False):
     """
     Create and set a cookie for the given username and remote client address
     for the given response.
@@ -64,11 +71,13 @@ def set_cookie(response, username, addr, settings, is_admin,
         for key in sorted(restrictions.keys()):
             prepend += '{key}={val}&'.format(key=key, val=restrictions[key])
 
-    cookie_value = _create_cookie(username, addr, settings, is_admin, prepend)
+    cookie_value = _create_cookie(
+        username, addr, settings, is_admin, prepend, eternal
+    )
     response.set_cookie(
         key='session',
         value=cookie_value,
-        max_age=settings['cookie_life'],
+        max_age=None if eternal else settings['cookie_life'],
         secure=True,
     )
 
@@ -87,7 +96,7 @@ def validate_cookie(request, settings):
             request.cookies:
         return (False, False, False, dict())
 
-    digest = seconds = username = None
+    digest = seconds = username = eternal = None
 
     pairs = [p.split('=', 1) for p in request.cookies['session'].split('&')]
     restrictions = dict()
@@ -102,6 +111,11 @@ def validate_cookie(request, settings):
             username = val
         if key == 'digest':
             digest = val
+        if key == 'eternal':
+            if val == 'True':
+                eternal = True
+            elif val == 'False':
+                eternal = False
         for restrict_key in restrict_keys:
             if key == restrict_key:
                 restrictions[key] = val
@@ -111,7 +125,7 @@ def validate_cookie(request, settings):
         if key in restrictions:
             prepend += '{key}={val}&'.format(key=key, val=restrictions[key])
 
-    if None in (digest, seconds, username):
+    if None in (digest, seconds, username, eternal):
         return (True, False, False, restrictions)
 
     if 'X-Forwarded-For' in request.headers:
@@ -120,16 +134,16 @@ def validate_cookie(request, settings):
         remote_addr = request.remote_addr
 
     admin_digest = _create_digest(
-        username, remote_addr, seconds, settings, True, prepend,
+        username, remote_addr, seconds, settings, True, prepend, eternal
     )
     non_admin_digest = _create_digest(
-        username, remote_addr, seconds, settings, False, prepend,
+        username, remote_addr, seconds, settings, False, prepend, eternal
     )
     wildcard_admin_digest = _create_digest(
-        username, 'any', seconds, settings, True, prepend,
+        username, 'any', seconds, settings, True, prepend, eternal
     )
     wildcard_non_admin_digest = _create_digest(
-        username, 'any', seconds, settings, False, prepend,
+        username, 'any', seconds, settings, False, prepend, eternal
     )
     if digest not in (
         admin_digest, non_admin_digest, wildcard_admin_digest,
@@ -137,7 +151,11 @@ def validate_cookie(request, settings):
     ):
         return (True, False, False, restrictions)
 
-    if (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds() - \
+    if eternal:
+        if settings.get('eternal_users', None) is None or username not in \
+                settings['eternal_users']:
+            return (True, False, False, restrictions)
+    elif (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds() - \
             seconds - settings['cookie_life'] >= 0:
         return (True, False, False, restrictions)
 
