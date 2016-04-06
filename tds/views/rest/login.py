@@ -101,6 +101,7 @@ class LoginView(BaseView):
             return
         self.restrictions = dict()
         self.request.wildcard = False
+        self.request.eternal = False
         for key in self.body:
             if key in ('password', 'username'):
                 continue
@@ -121,26 +122,36 @@ class LoginView(BaseView):
                         invalid_method = True
                 if not invalid_method:
                     self.restrictions[key] = self.body[key]
-            elif key == 'wildcard':
-                if self.body[key] not in (True, 1):
+            elif key in ('wildcard', 'eternal'):
+                if type(self.body[key]) != bool:
                     request.errors.add(
                         'body', key,
-                        "Value {val} for argument {key} is not a Boolean. Valid"
-                        " Boolean formats: (true, 1).".format(
+                        "Value {val} for argument {key} is not a Boolean."
+                        .format(
                             val=self.body[key],
                             key=key,
                         )
                     )
                     request.errors.status = 400
-                elif self.settings.get('wildcard_users', None) is None or \
-                        self.user not in self.settings['wildcard_users']:
+                elif key == 'wildcard' and (self.settings.get(
+                    'wildcard_users', None
+                ) is None or self.user not in self.settings['wildcard_users']):
                     request.errors.add(
                         'body', key,
-                        "Insufficient authorization. NO WILDCARD COOKIES FOR "
-                        "YOU!"
+                        "Insufficient authorization. You are not authorized to"
+                        " get wildcard cookies."
                     )
                     request.errors.status = 403
-                request.wildcard = self.body[key]
+                elif key == 'eternal' and (self.settings.get(
+                    'eternal_users', None
+                ) is None or self.user not in self.settings['eternal_users']):
+                    request.errors.add(
+                        'body', key,
+                        "Insufficient authorization. You are not authorized to"
+                        " get eternal cookies."
+                    )
+                    request.errors.status = 403
+                setattr(request, key, self.body[key])
             else:
                 self._validate_id_list(key, self.body[key])
 
@@ -215,6 +226,7 @@ class LoginView(BaseView):
             self.settings,
             self.request.is_admin,
             self.restrictions,
+            self.request.eternal,
         )
         return response
 
