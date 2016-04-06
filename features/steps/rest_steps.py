@@ -55,6 +55,8 @@ def given_i_have_a_cookie_with_restrictions(context, perm_type, restrictions):
     pairs = [pair.split('=', 1) for pair in restrictions.split(',')]
     query_dict = dict()
     for key, val in pairs:
+        if key == 'eternal':
+            val = val in ('True', 'true', '1')
         query_dict[key] = val
     if perm_type == 'user':
         _set_cookie(context, 'testuser', 'secret', query_dict)
@@ -301,13 +303,39 @@ def then_the_response_list_contains_object_property_listing(context, prop):
     assert matched, context.response.text
 
 
-@given(u'"{username}" is a wildcard user in the REST API')
-def given_username_is_a_wildcard_user_in_the_rest_api(context, username):
+def _set_user_type(context, username, user_type):
+    user_type = '{user_type}_users'.format(user_type=user_type)
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
                   'settings.yml'), 'r+') as f:
-        if 'wildcard_users' not in context.rest_settings:
-            context.rest_settings['wildcard_users'] = list()
-        context.rest_settings['wildcard_users'].append(username)
+        if user_type not in context.rest_settings:
+            context.rest_settings[user_type] = list()
+        context.rest_settings[user_type].append(username)
+        f.truncate()
+        f.write(
+            yaml.dump(context.rest_settings, default_flow_style=False)
+        )
+
+
+@given(u'"{username}" is a {user_type} user in the REST API')
+def given_username_is_a_user_type_user_in_the_rest_api(
+    context, username, user_type
+):
+    _set_user_type(context, username, user_type)
+
+
+@given(u'"{username}" is an {user_type} user in the REST API')
+def given_username_is_an_user_type_user_in_the_rest_api(
+    context, username, user_type
+):
+    _set_user_type(context, username, user_type)
+
+
+@given(u'I change cookie life to {val}')
+def given_i_change_cookie_life_to(context, val):
+    val = int(val)
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'), 'r+') as f:
+        context.rest_settings['cookie_life'] = val
         f.truncate()
         f.write(
             yaml.dump(context.rest_settings, default_flow_style=False)

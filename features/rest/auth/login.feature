@@ -57,20 +57,30 @@ Feature: Login
         When I POST "{"username": "testuser", "password": "secret", "wildcard": true}" to "/login"
         Then the response code is 403
         And the response contains errors:
-            | location  | name      | description                                               |
-            | body      | wildcard  | Insufficient authorization. NO WILDCARD COOKIES FOR YOU!  |
+            | location  | name      | description                                                                   |
+            | body      | wildcard  | Insufficient authorization. You are not authorized to get wildcard cookies.   |
 
     @rest
-    Scenario Outline: get a wildcard cookie
+    Scenario: get a wildcard cookie
         Given "testuser" is a wildcard user in the REST API
-        When I POST "{"username": "testuser", "password": "secret", "wildcard": <bool>}" to "/login"
+        When I POST "{"username": "testuser", "password": "secret", "wildcard": true}" to "/login"
         Then the response code is 200
         And the response contains a cookie
 
-        Examples:
-            | bool  |
-            | true  |
-            | 1     |
+    @rest
+    Scenario: get an eternal cookie
+        Given "testuser" is an eternal user in the REST API
+        When I POST "{"username": "testuser", "password": "secret", "eternal": true}" to "/login"
+        Then the response code is 200
+        And the response contains a cookie with eternal=True
+
+    @rest
+    Scenario: attempt to get an eternal cookie without authorization
+        When I POST "{"username": "testuser", "password": "secret", "eternal": true}" to "/login"
+        Then the response code is 403
+        And the response contains errors:
+            | location  | name      | description                                                                   |
+            | body      | eternal   | Insufficient authorization. You are not authorized to get eternal cookies.    |
 
     @rest
     Scenario: attempt to get an env-specific cookie for an environment that doesn't exist
