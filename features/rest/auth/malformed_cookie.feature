@@ -85,3 +85,28 @@ Feature: Malformed cookie detection
         And the response contains errors:
             | location  | name      | description                                               |
             | header    | cookie    | Cookie has expired or is invalid. Please reauthenticate.  |
+
+    @rest
+    Scenario Outline: attempt to overwrite eternal
+        Given I have a cookie with user permissions
+        And I set the cookie eternal to <eternal>
+        When I query GET "/projects"
+        Then the response code is 419
+        And the response contains errors:
+            | location  | name      | description                                               |
+            | header    | cookie    | Cookie has expired or is invalid. Please reauthenticate.  |
+
+        Examples:
+            | eternal   |
+            | true      |
+            | True      |
+
+    @rest
+    Scenario: attempt to remove eternal
+        Given I have a cookie with user permissions
+        And I remove eternal from the cookie
+        When I query GET "/projects"
+        Then the response code is 419
+        And the response contains errors:
+            | location  | name      | description                                               |
+            | header    | cookie    | Cookie has expired or is invalid. Please reauthenticate.  |
