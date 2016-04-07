@@ -16,7 +16,7 @@ import traceback
 
 from datetime import datetime, timedelta
 
-from kazoo.client import KazooClient   # , KazooState
+from kazoo.client import KazooClient, KazooState
 from simpledaemon import Daemon
 
 import tagopsdb
@@ -64,12 +64,12 @@ class TDSInstallerDaemon(Daemon):
 
         if zookeeper_config is not None:
             self.election = self.create_zoo(zookeeper_config)
-            run = self.election.run
+            self.zk_run = self.election.run
         else:
-            run = lambda f, *a, **k: f(*a, **k)
+            self.zk_run = lambda f, *a, **k: f(*a, **k)
 
         while not self.should_stop:
-            run(self.handle_incoming_deployments)
+            self.zk_run(self.handle_incoming_deployments)
             self.clean_up_processes()
             time.sleep(0.1)     # Increase probability of other daemons running
 
@@ -149,16 +149,25 @@ class TDSInstallerDaemon(Daemon):
             self.ongoing_processes[dep_id][1] + self.threshold
         ]
 
-    @staticmethod
-    def create_zoo(zoo_config):
+    def create_zoo(self, zoo_config):
         """
         Create and return a new zoo.
         """
         hostname = socket.gethostname()
 
-        zoo = KazooClient('hosts=%s' % ','.join(zoo_config))
-        zoo.start()
-        return zoo.Election('/tdsinstaller', hostname)
+        self.zoo = KazooClient('hosts=%s' % ','.join(zoo_config))
+        def state_listener(state):
+            if state == KazooState.SUSPENDED:
+                log.warning("ZooKeeper connection suspended. Reconnecting...")
+                self.election = self.create_zoo(zoo_config)
+                self.zk_run = self.election.run
+            elif state == KazooState.LOST:
+                log.warning("ZooKeeper connection lost.")
+            else:
+                log.info("Connecting to ZooKeeper...")
+        self.zoo.add_listener(state_listener)
+        self.zoo.start()
+        return self.zoo.Election('/tdsinstaller', hostname)
 
     def run(self):
         """A wrapper for the main process to ensure any unhandled
