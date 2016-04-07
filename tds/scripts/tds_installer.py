@@ -41,6 +41,7 @@ class TDSInstallerDaemon(Daemon):
         self.threshold = kwargs.pop('threshold') if 'threshold' in kwargs \
             else timedelta(minutes=30)
         self.app = app
+        self.heartbeat_time = datetime.now()
         super(TDSInstallerDaemon, self).__init__(*args, **kwargs)
 
     def sigterm_handler(self, signum, frame):
@@ -94,6 +95,12 @@ class TDSInstallerDaemon(Daemon):
         """Look for files in 'incoming' directory and handle them."""
         tagopsdb.Session.close()
         deployment = self.app.find_deployment()
+
+        # Heartbeat test to see if daemon is 'stuck'
+        if (datetime.now() - self.heartbeat_time).seconds >= 300:
+            self.heartbeat_time = datetime.now()
+            log.info('HEARTBEAT - Deployment search result: %r', deployment)
+
         if deployment is None:
             return
 
