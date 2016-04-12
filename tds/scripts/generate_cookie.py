@@ -37,7 +37,7 @@ def generate_cookie(username, address, environment_ids=None, methods=None,
     if settings_path is None:
         settings_path = opj(
             tds.utils.config.TDSConfig.default_conf_dir,
-            'deploy.yml',
+            'tds_rest.yml',
         )
     with open(settings_path) as settings_file:
         settings = yaml.load(settings_file.read())
