@@ -6,6 +6,7 @@ as a JSON object with information on the generated cookie.
 import sys
 
 from os.path import join as opj
+from datetime import datetime, timedelta
 
 import json
 import yaml
@@ -15,7 +16,7 @@ from tds.views.rest import utils
 
 
 def generate_cookie(username, address, environment_ids=None, methods=None,
-                    eternal=False):
+                    eternal=False, settings_path=None):
     """
     Generate and return a cookie with the given information.
     username should be the username of the cookie user.
@@ -26,19 +27,20 @@ def generate_cookie(username, address, environment_ids=None, methods=None,
     """
     prepend = ''
     if environment_ids is not None:
-        prepend += 'environment_ids={ids}&'.format(
+        prepend += 'environments={ids}&'.format(
             ids='+'.join(environment_ids),
         )
     if methods is not None:
         prepend += 'methods={methods}&'.format(
             methods='+'.join(methods),
         )
-    settings_path = opj(
-        tds.utils.config.TDSConfig.default_conf_dir,
-        'deploy.yml',
-    )
+    if settings_path is None:
+        settings_path = opj(
+            tds.utils.config.TDSConfig.default_conf_dir,
+            'deploy.yml',
+        )
     with open(settings_path) as settings_file:
-        settings = yaml.load(settings.file.read())
+        settings = yaml.load(settings_file.read())
     cookie_val = utils._create_cookie(
         username,
         address,
@@ -51,12 +53,17 @@ def generate_cookie(username, address, environment_ids=None, methods=None,
     expires = 'never' if eternal else (
         datetime.now() + timedelta(seconds=settings['cookie_life'])
     ).strftime("%Y-%m-%d %H:%M:%S")
-    return dict(
+    cookie_descript = dict(
         cookie=cookie_val,
-        allowedMethods=methods,
         expires=expires,
-        allowedEnvironments=[env_dict[env_id] for env_id in environment_ids],
     )
+    if methods:
+        cookie_descript['allowedMethods'] = methods
+    if environment_ids:
+        cookie_descript['allowedEnvironments'] = [
+            env_dict[env_id] for env_id in environment_ids
+        ]
+    return cookie_descript
 
 
 class ArgException(Exception):
@@ -69,7 +76,7 @@ class ArgException(Exception):
             "Usage:\n"
             "\tpython save_cookie.py <username> <address> "
             "[--environment_ids=<environment_ids>] [--methods=<methods>] "
-            "[--eternal]\n\n"
+            "[--eternal] [--settings_path=<settings_path>]\n\n"
             "Arguments:\n"
             "\tusername should be the username for the cookie user.\n"
             "\taddress should be the IP address the cookie is tied to or 'any'"
@@ -78,8 +85,10 @@ class ArgException(Exception):
             "environment ID restrictions.\n"
             "\tmethods should be a comma-separated list of method "
             "restrictions in caps (i.e., 'GET', not 'get').\n"
-            "\tUse wildcard to get an IP-wildcard cookie (if authorized).\n"
-            "\tUse eternal to get a non-expiring cookie (if authorized)."
+            "\tUse eternal to get a non-expiring cookie (if authorized).\n"
+            "\tsettings_path should be a path to the settings file.\n\n"
+            "Your input:\n"
+            "\t{inp}".format(inp=" ".join(sys.argv))
         )
         self.output = output + '\n\n' + usage_text
         super(ArgException, self).__init__(self.output, *args, **kwargs)
@@ -131,6 +140,11 @@ def parse_command_line(argv):
             if 'eternal' in arg_dict:
                 raise ArgException('ERROR: Encountered --eternal twice.')
             arg_dict['eternal'] = bool(arg)
+            to_remove.append(arg)
+        elif arg.startswith('--settings_path'):
+            if 'settings_path' in arg_dict:
+                raise ArgException('ERROR: Encountered --settings_path twice.')
+            arg_dict['settings_path'] = arg.split('=', 1)[1]
             to_remove.append(arg)
     for arg in to_remove:
         argv.remove(arg)

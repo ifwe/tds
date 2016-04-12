@@ -340,3 +340,9 @@ def given_i_change_cookie_life_to(context, val):
         f.write(
             yaml.dump(context.rest_settings, default_flow_style=False)
         )
+
+@when(u'I use the generated cookie')
+def when_i_use_the_generated_cookie(context):
+    cookie_obj = json.loads(context.process.stdout.strip())
+    assert 'cookie' in cookie_obj
+    context.cookie = cookie_obj['cookie']
