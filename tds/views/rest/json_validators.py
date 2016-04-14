@@ -70,8 +70,8 @@ class JSONValidatedView(object):
                     )
                     with open(tds_rest_path) as tds_rest_file:
                         data = yaml.load(tds_rest_file.read())
-                        self.settings['secret_key'] = data['secret_key']
-                        self.settings['url_prefix'] = data['url_prefix']
+                        for key in data:
+                            self.settings[key] = data[key]
                 else:
                     # This is so the feature test suite will work
                     self.settings['url_prefix'] = ''
