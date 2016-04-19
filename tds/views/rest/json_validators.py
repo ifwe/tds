@@ -9,6 +9,7 @@ import yaml
 
 from os.path import join as opj
 
+import tagopsdb
 import tds
 import tds.utils.config
 
@@ -17,6 +18,13 @@ class JSONValidatedView(object):
     """
     This class implements JSON validators for parameters given in requests.
     """
+
+    VALID_BOOLEAN_TRUE_VALUES = ('1', 'true', 'True')
+    VALID_BOOLEAN_FALSE_VALUES = ('0', 'false', 'False')
+    VALID_BOOLEAN_VALUES = tuple(
+        list(VALID_BOOLEAN_TRUE_VALUES) +
+        list(VALID_BOOLEAN_FALSE_VALUES)
+    )
 
     def __init__(self, request, *args, **kwargs):
         """
@@ -62,8 +70,8 @@ class JSONValidatedView(object):
                     )
                     with open(tds_rest_path) as tds_rest_file:
                         data = yaml.load(tds_rest_file.read())
-                        self.settings['secret_key'] = data['secret_key']
-                        self.settings['url_prefix'] = data['url_prefix']
+                        for key in data:
+                            self.settings[key] = data[key]
                 else:
                     # This is so the feature test suite will work
                     self.settings['url_prefix'] = ''
@@ -83,9 +91,7 @@ class JSONValidatedView(object):
                             table = self.model.delegate.__table__
                         else:
                             table = self.model.__table__
-                        col_name = param
-                        if param in self.param_routes:
-                            col_name = self.param_routes[param]
+                        col_name = self.param_routes.get(param, param)
                         setattr(
                             self,
                             '{param}_choices'.format(param=param),
@@ -97,6 +103,7 @@ class JSONValidatedView(object):
                             "Got exception {e}.".format(param=param, e=exc)
                         )
 
+        self.session = tagopsdb.model.Base.Session()
         super(JSONValidatedView, self).__init__(*args, **kwargs)
 
     def _validate_json_params(self, types=None):
@@ -127,6 +134,31 @@ class JSONValidatedView(object):
                     )
                 )
                 self.request.errors.status = 400
+
+    def _get_param_value(self, param_name, types=None):
+        """
+        Return the value of the param with name param_name from
+        self.request.validated_params, cast as its type declared in types, if
+        present in types. Otherwise, just return
+        self.request.validated_params[param_name].
+        param_name should be the name of the param and should be a key in
+        self.request.validated_params.
+        types should be a dict mapping param names to their types. If types is
+        None, self.types is used instead.
+        """
+        if types is None:
+            types = self.types
+        if param_name not in types:
+            return self.request.validated_params.get(param_name)
+        param_type = types[param_name]
+        raw_value = self.request.validated_params[param_name]
+        if param_type == 'number':
+            return float(raw_value)
+        elif param_type == 'integer':
+            return int(raw_value)
+        elif param_type == 'boolean':
+            return raw_value in self.VALID_BOOLEAN_TRUE_VALUES
+        return raw_value
 
     def _validate_number(self, param_name):
         """
@@ -198,9 +230,9 @@ class JSONValidatedView(object):
         string and return False if it is; return an error message if it isn't.
         """
         given = self.request.validated_params[param_name]
-        if given in ('0', '1', 'true', 'false', 'True', 'False'):
-            self.request.validated_params[param_name] = given in ('1', 'true',
-                                                                  'True')
+        if given in self.VALID_BOOLEAN_VALUES:
+            self.request.validated_params[param_name] = given in \
+                self.VALID_BOOLEAN_TRUE_VALUES
             return False
         return (
             "Value {val} for argument {param} is not a Boolean. Valid Boolean"
@@ -218,17 +250,12 @@ class JSONValidatedView(object):
         """
         given = self.request.validated_params[param_name]
         try:
-            date_format = "%Y-%m-%dT%H:%M:%S"
-            date = datetime.datetime.strptime(given[:19], date_format)
-            rem = float(given[19:26]) + int(given[26:29]) * 3600 \
-                + int(given[29:31]) * 60
-            date += datetime.timedelta(seconds=rem)
-        except:     #TODO: Figure out which exceptions will be thrown here.
+            date = datetime.datetime.fromtimestamp(given)
+            self.request.validated[param_name] = date
+            return False
+        except ValueError:
             return "Could not parse {val} for {param} as a valid timestamp."\
                 .format(val=given, param=param_name)
-        else:
-            self.request.validated_params[param_name] = date
-            return False
 
     def _validate_choice(self, param_name):
         """

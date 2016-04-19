@@ -5,9 +5,11 @@ Its only intended use is as a base class for the BaseView; directly importing
 and using this view is discouraged.
 """
 
+import types
 import logging
 import re
 
+import sqlalchemy.orm.query
 import tds.exceptions
 from . import utils
 from .json_validators import JSONValidatedView
@@ -17,6 +19,34 @@ class ValidatedView(JSONValidatedView):
     """
     This class implements common non-JSON validators.
     """
+
+    def query(self, model):
+        """
+        Convenience method for creating a query over the model or its delegate
+        if creating a query over the model fails.
+        Do some duck punching by adding get and find methods to query.
+        """
+        try:
+            query = self.session.query(model)
+            has_delegate = False
+        except:
+            query = self.session.query(model.delegate)
+            has_delegate = True
+        def get(query, *args, **kwargs):
+            if not has_delegate:
+                return query.filter_by(*args, **kwargs).one_or_none()
+            delegate = query.filter_by(*args, **kwargs).one_or_none()
+            if delegate is not None:
+                return model(delegate=delegate)
+            return delegate
+        query.get = types.MethodType(get, query, sqlalchemy.orm.query.Query)
+        def find(query, *args, **kwargs):
+            if not has_delegate:
+                return query.filter_by(*args, **kwargs).all()
+            return [model(delegate=obj) for obj in
+                    query.filter_by(*args, **kwargs).all()]
+        query.find = types.MethodType(find, query, sqlalchemy.orm.query.Query)
+        return query
 
     def _validate_params(self, valid_params):
         """
@@ -52,10 +82,17 @@ class ValidatedView(JSONValidatedView):
             ),
             None,
         )
+        if request.method in ('GET', 'HEAD'):
+            param_dict = {'select': 'string'}
+            if getattr(self, 'extra_individual_get_params', None) is not None:
+                for param in self.extra_individual_get_params:
+                    param_dict[param] = self.extra_individual_get_params[param]
+            self._validate_params(param_dict.keys())
+            self._validate_json_params(param_dict)
         if validator:
             validator(request)
         else:
-            if request.method == "GET":
+            if request.method in ("GET", "HEAD"):
                 self._validate_params(['select'])
                 self._validate_json_params({'select': 'string'})
             self.get_obj_by_name_or_id()
@@ -208,15 +245,14 @@ class ValidatedView(JSONValidatedView):
         for tup in self.unique_together:
             tup_dict = dict()
             for item in tup:
-                key = self.param_routes[item] if item in self.param_routes \
-                    else item
+                key = self.param_routes.get(item, item)
                 if request_type == "POST" and item not in \
                         self.request.validated_params:
                     continue
                 tup_dict[key] = self.request.validated_params[item] if item \
                     in self.request.validated_params else \
                     getattr(self.request.validated[self.name], key)
-            found = self.model.get(**tup_dict)
+            found = self.query(self.model).get(**tup_dict)
             if found is not None:
                 if request_type == "POST":
                     self.request.errors.add(
@@ -275,7 +311,7 @@ class ValidatedView(JSONValidatedView):
         if param_name in self.request.validated_params:
             dict_key = self.param_routes[param_name] if param_name in \
                 self.param_routes else param_name
-            found_obj = self.model.get(
+            found_obj = self.query(self.model).get(
                 **{dict_key: self.request.validated_params[param_name]}
             )
             if not found_obj:
@@ -326,8 +362,10 @@ class ValidatedView(JSONValidatedView):
         If the user is not authorized to do the current action, add the
         corresponding error.
         """
-        (present, username, is_admin) = utils.validate_cookie(request,
-                                                              self.settings)
+        (present, username, is_admin, restrictions) = utils.validate_cookie(
+            request,
+            self.settings
+        )
         if not present:
             request.errors.add(
                 'header', 'cookie',
@@ -345,6 +383,9 @@ class ValidatedView(JSONValidatedView):
         else:
             request.validated['user'] = username
             request.is_admin = is_admin
+            for key in restrictions:
+                restrictions[key] = restrictions[key].split('+')
+            request.restrictions = restrictions
             try:
                 collection_path = self.settings['url_prefix'] + \
                     self._services[
@@ -391,6 +432,23 @@ class ValidatedView(JSONValidatedView):
                         'in SiteOps to perform this operation for you.'
                     )
                     request.errors.status = 403
+            if 'methods' in request.restrictions:
+                request_method = 'get' if request.method == 'HEAD' else \
+                    request.method
+                if not any(request_method.lower() == method.lower() for method
+                           in request.restrictions['methods']):
+                    request.errors.add(
+                        'header', 'cookie',
+                        'Insufficient authorization. This cookie only has '
+                        'permissions for the following privileged methods: '
+                        '{methods}.'.format(
+                            methods=sorted(
+                                str(method) for method in
+                                request.restrictions['methods']
+                            ),
+                        )
+                    )
+                    request.errors.status = 403
 
     def _validate_foreign_key(self, param_name, model_name, model,
                               attr_name=None):
@@ -424,7 +482,7 @@ class ValidatedView(JSONValidatedView):
         """
         try:
             obj_id = int(param)
-            found = model.get(id=obj_id)
+            found = self.query(model).get(id=obj_id)
             if found is None:
                 self.request.errors.add(
                     'query', param_name,
@@ -439,7 +497,7 @@ class ValidatedView(JSONValidatedView):
         except ValueError:
             name = param
             attrs = {attr_name: name} if attr_name else {'name': name}
-            found = model.get(**attrs)
+            found = self.query(model).get(**attrs)
             if found is None:
                 self.request.errors.add(
                     'query', param_name,
@@ -492,12 +550,13 @@ class ValidatedView(JSONValidatedView):
         )
 
         if 'GET' in self.result:
-            self.result['GET']['attributes'] = dict(
+            self.result['GET']['parameters'] = dict(
                 select=dict(
                     type='CSV',
-                    description="Comma-separated list of attributes",
+                    description="Comma-separated list of attributes to return",
                 )
             )
+            self.result['GET']['attributes'] = dict()
             for attr in self.full_types:
                 self.result['GET']['attributes'][attr] = dict(
                     type=self.full_types[attr],
@@ -605,7 +664,7 @@ class ValidatedView(JSONValidatedView):
                 ),
                 select=dict(
                     type='CSV',
-                    description="Comma-separated list of attributes",
+                    description="Comma-separated list of attributes to return",
                 )
             )
 

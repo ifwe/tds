@@ -15,7 +15,7 @@ import tds.model
 import tds.exceptions
 
 from .validators import ValidatedView
-from . import types, descriptions
+from . import obj_types, descriptions
 
 
 def init_view(_view_cls=None, name=None, plural=None, model=None,
@@ -56,18 +56,11 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
 
         if set_obj_params:
             json_types = getattr(
-                types, "{name}_TYPES".format(
+                obj_types, "{name}_TYPES".format(
                     name=obj_name.upper().replace('-', '_')
                 )
             )
             cls.full_types = json_types
-            if 'user' in json_types or 'id' in json_types:
-                json_types = json_types.copy()
-            if 'user' in json_types:
-                del json_types['user']
-            if 'id' in json_types:
-                del json_types['id']
-            cls.types = json_types
 
             param_descripts = getattr(
                 descriptions, "{name}_DESCRIPTIONS".format(
@@ -75,12 +68,20 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
                 )
             )
             cls.full_descriptions = param_descripts
-            if 'user' in param_descripts or 'id' in param_descripts:
+
+            selectables_only = ('user', 'id', 'realized', 'created', 'spec_id',
+                                'dc_id', 'declared', 'project_type',
+                                'description', 'host_base', 'commit_hash',
+                                'deploy_result',)
+            if any(x in json_types for x in selectables_only):
+                json_types = json_types.copy()
                 param_descripts = param_descripts.copy()
-            if 'user' in param_descripts:
-                del param_descripts['user']
-            if 'id' in param_descripts:
-                del param_descripts['id']
+            for attr_name in selectables_only:
+                if attr_name in json_types:
+                    del json_types[attr_name]
+                if attr_name in param_descripts:
+                    del param_descripts[attr_name]
+            cls.types = json_types
             cls.param_descriptions = param_descripts
 
         return cls
@@ -136,13 +137,14 @@ class BaseView(ValidatedView):
             model = getattr(tds.model, obj_type.title(), None)
             if model is None:
                 raise tds.exceptions.NotFoundError('Model', [obj_type])
+        model_query = self.query(model)
 
         if not param_name:
             param_name = 'name_or_id'
 
         try:
             obj_id = int(self.request.matchdict[param_name])
-            obj = model.get(id=obj_id)
+            obj = model_query.get(id=obj_id)
             name = False
         except ValueError:
             if can_be_name:
@@ -151,11 +153,9 @@ class BaseView(ValidatedView):
                 obj_dict = dict()
                 if name_attr:
                     obj_dict[name_attr] = name
-                elif 'name' in self.param_routes:
-                    obj_dict[self.param_routes['name']] = name
                 else:
-                    obj_dict['name'] = name
-                obj = model.get(**obj_dict)
+                    obj_dict[self.param_routes.get('name', 'name')] = name
+                obj = model_query.get(**obj_dict)
             else:
                 obj_id = self.request.matchdict[param_name]
                 obj = None
@@ -200,6 +200,7 @@ class BaseView(ValidatedView):
 
         if obj_cls is None:
             raise tds.exceptions.NotFoundError('Model', [obj_type])
+        obj_cls_query = self.query(obj_cls)
 
         self._validate_params(('limit', 'start', 'select'))
         self._validate_json_params(
@@ -207,7 +208,7 @@ class BaseView(ValidatedView):
         )
 
         if plural not in self.request.validated:
-            self.request.validated[plural] = obj_cls.query().order_by(
+            self.request.validated[plural] = obj_cls_query.order_by(
                 obj_cls.id
             )
 
@@ -253,8 +254,15 @@ class BaseView(ValidatedView):
                 status=status,
                 headers=headers,
             )
+            tagopsdb.Session.remove()
             return resp
+        elif renderer == "empty":
+            return Response(
+                status=status,
+                headers=headers,
+            )
         else:
+            tagopsdb.Session.remove()
             raise NotImplementedError(
                 "REST renderer not implemented: {renderer}.".format(
                     renderer=renderer,
@@ -294,6 +302,13 @@ class BaseView(ValidatedView):
             [self.to_json_obj(x) for x in self.request.validated[self.plural]]
         )
 
+    @view(validators=('validate_collection_get', 'validate_cookie'))
+    def collection_head(self):
+        """
+        Same as collection_get above, except returns empty body.
+        """
+        return self.make_response(renderer="empty")
+
     def _handle_collection_post(self):
         """
         Handle the addition and commit of the model in a POST request after
@@ -301,15 +316,17 @@ class BaseView(ValidatedView):
         Create and return the HTTP response.
         """
         self._route_params()
-        if getattr(self.model, 'create', None):
+        if getattr(self.model, 'create', None) is not None:
             self.request.validated[self.name] = self.model.create(
+                True, self.session,
                 **self.request.validated_params
             )
         else:
-            self.request.validated[self.name] = self.model.update_or_create(
-                self.request.validated_params
+            self.request.validated[self.name] = self.model(
+                **self.request.validated_params
             )
-            tagopsdb.Session.commit()
+            self.session.add(self.request.validated[self.name])
+            self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             "201 Created",
@@ -338,10 +355,10 @@ class BaseView(ValidatedView):
         """
         if 'delete_cascade' in self.request.validated:
             for obj in self.request.validated['delete_cascade']:
-                tagopsdb.Session.delete(obj)
-            tagopsdb.Session.commit()
-        tagopsdb.Session.delete(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+                self.session.delete(obj)
+            self.session.commit()
+        self.session.delete(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )
@@ -355,6 +372,13 @@ class BaseView(ValidatedView):
             self.to_json_obj(self.request.validated[self.name])
         )
 
+    @view(validators=('validate_individual', 'validate_cookie'))
+    def head(self):
+        """
+        Same as get above except returns empty body.
+        """
+        return self.make_response(renderer="empty")
+
     @view(validators=('validate_individual', 'validate_put_post',
                       'validate_obj_put', 'validate_cookie'))
     def put(self):
@@ -364,10 +388,10 @@ class BaseView(ValidatedView):
         for attr in self.request.validated_params:
             setattr(
                 self.request.validated[self.name],
-                self.param_routes[attr] if attr in self.param_routes else attr,
+                self.param_routes.get(attr, attr),
                 self.request.validated_params[attr],
             )
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

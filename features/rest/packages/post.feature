@@ -18,7 +18,7 @@ Feature: Add (POST) package on REST API
         And the job has a build with number="2"
         When I query POST "/applications/<select>/packages?version=<ver>&revision=<rev>"
         Then the response code is 201
-        And the response is an object with version="<ver>",revision="<rev>",creator="testuser",job="myjob"
+        And the response is an object with version="<ver>",revision="<rev>",user="testuser",job="myjob"
         And there is a package with version="<ver>",revision="<rev>",creator="testuser",job="myjob"
 
         Examples:
@@ -27,12 +27,34 @@ Feature: Add (POST) package on REST API
             | 4         | 2     | 2     |
 
     @rest @jenkins_server
+    Scenario: attempt to pass name
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
+        When I query POST "/applications/app3/packages?version=2&revision=2&name=noexist"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name  | description                                                                                       |
+            | query     | name  | Unsupported query: name. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].   |
+        And there is no package with version="2",revision="2",creator="testuser",job="myjob",pkg_name="noexist"
+
+    @rest @jenkins_server
+    Scenario: attempt to set commit_hash
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
+        When I query POST "/applications/app3/packages?version=2&revision=2&commit_hash=asdfsad"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name          | description                                                                                               |
+            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
+        And there is no package with version="2",revision="2",creator="testuser",job="myjob",pkg_name="noexist"
+
+    @rest @jenkins_server
     Scenario: specify job
         Given there is a jenkins job with name="somejob"
         And the job has a build with number="2"
         When I query POST "/applications/4/packages?version=2&revision=2&job=somejob"
         Then the response code is 201
-        And the response is an object with version="2",revision="2",creator="testuser",job="somejob"
+        And the response is an object with version="2",revision="2",user="testuser",job="somejob"
         And there is a package with version="2",revision="2",creator="testuser",job="somejob"
 
     @rest @jenkins_server

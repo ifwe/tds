@@ -25,6 +25,7 @@ class DeploymentView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get deployment matching ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update deployment matching ID."),
         DELETE=dict(description="Delete deployment matching ID."),
     )
@@ -32,6 +33,7 @@ class DeploymentView(BaseView):
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of deployments, optionally by limit "
                  "and/or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new deployment."),
     )
 
@@ -179,7 +181,7 @@ class DeploymentView(BaseView):
         else:
             for dep in host_deployments:
                 conflicting_deps = [host_dep for host_dep in
-                    tds.model.HostDeployment.find(
+                    self.query(tds.model.HostDeployment).find(
                         host_id=dep.host_id,
                     ) if host_dep.id != dep.id and host_dep.deployment.status
                     in ('queued', 'inprogress')
@@ -228,13 +230,17 @@ class DeploymentView(BaseView):
                 previous_env_short = env_map[tier_dep.environment_obj.env]
                 if previous_env_short is None:
                     continue
-                previous_env = tagopsdb.Environment.get(env=previous_env_short)
+                previous_env = self.query(tagopsdb.Environment).get(
+                    env=previous_env_short
+                )
                 if previous_env is None:
                     raise tds.exceptions.ProgrammingError(
                         "Could not find environment with short name {env}."
                         .format(env=previous_env_short)
                     )
-                previous_tier_dep = tds.model.AppDeployment.find(
+                previous_tier_dep = self.query(
+                    tds.model.AppDeployment
+                ).find(
                     environment_id=previous_env.id,
                     app_id=tier_dep.app_id,
                     package_id=tier_dep.package_id,
@@ -299,3 +305,52 @@ class DeploymentView(BaseView):
         """
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
+
+    def validate_env_restrictions(self, request):
+        """
+        Validate that the cookie is authorized to deploy to environment of this
+        deployment.
+        """
+        if self.name not in request.validated or 'environments' not in \
+                request.restrictions:
+            return
+        dep = request.validated[self.name]
+        if any(
+            str(host_dep.host.environment_id) not in request.restrictions[
+                'environments'
+            ] for host_dep in dep.host_deployments
+        ) or any(
+            str(tier_dep.environment_id) not in request.restrictions[
+                'environments'
+            ] for tier_dep in dep.app_deployments
+        ):
+            request.errors.add(
+                'header', 'cookie',
+                "Insufficient authorization. This cookie only has permissions "
+                "for the following environment IDs: {environments}.".format(
+                    environments=sorted(
+                        int(env_id) for env_id in request.restrictions[
+                            'environments'
+                        ]
+                    )
+                )
+            )
+            request.errors.status = 403
+
+    @view(validators=('validate_individual', 'validate_put_post',
+                      'validate_obj_put', 'validate_cookie',
+                      'validate_env_restrictions'))
+    def put(self):
+        """
+        Handle a PUT request after the parameters are marked valid JSON.
+        """
+        for attr in self.request.validated_params:
+            setattr(
+                self.request.validated[self.name],
+                self.param_routes.get(attr, attr),
+                self.request.validated_params[attr],
+            )
+        self.session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )

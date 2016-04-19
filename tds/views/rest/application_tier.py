@@ -8,7 +8,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb
 from .base import BaseView, init_view
-from . import types as obj_types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import APPLICATION_TIER_PERMISSIONS
 
@@ -25,6 +25,7 @@ class ApplicationTierView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get project-application-tier association."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         DELETE=dict(
             description="Delete project-application-tier association.",
             returns="Deleted project-application-tier association.",
@@ -35,6 +36,7 @@ class ApplicationTierView(BaseView):
         GET=dict(
             description="Get all project-application-tier associations."
         ),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(
             description="Create new association for project-application "
                 "of tier with given ID or name (ID given precedence).",
@@ -79,7 +81,7 @@ class ApplicationTierView(BaseView):
             x in request.validated for x in ('project', 'application', 'tier')
         ):
             return
-        found = self.model.get(
+        found = self.query(self.model).get(
             project_id=request.validated['project'].id,
             pkg_def_id=request.validated['application'].id,
             app_id=request.validated['tier'].id,
@@ -102,23 +104,21 @@ class ApplicationTierView(BaseView):
         Validate application and project being referenced exist and return
         all associated tiers for that application-project pair.
         """
-        if len(request.params) > 0:
-            for key in request.params:
-                request.errors.add(
-                    'query', key,
-                    "Unsupported query: {key}. There are no valid "
-                    "parameters for this method.".format(key=key),
-                )
-            request.errors.status = 422
+        self._validate_params(['limit', 'select'])
+        self._validate_json_params({'limit': 'integer', 'select': 'string'})
+        self._validate_select_attributes(request)
         self.get_obj_by_name_or_id('project', tds.model.Project)
         self.get_obj_by_name_or_id('application', tds.model.Application,
                                    'pkg_name',
                                    param_name='application_name_or_id')
         if all(x in request.validated for x in ('project', 'application')):
-            request.validated[self.plural] = self.model.find(
-                project_id=request.validated['project'].id,
-                pkg_def_id=request.validated['application'].id,
+            query = self.query(self.model).filter(
+                self.model.project_id == request.validated['project'].id,
+                self.model.pkg_def_id == request.validated['application'].id,
             )
+            if 'limit' in request.validated_params:
+                query = query.limit(self.request.validated_params['limit'])
+            request.validated[self.plural] = query.all()
 
     def validate_application_tier_post(self, request):
         """
@@ -132,11 +132,11 @@ class ApplicationTierView(BaseView):
         if not all(x in request.validated for x in ('project', 'application')):
             return
         if 'id' in request.validated_params:
-            found = tds.model.AppTarget.get(
+            found = self.query(tds.model.AppTarget).get(
                 id=request.validated_params['id']
             )
         elif 'name' in request.validated_params:
-            found = tds.model.AppTarget.get(
+            found = self.query(tds.model.AppTarget).get(
                 name=request.validated_params['name']
             )
         else:
@@ -160,7 +160,7 @@ class ApplicationTierView(BaseView):
             request.errors.status = 400
             return
 
-        already_exists = tagopsdb.model.ProjectPackage.get(
+        already_exists = self.query(tagopsdb.model.ProjectPackage).get(
             project_id=request.validated['project'].id,
             pkg_def_id=request.validated['application'].id,
             app_id=found.id,
@@ -181,8 +181,8 @@ class ApplicationTierView(BaseView):
         """
         Handle collection POST after all validation has passed.
         """
-        tagopsdb.Session.add(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+        self.session.add(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             self.response_code,
@@ -193,8 +193,8 @@ class ApplicationTierView(BaseView):
         """
         Handle DELETE after all validation has passed.
         """
-        tagopsdb.Session.delete(self.request.validated[self.name])
-        tagopsdb.Session.commit()
+        self.session.delete(self.request.validated[self.name])
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name])
         )

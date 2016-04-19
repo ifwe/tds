@@ -110,6 +110,16 @@ def then_the_package_version_was_deployed_to_host(context, pkg, version,
     )
 
 
+@then(u'package "{pkg}" version "{version}" was not deployed to host "{hostname}"')
+def then_package_was_not_deployed_to_the_host(context, pkg, version, hostname):
+    package = tagopsdb.Package.get(name=pkg, version=version)
+    assert package is not None, (pkg, version)
+    assert (
+        (package.name, package.version) not in
+        get_strat_helper(context).get_deployments_for_host(hostname)
+    )
+
+
 def check_restart_on_hosts(context, hosts, pkg):
     ran_steps = False
     for host in hosts:
@@ -208,16 +218,6 @@ def then_the_package_version_was_deployed_to_deploy_targets(context, pkg,
         ],
         pkg,
         version
-    )
-
-
-@then(u'package "{pkg}" version "{version}" was not deployed to host "{hostname}"')
-def then_package_was_not_deployed_to_the_host(context, pkg, version, hostname):
-    package = tagopsdb.Package.get(name=pkg, version=version)
-    assert package is not None, (pkg, version)
-    assert (
-        (package.name, package.version) not in
-        get_strat_helper(context).get_deployments_for_host(hostname)
     )
 
 

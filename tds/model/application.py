@@ -1,6 +1,6 @@
 """Model module for application object."""
 
-from sqlalchemy import desc
+from sqlalchemy import desc, not_
 
 from .base import Base
 import tagopsdb
@@ -85,22 +85,34 @@ class Application(Base):
         defaults.update(attrs)
         return Package.create(**defaults)
 
-    def get_latest_tier_deployment(self, tier_id, environment_id):
+    def get_latest_tier_deployment(
+        self, tier_id, environment_id, exclude_statuses=None, query=None
+    ):
         """
         Return latest tier deployment of this application on tier with ID
         tier_id in environment with ID environment_id.
+        exclude_statuses is an optional list of statuses that should be
+        excluded from the results.
         """
-        return tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
-            tagopsdb.model.AppDeployment.package
-        ).filter(
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.AppDeployment)
+        query = query.join(tagopsdb.model.AppDeployment.package).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.AppDeployment.app_id == tier_id,
             tagopsdb.model.AppDeployment.environment_id == environment_id,
-        ).order_by(desc(tagopsdb.model.AppDeployment.realized)).first()
+        )
+        if exclude_statuses is not None:
+            query = query.filter(
+                not_(tagopsdb.model.AppDeployment.status.in_(exclude_statuses))
+            )
+        return query.order_by(
+            desc(tagopsdb.model.AppDeployment.realized)
+        ).first()
 
     def get_latest_completed_tier_deployment(self, tier_id, environment_id,
                                              must_be_validated=False,
-                                             exclude_package_ids=None):
+                                             exclude_package_ids=None,
+                                             query=None):
         """
         Return latest completed tier deployment of this application on tier
         with ID tier_id in environment with ID environment_id.
@@ -111,7 +123,9 @@ class Application(Base):
         """
         in_list = ['validated'] if must_be_validated else ['validated',
                                                            'complete']
-        query = tagopsdb.Session.query(tagopsdb.model.AppDeployment).join(
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.AppDeployment)
+        query = query.join(
             tagopsdb.model.AppDeployment.package
         ).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
@@ -120,7 +134,6 @@ class Application(Base):
             tagopsdb.model.AppDeployment.status.in_(in_list)
         )
         if exclude_package_ids:
-            from sqlalchemy import not_
             query = query.filter(not_(
                 tagopsdb.model.AppDeployment.package_id.in_(exclude_package_ids)
             ))
@@ -128,27 +141,82 @@ class Application(Base):
             desc(tagopsdb.model.AppDeployment.realized)
         ).first()
 
-    def get_latest_host_deployment(self, host_id):
+    def get_latest_host_deployment(self, host_id, package_id=None, query=None):
         """
         Return latest host deployment of this application on host with ID
         host_id.
+        package_id is an optional inclusive filter.
         """
-        return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
-            tagopsdb.model.HostDeployment.package
-        ).filter(
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        query = query.join(tagopsdb.model.HostDeployment.package).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.HostDeployment.host_id == host_id,
-        ).order_by(desc(tagopsdb.model.HostDeployment.realized)).first()
+        )
+        if package_id is not None:
+            query = query.filter(tagopsdb.model.Package.id == package_id)
+        return query.order_by(
+            desc(tagopsdb.model.HostDeployment.realized)
+        ).first()
 
-    def get_latest_completed_host_deployment(self, host_id):
+    def get_latest_completed_host_deployment(self, host_id, query=None):
         """
         Return latest completed host_deployment (status == 'ok') of this
         application on host with ID host_id.
         """
-        return tagopsdb.Session.query(tagopsdb.model.HostDeployment).join(
-            tagopsdb.model.HostDeployment.package
-        ).filter(
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        return query.join(tagopsdb.model.HostDeployment.package).filter(
             tagopsdb.model.Package.pkg_def_id == self.id,
             tagopsdb.model.HostDeployment.host_id == host_id,
             tagopsdb.model.HostDeployment.status == 'ok',
         ).order_by(desc(tagopsdb.model.HostDeployment.realized)).first()
+
+    def get_latest_host_deployments_for_tier(
+        self, tier_id, environment_id, package_id=None, query=None
+    ):
+        """
+        Return latest host_deployments of this application on hosts with given
+        tier_id and environment_id.
+        package_id is an optional inclusive filter.
+        """
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        query = query.join(tagopsdb.model.HostDeployment.package).join(
+            tagopsdb.model.HostDeployment.host
+        ).filter(
+            tagopsdb.model.Package.pkg_def_id == self.id,
+            tagopsdb.model.Host.app_id == tier_id,
+            tagopsdb.model.Host.environment_id == environment_id,
+        )
+        if package_id is not None:
+            query = query.filter(tagopsdb.model.Package.id == package_id)
+        return query.order_by(
+            tagopsdb.model.Host.hostname,
+            tagopsdb.model.HostDeployment.realized.asc()
+        ).all()
+
+    def get_latest_completed_host_deployments_for_tier(
+        self, tier_id, environment_id, package_id=None, query=None
+    ):
+        """
+        Return latest completed host_deployments (status == 'ok') of this
+        application on hosts with given tier_id and environment_id.
+        package_id is an optional inclusive filter.
+        """
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.HostDeployment)
+        query = query.join(tagopsdb.model.HostDeployment.package).join(
+            tagopsdb.model.HostDeployment.host
+        ).filter(
+            tagopsdb.model.Package.pkg_def_id == self.id,
+            tagopsdb.model.Host.app_id == tier_id,
+            tagopsdb.model.Host.environment_id == environment_id,
+            tagopsdb.model.HostDeployment.status == 'ok',
+        )
+        if package_id is not None:
+            query = query.filter(tagopsdb.model.Package.id == package_id)
+        return query.order_by(
+            tagopsdb.model.Host.hostname,
+            tagopsdb.model.HostDeployment.realized.asc()
+        ).all()

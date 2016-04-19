@@ -29,12 +29,35 @@ Feature: GET package(s) from the REST API by ID
             | 2         | 2         |
             | 2         | 3         |
             | 3         | 1         |
+        And the response list objects do not contain attributes creator,pkg_def_id,pkg_name
+
+    @rest
+    Scenario: get all packages with select query
+        When I query GET "/packages?select=version,revision"
+        Then the response code is 200
+        And the response is a list of 5 items
+        And the response list contains objects:
+            | version   | revision  |
+            | 1         | 2         |
+            | 2         | 1         |
+            | 2         | 2         |
+            | 2         | 3         |
+            | 3         | 1         |
+        And the response list objects do not contain attributes id,status,builder,user,job,name,creator,pkg_def_id,pkg_name
 
     @rest
     Scenario: get a package by ID
         When I query GET "/packages/2"
         Then the response code is 200
         And the response is an object with version="2",revision="1"
+        And the response object does not contain attributes creator,pkg_def_id,pkg_name
+
+    @rest
+    Scenario: get a package by ID with select query
+        When I query GET "/packages/2?select=version,revision"
+        Then the response code is 200
+        And the response is an object with version="2",revision="1"
+        And the response object does not contain attributes id,status,builder,user,job,name,creator,pkg_def_id,pkg_name
 
     @rest
     Scenario: get a package that doesn't exist

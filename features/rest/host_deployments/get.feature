@@ -35,24 +35,48 @@ Feature: GET host deployment(s) from the REST API
     @rest
     Scenario: get all host deployments
         Given there are host deployments:
-            | id    | deployment_id | host_id   | status        | user  | package_id    |
-            | 1     | 1             | 1         | pending       | foo   | 1             |
-            | 2     | 1             | 2         | inprogress    | foo   | 1             |
+            | id    | deployment_id | host_id   | status        | user  | package_id    | duration  |
+            | 1     | 1             | 1         | pending       | foo   | 1             | 2         |
+            | 2     | 1             | 2         | inprogress    | foo   | 1             | 20        |
         When I query GET "/host_deployments"
         Then the response code is 200
         And the response is a list of 2 items
-        And the response list contains an object with id=1,deployment_id=1,host_id=1,status="pending",user="foo",package_id=1
-        And the response list contains an object with id=2,deployment_id=1,host_id=2,status="inprogress",user="foo",package_id=1
+        And the response list contains an object with id=1,deployment_id=1,host_id=1,status="pending",user="foo",package_id=1,duration=2
+        And the response list contains an object with id=2,deployment_id=1,host_id=2,status="inprogress",user="foo",package_id=1,duration=20
+
+    @rest
+    Scenario: get all host deployments with select query
+        Given there are host deployments:
+            | id    | deployment_id | host_id   | status        | user  | package_id    | duration  |
+            | 1     | 1             | 1         | pending       | foo   | 1             | 2         |
+            | 2     | 1             | 2         | inprogress    | foo   | 1             | 20        |
+        When I query GET "/host_deployments?select=id,deployment_id,host_id"
+        Then the response code is 200
+        And the response is a list of 2 items
+        And the response list contains an object with id=1,deployment_id=1,host_id=1
+        And the response list contains an object with id=2,deployment_id=1,host_id=2
+        And the response list objects do not contain attributes status,user,package_id,duration
 
     @rest
     Scenario: get a specific host deployment
         Given there are host deployments:
-            | id    | deployment_id | host_id   | status        | user  | package_id    |
-            | 1     | 1             | 1         | pending       | foo   | 1             |
-            | 2     | 1             | 2         | inprogress    | foo   | 1             |
+            | id    | deployment_id | host_id   | status        | user  | package_id    | duration  |
+            | 1     | 1             | 1         | pending       | foo   | 1             | 2         |
+            | 2     | 1             | 2         | inprogress    | foo   | 1             | 20        |
         When I query GET "/host_deployments/1"
         Then the response code is 200
-        And the response is an object with id=1,deployment_id=1,host_id=1,status="pending",user="foo",package_id=1
+        And the response is an object with id=1,deployment_id=1,host_id=1,status="pending",user="foo",package_id=1,duration=2
+
+    @rest
+    Scenario: get a specific host deployment with select query
+        Given there are host deployments:
+            | id    | deployment_id | host_id   | status        | user  | package_id    | duration  |
+            | 1     | 1             | 1         | pending       | foo   | 1             | 2         |
+            | 2     | 1             | 2         | inprogress    | foo   | 1             | 20        |
+        When I query GET "/host_deployments/1?select=id,deployment_id,host_id"
+        Then the response code is 200
+        And the response is an object with id=1,deployment_id=1,host_id=1
+        And the response object does not contain attributes status,user,package_id,duration
 
     @rest
     Scenario Outline: specify limit and/or last queries

@@ -7,9 +7,10 @@ Feature: OPTIONS for most recent tier deployment
     Scenario: get options for the endpoint
         When I query OPTIONS "/applications/foo/tiers/bar/environments/biz"
         Then the response code is 200
-        And the response header contains "Allows" set to "GET, OPTIONS"
+        And the response header contains "Allows" set to "GET, HEAD, OPTIONS"
         And the response body contains "Get HTTP method options and parameters for this URL endpoint."
         And the response body contains "Get the most recent completed tier deployment for an application, tier, and environment."
+        And the response body contains "Do a GET query without a body returned."
         And the response body contains "id"
         And the response body contains "deployment_id"
         And the response body contains "package_id"

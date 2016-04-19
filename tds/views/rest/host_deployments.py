@@ -35,6 +35,7 @@ class HostDeploymentView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get host deployment matching ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update host deployment matching ID."),
         DELETE=dict(description="Delete host deployment matching ID."),
     )
@@ -42,6 +43,7 @@ class HostDeploymentView(BaseView):
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of host deployments, optionally by "
                  "limit and/or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new host deployment."),
     )
 
@@ -60,7 +62,7 @@ class HostDeploymentView(BaseView):
             )
             self.request.errors.status = 403
             return
-        found_app_dep = tds.model.AppDeployment.get(
+        found_app_dep = self.query(tds.model.AppDeployment).get(
             deployment_id=self.request.validated[self.name].deployment_id,
             app_id=self.request.validated[self.name].host.app_id,
         )
@@ -98,10 +100,10 @@ class HostDeploymentView(BaseView):
             if 'host_id' not in self.request.validated_params or \
                     'deployment_id' not in self.request.validated_params:
                 return
-            own_host = tds.model.HostTarget.get(
+            own_host = self.query(tds.model.HostTarget).get(
                 id=self.request.validated_params['host_id']
             )
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'host_id'
@@ -112,21 +114,21 @@ class HostDeploymentView(BaseView):
             return
         elif 'host_id' not in self.request.validated_params:
             own_host = self.request.validated[self.name].host
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'deployment_id'
         elif 'deployment_id' not in self.request.validated_params:
-            own_host = tds.model.HostTarget.get(
+            own_host = self.query(tds.model.HostTarget).get(
                 id=self.request.validated_params['host_id']
             )
             deployment = self.request.validated[self.name].deployment
             name = 'host_id'
         else:
-            own_host = tds.model.HostTarget.get(
+            own_host = self.query(tds.model.HostTarget).get(
                 id=self.request.validated_params['host_id']
             )
-            deployment = tds.model.Deployment.get(
+            deployment = self.query(tds.model.Deployment).get(
                 id=self.request.validated_params['deployment_id']
             )
             name = 'host_id'
@@ -211,11 +213,13 @@ class HostDeploymentView(BaseView):
         the application for the package with ID pkg_id for some project.
         If it isn't, add an error.
         """
-        found_pkg = tds.model.Package.get(id=pkg_id)
-        found_host = tds.model.HostTarget.get(id=host_id)
+        found_pkg = self.query(tds.model.Package).get(id=pkg_id)
+        found_host = self.query(tds.model.HostTarget).get(id=host_id)
         if not (found_pkg and found_host):
             return
-        found_project_pkg = tagopsdb.model.ProjectPackage.find(
+        found_project_pkg = self.query(
+            tagopsdb.model.ProjectPackage
+        ).find(
             pkg_def_id=found_pkg.pkg_def_id,
             app_id=found_host.app_id,
         )
@@ -257,11 +261,61 @@ class HostDeploymentView(BaseView):
             self.request.validated_params['host_id'],
         )
 
+    def validate_env_restrictions(self, request):
+        """
+        Validate that the cookie is authorized to deploy to environment of this
+        host dep.
+        """
+        if 'environments' in request.restrictions:
+            if 'host_id' in request.validated_params:
+                host = self.query(tds.model.HostTarget).get(
+                    id=request.validated_params['host_id'],
+                )
+            elif self.name in request.validated:
+                host = request.validated[self.name]
+            else:
+                return
+
+            if host is not None and str(host.environment_id) not in \
+                    request.restrictions['environments']:
+                request.errors.add(
+                    'header', 'cookie',
+                    "Insufficient authorization. This cookie only has "
+                    "permissions for the following environment IDs: "
+                    "{environments}.".format(
+                        environments=sorted(
+                            int(env_id) for env_id in request.restrictions[
+                                'environments'
+                            ]
+                        ),
+                    )
+                )
+                request.errors.status = 403
+
     @view(validators=('validate_put_post', 'validate_post_required',
-                      'validate_obj_post', 'validate_cookie'))
+                      'validate_obj_post', 'validate_cookie',
+                      'validate_env_restrictions'))
     def collection_post(self):
         """
         Perform a collection POST after all validation has passed.
         """
         self.request.validated_params['user'] = self.request.validated['user']
         return self._handle_collection_post()
+
+    @view(validators=('validate_individual', 'validate_put_post',
+                      'validate_obj_put', 'validate_cookie',
+                      'validate_env_restrictions'))
+    def put(self):
+        """
+        Handle a PUT request after the parameters are marked valid JSON.
+        """
+        for attr in self.request.validated_params:
+            setattr(
+                self.request.validated[self.name],
+                self.param_routes.get(attr, attr),
+                self.request.validated_params[attr],
+            )
+        self.session.commit()
+        return self.make_response(
+            self.to_json_obj(self.request.validated[self.name])
+        )

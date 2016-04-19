@@ -35,9 +35,8 @@ class Installer(TDSProgramBase):
         """
         Determine deployment strategy and initialize some parameters.
         """
-        self.retry = params.pop('retry') if 'retry' in params else 4
-        self.deployment_id = params.pop('deployment_id') if 'deployment_id' \
-            in params else None
+        self.retry = params.pop('retry', 4)
+        self.deployment_id = params.pop('deployment_id', None)
 
         super(Installer, self).__init__(params, *args, **kwargs)
 
@@ -118,6 +117,7 @@ class Installer(TDSProgramBase):
         Perform host deployment for given host and update database
         with results.
         """
+        now = datetime.now()
         # If host already has a valid deployment, nothing to do
         if host_deployment.status == 'ok':
             return 'ok'
@@ -129,6 +129,8 @@ class Installer(TDSProgramBase):
         if host_deployment.deployment.status == 'canceled':
             return 'canceled'
 
+        host_deployment.status = 'inprogress'
+        tagopsdb.Session.commit()
         success, host_result = self.deploy_strategy.deploy_to_host(
             host_deployment.host.name,
             host_deployment.package.name,
@@ -140,6 +142,7 @@ class Installer(TDSProgramBase):
             host_deployment.status = 'ok'
         else:
             host_deployment.status = 'failed'
+        self._set_duration(host_deployment, now)
 
         host_deployment.deploy_result = host_result
         tagopsdb.Session.commit()
@@ -151,6 +154,7 @@ class Installer(TDSProgramBase):
         Perform tier deployment for given tier (only doing hosts that
         require the deployment) and update database with results.
         """
+        now = datetime.now()
         dep_hosts = sorted(
             tier_deployment.application.hosts,
             key=lambda host: host.name,
@@ -159,6 +163,8 @@ class Installer(TDSProgramBase):
 
         done_host_dep_ids = set()
         canceled = False
+        tier_deployment.status = 'inprogress'
+        tagopsdb.Session.commit()
         for dep_host in dep_hosts:
             host_deployment = tds.model.HostDeployment.get(
                 host_id=dep_host.id,
@@ -180,6 +186,7 @@ class Installer(TDSProgramBase):
             tier_deployment.status = 'incomplete'
         elif not canceled:
             tier_deployment.status = 'complete'
+        self._set_duration(tier_deployment, now)
 
         tagopsdb.Session.commit()
         return done_host_dep_ids
@@ -189,6 +196,7 @@ class Installer(TDSProgramBase):
         Perform deployments for tier or host(s) one host at a time
         (no parallelism).
         """
+        now = datetime.now()
         tier_deployments = sorted(
             deployment.app_deployments,
             key=lambda dep:dep.target.name,
@@ -205,6 +213,7 @@ class Installer(TDSProgramBase):
             self._refresh(deployment)
             if deployment.status == 'canceled':
                 deployment.status = 'stopped'
+                self._set_duration(deployment, now)
                 tagopsdb.Session.commit()
                 return
 
@@ -221,6 +230,7 @@ class Installer(TDSProgramBase):
             self._refresh(deployment)
             if deployment.status == 'canceled':
                 deployment.status = 'stopped'
+                self._set_duration(deployment, now)
                 tagopsdb.Session.commit()
                 return
 
@@ -229,7 +239,18 @@ class Installer(TDSProgramBase):
             deployment.status = 'failed'
         else:
             deployment.status = 'complete'
+        self._set_duration(deployment, now)
         tagopsdb.Session.commit()
+
+    @staticmethod
+    def _set_duration(deployment, now):
+        """
+        Set duration of deployment to total float seconds since now.
+        deployment should be an object with a duration attribute (deployment,
+        host deployment, tier deployment).
+        now should be a datetime.
+        """
+        deployment.duration = (datetime.now() - now).total_seconds()
 
     def run(self):
         """

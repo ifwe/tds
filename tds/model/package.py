@@ -37,3 +37,12 @@ class Package(Base):
             if (app_dep.target == tier.delegate and
                 app_dep.environment_obj == environment):
                 yield AppDeployment(delegate=app_dep)
+
+    def get_current_app_deployment(self, tier_id, environment_id, query=None):
+        if query is None:
+            query = tagopsdb.Session.query(tagopsdb.model.AppDeployment)
+        return query.filter(
+            tagopsdb.model.AppDeployment.package_id == self.id,
+            tagopsdb.model.AppDeployment.app_id == tier_id,
+            tagopsdb.model.AppDeployment.environment_id == environment_id,
+        ).order_by(desc(tagopsdb.model.AppDeployment.realized)).first()

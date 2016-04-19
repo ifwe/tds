@@ -11,7 +11,7 @@ except ImportError:
 
 import tds.model
 from .base import BaseView, init_view
-from . import types as obj_types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import PACKAGE_BY_ID_PERMISSIONS
 
@@ -37,6 +37,7 @@ class PackageByIDView(BaseView):
     param_routes = {
         'name': 'pkg_name',
         'application_id': 'pkg_def_id',
+        'user': 'creator',
     }
 
     full_types = obj_types.PACKAGE_TYPES
@@ -61,12 +62,14 @@ class PackageByIDView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get package matching ID."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update package matching ID."),
     )
 
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of packages, optionally by limit and/"
                  "or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new package."),
     )
 
@@ -89,8 +92,8 @@ class PackageByIDView(BaseView):
 
         if any(x in self.request.validated_params for x in
                ('version', 'revision', 'name')):
-            found_pkg = self.model.get(
-                application=tds.model.Application.get(
+            found_pkg = self.query(self.model).get(
+                application=self.query(tds.model.Application).get(
                     pkg_name=self.request.validated_params['name']
                 ) if 'name' in self.request.validated_params else
                     self.request.validated[self.name].application,
@@ -115,7 +118,9 @@ class PackageByIDView(BaseView):
 
         if any(x in self.request.validated_params for x in
                ('version', 'revision', 'job')):
-            self._validate_jenkins_build()
+            commit_hash = self._validate_jenkins_build()
+            if commit_hash is not None:
+                self.request.validated['commit_hash'] = commit_hash
 
         if self.name not in self.request.validated:
             return
@@ -139,7 +144,7 @@ class PackageByIDView(BaseView):
         """
         if 'name' not in self.request.validated_params:
             return
-        found_app = tds.model.Application.get(
+        found_app = self.query(tds.model.Application).get(
             pkg_name=self.request.validated_params['name']
         )
         ver_check = 'version' in self.request.validated_params
@@ -158,7 +163,7 @@ class PackageByIDView(BaseView):
             return
         else:
             self.request.validated_params['application'] = found_app
-        found_pkg = self.model.get(
+        found_pkg = self.query(self.model).get(
             application=found_app,
             version=self.request.validated_params['version'],
             revision=self.request.validated_params['revision'],
@@ -179,7 +184,9 @@ class PackageByIDView(BaseView):
             )
             self.request.errors.status = 403
 
-        self._validate_jenkins_build()
+        commit_hash = self._validate_jenkins_build()
+        if commit_hash is not None:
+            self.request.validated['commit_hash'] = commit_hash
 
     def _add_jenkins_error(self, message):
         """
@@ -216,7 +223,7 @@ class PackageByIDView(BaseView):
 
         application = None
         if 'name' in self.request.validated_params:
-            app = tds.model.Application.get(
+            app = self.query(tds.model.Application).get(
                 pkg_name=self.request.validated_params['name']
             )
             if app is None:
@@ -279,6 +286,13 @@ class PackageByIDView(BaseView):
                     .format(matrix=matrix_name, job=job_name)
                 )
                 self.request.errors.status = 400
+
+        if self.request.errors.status == 400:
+            return None
+        try:
+            return build.get_revision()
+        except:             # Unkown exception type --KN
+            return None
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))

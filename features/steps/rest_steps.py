@@ -6,11 +6,30 @@ from os.path import join as opj
 
 import json
 import requests
+import yaml
 
 from behave import given, then, when
 
 from tds.views.rest import utils
 from .model_steps import parse_properties
+
+
+def _set_cookie(context, username, password, query_dict=None):
+    if query_dict is None:
+        query_dict = dict()
+    query_dict['username'] = username
+    query_dict['password'] = password
+    response = requests.post(
+        "http://{addr}:{port}/login".format(
+            addr=context.rest_server.server_name,
+            port=context.rest_server.server_port,
+        ),
+        data=json.dumps(query_dict),
+    )
+    assert 'session' in response.cookies, (
+        "Authentication failed: {resp}".format(resp=response)
+    )
+    context.cookie = response.cookies['session']
 
 
 @given(u'I have a cookie with {perm_type} permissions')
@@ -19,26 +38,66 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
     Add a cookie at context.cookie with the permission type perm_type.
     """
     if perm_type == 'user':
-        response = requests.post(
-            "http://{addr}:{port}/login".format(
-                addr=context.rest_server.server_name,
-                port=context.rest_server.server_port,
-            ),
-            data=json.dumps(dict(username="testuser", password="secret")),
-        )
-        context.cookie = response.cookies['session']
+        _set_cookie(context, 'testuser', 'secret')
     elif perm_type == 'admin':
-        response = requests.post(
-            "http://{addr}:{port}/login".format(
-                addr=context.rest_server.server_name,
-                port=context.rest_server.server_port,
-            ),
-            data=json.dumps(dict(username="testadmin", password="removed")),
-        )
-        context.cookie = response.cookies['session']
+        _set_cookie(context, 'testadmin', 'removed')
     else:
         assert False, ("Unknown permission type: {p}. "
                        "Valid options: user, admin.".format(p=perm_type))
+
+
+@given(u'I have a cookie with {perm_type} permissions and {restrictions}')
+def given_i_have_a_cookie_with_restrictions(context, perm_type, restrictions):
+    """
+    Add a cookie at context.cookie with the given permission type and
+    restrictions.
+    """
+    pairs = [pair.split('=', 1) for pair in restrictions.split(',')]
+    query_dict = dict()
+    for key, val in pairs:
+        if key == 'eternal':
+            val = val in ('True', 'true', '1')
+        query_dict[key] = val
+    if perm_type == 'user':
+        _set_cookie(context, 'testuser', 'secret', query_dict)
+    elif perm_type == 'admin':
+        _set_cookie(context, 'testadmin', 'removed', query_dict)
+    else:
+        assert False, ("Unknown permission type: {p}. "
+                       "Valid options: user, admin.".format(p=perm_type))
+
+
+@given(u'I set the cookie {prop} to {value}')
+def given_i_set_the_cookie_prop_to_value(context, prop, value):
+    pairs = [pair.split('=', 1) for pair in context.cookie.split('&')]
+    cookie_string = ''
+    for key, val in pairs:
+        if key == prop:
+            val = value
+        cookie_string += '{key}={val}&'.format(key=key, val=val)
+    context.cookie = cookie_string[:-1]
+
+
+@given(u'I increment the cookie issued stamp by {increment}')
+def given_i_increment_the_cookie_issued_stamp_by(context, increment):
+    pairs = [pair.split('=', 1) for pair in context.cookie.split('&')]
+    cookie_string = ''
+    for key, val in pairs:
+        if key == 'issued':
+            val = str(int(val) + int(increment))
+        cookie_string += '{key}={val}&'.format(key=key, val=val)
+    context.cookie = cookie_string[:-1]
+
+
+@given(u'I remove {prop} from the cookie')
+def given_i_remove_prop_from_the_cookie(context, prop):
+    pairs = [pair.split('=', 1) for pair in context.cookie.split('&')]
+    cookie_string = ''
+    for key, val in pairs:
+        if key == prop:
+            continue
+        cookie_string += '{key}={val}&'.format(key=key, val=val)
+    context.cookie = cookie_string[:-1]
 
 
 @given(u'I have set the request headers {properties}')
@@ -194,9 +253,22 @@ def then_the_response_body_does_not_contain(context, message):
                                                   context.response.text)
 
 
+@then(u'the response body is empty')
+def then_the_response_body_is_empty(context):
+    assert len(context.response.text) == 0, context.response.text
+
+
 @then(u'the response contains a cookie')
 def then_the_response_contains_a_cookie(context):
     assert len(context.response.cookies) > 0, context.response.cookies
+
+
+@then(u'the response contains a cookie with {properties}')
+def then_the_response_contains_a_cookie_with(context, properties):
+    assert len(context.response.cookies) > 0, context.response.cookies
+    assert properties in context.response.cookies['session'], (
+        context.response.cookies['session']
+    )
 
 
 @then(u'the response does not contain a cookie')
@@ -229,3 +301,42 @@ def then_the_response_list_contains_object_property_listing(context, prop):
                 matched = True
                 break
     assert matched, context.response.text
+
+
+def _set_user_type(context, username, user_type):
+    user_type = '{user_type}_users'.format(user_type=user_type)
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'), 'r+') as f:
+        if user_type not in context.rest_settings:
+            context.rest_settings[user_type] = list()
+        context.rest_settings[user_type].append(username)
+        f.truncate()
+        f.write(
+            yaml.dump(context.rest_settings, default_flow_style=False)
+        )
+
+
+@given(u'"{username}" is a {user_type} user in the REST API')
+def given_username_is_a_user_type_user_in_the_rest_api(
+    context, username, user_type
+):
+    _set_user_type(context, username, user_type)
+
+
+@given(u'"{username}" is an {user_type} user in the REST API')
+def given_username_is_an_user_type_user_in_the_rest_api(
+    context, username, user_type
+):
+    _set_user_type(context, username, user_type)
+
+
+@given(u'I change cookie life to {val}')
+def given_i_change_cookie_life_to(context, val):
+    val = int(val)
+    with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                  'settings.yml'), 'r+') as f:
+        context.rest_settings['cookie_life'] = val
+        f.truncate()
+        f.write(
+            yaml.dump(context.rest_settings, default_flow_style=False)
+        )

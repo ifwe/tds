@@ -176,9 +176,8 @@ class RootView(BaseView):
         Construct the OPTIONS response dict and set it to self.results.
         """
         self.result = dict(
-            GET=dict(
-                description="Get all supported URLS.",
-            ),
+            GET=dict(description="Get all supported URLS."),
+            HEAD=dict(description="Do a GET query without a body returned."),
             OPTIONS=dict(
                 description="Get HTTP method options and parameters for this "
                     "URL endpoint.",
@@ -192,6 +191,13 @@ class RootView(BaseView):
         """
         return self.make_response([self.to_json_obj(x) for x in self.results])
 
+    @view(validators=('validate_root_get',))
+    def head(self):
+        """
+        Same as get above except returns empty body.
+        """
+        return self.make_response(renderer="empty")
+
     @view(validators=('validate_root_options',))
     def options(self):
         """
@@ -199,7 +205,7 @@ class RootView(BaseView):
         """
         return self.make_response(
             body=self.to_json_obj(self.result),
-            headers=dict(Allows="GET, OPTIONS"),
+            headers=dict(Allows="GET, HEAD, OPTIONS"),
         )
 
     @view(validators=('method_not_allowed',))

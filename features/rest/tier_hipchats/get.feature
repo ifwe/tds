@@ -33,6 +33,17 @@ Feature: GET tier-hipchat relationship(s) from the REST API
             | hipchat2  |
 
     @rest
+    Scenario: get all hipchats associated with a tier with select query
+        When I query GET "/tiers/tier1/hipchats?select=name"
+        Then the response code is 200
+        And the response is a list of 2 items
+        And the response list contains objects:
+            | name      |
+            | hipchat1  |
+            | hipchat2  |
+        And the response list objects do not contain attributes id
+
+    @rest
     Scenario: get a HipChat that doesn't exist
         When I query GET "/tiers/tier1/hipchats/hipchat500"
         Then the response code is 404
@@ -52,10 +63,22 @@ Feature: GET tier-hipchat relationship(s) from the REST API
             | 1         |
 
     @rest
-    Scenario: pass a parameter
+    Scenario Outline: get a specific hipchat with select query
+        When I query GET "/tiers/tier1/hipchats/<select>?select=name"
+        Then the response code is 200
+        And the response is an object with name="hipchat1"
+        And the response object does not contain attributes id
+
+        Examples:
+            | select    |
+            | hipchat1  |
+            | 1         |
+
+    @rest
+    Scenario: pass an invalid parameter
         When I query GET "/tiers/tier1/hipchats?limit=10&start=10"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                               |
-            | query     | limit | Unsupported query: limit. There are no valid parameters for this method.  |
-            | query     | start | Unsupported query: start. There are no valid parameters for this method.  |
+            | location  | name  | description                                               |
+            | query     | limit | Unsupported query: limit. Valid parameters: ['select'].   |
+            | query     | start | Unsupported query: start. Valid parameters: ['select'].   |

@@ -28,4 +28,4 @@ def then_there_are_graphite_notifications(context, number):
 
     notifications = context.graphite_server.get_notifications()
     assert notifications is not None
-    assert len(notifications) == number
+    assert len(notifications) == number, notifications

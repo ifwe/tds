@@ -18,7 +18,7 @@ Feature: POST package(s) from the REST API by ID
         And the job has a build with number="2"
         When I query POST "/packages?name=app3&version=2&revision=2"
         Then the response code is 201
-        And the response is an object with version="2",revision="2",creator="testuser"
+        And the response is an object with version="2",revision="2",user="testuser"
         And there is a package with version="2",revision="2",creator="testuser"
 
     @rest @jenkins_server
@@ -33,7 +33,7 @@ Feature: POST package(s) from the REST API by ID
         And there is no package with version="2",revision="2",creator="testuser"
 
     @rest @jenkins_server
-    Scenario: pass an name for an application that doesn't exist
+    Scenario: pass a name for an application that doesn't exist
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="2"
         When I query POST "/packages?name=noexist&version=2&revision=2"
@@ -52,6 +52,17 @@ Feature: POST package(s) from the REST API by ID
         And the response contains errors:
             | location  | name  | description                                                                                                   |
             | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'id', 'job', 'name', 'revision', 'status', 'version'].  |
+        And there is no package with version="2",revision="2",creator="testuser"
+
+    @rest @jenkins_server
+    Scenario: attempt to set commit_hash
+        Given there is a jenkins job with name="myjob"
+        And the job has a build with number="2"
+        When I query POST "/packages?name=app3&version=2&revision=2&commit_hash=fdsafdsaf"
+        Then the response code is 422
+        And the response contains errors:
+            | location  | name          | description                                                                                                           |
+            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'id', 'job', 'name', 'revision', 'status', 'version'].  |
         And there is no package with version="2",revision="2",creator="testuser"
 
     @rest @jenkins_server

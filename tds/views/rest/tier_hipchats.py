@@ -7,7 +7,7 @@ from cornice.resource import resource, view
 import tds.model
 import tagopsdb
 from .base import BaseView, init_view
-from . import types as obj_types, descriptions
+from . import obj_types, descriptions
 from .urls import ALL_URLS
 from .permissions import TIER_HIPCHAT_PERMISSIONS
 
@@ -42,6 +42,7 @@ class TierHipchatView(BaseView):
 
     individual_allowed_methods = dict(
         GET=dict(description="Get a HipChat associated with the tier."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         DELETE=dict(
             description="Disassociate a HipChat from the tier.",
             returns="Disassociated HipChat",
@@ -53,6 +54,7 @@ class TierHipchatView(BaseView):
             description="Get a list of HipChats associated with the tier, "
             "optionally by limit and/or start."
         ),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(
             description="Associate a HipChat with the tier by name or "
                 "ID (ID given precedence).",
@@ -88,14 +90,9 @@ class TierHipchatView(BaseView):
         """
         Validate the tier being referenced and HipChat being referenced exist.
         """
-        if len(request.params) > 0:
-            for key in request.params:
-                request.errors.add(
-                    'query', key,
-                    "Unsupported query: {key}. There are no valid "
-                    "parameters for this method.".format(key=key),
-                )
-            request.errors.status = 422
+        self._validate_params(['select'])
+        self._validate_json_params({'select': 'string'})
+        self._validate_select_attributes(request)
         self.get_obj_by_name_or_id('tier', tds.model.AppTarget,
                                    'app_type')
         if 'tier' in request.validated:
@@ -111,7 +108,7 @@ class TierHipchatView(BaseView):
         self.request.validated['tier'].hipchats.remove(self.request.validated[
             'HipChat'
         ])
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated['HipChat'])
         )
@@ -126,9 +123,9 @@ class TierHipchatView(BaseView):
             return
 
         if 'id' in request.params:
-            found = self.model.get(id=request.params['id'])
+            found = self.query(self.model).get(id=request.params['id'])
         elif 'name' in request.params:
-            found = self.model.get(room_name=request.params['name'])
+            found = self.query(self.model).get(room_name=request.params['name'])
         else:
             request.errors.add(
                 'query', '',
@@ -142,8 +139,7 @@ class TierHipchatView(BaseView):
                 'query', 'id' if 'id' in request.params else 'name',
                 "Hipchat with {param} {val} does not exist.".format(
                     param='ID' if 'id' in request.params else 'name',
-                    val=request.params['id'] if 'id' in request.params else
-                        request.params['name'],
+                    val=request.params.get('id', request.params.get('name')),
                 )
             )
             request.errors.status = 404
@@ -161,7 +157,7 @@ class TierHipchatView(BaseView):
         """
         Handle collection POST after all validation has passed.
         """
-        tagopsdb.Session.commit()
+        self.session.commit()
         return self.make_response(
             self.to_json_obj(self.request.validated[self.name]),
             self.response_code,

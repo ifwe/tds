@@ -27,7 +27,7 @@ Feature: POST tier deployment(s) from the REST API
         When I query POST "/tier_deployments?deployment_id=1&tier_id=2&environment_id=1&package_id=1"
         Then the response code is 201
         And the response is an object with deployment_id=1,tier_id=2,id=1,user="testuser",environment_id=1,package_id=1
-        And there is a tier deployment with deployment_id=1,app_id=2,id=1,user="testuser",environment_id=1,package_id=1
+        And there is a tier deployment with deployment_id=1,app_id=2,id=1,user="testuser",environment_id=1,package_id=1,duration=0
 
     @rest
     Scenario: post a tier deployment for a tier with hosts
@@ -40,9 +40,9 @@ Feature: POST tier deployment(s) from the REST API
             | host4 | dev       | 3         |
         When I query POST "/tier_deployments?deployment_id=1&tier_id=2&environment_id=1&package_id=1"
         Then the response is an object with deployment_id=1,tier_id=2,id=1,user="testuser",environment_id=1,package_id=1
-        And there is a tier deployment with deployment_id=1,app_id=2,id=1,user="testuser",environment_id=1,package_id=1
-        And there is a host deployment with deployment_id=1,host_id=1,user="testuser",package_id=1
-        And there is a host deployment with deployment_id=1,host_id=2,user="testuser",package_id=1
+        And there is a tier deployment with deployment_id=1,app_id=2,id=1,user="testuser",environment_id=1,package_id=1,duration=0
+        And there is a host deployment with deployment_id=1,host_id=1,user="testuser",package_id=1,duration=0
+        And there is a host deployment with deployment_id=1,host_id=2,user="testuser",package_id=1,duration=0
         And there is no host deployment with deployment_id=1,host_id=3,user="testuser",package_id=1
         And there is no host deployment with deployment_id=1,host_id=4,user="testuser",package_id=1
 

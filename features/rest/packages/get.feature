@@ -55,6 +55,26 @@ Feature: GET package(s) from the REST API
             | 2         | 2         |
             | 2         | 3         |
             | 3         | 1         |
+        And the response list objects do not contain attributes creator
+
+        Examples:
+            | select    |
+            | app2      |
+            | 3         |
+
+    @rest
+    Scenario Outline: get all packages for an application with select query
+        When I query GET "/applications/<select>/packages?select=version,revision"
+        Then the response code is 200
+        And the response is a list of 5 items
+        And the response list contains objects:
+            | version   | revision  |
+            | 1         | 2         |
+            | 2         | 1         |
+            | 2         | 2         |
+            | 2         | 3         |
+            | 3         | 1         |
+        And the response list objects do not contain attributes id,application_id,status,created,builder,user,name
 
         Examples:
             | select    |
@@ -81,6 +101,20 @@ Feature: GET package(s) from the REST API
         When I query GET "/applications/<select>/packages/<ver>/<rev>"
         Then the response code is 200
         And the response is an object with version="<ver>",revision="<rev>"
+
+        Examples:
+            | select    | ver   | rev   |
+            | app2      | 1     | 2     |
+            | app2      | 2     | 1     |
+            | 3         | 1     | 2     |
+            | 3         | 2     | 1     |
+
+    @rest
+    Scenario Outline: get a specific package with select query
+        When I query GET "/applications/<select>/packages/<ver>/<rev>?select=version,revision"
+        Then the response code is 200
+        And the response is an object with version="<ver>",revision="<rev>"
+        And the response object does not contain attributes id,application_id,status,created,builder,user
 
         Examples:
             | select    | ver   | rev   |

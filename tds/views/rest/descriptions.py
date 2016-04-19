@@ -12,6 +12,7 @@ APPLICATION_DESCRIPTIONS = {
     'arch': 'Binary architecture used',
     'validation_type': 'Validation process used',
     'env_specific': 'Whether the application is environment specific',
+    'created': 'When this application was created',
 }
 
 APPLICATION_TIER_DESCRIPTIONS = {
@@ -25,6 +26,8 @@ DEPLOYMENT_DESCRIPTIONS = {
     'user': 'Username of creator',
     'status': 'Current status of the deployment',
     'delay': 'Delay in integer seconds between restarts',
+    'duration': 'Float seconds the installer daemon worked on this deployment',
+    'declared': 'When this deployment was created',
 }
 
 ENVIRONMENT_DESCRIPTIONS = {
@@ -58,6 +61,8 @@ HOST_DESCRIPTIONS = {
     'state': 'Current state',
     'distribution': 'Distribution used',
     'environment_id': 'ID of environment of residence',
+    'spec_id': 'ID of the specification of this host',
+    'dc_id': 'ID of the data center where this host resides',
 }
 
 HOST_DEPLOYMENT_DESCRIPTIONS = {
@@ -67,6 +72,10 @@ HOST_DEPLOYMENT_DESCRIPTIONS = {
     'package_id': 'ID of the package being deployed',
     'status': 'Current status',
     'user': 'Username of creator',
+    'duration': 'Float seconds the installer daemon worked on this host '
+        'deployment',
+    'realized': 'When this host deployment was created',
+    'deploy_result': 'Salt output for deployment',
 }
 
 PACKAGE_DESCRIPTIONS = {
@@ -78,6 +87,11 @@ PACKAGE_DESCRIPTIONS = {
     'job': 'Name of Jenkins job',
     'application_id': "Unique integer identifier for the package's "
         "application",
+    'created': 'When this package was created',
+    'user': 'User who added this package',
+    'name': 'Name of the application of this package',
+    'project_type': 'The type of project to which this package belongs',
+    'commit_hash': 'The commit hash of the build',
 }
 
 PROJECT_DESCRIPTIONS = {
@@ -93,6 +107,8 @@ TIER_DESCRIPTIONS = {
     'ganglia_id': 'ID of Ganglia group',
     'ganglia_name': 'Name of Ganglia group',
     'status': 'Current status',
+    'description': 'Description of this tier',
+    'host_base': 'Base for hosts in this tier',
 }
 
 TIER_DEPLOYMENT_DESCRIPTIONS = {
@@ -104,4 +120,7 @@ TIER_DEPLOYMENT_DESCRIPTIONS = {
     'environment_id': 'ID of environment location for deployment',
     'user': 'Username of creator',
     'skewed': "Whether the application has different host deployment versions",
+    'duration': 'Float seconds the installer daemon worked on this tier '
+        'deployment',
+    'realized': 'When this tier deployment was created',
 }

@@ -110,9 +110,10 @@ Feature: GET application(s) from the REST API
         And the response list objects do not contain attributes <attrs>
 
         Examples:
-            | select    | attrs                                                                 |
-            | name      | job,arch,build_type,build_host,validation_type,env_specific,created   |
-            | name,job  | arch,build_type,build_host,validation_type,env_specific,created       |
+            | select        | attrs                                                                 |
+            | name          | job,arch,build_type,build_host,validation_type,env_specific,created   |
+            | name,job      | arch,build_type,build_host,validation_type,env_specific,created       |
+            | name,created  | job,arch,build_type,build_host,validation_type,env_specific           |
 
     @rest
     Scenario: pass invalid attr to select
@@ -124,8 +125,8 @@ Feature: GET application(s) from the REST API
         When I query GET "/applications?select=foo"
         Then the response code is 400
         And the response contains errors:
-            | location  | name      | description                                                                                                                                                   |
-            | query     | select    | foo is not a valid attribute. Valid attributes: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'id', 'job', 'name', 'validation_type'].  |
+            | location  | name      | description                                                                                                                                                               |
+            | query     | select    | foo is not a valid attribute. Valid attributes: ['arch', 'build_host', 'build_type', 'created', 'deploy_type', 'env_specific', 'id', 'job', 'name', 'validation_type'].   |
 
     @rest
     Scenario Outline: specify limit and/or last queries

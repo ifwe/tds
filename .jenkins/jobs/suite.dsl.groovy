@@ -130,14 +130,11 @@ def (tds, branches) = project.branchBuilders(gauntlet.name)
 // Override default 30m timeout
 jobFactory.referencedJobs.each {
     it.with() {
-        parameters {
-            stringParam('UPSTREAM_GIT_COMMIT', 'origin/master', 'The commit to build')
-        }
         triggers {
             scm('')
         }
         wrappers {
-            timeout(180, false)
+            timeout(240, false)
         }
     }
 }

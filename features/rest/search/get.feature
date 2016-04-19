@@ -120,8 +120,8 @@ Feature: REST API search GET
         When I query GET "/search/projects?limit=<limit>&start=<start>"
         Then the response code is 400
         And the response contains errors:
-            | location  | name      | description                                                               |
-            | query     | <param>   | Validation failed: Value 2.3 for argument <param> is not an integer.    |
+            | location  | name      | description                                                           |
+            | query     | <param>   | Validation failed: Value 2.3 for argument <param> is not an integer.  |
 
         Examples:
             | limit | start | param |
@@ -163,8 +163,8 @@ Feature: REST API search GET
         When I query GET "/search/hosts?status=operational"
         Then the response code is 422
         And the response contains errors:
-            | location  | name      | description                                                                                                                                                                           |
-            | query     | status    | Unsupported query: status. Valid parameters: ['cab', 'cage', 'console_port', 'distribution', 'environment_id', 'id', 'limit', 'name', 'rack', 'select', 'start', 'state', 'tier_id']. |
+            | location  | name      | description                                                                                                                                                                                               |
+            | query     | status    | Unsupported query: status. Valid parameters: ['cab', 'cage', 'console_port', 'dc_id', 'distribution', 'environment_id', 'id', 'limit', 'name', 'rack', 'select', 'spec_id', 'start', 'state', 'tier_id']. |
 
     @rest
     Scenario: pass a param that is routed to the ORM name
@@ -230,7 +230,30 @@ Feature: REST API search GET
             | 303 See Other |
 
     @rest
-    Scenario Outline: specify limit and/or start queries
+    Scenario Outline: specify limit and/or start queries without filter query
+        Given there is a deploy target with name="tier1"
+        And there is an environment with name="dev"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+            | host2 | dev   |
+            | host3 | dev   |
+            | host4 | dev   |
+            | host5 | dev   |
+        When I query GET "/search/hosts?limit=<limit>&start=<start>"
+        Then the response code is 200
+        And the response is a list of <num> items
+        And the response list contains id range <min> to <max>
+
+        Examples:
+            | limit | start | num   | min   | max   |
+            |       |       | 5     | 1     | 5     |
+            |       | 3     | 3     | 3     | 5     |
+            | 2     |       | 2     | 1     | 2     |
+            | 2     | 3     | 2     | 3     | 4     |
+
+    @rest
+    Scenario Outline: specify limit and/or start queries with filter query
         Given there is a deploy target with name="tier1"
         And there is an environment with name="dev"
         And there are hosts:

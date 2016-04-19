@@ -26,7 +26,11 @@ class PackageView(BaseView):
     others correspond to the /applications/{name_or_id} URL.
     """
 
-    param_routes = {}
+    param_routes = {
+        'name': 'pkg_name',
+        'application_id': 'pkg_def_id',
+        'user': 'creator',
+    }
 
     defaults = {
         'status': 'pending',
@@ -39,6 +43,7 @@ class PackageView(BaseView):
     individual_allowed_methods = dict(
         GET=dict(description="Get package for an application with version and "
                  "revision."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         PUT=dict(description="Update package for an application with version "
                  "and revision."),
     )
@@ -46,6 +51,7 @@ class PackageView(BaseView):
     collection_allowed_methods = dict(
         GET=dict(description="Get a list of packages for an application, "
                  "optionally by limit and/or start."),
+        HEAD=dict(description="Do a GET query without a body returned."),
         POST=dict(description="Add a new package for an application."),
     )
 
@@ -57,6 +63,10 @@ class PackageView(BaseView):
             del self.types['application_id']
         if 'application_id' in self.param_descriptions:
             del self.param_descriptions['application_id']
+        if 'name' in self.types:
+            del self.types['name']
+        if 'name' in self.param_descriptions:
+            del self.param_descriptions['name']
         super(PackageView, self).__init__(*args, **kwargs)
 
     def validate_individual_package(self, request):
@@ -104,8 +114,12 @@ class PackageView(BaseView):
                 'Revision must be an integer'
             )
             return
+        if self.request.method in ('GET', 'HEAD'):
+            self._validate_params(['select'])
+            self._validate_json_params({'select': 'string'})
+            self._validate_select_attributes(self.request)
         try:
-            pkg = tds.model.Package.get(
+            pkg = self.query(tds.model.Package).get(
                 application=self.request.validated['application'],
                 version=self.request.matchdict['version'],
                 revision=self.request.matchdict['revision'],
@@ -134,7 +148,7 @@ class PackageView(BaseView):
         request.params['start'] if those are non-null.
         """
         try:
-            pkgs = tds.model.Package.query().filter(
+            pkgs = self.query(tds.model.Package).filter(
                 tds.model.Package.application == self.request.validated[
                     'application'
                 ],
@@ -157,7 +171,7 @@ class PackageView(BaseView):
 
         if 'version' in self.request.validated_params or 'revision' in \
                 self.request.validated_params:
-            found_pkg = self.model.get(
+            found_pkg = self.query(self.model).get(
                 application=self.request.validated['application'],
                 version=self.request.validated_params['version'] if 'version'
                     in self.request.validated_params else
@@ -176,7 +190,9 @@ class PackageView(BaseView):
                     " exists."
                 )
                 self.request.errors.status = 409
-            self._validate_jenkins_build()
+            commit_hash = self._validate_jenkins_build()
+            if commit_hash is not None:
+                self.request.validated['commit_hash'] = commit_hash
 
         if 'status' in self.request.validated_params and \
                 self.request.validated_params['status'] != \
@@ -202,7 +218,7 @@ class PackageView(BaseView):
         rev_check = 'revision' in self.request.validated_params
         if not (app_check and ver_check and rev_check):
             return
-        found_pkg = self.model.get(
+        found_pkg = self.query(self.model).get(
             application=self.request.validated['application'],
             version=self.request.validated_params['version'],
             revision=self.request.validated_params['revision'],
@@ -224,7 +240,9 @@ class PackageView(BaseView):
             )
             self.request.errors.status = 403
 
-        self._validate_jenkins_build()
+        commit_hash = self._validate_jenkins_build()
+        if commit_hash is not None:
+            self.request.validated['commit_hash'] = commit_hash
 
         if 'job' not in self.request.validated_params:
             self.request.validated_params['job'] = self.request.validated[
@@ -317,6 +335,13 @@ class PackageView(BaseView):
                     .format(matrix=matrix_name, job=job_name)
                 )
                 self.request.errors.status = 400
+
+        if self.request.errors.status == 400:
+            return None
+        try:
+            return build.get_revision()
+        except:                 # Exception type unknown --KN
+            return None
 
     @view(validators=('validate_put_post', 'validate_post_required',
                       'validate_obj_post', 'validate_cookie'))
