@@ -340,3 +340,14 @@ def given_i_change_cookie_life_to(context, val):
         f.write(
             yaml.dump(context.rest_settings, default_flow_style=False)
         )
+
+
+@given(u'I run the REST server forever')
+def given_i_run_the_rest_server_forever(context):
+    import time
+    print "Running REST server at http://{addr}:{port}".format(
+        addr=context.rest_server.server_name,
+        port=context.rest_server.server_port,
+    )
+    while 1:
+        time.sleep(99999)

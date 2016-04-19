@@ -63,3 +63,6 @@ tds/views/rest/settings.yml
 
 # Compiled JS
 tds/web/js/app.js
+
+# REST server feature for the web UI
+features/rest/web_test.feature
