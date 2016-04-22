@@ -9,6 +9,7 @@ ALL_URLS = dict(
         '{application_name_or_id}/tiers/{tier_name_or_id}',
     application_collection='/applications',
     application='/applications/{name_or_id}',
+    bystander='/bystander',
     current_host_deployment='/applications/{name_or_id}/hosts/'
         '{host_name_or_id}',
     current_tier_deployment='/applications/{name_or_id}/tiers/'
