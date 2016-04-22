@@ -363,6 +363,9 @@ def then_the_test_conforms_to_the_bystander_expectation(context):
             assert env_dict['1']['package_version'] == '1'
             assert env_dict['2']['package_version'] == '2'
             assert env_dict['3']['package_version'] == '3'
+            assert env_dict['1']['name'] == 'dev'
+            assert env_dict['2']['name'] == 'stage'
+            assert env_dict['3']['name'] == 'prod'
             assert env_dict['prod_ahead']
             assert env_dict['stage_ahead']
         elif app_id == '3':
@@ -375,6 +378,9 @@ def then_the_test_conforms_to_the_bystander_expectation(context):
             assert env_dict['1']['package_version'] == '1'
             assert env_dict['2']['package_version'] == '3'
             assert env_dict['3']['package_version'] == '2'
+            assert env_dict['1']['name'] == 'dev'
+            assert env_dict['2']['name'] == 'stage'
+            assert env_dict['3']['name'] == 'prod'
             assert not env_dict['prod_ahead']
             assert env_dict['stage_ahead']
         else:
@@ -387,5 +393,8 @@ def then_the_test_conforms_to_the_bystander_expectation(context):
             assert env_dict['1']['package_version'] == '3'
             assert env_dict['2']['package_version'] == '2'
             assert env_dict['3']['package_version'] == '1'
+            assert env_dict['1']['name'] == 'dev'
+            assert env_dict['2']['name'] == 'stage'
+            assert env_dict['3']['name'] == 'prod'
             assert not env_dict['prod_ahead']
             assert not env_dict['stage_ahead']

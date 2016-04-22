@@ -158,6 +158,7 @@ class BystanderView(base.BaseView):
                 )
                 if env_dep is not None:
                     env_sub_dict[env.id] = dict(
+                        name=env.env,
                         package_id=env_dep.package_id,
                         package_version=env_dep.package.version,
                         package_revision=env_dep.package.revision,
