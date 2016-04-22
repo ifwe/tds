@@ -139,6 +139,11 @@ SEARCH_PERMISSIONS = dict(
     head='user',
 )
 
+BYSTANDER_PERMISSIONS = dict(
+    get='user',
+    head='user',
+)
+
 TIER_DEPLOYMENT_PERMISSIONS = dict(
     collection_get='user',
     collection_head='user',

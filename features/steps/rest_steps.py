@@ -340,3 +340,61 @@ def given_i_change_cookie_life_to(context, val):
         f.write(
             yaml.dump(context.rest_settings, default_flow_style=False)
         )
+
+
+@then(u'the response object conforms to the bystander expectation')
+def then_the_test_conforms_to_the_bystander_expectation(context):
+    obj = context.response.json()
+    app_mapping = {'2': "app1", '3': "app2", '4': "app3"}
+    tier_mapping = {'2': "tier1", '3': "tier2", '4': "tier3"}
+    for app_id in ['2', '3', '4']:
+        assert app_id in obj, obj
+        assert obj[app_id]['name'] == app_mapping[app_id]
+        assert app_id in obj[app_id], obj[app_id]
+        assert obj[app_id][app_id]['name'] == tier_mapping[app_id]
+        env_dict = obj[app_id][app_id]
+        if app_id == '2':
+            assert env_dict['1']['package_id'] == 1
+            assert env_dict['2']['package_id'] == 2
+            assert env_dict['3']['package_id'] == 3
+            assert env_dict['1']['package_revision'] == '1'
+            assert env_dict['2']['package_revision'] == '2'
+            assert env_dict['3']['package_revision'] == '3'
+            assert env_dict['1']['package_version'] == '1'
+            assert env_dict['2']['package_version'] == '2'
+            assert env_dict['3']['package_version'] == '3'
+            assert env_dict['1']['name'] == 'dev'
+            assert env_dict['2']['name'] == 'stage'
+            assert env_dict['3']['name'] == 'prod'
+            assert env_dict['prod_ahead']
+            assert env_dict['stage_ahead']
+        elif app_id == '3':
+            assert env_dict['1']['package_id'] == 4
+            assert env_dict['2']['package_id'] == 6
+            assert env_dict['3']['package_id'] == 5
+            assert env_dict['1']['package_revision'] == '4'
+            assert env_dict['2']['package_revision'] == '6'
+            assert env_dict['3']['package_revision'] == '5'
+            assert env_dict['1']['package_version'] == '1'
+            assert env_dict['2']['package_version'] == '3'
+            assert env_dict['3']['package_version'] == '2'
+            assert env_dict['1']['name'] == 'dev'
+            assert env_dict['2']['name'] == 'stage'
+            assert env_dict['3']['name'] == 'prod'
+            assert not env_dict['prod_ahead']
+            assert env_dict['stage_ahead']
+        else:
+            assert env_dict['1']['package_id'] == 9
+            assert env_dict['2']['package_id'] == 8
+            assert env_dict['3']['package_id'] == 7
+            assert env_dict['1']['package_revision'] == '9'
+            assert env_dict['2']['package_revision'] == '8'
+            assert env_dict['3']['package_revision'] == '7'
+            assert env_dict['1']['package_version'] == '3'
+            assert env_dict['2']['package_version'] == '2'
+            assert env_dict['3']['package_version'] == '1'
+            assert env_dict['1']['name'] == 'dev'
+            assert env_dict['2']['name'] == 'stage'
+            assert env_dict['3']['name'] == 'prod'
+            assert not env_dict['prod_ahead']
+            assert not env_dict['stage_ahead']
