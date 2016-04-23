@@ -398,3 +398,11 @@ def then_the_test_conforms_to_the_bystander_expectation(context):
             assert env_dict['3']['name'] == 'prod'
             assert not env_dict['prod_ahead']
             assert not env_dict['stage_ahead']
+
+
+@then(u'the response object has keys {keys}')
+def then_the_response_object_has_keys(context, keys):
+    keys = keys.split(',')
+    obj = context.response.json()
+    for key in keys:
+        assert key in obj, (key, obj)
