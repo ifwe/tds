@@ -137,16 +137,35 @@ class BystanderView(base.BaseView):
 
     permissions = BYSTANDER_PERMISSIONS
 
-    def validate_bystander_get(self, _request):
+    def validate_bystander_get(self, request):
         """
         Validate a bystander GET request.
         """
         self.name = 'bystander'
-        self._validate_params(list())
+        self._validate_params(['limit', 'start'])
 
+        self._validate_json_params({'limit': 'integer', 'start': 'integer'})
+
+        if request.errors:
+            return
+        self.applications = self.query(tds.model.Application)
+        if 'start' in request.validated_params:
+            self.applications = self.applications.filter(
+                tds.model.Application.id >= request.validated_params['start']
+            )
+        if 'limit' in request.validated_params:
+            self.applications = self.applications.limit(
+                request.validated_params['limit']
+            )
+
+        # self.applications = self.applications.all()
         self.result = dict()
         all_envs = tagopsdb.model.Environment.all()
-        for app_tier in tagopsdb.model.ProjectPackage.all():
+        for app_tier in self.query(tagopsdb.model.ProjectPackage).filter(
+            tagopsdb.model.ProjectPackage.pkg_def_id.in_(
+                [app.id for app in self.applications]
+            )
+        ).all():
             app = tds.model.Application.get(id=app_tier.pkg_def_id)
             tier = tds.model.AppTarget.get(id=app_tier.app_id)
             env_sub_dict = dict()
@@ -190,8 +209,14 @@ class BystanderView(base.BaseView):
         self.result = dict(
             GET=dict(
                 description="Get latest deployed version of all applications"
-                    " on all associated tiers in each environment.",
-                parameters=dict(),
+                    " on all associated tiers in each environment, filtered by"
+                    " limit and/or start. NOTE: This method guarantees only "
+                    "that up to limit number of applications will be covered; "
+                    "applications should not expect exactly limit entries.",
+                parameters=dict(
+                    limit="Number of applications to cover",
+                    start="ID of the first application in this page",
+                ),
             ),
             HEAD=dict(description="Do a GET query without a body returned."),
             OPTIONS=dict(
