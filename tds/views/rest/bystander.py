@@ -1,10 +1,10 @@
 """
 REST API view for Bystander functionality.
 This view supports only GET and HEAD and on a successfull GET request returns a
-dict with app_id keys with dict values with keys:
-    name: name of the application
-    tier: a dict with tier_id keys with values:
-        name: name of the tier
+dict with tier_id keys with dict values with keys:
+    name: name of the tier
+    app: a dict with tier_id keys with values:
+        name: name of the application
         prod_ahead: True iff prod version is ahead of stage version
         stage_ahead: True iff stage version is ahead of dev version
         envs: a dict with env_id keys with values:
@@ -16,9 +16,9 @@ dict with app_id keys with dict values with keys:
 The full structure of the response is similar to:
     {
         1: {
-            'name': 'app1',
+            'name': 'tier1',
             1: {
-                name: 'tier1',
+                name: 'app1',
                 prod_ahead: false,
                 stage_ahead: false,
                 1: {
@@ -41,7 +41,7 @@ The full structure of the response is similar to:
                 }
             },
             2: {
-                name: 'tier2',
+                name: 'app2',
                 prod_ahead: false,
                 stage_ahead: true,
                 1: {
@@ -65,9 +65,9 @@ The full structure of the response is similar to:
             }
         },
         2: {
-            'name': 'app2',
+            'name': 'tier2',
             3: {
-                name: 'tier3',
+                name: 'app3',
                 prod_ahead: true,
                 stage_ahead: false,
                 1: {
@@ -90,7 +90,7 @@ The full structure of the response is similar to:
                 }
             },
             4: {
-                name: 'tier4',
+                name: 'app4',
                 prod_ahead: true,
                 stage_ahead: true,
                 1: {
@@ -148,13 +148,13 @@ class BystanderView(base.BaseView):
 
         if request.errors:
             return
-        self.applications = self.query(tds.model.Application)
+        self.tiers = self.query(tds.model.AppTarget)
         if 'start' in request.validated_params:
-            self.applications = self.applications.filter(
-                tds.model.Application.id >= request.validated_params['start']
+            self.tiers = self.tiers.filter(
+                tds.model.AppTarget.id >= request.validated_params['start']
             )
         if 'limit' in request.validated_params:
-            self.applications = self.applications.limit(
+            self.tiers = self.tiers.limit(
                 request.validated_params['limit']
             )
 
@@ -162,12 +162,12 @@ class BystanderView(base.BaseView):
         self.result = dict()
         all_envs = tagopsdb.model.Environment.all()
         for app_tier in self.query(tagopsdb.model.ProjectPackage).filter(
-            tagopsdb.model.ProjectPackage.pkg_def_id.in_(
-                [app.id for app in self.applications]
+            tagopsdb.model.ProjectPackage.app_id.in_(
+                [tier.id for tier in self.tiers]
             )
         ).all():
-            app = tds.model.Application.get(id=app_tier.pkg_def_id)
-            tier = tds.model.AppTarget.get(id=app_tier.app_id)
+            app = self.query(tds.model.Application).get(id=app_tier.pkg_def_id)
+            tier = self.query(tds.model.AppTarget).get(id=app_tier.app_id)
             env_sub_dict = dict()
             for env in all_envs:
                 env_dep = app.get_latest_completed_tier_deployment(
@@ -185,22 +185,22 @@ class BystanderView(base.BaseView):
                     )
             if len(env_sub_dict) == 0:
                 continue
-            if app.id not in self.result:
-                self.result[app.id] = dict(name=app.name)
+            if tier.id not in self.result:
+                self.result[tier.id] = dict(name=tier.name)
             try:
-                env_sub_dict['prod_ahead'] = env_sub_dict[PROD_ID][
+                env_sub_dict['prod_ahead'] = int(env_sub_dict[PROD_ID][
                     'package_version'
-                ] > env_sub_dict[STAGE_ID]['package_version']
-            except KeyError:
+                ]) > int(env_sub_dict[STAGE_ID]['package_version'])
+            except (KeyError, ValueError):
                 env_sub_dict['prod_ahead'] = False
             try:
-                env_sub_dict['stage_ahead'] = env_sub_dict[STAGE_ID][
+                env_sub_dict['stage_ahead'] = int(env_sub_dict[STAGE_ID][
                     'package_version'
-                ] > env_sub_dict[DEV_ID]['package_version']
-            except KeyError:
+                ]) > int(env_sub_dict[DEV_ID]['package_version'])
+            except (KeyError, ValueError):
                 env_sub_dict['stage_ahead'] = False
-            self.result[app.id][tier.id] = env_sub_dict
-            self.result[app.id][tier.id]['name'] = tier.name
+            self.result[tier.id][app.id] = env_sub_dict
+            self.result[tier.id][app.id]['name'] = app.name
 
     def validate_bystander_options(self, _request):
         """
@@ -214,8 +214,8 @@ class BystanderView(base.BaseView):
                     "that up to limit number of applications will be covered; "
                     "applications should not expect exactly limit entries.",
                 parameters=dict(
-                    limit="Number of applications to cover",
-                    start="ID of the first application in this page",
+                    limit="Number of tiers to cover",
+                    start="ID of the first tier in this page",
                 ),
             ),
             HEAD=dict(description="Do a GET query without a body returned."),

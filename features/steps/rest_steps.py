@@ -347,13 +347,13 @@ def then_the_test_conforms_to_the_bystander_expectation(context):
     obj = context.response.json()
     app_mapping = {'2': "app1", '3': "app2", '4': "app3"}
     tier_mapping = {'2': "tier1", '3': "tier2", '4': "tier3"}
-    for app_id in ['2', '3', '4']:
-        assert app_id in obj, obj
-        assert obj[app_id]['name'] == app_mapping[app_id]
-        assert app_id in obj[app_id], obj[app_id]
-        assert obj[app_id][app_id]['name'] == tier_mapping[app_id]
-        env_dict = obj[app_id][app_id]
-        if app_id == '2':
+    for tier_id in ['2', '3', '4']:
+        assert tier_id in obj, obj
+        assert obj[tier_id]['name'] == tier_mapping[tier_id]
+        assert tier_id in obj[tier_id], obj[tier_id]
+        assert obj[tier_id][tier_id]['name'] == app_mapping[tier_id]
+        env_dict = obj[tier_id][tier_id]
+        if tier_id == '2':
             assert env_dict['1']['package_id'] == 1
             assert env_dict['2']['package_id'] == 2
             assert env_dict['3']['package_id'] == 3
@@ -368,7 +368,7 @@ def then_the_test_conforms_to_the_bystander_expectation(context):
             assert env_dict['3']['name'] == 'prod'
             assert env_dict['prod_ahead']
             assert env_dict['stage_ahead']
-        elif app_id == '3':
+        elif tier_id == '3':
             assert env_dict['1']['package_id'] == 4
             assert env_dict['2']['package_id'] == 6
             assert env_dict['3']['package_id'] == 5
