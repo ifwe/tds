@@ -12,6 +12,6 @@ Feature: REST API bystander OPTIONS
         And the response body contains "Do a GET query without a body returned."
         And the response body contains "Get HTTP method options and parameters for this URL endpoint."
         And the response body contains "limit"
-        And the response body contains "Number of applications to cover"
+        And the response body contains "Number of tiers to cover"
         And the response body contains "start"
-        And the response body contains "ID of the first application in this page"
+        And the response body contains "ID of the first tier in this page"
