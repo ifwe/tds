@@ -78,7 +78,7 @@ Feature: REST API bystander HEAD
         Then the response code is 200
         And the response body is empty
 
-@rest @wip
+@rest
 Scenario Outline: use limit and/or start
     Given there is a project with name="proj1"
     And there is a project with name="proj2"

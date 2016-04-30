@@ -230,6 +230,23 @@ Feature: REST API search GET
             | 303 See Other |
 
     @rest
+    Scenario: get package with user select
+        Given there are applications:
+            | name  |
+            | app1  |
+        And there are packages:
+            | version   | revision  | creator   |
+            | 1         | 2         | foo       |
+            | 2         | 1         | foo       |
+        When I query GET "/search/packages?user=foo"
+        Then the response code is 200
+        And the response is a list of 2 items
+        And the response list contains objects:
+            | user  | version   |
+            | foo   | 1         |
+            | foo   | 2         |
+
+    @rest
     Scenario Outline: specify limit and/or start queries without filter query
         Given there is a deploy target with name="tier1"
         And there is an environment with name="dev"
