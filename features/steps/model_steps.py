@@ -117,7 +117,7 @@ def package_factory(context, **kwargs):
         version=kwargs.get('version', 1),
         revision=kwargs.get('revision', 1),
         status=kwargs.get('status', 'completed'),
-        creator=curr_user,
+        creator=kwargs.get('creator', curr_user),
         builder='jenkins',
         job=kwargs.get('job', application.path),
     )
