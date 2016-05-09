@@ -350,6 +350,7 @@ def then_the_test_conforms_to_the_bystander_expectation(context):
     for tier_id in ['2', '3', '4']:
         assert tier_id in obj, obj
         assert obj[tier_id]['name'] == tier_mapping[tier_id]
+        assert obj[tier_id]['status'] == 'active'
         assert tier_id in obj[tier_id], obj[tier_id]
         assert obj[tier_id][tier_id]['name'] == app_mapping[tier_id]
         env_dict = obj[tier_id][tier_id]
