@@ -6,6 +6,7 @@ APPLICATION_TYPES = {
     'id': 'integer',
     'name': 'string',
     'job': 'string',
+    'repository': 'string',
     'build_host': 'string',
     'build_type': 'choice',
     'deploy_type': 'string',
