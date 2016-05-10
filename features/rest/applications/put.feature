@@ -38,6 +38,13 @@ Feature: Update (PUT) application on REST API
             | 2         |
 
     @rest
+    Scenario: update application repository field
+        When I query PUT "/applications/app1?repository=https://www.example.org/repo/foo/bar"
+        Then the response code is 200
+        And the response is an object with name="app1",id=2,repository="https://www.example.org/repo/foo/bar"
+        And there is an application with pkg_name="app1",id=2,repository="https://www.example.org/repo/foo/bar"
+
+    @rest
     Scenario Outline: pass an invalid parameter
         When I query PUT "/applications/<select>?<query>"
         Then the response code is 422

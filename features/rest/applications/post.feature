@@ -26,13 +26,14 @@ Feature: Add (POST) application on REST API
         And there is an application with pkg_name="app4",id=5,path="myjob",<props>
 
         Examples:
-            | query                     | props                         |
-            | build_host=ci.example.org | build_host="ci.example.org"   |
-            | build_type=hudson         | build_type="hudson"           |
-            | deploy_type=deb           | deploy_type="deb"             |
-            | arch=x86_64               | arch="x86_64"                 |
-            | validation_type=valtype   | validation_type="valtype"     |
-            | env_specific=1            | env_specific=True             |
+            | query                                             | props                                             |
+            | build_host=ci.example.org                         | build_host="ci.example.org"                       |
+            | build_type=hudson                                 | build_type="hudson"                               |
+            | deploy_type=deb                                   | deploy_type="deb"                                 |
+            | arch=x86_64                                       | arch="x86_64"                                     |
+            | validation_type=valtype                           | validation_type="valtype"                         |
+            | env_specific=1                                    | env_specific=True                                 |
+            | repository=https://www.example.com/repo/foo/bar   | repository="https://www.example.com/repo/foo/bar" |
 
     @rest
     Scenario Outline: omit required fields
