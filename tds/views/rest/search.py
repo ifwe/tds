@@ -169,6 +169,23 @@ class SearchView(base.BaseView):
         if self.limit is not None:
             self.results = self.results.limit(self.limit)
 
+        timestamp_map = {
+            'deployments': 'declared',
+            'host_deployments': 'realized',
+            'tier_deployments': 'realized',
+        }
+
+        if self.before is not None:
+            timestamp_col = getattr(self.model, timestamp_map[self.obj_type])
+            self.results = self.results.filter(
+                timestamp_col < self.before
+            )
+        if self.after is not None:
+            timestamp_col = getattr(self.model, timestamp_map[self.obj_type])
+            self.results = self.results.filter(
+                timestamp_col > self.after
+            )
+
     def _validate_obj_type_exists(self):
         """
         If the obj_type is in the self.types, return True.
@@ -179,7 +196,7 @@ class SearchView(base.BaseView):
                 'path', 'obj_type',
                 "Unknown object type {obj_type}. Supported object types are: "
                 "{types}.".format(
-                    obj_type=self.request.matchdict['obj_type'],
+                    obj_type=self.obj_type,
                     types=sorted(self.TYPES.keys()),
                 )
             )
@@ -217,13 +234,23 @@ class SearchView(base.BaseView):
         Validate a search GET request.
         """
         self.name = 'search'
+        self.obj_type = request.matchdict['obj_type']
         if not self._validate_obj_type_exists():
             return
 
-        self.obj_dict = self.TYPES[request.matchdict['obj_type']]
+        self.obj_dict = self.TYPES[self.obj_type]
         self.model = self.obj_dict['model']
+        extra_params = {
+            'limit': 'integer',
+            'start': 'integer',
+            'select': 'string',
+        }
+        if self.obj_type in ('deployments', 'host_deployments',
+                             'tier_deployments'):
+            extra_params['before'] = 'timestamp'
+            extra_params['after'] = 'timestamp'
         self._validate_params(
-            self.obj_dict['params'].keys() + ['limit', 'start', 'select']
+            self.obj_dict['params'].keys() + extra_params.keys()
         )
 
         for param in request.validated_params:
@@ -234,34 +261,44 @@ class SearchView(base.BaseView):
                 setattr(self, choice_param, self._get_param_choices(param))
 
         self._validate_json_params(self.obj_dict['params'])
-        self._validate_json_params(
-            {'limit': 'integer', 'start': 'integer', 'select': 'string'}
-        )
-        self.limit = self.start = None
+        self._validate_json_params(extra_params)
+
+        self.limit = self.start = self.before = self.after = None
+
         if 'limit' in request.validated_params:
             self.limit = request.validated_params.pop('limit')
         if 'start' in request.validated_params:
             self.start = request.validated_params.pop('start')
+        if 'before' in request.validated_params:
+            request.validated_params.pop('before')
+            if request.validated.get('before', None) is not None:
+                self.before = request.validated.pop('before')
+        if 'after' in request.validated_params:
+            request.validated_params.pop('after')
+            if request.validated.get('after', None) is not None:
+                self.after = request.validated.pop('after')
+
         self._validate_select_attributes(
             request, self.obj_dict['params'].keys()
         )
         self._route_params(self.obj_dict['param_routes'])
+
         self._get_results()
 
     def validate_search_options(self, request):
         """
         Validate search OPTIONS request.
         """
+        self.obj_type = request.matchdict['obj_type']
         if not self._validate_obj_type_exists():
             return
-        self.obj_dict = self.TYPES[request.matchdict['obj_type']]
+        self.obj_dict = self.TYPES[self.obj_type]
         self.model = self.obj_dict['model']
         self.result = dict(
             GET=dict(
                 description="Search for {obj_type} by specifying restrictions "
                     "on parameters.".format(
-                        obj_type=request.matchdict['obj_type'].replace('_',
-                                                                       ' ')
+                        obj_type=self.obj_type.replace('_', ' '),
                     ),
                 parameters=dict(),
             ),
@@ -295,7 +332,7 @@ class SearchView(base.BaseView):
                         headers=dict(
                             Location="{app_path}/{obj_type}/{obj_id}".format(
                                 app_path=self.request.application_url,
-                                obj_type=self.request.matchdict['obj_type'],
+                                obj_type=self.obj_type,
                                 obj_id=self.results[0].id,
                             )
                         )

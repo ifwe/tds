@@ -249,13 +249,38 @@ class JSONValidatedView(object):
         date and return False if it is; return an error message if it isn't.
         """
         given = self.request.validated_params[param_name]
+        time_fmt = "%Y-%m-%d %H:%M:%S"
+        if getattr(self.request, 'validated', None) is None:
+            self.request.validated = dict()
         try:
-            date = datetime.datetime.fromtimestamp(given)
-            self.request.validated[param_name] = date
+            int_given = int(given)
+            self.request.validated[param_name] = \
+                datetime.datetime.fromtimestamp(int_given).strftime(time_fmt)
             return False
         except ValueError:
-            return "Could not parse {val} for {param} as a valid timestamp."\
-                .format(val=given, param=param_name)
+            epoch = datetime.datetime.fromtimestamp(0)
+            try:
+                parsed = \
+                    datetime.datetime.strptime(given[:19], "%Y-%m-%dT%H:%M:%S")
+                self.request.validated[param_name] = parsed.strftime(time_fmt)
+                return False
+            except ValueError:
+                try:
+                    parsed = \
+                        datetime.datetime.strptime(given[:10], "%Y-%m-%d")
+                    self.request.validated[param_name] = parsed.strftime(
+                        time_fmt
+                    )
+                    return False
+                except ValueError:
+                    return (
+                        "Could not parse {val} for {param} as a valid "
+                        "timestamp. Valid timestamp formats: %Y-%m-%d, "
+                        "%Y-%m-%dT%H:%M:%S, and integer seconds since epoch."
+                        .format(
+                            val=given, param=param_name
+                        )
+                    )
 
     def _validate_choice(self, param_name):
         """
