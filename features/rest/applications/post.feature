@@ -56,8 +56,8 @@ Feature: Add (POST) application on REST API
         When I query POST "/applications?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'validation_type'].  |
+            | location  | name  | description                                                                                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'repository', 'validation_type'].    |
         And there is no application with pkg_name="app4"
         And there is no application with path="myjob"
 
@@ -80,7 +80,7 @@ Feature: Add (POST) application on REST API
         Then the response code is 409
         And the response contains errors:
             | location  | name      | description                                                                   |
-            | query     | <name>    | Validation failed: Value foo for argument <name> must be one of: [<choices>].  |
+            | query     | <name>    | Validation failed: Value foo for argument <name> must be one of: [<choices>]. |
 
         Examples:
             | query             | name          | choices                           |
