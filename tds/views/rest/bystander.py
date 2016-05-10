@@ -186,7 +186,7 @@ class BystanderView(base.BaseView):
             if len(env_sub_dict) == 0:
                 continue
             if tier.id not in self.result:
-                self.result[tier.id] = dict(name=tier.name)
+                self.result[tier.id] = dict(name=tier.name, status=tier.status)
             try:
                 env_sub_dict['prod_ahead'] = int(env_sub_dict[PROD_ID][
                     'package_version'

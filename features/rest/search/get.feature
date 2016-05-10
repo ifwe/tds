@@ -297,3 +297,116 @@ Feature: REST API search GET
             |       | 8     | 4     | 8     | 11    |
             | 2     |       | 2     | 5     | 6     |
             | 2     | 8     | 2     | 8     | 9     |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for deployments
+        Given there are deployments:
+            | id    | user  | status    | declared              |
+            | 1     | foo   | pending   | 2016-01-01 01:00:00   |
+            | 2     | foo   | queued    | 2016-01-01 02:00:00   |
+            | 3     | foo   | pending   | 2016-01-01 03:00:00   |
+            | 4     | foo   | queued    | 2016-01-01 04:00:00   |
+            | 5     | foo   | queued    | 2016-01-01 04:00:01   |
+        When I query GET "/search/deployments?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 5     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 5     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 4     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
+
+    @rest
+    Scenario Outline: pass invalid time format for before and/or after queries
+        When I query GET "/search/deployments?before=<before>&after=<after>"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name      | description                                                                                                                                                       |
+            | query     | <name>    | Validation failed: Could not parse <val> for <name> as a valid timestamp. Valid timestamp formats: %Y-%m-%d, %Y-%m-%dT%H:%M:%S, and integer seconds since epoch.  |
+
+        Examples:
+            | before    | after | name      | val   |
+            | asdf      |       | before    | asdf  |
+            |           | asdf  | after     | asdf  |
+            | fdsa      | asdf  | before    | fdsa  |
+            | fdsa      | asdf  | after     | asdf  |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for host deployments
+        Given there are deployments:
+            | id    | user  | status    | declared              |
+            | 1     | foo   | pending   | 2016-01-01 01:00:00   |
+        And there is an application with name="app1"
+        And there are packages:
+            | version   | revision  |
+            | 1         | 1         |
+        And there is an environment with name="dev"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-01 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | ok        | 2016-01-01 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | ok        | 2016-01-01 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-01 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-01 04:00:01   | 1             | 1             | 1         |
+        When I query GET "/search/host_deployments?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 5     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 5     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 4     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for tier deployments
+        Given there are deployments:
+            | id    | user  | status    | declared              |
+            | 1     | foo   | pending   | 2016-01-01 01:00:00   |
+        And there is an application with name="app1"
+        And there are packages:
+            | version   | revision  |
+            | 1         | 1         |
+        And there is an environment with name="dev"
+        And there is a deploy target with name="app1"
+        And there are tier deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete  | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | complete  | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | complete  | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | complete  | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | complete  | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        When I query GET "/search/tier_deployments?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 5     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 5     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 4     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
