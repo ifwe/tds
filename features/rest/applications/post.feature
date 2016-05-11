@@ -26,13 +26,14 @@ Feature: Add (POST) application on REST API
         And there is an application with pkg_name="app4",id=5,path="myjob",<props>
 
         Examples:
-            | query                     | props                         |
-            | build_host=ci.example.org | build_host="ci.example.org"   |
-            | build_type=hudson         | build_type="hudson"           |
-            | deploy_type=deb           | deploy_type="deb"             |
-            | arch=x86_64               | arch="x86_64"                 |
-            | validation_type=valtype   | validation_type="valtype"     |
-            | env_specific=1            | env_specific=True             |
+            | query                                             | props                                             |
+            | build_host=ci.example.org                         | build_host="ci.example.org"                       |
+            | build_type=hudson                                 | build_type="hudson"                               |
+            | deploy_type=deb                                   | deploy_type="deb"                                 |
+            | arch=x86_64                                       | arch="x86_64"                                     |
+            | validation_type=valtype                           | validation_type="valtype"                         |
+            | env_specific=1                                    | env_specific=True                                 |
+            | repository=https://www.example.com/repo/foo/bar   | repository="https://www.example.com/repo/foo/bar" |
 
     @rest
     Scenario Outline: omit required fields
@@ -56,8 +57,8 @@ Feature: Add (POST) application on REST API
         When I query POST "/applications?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'validation_type'].  |
+            | location  | name  | description                                                                                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'repository', 'validation_type'].    |
         And there is no application with pkg_name="app4"
         And there is no application with path="myjob"
 
@@ -80,7 +81,7 @@ Feature: Add (POST) application on REST API
         Then the response code is 409
         And the response contains errors:
             | location  | name      | description                                                                   |
-            | query     | <name>    | Validation failed: Value foo for argument <name> must be one of: [<choices>].  |
+            | query     | <name>    | Validation failed: Value foo for argument <name> must be one of: [<choices>]. |
 
         Examples:
             | query             | name          | choices                           |

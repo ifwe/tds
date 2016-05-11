@@ -148,6 +148,14 @@ class SearchView(base.BaseView):
         'tier_deployments': TIER_DEPLOYMENT_DICT,
     }
 
+    TIMESTAMP_MAP = {
+        'deployments': 'declared',
+        'host_deployments': 'realized',
+        'tier_deployments': 'realized',
+        'applications': 'created',
+        'packages': 'created',
+    }
+
     def _get_results(self):
         """
         Set self.results to the results of the query in
@@ -169,19 +177,17 @@ class SearchView(base.BaseView):
         if self.limit is not None:
             self.results = self.results.limit(self.limit)
 
-        timestamp_map = {
-            'deployments': 'declared',
-            'host_deployments': 'realized',
-            'tier_deployments': 'realized',
-        }
-
         if self.before is not None:
-            timestamp_col = getattr(self.model, timestamp_map[self.obj_type])
+            timestamp_col = getattr(
+                self.model, self.TIMESTAMP_MAP[self.obj_type]
+            )
             self.results = self.results.filter(
                 timestamp_col < self.before
             )
         if self.after is not None:
-            timestamp_col = getattr(self.model, timestamp_map[self.obj_type])
+            timestamp_col = getattr(
+                self.model, self.TIMESTAMP_MAP[self.obj_type]
+            )
             self.results = self.results.filter(
                 timestamp_col > self.after
             )
@@ -245,8 +251,7 @@ class SearchView(base.BaseView):
             'start': 'integer',
             'select': 'string',
         }
-        if self.obj_type in ('deployments', 'host_deployments',
-                             'tier_deployments'):
+        if self.obj_type in self.TIMESTAMP_MAP.keys():
             extra_params['before'] = 'timestamp'
             extra_params['after'] = 'timestamp'
         self._validate_params(
