@@ -6,6 +6,7 @@ APPLICATION_DESCRIPTIONS = {
     'id': 'Unique integer identifier',
     'name': 'Unique string identifier',
     'job': 'Name of Jenkins job',
+    'repository': 'URL to central code repository for this application',
     'build_host': 'Host that created the build',
     'build_type': 'Build process used',
     'deploy_type': 'Deployment process used',
