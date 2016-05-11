@@ -6,6 +6,7 @@ import os.path
 import pwd
 import yaml
 from time import mktime
+from datetime import datetime
 
 from behave import given, then, when
 
@@ -118,6 +119,9 @@ def package_factory(context, **kwargs):
         revision=kwargs.get('revision', 1),
         status=kwargs.get('status', 'completed'),
         creator=kwargs.get('creator', curr_user),
+        created=kwargs.get(
+            'created', datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ),
         builder='jenkins',
         job=kwargs.get('job', application.path),
     )

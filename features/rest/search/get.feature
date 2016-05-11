@@ -410,3 +410,57 @@ Feature: REST API search GET
             |                       | 2016-01-01T01:00:00   | 4     |
             | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
             | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for applications
+        Given there are applications:
+            | name  | created               |
+            | app1  | 2016-01-01 01:00:00   |
+            | app2  | 2016-01-01 02:00:00   |
+            | app3  | 2016-01-01 03:00:00   |
+            | app4  | 2016-01-01 04:00:00   |
+            | app5  | 2016-01-01 04:00:01   |
+        When I query GET "/search/applications?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        # Numbers are b0rked because of __dummy__ app
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 6     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 6     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 6     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 5     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for packages
+        Given there is an application with name="app1"
+        And there are packages:
+            | version   | revision  | created               |
+            | 1         | 1         | 2016-01-01 01:00:00   |
+            | 2         | 2         | 2016-01-01 02:00:00   |
+            | 3         | 3         | 2016-01-01 03:00:00   |
+            | 4         | 4         | 2016-01-01 04:00:00   |
+            | 5         | 5         | 2016-01-01 04:00:01   |
+        When I query GET "/search/packages?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 5     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 5     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 4     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
