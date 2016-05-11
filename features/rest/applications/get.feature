@@ -47,7 +47,7 @@ Feature: GET application(s) from the REST API
             | name  | repository        |
             | app1  | example.com/app1  |
             | app2  | example.com/app2  |
-            | app3  | example.com/app3  |
+            | app3  |                   |
         When I query GET "/applications/<app>"
         Then the response code is 200
         And the response is an object with name="<app>",repository="<repo>"
@@ -56,7 +56,7 @@ Feature: GET application(s) from the REST API
             | app   | repo              |
             | app1  | example.com/app1  |
             | app2  | example.com/app2  |
-            | app3  | example.com/app3  |
+            | app3  |                   |
 
     @rest
     Scenario Outline: get a single application by ID
