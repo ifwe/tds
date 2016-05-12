@@ -14,6 +14,7 @@ salt:
 notifications:
   email:
     receiver: fake@example.com
+    sender_domain: ifwe.co
     port: 1025
   enabled_methods: []
   graphite:
