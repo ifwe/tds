@@ -73,8 +73,8 @@ Feature: Add (POST) package on REST API
         When I query POST "/applications/app3/packages?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
+            | location  | name  | description                                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'commit_hash', 'job', 'revision', 'status', 'version']. |
         And there is no package with version="2",revision="2",creator="testuser"
 
         Examples:
