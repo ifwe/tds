@@ -44,7 +44,7 @@ Feature: application update application properties
         And I have "dev" permissions
         And there is an application with name="myapp"
         When I run "application update myapp <properties>"
-        Then the output is "Invalid attribute: fake_prop. Valid attributes are: ('job_name',)"
+        Then the output is "Invalid attribute: fake_prop. Valid attributes are: ('job_name', 'repository')"
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
@@ -58,7 +58,7 @@ Feature: application update application properties
         And I have "dev" permissions
         And there is an application with name="myapp"
         When I run "application update myapp <properties>"
-        Then the output is "Invalid attribute: name. Valid attributes are: ('job_name',)"
+        Then the output is "Invalid attribute: name. Valid attributes are: ('job_name', 'repository')"
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
