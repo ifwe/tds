@@ -32,6 +32,7 @@ class PackageByIDView(BaseView):
         'builder': 'choice',
         'job': 'string',
         'name': 'string',
+        'commit_hash': 'string',
     }
 
     param_routes = {

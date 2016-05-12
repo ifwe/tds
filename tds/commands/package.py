@@ -272,7 +272,7 @@ class PackageController(BaseController):
                 )
         try:
             return build.get_revision()
-        except:             # Not sure what exception will be raise --KN
+        except:             # Not sure what exception will be raised --KN
             return None
 
     @validate('package')
