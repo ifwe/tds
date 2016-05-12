@@ -312,7 +312,7 @@ class RepoUpdater(TDSProgramBase):
     def email_for_invalid_rpm(self, rpm_file):
         """Send an email to engineering if a bad RPM is found."""
         sender = 'siteops'
-        sender_email = '%s@tagged.com' % sender
+        sender_email = '%s@ifwe.co' % sender
         receiver_emails = ['eng+tds@tagged.com']
         if self.email_receiver is not None:
             receiver_emails.append(self.email_receiver)
