@@ -52,6 +52,7 @@ APPLICATION_TEMPLATE = (
     'Build system type: {self.build_type}\n'
     'Build host: {self.build_host}\n'
     'Path: {self.path}\n'
+    'Repository: {self.repository}\n'
 )
 PKG_DEPLOY_HEADER_TEMPLATE = (
     'Deployments of package {pkg_dep[pkg_def].name} '

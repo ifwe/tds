@@ -117,10 +117,13 @@ APPLICATION_DATA = odict([
                 ('help', 'Name of the existing application'),
             ])),
             (('properties',), odict([
-                ('help', ('New properties. E.g., job_name=jenkins_job.'
-                          ' For admins: name=myapp '
+                ('help', ('New properties. E.g., job_name=jenkins_job '
+                          'repository=https://code.ifwe.co/projects/tds/repos'
+                          '/tds. For admins: name=myapp '
                           'job_name=jenkins_job deploy_type=rpm arch=noarch '
-                          'build_type=jenkins build_host=ci.tagged.com')),
+                          'build_type=jenkins build_host=ci.tagged.com '
+                          'repository=https://code.ifwe.co/projects/tagopsdb'
+                          '/repos/tagopsdb.')),
                 ('metavar', 'PROPERTY'),
                 ('nargs', '*'),
             ])),
