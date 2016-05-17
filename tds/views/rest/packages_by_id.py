@@ -32,6 +32,7 @@ class PackageByIDView(BaseView):
         'builder': 'choice',
         'job': 'string',
         'name': 'string',
+        'commit_hash': 'string',
     }
 
     param_routes = {
@@ -50,6 +51,7 @@ class PackageByIDView(BaseView):
         'builder': 'Entity that built the package',
         'job': 'Name of Jenkins job',
         'name': "Name of the package's application",
+        'commit_hash': 'The commit hash of the build',
     }
 
     full_descriptions = descriptions.PACKAGE_DESCRIPTIONS

@@ -35,20 +35,19 @@ Feature: Update (PUT) package on REST API by ID
         When I query PUT "/packages/1?foo=bar&version=500"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'id', 'job', 'name', 'revision', 'status', 'version'].  |
+            | location  | name  | description                                                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'commit_hash', 'id', 'job', 'name', 'revision', 'status', 'version'].   |
         And there is no package with version="500"
 
     @rest @jenkins_server
-    Scenario: attempt to set commit_hash
+    Scenario: set commit_hash
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="500"
-        When I query PUT "/packages/1?commit_hash=bar&version=500"
-        Then the response code is 422
-        And the response contains errors:
-            | location  | name          | description                                                                                                           |
-            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'id', 'job', 'name', 'revision', 'status', 'version'].  |
-        And there is no package with version="500"
+        When I query PUT "/packages/1?commit_hash=hash123hash&version=500"
+        Then the response code is 200
+        And the response is an object with version="500",revision="2",name="app2",commit_hash="hash123hash"
+        And there is a package with version="500",revision="2",pkg_name="app2",commit_hash="hash123hash"
+        And there is no package with version="1",revision="2",pkg_name="app2"
 
     @rest @jenkins_server
     Scenario: update a package

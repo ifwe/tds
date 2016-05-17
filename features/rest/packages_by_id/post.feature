@@ -28,7 +28,7 @@ Feature: POST package(s) from the REST API by ID
         When I query POST "/packages?version=2&revision=2"
         Then the response code is 400
         And the response contains errors:
-            | location  | name  | description                   |
+            | location  | name  | description               |
             | query     |       | name is a required field. |
         And there is no package with version="2",revision="2",creator="testuser"
 
@@ -50,20 +50,18 @@ Feature: POST package(s) from the REST API by ID
         When I query POST "/packages?name=app3&version=2&revision=2&foo=bar"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                   |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'id', 'job', 'name', 'revision', 'status', 'version'].  |
+            | location  | name  | description                                                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'commit_hash', 'id', 'job', 'name', 'revision', 'status', 'version'].   |
         And there is no package with version="2",revision="2",creator="testuser"
 
     @rest @jenkins_server
-    Scenario: attempt to set commit_hash
+    Scenario: set commit_hash
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="2"
-        When I query POST "/packages?name=app3&version=2&revision=2&commit_hash=fdsafdsaf"
-        Then the response code is 422
-        And the response contains errors:
-            | location  | name          | description                                                                                                           |
-            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'id', 'job', 'name', 'revision', 'status', 'version'].  |
-        And there is no package with version="2",revision="2",creator="testuser"
+        When I query POST "/packages?name=app3&version=2&revision=2&commit_hash=123hash123"
+        Then the response code is 201
+        And the response is an object with version="2",revision="2",user="testuser",commit_hash="123hash123"
+        And there is a package with version="2",revision="2",creator="testuser",commit_hash="123hash123"
 
     @rest @jenkins_server
     Scenario: attempt to violate a unique constraint

@@ -103,6 +103,7 @@ class SearchView(base.BaseView):
         'param_routes': {
             'application_id': 'pkg_def_id',
             'user': 'creator',
+            'name': 'pkg_name',
         },
         'descriptions': descriptions.PACKAGE_DESCRIPTIONS,
     }

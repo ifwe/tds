@@ -235,10 +235,10 @@ class ApplicationController(BaseController):
         if kwargs['user_level'] == "admin":
             valid_attrs = (
                 'name', 'deploy_type', 'arch', 'build_type', 'build_host',
-                'job_name',
+                'job_name', 'repository'
             )
         else:
-            valid_attrs = ('job_name',)
+            valid_attrs = ('job_name', 'repository')
         mappings = dict(job_name="path")
         properties = self._parse_properties(properties, valid_attrs, mappings)
         updated = False
