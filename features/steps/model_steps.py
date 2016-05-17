@@ -710,6 +710,10 @@ def then_the_output_describes_an_application_with_properties(context, properties
             assert ('Path: %(path)s' % attrs) in lines
             processed_attrs.add('path')
 
+        if 'repository' in attrs:
+            assert ('Repository: %(repository)s' % attrs) in lines
+            processed_attrs.add('repository')
+
         unprocessed_attrs = set(attrs) - processed_attrs
         if unprocessed_attrs:
             assert len(unprocessed_attrs) == 0, unprocessed_attrs

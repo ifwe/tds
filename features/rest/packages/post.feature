@@ -33,20 +33,18 @@ Feature: Add (POST) package on REST API
         When I query POST "/applications/app3/packages?version=2&revision=2&name=noexist"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                       |
-            | query     | name  | Unsupported query: name. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].   |
+            | location  | name  | description                                                                                                       |
+            | query     | name  | Unsupported query: name. Valid parameters: ['builder', 'commit_hash', 'job', 'revision', 'status', 'version'].    |
         And there is no package with version="2",revision="2",creator="testuser",job="myjob",pkg_name="noexist"
 
     @rest @jenkins_server
-    Scenario: attempt to set commit_hash
+    Scenario: set commit_hash
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="2"
-        When I query POST "/applications/app3/packages?version=2&revision=2&commit_hash=asdfsad"
-        Then the response code is 422
-        And the response contains errors:
-            | location  | name          | description                                                                                               |
-            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
-        And there is no package with version="2",revision="2",creator="testuser",job="myjob",pkg_name="noexist"
+        When I query POST "/applications/app3/packages?version=2&revision=2&commit_hash=hash123hash"
+        Then the response code is 201
+        And the response is an object with version="2",revision="2",user="testuser",job="myjob",name="app3",commit_hash="hash123hash"
+        And there is a package with version="2",revision="2",creator="testuser",job="myjob",pkg_name="app3",commit_hash="hash123hash"
 
     @rest @jenkins_server
     Scenario: specify job
@@ -75,8 +73,8 @@ Feature: Add (POST) package on REST API
         When I query POST "/applications/app3/packages?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
+            | location  | name  | description                                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'commit_hash', 'job', 'revision', 'status', 'version']. |
         And there is no package with version="2",revision="2",creator="testuser"
 
         Examples:

@@ -71,8 +71,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
 
             selectables_only = ('user', 'id', 'realized', 'created', 'spec_id',
                                 'dc_id', 'declared', 'project_type',
-                                'description', 'host_base', 'commit_hash',
-                                'deploy_result',)
+                                'description', 'host_base', 'deploy_result',)
             if any(x in json_types for x in selectables_only):
                 json_types = json_types.copy()
                 param_descripts = param_descripts.copy()
