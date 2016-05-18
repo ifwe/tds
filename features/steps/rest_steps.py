@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Steps for the REST API.
 """
@@ -212,6 +226,22 @@ def then_the_response_object_does_not_contain_attributes(context, attrs):
     )
 
 
+@then(u'the response object contains attributes {attrs}')
+def then_the_response_object_contains_attributes(context, attrs):
+    attrs = attrs.split(',')
+    assert all(attr in context.response.json() for attr in attrs), (
+        attrs, context.response.json()
+    )
+
+
+@then(u'the response object has keys {keys}')
+def then_the_response_object_has_keys(context, keys):
+    keys = keys.split(',')
+    obj = context.response.json()
+    for key in keys:
+        assert key in obj, (key, obj)
+
+
 @then(u'the response list objects do not contain attributes {attrs}')
 def then_the_response_list_objects_do_not_contain_attributes(context, attrs):
     attrs = attrs.split(',')
@@ -401,9 +431,54 @@ def then_the_test_conforms_to_the_bystander_expectation(context):
             assert not env_dict['stage_ahead']
 
 
-@then(u'the response object has keys {keys}')
-def then_the_response_object_has_keys(context, keys):
-    keys = keys.split(',')
-    obj = context.response.json()
-    for key in keys:
-        assert key in obj, (key, obj)
+@then(u'the response object conforms to the performance expectation')
+def then_the_response_conforms_to_the_performance_expectation(context):
+    returned = context.response.json()
+    models = (
+        'packages', 'tier_deployments', 'host_deployments', 'deployments',
+    )
+    month = '2016-01'
+    for model in models:
+        assert any(obj['month'] == month for obj in returned[model])
+    assert returned['packages'][0]['failed'] == 1
+    assert returned['packages'][0]['completed'] == 1
+    assert returned['packages'][0]['removed'] == 1
+    assert returned['packages'][0]['pending'] == 1
+    assert returned['packages'][0]['processing'] == 1
+    assert returned['packages'][0]['total'] == 5
+    assert returned['deployments'][0]['pending'] == 2
+    assert returned['deployments'][0]['failed'] == 1
+    assert returned['deployments'][0]['inprogress'] == 1
+    assert returned['deployments'][0]['queued'] == 1
+    assert returned['deployments'][0]['total'] == 5
+    assert returned['tier_deployments'][0]['complete'] == 1
+    assert returned['tier_deployments'][0]['incomplete'] == 1
+    assert returned['tier_deployments'][0]['inprogress'] == 1
+    assert returned['tier_deployments'][0]['pending'] == 1
+    assert returned['tier_deployments'][0]['validated'] == 1
+    assert returned['tier_deployments'][0]['total'] == 5
+    assert returned['host_deployments'][0]['ok'] == 3
+    assert returned['host_deployments'][0]['failed'] == 1
+    assert returned['host_deployments'][0]['pending'] == 1
+    assert returned['host_deployments'][0]['total'] == 5
+    assert returned['packages'][1]['failed'] == 0
+    assert returned['packages'][1]['completed'] == 0
+    assert returned['packages'][1]['removed'] == 0
+    assert returned['packages'][1]['pending'] == 0
+    assert returned['packages'][1]['processing'] == 0
+    assert returned['packages'][1]['total'] == 0
+    assert returned['deployments'][1]['pending'] == 0
+    assert returned['deployments'][1]['failed'] == 0
+    assert returned['deployments'][1]['inprogress'] == 0
+    assert returned['deployments'][1]['queued'] == 0
+    assert returned['deployments'][1]['total'] == 0
+    assert returned['tier_deployments'][1]['complete'] == 0
+    assert returned['tier_deployments'][1]['incomplete'] == 0
+    assert returned['tier_deployments'][1]['inprogress'] == 0
+    assert returned['tier_deployments'][1]['pending'] == 0
+    assert returned['tier_deployments'][1]['validated'] == 0
+    assert returned['tier_deployments'][1]['total'] == 0
+    assert returned['host_deployments'][1]['ok'] == 0
+    assert returned['host_deployments'][1]['failed'] == 0
+    assert returned['host_deployments'][1]['pending'] == 0
+    assert returned['host_deployments'][1]['total'] == 0
