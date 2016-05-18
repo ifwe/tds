@@ -31,6 +31,7 @@ ALL_URLS = dict(
     package_by_id='/packages/{id}',
     package_collection='/applications/{name_or_id}/packages',
     package='/applications/{name_or_id}/packages/{version}/{revision}',
+    performance='/performance',
     project_collection='/projects',
     project='/projects/{name_or_id}',
     search='/search/{obj_type}',
