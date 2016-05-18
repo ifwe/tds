@@ -54,46 +54,61 @@ class PerformanceView(base.BaseView):
         """
         self.name = 'performance'
         self._validate_params([])
+        obj_type = request.matchdict['obj_type']
+        if obj_type not in self.model_dict:
+            request.errors.add(
+                'path', 'obj_type',
+                "Unknown object type {obj_type}. Supported object types are: "
+                "{types}.".format(
+                    obj_type=obj_type,
+                    types=sorted(self.model_dict.keys()),
+                )
+            )
+            self.request.errors.status = 404
+            return
 
         latest = datetime.today()
         time_fmt = "%Y-%m-%d %H:%M:%S"
         to_return = dict()
-        for model_name in self.model_dict:
-            date_objs = list()
-            model = self.model_dict[model_name]['model']
-            col_name = self.model_dict[model_name]['attr']
-            column = getattr(model, col_name)
-            if getattr(model, 'delegate', None):
-                table = model.delegate.__table__
-            else:
-                table = model.__table__
-            statuses = table.columns['status'].type.enums
-            earliest = min(
-                [getattr(obj, col_name) for obj in self.query(model).all()] +
-                [latest]
-            )
-            earliest = datetime(
-                year=earliest.year, month=earliest.month, day=1
-            )
-            current = earliest
+        model = self.model_dict[obj_type]['model']
+        col_name = self.model_dict[obj_type]['attr']
+        # for model_name in self.model_dict:
+        date_objs = list()
+        # model = self.model_dict[model_name]['model']
+        # col_name = self.model_dict[model_name]['attr']
+        column = getattr(model, col_name)
+        if getattr(model, 'delegate', None):
+            table = model.delegate.__table__
+        else:
+            table = model.__table__
+        statuses = table.columns['status'].type.enums
+        earliest = min(
+            [getattr(obj, col_name) for obj in self.query(model).all()] +
+            [latest]
+        )
+        earliest = datetime(
+            year=earliest.year, month=earliest.month, day=1
+        )
+        current = earliest
+        month_later = self._add_one_month(current)
+        while month_later <= latest:
+            date_obj = dict(month=current.strftime("%Y-%m"))
+            all_objs = self.query(model).filter(
+                column < month_later.strftime(time_fmt),
+                column >= current.strftime(time_fmt)
+            ).all()
+            date_obj['total'] = len(all_objs)
+            for status in statuses:
+                date_obj[status] = len([
+                    obj for obj in all_objs if
+                    getattr(obj, 'status') == status
+                ])
+            date_objs.append(date_obj)
+            current = self._add_one_month(current)
             month_later = self._add_one_month(current)
-            while month_later <= latest:
-                date_obj = dict(month=current.strftime("%Y-%m"))
-                all_objs = self.query(model).filter(
-                    column < month_later.strftime(time_fmt),
-                    column >= current.strftime(time_fmt)
-                ).all()
-                date_obj['total'] = len(all_objs)
-                for status in statuses:
-                    date_obj[status] = len([
-                        obj for obj in all_objs if
-                        getattr(obj, 'status') == status
-                    ])
-                date_objs.append(date_obj)
-                current = self._add_one_month(current)
-                month_later = self._add_one_month(current)
-            to_return[model_name] = date_objs
-        self.result = to_return
+        # to_return[model_name] = date_objs
+        # self.result = to_return
+        self.result = date_objs
 
     def validate_performance_options(self, _request):
         """
@@ -101,8 +116,8 @@ class PerformanceView(base.BaseView):
         """
         self.result = dict(
             GET=dict(
-                description="Get metrics packages, tier deployments, host "
-                    "deployments, and deployments by month for all months.",
+                description="Get metrics on packages, tier deployments, host "
+                    "deployments, or deployments by month for all months.",
                 parameters=dict(),
             ),
             HEAD=dict(description="Do a GET query without a body returned."),
