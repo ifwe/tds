@@ -38,6 +38,11 @@ APPLICATION_PERMISSIONS = dict(
     put='admin',
 )
 
+BYSTANDER_PERMISSIONS = dict(
+    get='user',
+    head='user',
+)
+
 CURRENT_HOST_DEPLOYMENT_PERMISSIONS = dict(
     get='user',
     head='user',
@@ -128,6 +133,11 @@ PACKAGE_PERMISSIONS = dict(
     put='user',
 )
 
+PERFORMANCE_PERMISSIONS = dict(
+    get='user',
+    head='user',
+)
+
 PROJECT_PERMISSIONS = dict(
     collection_get='user',
     collection_head='user',
@@ -149,11 +159,6 @@ ROOT_PERMISSIONS = dict(
 )
 
 SEARCH_PERMISSIONS = dict(
-    get='user',
-    head='user',
-)
-
-BYSTANDER_PERMISSIONS = dict(
     get='user',
     head='user',
 )

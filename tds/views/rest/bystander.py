@@ -242,7 +242,7 @@ class BystanderView(base.BaseView):
     @view(validators=('validate_bystander_get', 'validate_cookie'))
     def get(self):
         """
-        Performa a GET request after all validation has passed.
+        Perform a GET request after all validation has passed.
         """
         return self.make_response(self.to_json_obj(self.result))
 
@@ -266,7 +266,7 @@ class BystanderView(base.BaseView):
     @view(validators=('method_not_allowed'))
     def delete(self):
         """
-        Perform a DELETE request after all validation has passed.
+        Method not allowed.
         """
         return self.make_response({})
 
