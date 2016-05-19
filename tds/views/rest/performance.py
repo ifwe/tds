@@ -141,7 +141,10 @@ class PerformanceView(base.BaseView):
             GET=dict(
                 description="Get metrics on packages, tier deployments, host "
                     "deployments, or deployments by month for all months.",
-                parameters=dict(),
+                parameters=dict(
+                    limit="Number of months to cover.",
+                    start="Date or datetime during the first month to cover.",
+                ),
             ),
             HEAD=dict(description="Do a GET query without a body returned."),
             OPTIONS=dict(
