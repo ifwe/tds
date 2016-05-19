@@ -89,7 +89,7 @@ class PerformanceView(base.BaseView):
 
         if 'start' in request.validated_params:
             earliest = datetime.strptime(
-                request.validated_params['start'],
+                request.validated['start'],
                 "%Y-%m-%d %H:%M:%S"
             )
         else:
@@ -102,10 +102,11 @@ class PerformanceView(base.BaseView):
         )
 
         if 'limit' in request.validated_params:
-            limit = request.validated_params['limit']
+            limit = int(request.validated_params['limit'])
             latest = earliest
             while limit:
                 latest = self._add_one_month(latest)
+                limit -= 1
         else:
             latest = today
         if latest > today:
