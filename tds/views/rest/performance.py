@@ -53,7 +53,8 @@ class PerformanceView(base.BaseView):
         Validate a performance GET request.
         """
         self.name = 'performance'
-        self._validate_params([])
+        self._validate_params(['limit', 'start'])
+        self._validate_json_params({'limit': 'integer', 'start': 'timestamp'})
         obj_type = request.matchdict['obj_type']
         if obj_type not in self.model_dict:
             request.errors.add(
@@ -65,9 +66,10 @@ class PerformanceView(base.BaseView):
                 )
             )
             self.request.errors.status = 404
+
+        if request.errors:
             return
 
-        latest = datetime.today()
         time_fmt = "%Y-%m-%d %H:%M:%S"
         to_return = dict()
         model = self.model_dict[obj_type]['model']
@@ -82,13 +84,33 @@ class PerformanceView(base.BaseView):
         else:
             table = model.__table__
         statuses = table.columns['status'].type.enums
-        earliest = min(
-            [getattr(obj, col_name) for obj in self.query(model).all()] +
-            [latest]
-        )
+
+        today = datetime.today()
+
+        if 'start' in request.validated_params:
+            earliest = datetime.strptime(
+                request.validated_params['start'],
+                "%Y-%m-%d %H:%M:%S"
+            )
+        else:
+            earliest = min(
+                [getattr(obj, col_name) for obj in self.query(model).all()] +
+                [today]
+            )
         earliest = datetime(
             year=earliest.year, month=earliest.month, day=1
         )
+
+        if 'limit' in request.validated_params:
+            limit = request.validated_params['limit']
+            latest = earliest
+            while limit:
+                latest = self._add_one_month(latest)
+        else:
+            latest = today
+        if latest > today:
+            latest = today
+
         current = earliest
         month_later = self._add_one_month(current)
         while month_later <= latest:
