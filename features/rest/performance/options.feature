@@ -25,3 +25,7 @@ Feature: REST API performance OPTIONS
         And the response body contains "Get metrics on packages, tier deployments, host deployments, or deployments by month for all months."
         And the response body contains "Do a GET query without a body returned."
         And the response body contains "Get HTTP method options and parameters for this URL endpoint."
+        And the response body contains "limit"
+        And the response body contains "start"
+        And the response body contains "Number of months to cover."
+        And the response body contains "Date or datetime during the first month to cover."
