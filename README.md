@@ -15,7 +15,7 @@ with Alembic used for SQLAlchemy schema migrations.
 
 
 ## License
-<a href="http://opensource.org/licenses/MIT">MIT</a>
+<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>
 
 ## Installation
 To install all necessary dependencies and TDS:
