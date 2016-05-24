@@ -22,9 +22,9 @@ import subprocess
 
 import tds
 import tds.exceptions
+import tds.scripts.generate_cookie
 import tds.scripts.tds_prog
 import tds.scripts.unvalidated_deploy_check
-import tds.scripts.generate_cookie
 import tds.utils.processes as processes
 import tds.apps.repo_updater
 
