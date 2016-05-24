@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 Feature: REST API search GET
     As a developer
     I want to find objects matching my specifications
@@ -230,6 +244,23 @@ Feature: REST API search GET
             | 303 See Other |
 
     @rest
+    Scenario: get package with user select
+        Given there are applications:
+            | name  |
+            | app1  |
+        And there are packages:
+            | version   | revision  | creator   |
+            | 1         | 2         | foo       |
+            | 2         | 1         | foo       |
+        When I query GET "/search/packages?user=foo"
+        Then the response code is 200
+        And the response is a list of 2 items
+        And the response list contains objects:
+            | user  | version   |
+            | foo   | 1         |
+            | foo   | 2         |
+
+    @rest
     Scenario Outline: specify limit and/or start queries without filter query
         Given there is a deploy target with name="tier1"
         And there is an environment with name="dev"
@@ -280,3 +311,170 @@ Feature: REST API search GET
             |       | 8     | 4     | 8     | 11    |
             | 2     |       | 2     | 5     | 6     |
             | 2     | 8     | 2     | 8     | 9     |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for deployments
+        Given there are deployments:
+            | id    | user  | status    | declared              |
+            | 1     | foo   | pending   | 2016-01-01 01:00:00   |
+            | 2     | foo   | queued    | 2016-01-01 02:00:00   |
+            | 3     | foo   | pending   | 2016-01-01 03:00:00   |
+            | 4     | foo   | queued    | 2016-01-01 04:00:00   |
+            | 5     | foo   | queued    | 2016-01-01 04:00:01   |
+        When I query GET "/search/deployments?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 5     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 5     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 4     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
+
+    @rest
+    Scenario Outline: pass invalid time format for before and/or after queries
+        When I query GET "/search/deployments?before=<before>&after=<after>"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name      | description                                                                                                                                                       |
+            | query     | <name>    | Validation failed: Could not parse <val> for <name> as a valid timestamp. Valid timestamp formats: %Y-%m-%d, %Y-%m-%dT%H:%M:%S, and integer seconds since epoch.  |
+
+        Examples:
+            | before    | after | name      | val   |
+            | asdf      |       | before    | asdf  |
+            |           | asdf  | after     | asdf  |
+            | fdsa      | asdf  | before    | fdsa  |
+            | fdsa      | asdf  | after     | asdf  |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for host deployments
+        Given there are deployments:
+            | id    | user  | status    | declared              |
+            | 1     | foo   | pending   | 2016-01-01 01:00:00   |
+        And there is an application with name="app1"
+        And there are packages:
+            | version   | revision  |
+            | 1         | 1         |
+        And there is an environment with name="dev"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-01 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | ok        | 2016-01-01 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | ok        | 2016-01-01 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-01 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-01 04:00:01   | 1             | 1             | 1         |
+        When I query GET "/search/host_deployments?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 5     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 5     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 4     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for tier deployments
+        Given there are deployments:
+            | id    | user  | status    | declared              |
+            | 1     | foo   | pending   | 2016-01-01 01:00:00   |
+        And there is an application with name="app1"
+        And there are packages:
+            | version   | revision  |
+            | 1         | 1         |
+        And there is an environment with name="dev"
+        And there is a deploy target with name="app1"
+        And there are tier deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete  | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | complete  | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | complete  | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | complete  | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | complete  | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        When I query GET "/search/tier_deployments?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 5     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 5     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 4     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for applications
+        Given there are applications:
+            | name  | created               |
+            | app1  | 2016-01-01 01:00:00   |
+            | app2  | 2016-01-01 02:00:00   |
+            | app3  | 2016-01-01 03:00:00   |
+            | app4  | 2016-01-01 04:00:00   |
+            | app5  | 2016-01-01 04:00:01   |
+        When I query GET "/search/applications?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        # Numbers are b0rked because of __dummy__ app
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 6     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 6     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 6     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 5     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |
+
+    @rest
+    Scenario Outline: specify before and/or after queries for packages
+        Given there is an application with name="app1"
+        And there are packages:
+            | version   | revision  | created               |
+            | 1         | 1         | 2016-01-01 01:00:00   |
+            | 2         | 2         | 2016-01-01 02:00:00   |
+            | 3         | 3         | 2016-01-01 03:00:00   |
+            | 4         | 4         | 2016-01-01 04:00:00   |
+            | 5         | 5         | 2016-01-01 04:00:01   |
+        When I query GET "/search/packages?before=<before>&after=<after>"
+        Then the response code is 200
+        And the response is a list of <num> items
+
+        Examples:
+            | before                | after                 | num   |
+            | 0                     |                       | 0     |
+            |                       | 0                     | 5     |
+            | 2016-01-01            |                       | 0     |
+            |                       | 2015-12-31            | 5     |
+            | 2016-01-01T00:00:00   |                       | 0     |
+            |                       | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T02:00:00   |                       | 1     |
+            |                       | 2016-01-01T01:00:00   | 4     |
+            | 2016-01-01T04:00:02   | 2016-01-01T00:59:59   | 5     |
+            | 2016-01-01T04:00:01   | 2016-01-01T02:59:59   | 2     |

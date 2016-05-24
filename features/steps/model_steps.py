@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Model configuration/management for feature tests"""
 
 import itertools
@@ -6,6 +20,7 @@ import os.path
 import pwd
 import yaml
 from time import mktime
+from datetime import datetime
 
 from behave import given, then, when
 
@@ -117,7 +132,10 @@ def package_factory(context, **kwargs):
         version=kwargs.get('version', 1),
         revision=kwargs.get('revision', 1),
         status=kwargs.get('status', 'completed'),
-        creator=curr_user,
+        creator=kwargs.get('creator', curr_user),
+        created=kwargs.get(
+            'created', datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ),
         builder='jenkins',
         job=kwargs.get('job', application.path),
     )
@@ -705,6 +723,10 @@ def then_the_output_describes_an_application_with_properties(context, properties
         if 'path' in attrs:
             assert ('Path: %(path)s' % attrs) in lines
             processed_attrs.add('path')
+
+        if 'repository' in attrs:
+            assert ('Repository: %(repository)s' % attrs) in lines
+            processed_attrs.add('repository')
 
         unprocessed_attrs = set(attrs) - processed_attrs
         if unprocessed_attrs:

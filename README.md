@@ -1,8 +1,8 @@
 # TDS
 [![Build Status](https://ci.tagged.com/job/tds-tds-features/badge/icon)](https://ci.tagged.com/job/tds-tds-features/)
 
-## Author
-Kenneth Lareau
+## Authors
+Kenneth Lareau, Karandeep Nagra
 
 ## Description
 TDS is a deployment system developed at Tagged with a database backend
@@ -19,6 +19,7 @@ with Alembic used for SQLAlchemy schema migrations.
 
 ## Installation
 To install all necessary dependencies and TDS:
+
 ```bash
 $ ./setup.py
 ```
@@ -27,6 +28,7 @@ $ ./setup.py
 
 ### PyPI packages
 See `requirements.txt`. To install (NOTE: `setup.py` will do this for you):
+
 ```bash
 $ pip install -r requirements.txt
 ```
@@ -42,19 +44,22 @@ $ pip install -r requirements.txt
 ## Testing
 First, install development requirements
 (again, `setup.py` automatically does this for you):
+
 ```bash
 $ pip install -r requirements-dev.txt
 ```
 
 ### Unit tests
 The following command will run all unit tests:
-```
+
+```bash
 $ ./run_tests.py
 ```
 
 ### Feature tests
 The following command will run all
 <a href="//pythonhosted.org/behave/">Behave</a> tests:
+
 ```bash
 $ behave
 ```
@@ -198,3 +203,11 @@ functions related to object types are spread across the application.
 ## Roadmap
 See [roadmap.md](./doc/roadmap.md) for details on the release history and
 planned development of TDS.
+
+-----
+
+README.md: Copyright 2016 Ifwe Inc.
+
+README.md is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+
+You should have received a copy of the license along with this work. If not, see <http://creativecommons.org/licenses/by-sa/4.0/>.

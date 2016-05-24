@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Base view class for REST API.
 """
@@ -71,8 +85,7 @@ def init_view(_view_cls=None, name=None, plural=None, model=None,
 
             selectables_only = ('user', 'id', 'realized', 'created', 'spec_id',
                                 'dc_id', 'declared', 'project_type',
-                                'description', 'host_base', 'commit_hash',
-                                'deploy_result',)
+                                'description', 'host_base', 'deploy_result',)
             if any(x in json_types for x in selectables_only):
                 json_types = json_types.copy()
                 param_descripts = param_descripts.copy()

@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 Feature: Update (PUT) package on REST API
     As a developer
     I want to update information for one of my packages
@@ -56,8 +70,8 @@ Feature: Update (PUT) package on REST API
         When I query PUT "/applications/<select>/packages/2/3?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
+            | location  | name  | description                                                                                                   |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['builder', 'commit_hash', 'job', 'revision', 'status', 'version']. |
         And there is a package with version=2,revision=3
 
         Examples:
@@ -84,15 +98,14 @@ Feature: Update (PUT) package on REST API
             | 3         |
 
     @rest @jenkins_server
-    Scenario Outline: attempt to set commit_hash
+    Scenario Outline: set commit_hash
         Given there is a jenkins job with name="myjob"
         And the job has a build with number="10"
-        When I query PUT "/applications/<select>/packages/2/3?version=10&revision=50&commit_hash=2312312"
-        Then the response code is 422
-        And the response contains errors:
-            | location  | name          | description                                                                                               |
-            | query     | commit_hash   | Unsupported query: commit_hash. Valid parameters: ['builder', 'job', 'revision', 'status', 'version'].    |
-        And there is a package with version=2,revision=3
+        When I query PUT "/applications/<select>/packages/2/3?version=10&revision=50&commit_hash=123hash123"
+        Then the response code is 200
+        And the response is an object with version="10",revision="50",commit_hash="123hash123",name="app2"
+        And there is a package with version=10,revision=50,commit_hash="123hash123",pkg_name="app2"
+        And there is no package with version=2,revision=3,pkg_name="app2"
 
         Examples:
             | select    |

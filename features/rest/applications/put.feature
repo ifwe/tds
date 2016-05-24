@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 Feature: Update (PUT) application on REST API
     As a developer
     I want to update information for one of my applications
@@ -38,12 +52,19 @@ Feature: Update (PUT) application on REST API
             | 2         |
 
     @rest
+    Scenario: update application repository field
+        When I query PUT "/applications/app1?repository=https://www.example.org/repo/foo/bar"
+        Then the response code is 200
+        And the response is an object with name="app1",id=2,repository="https://www.example.org/repo/foo/bar"
+        And there is an application with pkg_name="app1",id=2,repository="https://www.example.org/repo/foo/bar"
+
+    @rest
     Scenario Outline: pass an invalid parameter
         When I query PUT "/applications/<select>?<query>"
         Then the response code is 422
         And the response contains errors:
-            | location  | name  | description                                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'validation_type'].  |
+            | location  | name  | description                                                                                                                                                       |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['arch', 'build_host', 'build_type', 'deploy_type', 'env_specific', 'job', 'name', 'repository', 'validation_type'].    |
         And there is an application with pkg_name="app1",id=2
 
         Examples:

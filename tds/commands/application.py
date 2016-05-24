@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Commands to manage the TDS applications."""
 import logging
 
@@ -235,10 +249,10 @@ class ApplicationController(BaseController):
         if kwargs['user_level'] == "admin":
             valid_attrs = (
                 'name', 'deploy_type', 'arch', 'build_type', 'build_host',
-                'job_name',
+                'job_name', 'repository'
             )
         else:
-            valid_attrs = ('job_name',)
+            valid_attrs = ('job_name', 'repository')
         mappings = dict(job_name="path")
         properties = self._parse_properties(properties, valid_attrs, mappings)
         updated = False

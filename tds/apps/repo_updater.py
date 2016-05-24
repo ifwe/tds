@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Updates the deploy yum repository with files in the configured directories
 """
@@ -312,7 +326,7 @@ class RepoUpdater(TDSProgramBase):
     def email_for_invalid_rpm(self, rpm_file):
         """Send an email to engineering if a bad RPM is found."""
         sender = 'siteops'
-        sender_email = '%s@tagged.com' % sender
+        sender_email = '%s@ifwe.co' % sender
         receiver_emails = ['eng+tds@tagged.com']
         if self.email_receiver is not None:
             receiver_emails.append(self.email_receiver)

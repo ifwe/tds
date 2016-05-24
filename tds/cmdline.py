@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Data for command line arguments, subarguments and options."""
 
 from collections import OrderedDict as odict
@@ -117,10 +131,13 @@ APPLICATION_DATA = odict([
                 ('help', 'Name of the existing application'),
             ])),
             (('properties',), odict([
-                ('help', ('New properties. E.g., job_name=jenkins_job.'
-                          ' For admins: name=myapp '
+                ('help', ('New properties. E.g., job_name=jenkins_job '
+                          'repository=https://code.ifwe.co/projects/tds/repos'
+                          '/tds. For admins: name=myapp '
                           'job_name=jenkins_job deploy_type=rpm arch=noarch '
-                          'build_type=jenkins build_host=ci.tagged.com')),
+                          'build_type=jenkins build_host=ci.tagged.com '
+                          'repository=https://code.ifwe.co/projects/tagopsdb'
+                          '/repos/tagopsdb.')),
                 ('metavar', 'PROPERTY'),
                 ('nargs', '*'),
             ])),

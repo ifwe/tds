@@ -1,3 +1,17 @@
+# Copyright 2016 Ifwe Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 Feature: application update application properties
     As a user
     I want to update aspects of an application
@@ -44,7 +58,7 @@ Feature: application update application properties
         And I have "dev" permissions
         And there is an application with name="myapp"
         When I run "application update myapp <properties>"
-        Then the output is "Invalid attribute: fake_prop. Valid attributes are: ('job_name',)"
+        Then the output is "Invalid attribute: fake_prop. Valid attributes are: ('job_name', 'repository')"
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
@@ -58,7 +72,7 @@ Feature: application update application properties
         And I have "dev" permissions
         And there is an application with name="myapp"
         When I run "application update myapp <properties>"
-        Then the output is "Invalid attribute: name. Valid attributes are: ('job_name',)"
+        Then the output is "Invalid attribute: name. Valid attributes are: ('job_name', 'repository')"
         And there is an application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
 
         Examples:
@@ -80,22 +94,25 @@ Feature: application update application properties
             | dev       | job_name=job                                                                                          |
             | admin     | job_name=job name=myapp deploy_type=rpm arch=noarch build_type=jenkins build_host=fakeci.example.org  |
 
-    Scenario: unprivileged user updates job_name
+    Scenario Outline: unprivileged user updates job_name and/or repository
         Given there is an environment with name="dev"
         And I am in the "dev" environment
         And I have "dev" permissions
-        And there is an application with name="myapp",path="job"
-        When I run "application update myapp job_name=new_job"
-        Then the output describes an application with name="myapp",arch="noarch",path="new_job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
+        And there are applications:
+            | name      | path  | repository                            |
+            | myapp     | job   | https://www.example.org/repos/repo1   |
+        When I run "application update myapp <params>"
+        Then the output describes an application with name="myapp",arch="noarch",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins",<description>
         And the output has "Application has been successfully updated."
-        And there is an application
-            | name          | myapp                 |
-            | arch          | noarch                |
-            | path          | new_job               |
-            | deploy_type   | rpm                   |
-            | build_type    | jenkins               |
-            | build_host    | fakeci.example.org    |
-        And there is no application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
+        And there is an application with name="myapp",arch="noarch",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins",<description>
+        And there is no application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins",repository="https://www.example.org/repos/repo1"
+
+        Examples:
+            | params                                                            | description                                                       |
+            | job_name=new_job                                                  | path="new_job"                                                    |
+            | repository=https://www.example.org/repos/repo2                    | repository="https://www.example.org/repos/repo2"                  |
+            | repository=https://www.example.org/repos/repo2 job_name=new_job   | repository="https://www.example.org/repos/repo2",path="new_job"   |
+            | job_name=new_job repository=https://www.example.org/repos/repo2   | repository="https://www.example.org/repos/repo2",path="new_job"   |
 
     Scenario: matrix_build in job_name
         Given there is an environment with name="dev"
@@ -118,18 +135,14 @@ Feature: application update application properties
         Given there is an environment with name="dev"
         And I am in the "dev" environment
         And I have "admin" permissions
-        And there is an application with name="myapp",path="job"
-        When I run "application update myapp job_name=new_job name=new_name arch=x86_64 deploy_type=rpm build_type=hudson build_host=hudson.example.org"
-        Then the output describes an application with name="new_name",arch="x86_64",path="new_job",deploy_type="rpm",build_host="hudson.example.org",build_type="hudson"
+        And there are applications:
+            | name  | path  | repository                            |
+            | myapp | job   | https://www.example.org/repos/repo1   |
+        When I run "application update myapp job_name=new_job name=new_name arch=x86_64 deploy_type=rpm build_type=hudson build_host=hudson.example.org repository=https://www.example.org/repos/repo2"
+        Then the output describes an application with name="new_name",arch="x86_64",path="new_job",deploy_type="rpm",build_host="hudson.example.org",build_type="hudson",repository="https://www.example.org/repos/repo2"
         And the output has "Application has been successfully updated."
-        And there is an application
-            | name          | new_name              |
-            | arch          | x86_64                |
-            | path          | new_job               |
-            | deploy_type   | rpm                   |
-            | build_type    | hudson                |
-            | build_host    | hudson.example.org    |
-        And there is no application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins"
+        And there is an application with name="new_name",arch="x86_64",path="new_job",deploy_type="rpm",build_host="hudson.example.org",build_type="hudson",repository="https://www.example.org/repos/repo2"
+        And there is no application with name="myapp",arch="noarch",path="job",deploy_type="rpm",build_host="fakeci.example.org",build_type="jenkins",repository="https://www.example.org/repos/repo1"
 
     Scenario: invalid arch
         Given there is an environment with name="dev"
