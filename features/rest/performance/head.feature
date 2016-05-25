@@ -22,12 +22,12 @@ Feature: REST API performance HEAD
 
     @rest
     Scenario: get with no data
-        When I query HEAD "/performance"
+        When I query HEAD "/performance/packages"
         Then the response code is 200
         And the response body is empty
 
     @rest
-    Scenario: get with data
+    Scenario: get packages info
         Given there is an application with name="app1"
         And there is an environment with name="dev"
         And there is a deploy target with name="tier1"
@@ -62,6 +62,206 @@ Feature: REST API performance HEAD
             | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
             | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
             | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
-        When I query HEAD "/performance"
+        When I query HEAD "/performance/packages"
+        Then the response code is 200
+        And the response body is empty
+
+    @rest
+    Scenario: get packages info with limit and start
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query HEAD "/performance/packages?start=2016-01-01&limit=1"
+        Then the response code is 200
+        And the response body is empty
+
+    @rest
+    Scenario: bad start format
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query HEAD "/performance/packages?start=foo"
+        Then the response code is 400
+        And the response body is empty
+
+    @rest
+    Scenario: get deployments info
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query HEAD "/performance/deployments"
+        Then the response code is 200
+        And the response body is empty
+
+    @rest
+    Scenario: get tier deployment info
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query HEAD "/performance/tier_deployments"
+        Then the response code is 200
+        And the response body is empty
+
+    @rest
+    Scenario: get host deployment info
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query HEAD "/performance/host_deployments"
         Then the response code is 200
         And the response body is empty

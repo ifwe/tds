@@ -22,12 +22,11 @@ Feature: REST API performance GET
 
     @rest
     Scenario: get with no data
-        When I query GET "/performance"
+        When I query GET "/performance/packages"
         Then the response code is 200
-        And the response object contains attributes packages,tier_deployments,host_deployments,deployments
 
     @rest
-    Scenario: get with data
+    Scenario: get packages info
         Given there is an application with name="app1"
         And there is an environment with name="dev"
         And there is a deploy target with name="tier1"
@@ -62,7 +61,231 @@ Feature: REST API performance GET
             | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
             | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
             | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
-        When I query GET "/performance"
+        When I query GET "/performance/packages"
         Then the response code is 200
-        And the response object contains attributes packages,tier_deployments,host_deployments,deployments
-        And the response object conforms to the performance expectation
+        And the response list contains an object with month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1
+        And the response list contains an object with month="2016-02",total=0,failed=0,completed=0,removed=0,pending=0,processing=0
+
+    @rest
+    Scenario Outline: get packages info with limit and/or start
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query GET "/performance/packages?start=<start>&limit=<limit>"
+        Then the response code is 200
+        And the response list contains an object with <props>
+
+        Examples:
+            | start                 | limit | props                                                                         |
+            | 2016-01-01            | 1     | month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1 |
+            | 2016-01-01            |       | month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1 |
+            | 2015-01-01            | 13    | month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1 |
+            | 2015-01-01            |       | month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1 |
+            | 2016-02-02            | 1     | month="2016-02",total=0,failed=0,completed=0,removed=0,pending=0,processing=0 |
+            | 2016-01-31T12:35:12   | 1     | month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1 |
+            | 2016-01-31T12:25:12   |       | month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1 |
+            | 2015-01-31T12:25:12   | 13    | month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1 |
+            | 2015-01-31T12:25:12   |       | month="2016-01",total=5,failed=1,completed=1,removed=1,pending=1,processing=1 |
+            | 2016-02-28T12:25:12   | 1     | month="2016-02",total=0,failed=0,completed=0,removed=0,pending=0,processing=0 |
+
+    @rest
+    Scenario Outline: bad start format
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query GET "/performance/packages?start=<start>"
+        Then the response code is 400
+        And the response contains errors:
+            | location  | name  | description                                                                                                                                                       |
+            | query     | start | Validation failed: Could not parse <start> for start as a valid timestamp. Valid timestamp formats: %Y-%m-%d, %Y-%m-%dT%H:%M:%S, and integer seconds since epoch. |
+
+        Examples:
+            | start                 |
+            | foo                   |
+            | 2016-01-50            |
+            | 2016-01-50T12:00:00   |
+
+    @rest
+    Scenario: get deployments info
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query GET "/performance/deployments"
+        Then the response code is 200
+        And the response list contains an object with month="2016-01",total=5,failed=1,pending=2,inprogress=1,queued=1
+        And the response list contains an object with month="2016-02",total=0,failed=0,pending=0,inprogress=0,queued=0
+
+    @rest
+    Scenario: get tier deployment info
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query GET "/performance/tier_deployments"
+        Then the response code is 200
+        And the response list contains an object with month="2016-01",total=5,complete=1,incomplete=1,inprogress=1,pending=1,validated=1
+        And the response list contains an object with month="2016-02",total=0,complete=0,incomplete=0,inprogress=0,pending=0,validated=0
+
+    @rest
+    Scenario: get host deployment info
+        Given there is an application with name="app1"
+        And there is an environment with name="dev"
+        And there is a deploy target with name="tier1"
+        And there are hosts:
+            | name  | env   |
+            | host1 | dev   |
+        And there are packages:
+            | version   | revision  | created               | status        |
+            | 1         | 1         | 2016-01-02 01:00:00   | failed        |
+            | 2         | 2         | 2016-01-02 02:00:00   | completed     |
+            | 3         | 3         | 2016-01-02 03:00:00   | removed       |
+            | 4         | 4         | 2016-01-02 04:00:00   | pending       |
+            | 5         | 5         | 2016-01-02 04:00:01   | processing    |
+        And there are deployments:
+            | id    | user  | status        | declared              |
+            | 1     | foo   | pending       | 2016-01-03 01:00:00   |
+            | 2     | foo   | failed        | 2016-01-03 02:00:00   |
+            | 3     | foo   | pending       | 2016-01-03 03:00:00   |
+            | 4     | foo   | inprogress    | 2016-01-03 04:00:00   |
+            | 5     | foo   | queued        | 2016-01-03 04:00:01   |
+        And there are tier deployments:
+            | id    | user  | status        | realized              | deployment_id | package_id    | app_id    | environment_id    |
+            | 1     | foo   | complete      | 2016-01-01 01:00:00   | 1             | 1             | 1         | 1                 |
+            | 2     | foo   | incomplete    | 2016-01-01 02:00:00   | 1             | 1             | 1         | 1                 |
+            | 3     | foo   | inprogress    | 2016-01-01 03:00:00   | 1             | 1             | 1         | 1                 |
+            | 4     | foo   | pending       | 2016-01-01 04:00:00   | 1             | 1             | 1         | 1                 |
+            | 5     | foo   | validated     | 2016-01-01 04:00:01   | 1             | 1             | 1         | 1                 |
+        And there are host deployments:
+            | id    | user  | status    | realized              | deployment_id | package_id    | host_id   |
+            | 1     | foo   | ok        | 2016-01-30 01:00:00   | 1             | 1             | 1         |
+            | 2     | foo   | failed    | 2016-01-30 02:00:00   | 1             | 1             | 1         |
+            | 3     | foo   | pending   | 2016-01-30 03:00:00   | 1             | 1             | 1         |
+            | 4     | foo   | ok        | 2016-01-30 04:00:00   | 1             | 1             | 1         |
+            | 5     | foo   | ok        | 2016-01-30 04:00:01   | 1             | 1             | 1         |
+        When I query GET "/performance/host_deployments"
+        Then the response code is 200
+        And the response list contains an object with month="2016-01",total=5,ok=3,failed=1,pending=1
+        And the response list contains an object with month="2016-02",total=0,ok=0,failed=0,pending=0

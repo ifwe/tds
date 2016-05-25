@@ -19,9 +19,13 @@ Feature: REST API performance OPTIONS
 
     @rest
     Scenario: get options for the performance endpoint
-        When I query OPTIONS "/performance"
+        When I query OPTIONS "/performance/packages"
         Then the response code is 200
         And the response header contains "Allows" set to "GET, HEAD, OPTIONS"
-        And the response body contains "Get metrics packages, tier deployments, host deployments, and deployments by month for all months."
+        And the response body contains "Get metrics on packages, tier deployments, host deployments, or deployments by month for all months."
         And the response body contains "Do a GET query without a body returned."
         And the response body contains "Get HTTP method options and parameters for this URL endpoint."
+        And the response body contains "limit"
+        And the response body contains "start"
+        And the response body contains "Number of months to cover."
+        And the response body contains "Date or datetime during the first month to cover."

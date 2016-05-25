@@ -53,47 +53,85 @@ class PerformanceView(base.BaseView):
         Validate a performance GET request.
         """
         self.name = 'performance'
-        self._validate_params([])
+        self._validate_params(['limit', 'start'])
+        self._validate_json_params({'limit': 'integer', 'start': 'timestamp'})
+        obj_type = request.matchdict['obj_type']
+        if obj_type not in self.model_dict:
+            request.errors.add(
+                'path', 'obj_type',
+                "Unknown object type {obj_type}. Supported object types are: "
+                "{types}.".format(
+                    obj_type=obj_type,
+                    types=sorted(self.model_dict.keys()),
+                )
+            )
+            self.request.errors.status = 404
 
-        latest = datetime.today()
+        if request.errors:
+            return
+
         time_fmt = "%Y-%m-%d %H:%M:%S"
         to_return = dict()
-        for model_name in self.model_dict:
-            date_objs = list()
-            model = self.model_dict[model_name]['model']
-            col_name = self.model_dict[model_name]['attr']
-            column = getattr(model, col_name)
-            if getattr(model, 'delegate', None):
-                table = model.delegate.__table__
-            else:
-                table = model.__table__
-            statuses = table.columns['status'].type.enums
+        model = self.model_dict[obj_type]['model']
+        col_name = self.model_dict[obj_type]['attr']
+        # for model_name in self.model_dict:
+        date_objs = list()
+        # model = self.model_dict[model_name]['model']
+        # col_name = self.model_dict[model_name]['attr']
+        column = getattr(model, col_name)
+        if getattr(model, 'delegate', None):
+            table = model.delegate.__table__
+        else:
+            table = model.__table__
+        statuses = table.columns['status'].type.enums
+
+        today = datetime.today()
+
+        if 'start' in request.validated_params:
+            earliest = datetime.strptime(
+                request.validated['start'],
+                "%Y-%m-%d %H:%M:%S"
+            )
+        else:
             earliest = min(
                 [getattr(obj, col_name) for obj in self.query(model).all()] +
-                [latest]
+                [today]
             )
-            earliest = datetime(
-                year=earliest.year, month=earliest.month, day=1
-            )
-            current = earliest
+        earliest = datetime(
+            year=earliest.year, month=earliest.month, day=1
+        )
+
+        if 'limit' in request.validated_params:
+            limit = int(request.validated_params['limit'])
+            latest = earliest
+            while limit:
+                latest = self._add_one_month(latest)
+                limit -= 1
+        else:
+            latest = today
+        if latest > today:
+            latest = today
+
+        current = earliest
+        month_later = self._add_one_month(current)
+        while month_later <= latest:
+            date_obj = dict(month=current.strftime("%Y-%m"))
+            all_objs = self.query(model).filter(
+                column < month_later.strftime(time_fmt),
+                column >= current.strftime(time_fmt)
+            ).all()
+            date_obj['total'] = len(all_objs)
+            for status in statuses:
+                date_obj[status] = len([
+                    obj for obj in all_objs if
+                    getattr(obj, 'status') == status
+                ])
+            date_objs.append(date_obj)
+            current = self._add_one_month(current)
             month_later = self._add_one_month(current)
-            while month_later <= latest:
-                date_obj = dict(month=current.strftime("%Y-%m"))
-                all_objs = self.query(model).filter(
-                    column < month_later.strftime(time_fmt),
-                    column >= current.strftime(time_fmt)
-                ).all()
-                date_obj['total'] = len(all_objs)
-                for status in statuses:
-                    date_obj[status] = len([
-                        obj for obj in all_objs if
-                        getattr(obj, 'status') == status
-                    ])
-                date_objs.append(date_obj)
-                current = self._add_one_month(current)
-                month_later = self._add_one_month(current)
-            to_return[model_name] = date_objs
-        self.result = to_return
+        # to_return[model_name] = date_objs
+        # self.result = to_return
+        self.result = date_objs
 
     def validate_performance_options(self, _request):
         """
@@ -101,9 +139,12 @@ class PerformanceView(base.BaseView):
         """
         self.result = dict(
             GET=dict(
-                description="Get metrics packages, tier deployments, host "
-                    "deployments, and deployments by month for all months.",
-                parameters=dict(),
+                description="Get metrics on packages, tier deployments, host "
+                    "deployments, or deployments by month for all months.",
+                parameters=dict(
+                    limit="Number of months to cover.",
+                    start="Date or datetime during the first month to cover.",
+                ),
             ),
             HEAD=dict(description="Do a GET query without a body returned."),
             OPTIONS=dict(
