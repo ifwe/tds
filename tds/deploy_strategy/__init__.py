@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'Different ways to deploy things to Tagged infrastructure'
+'Different ways to deploy things to if(we) infrastructure'
 
 from .base import DeployStrategy
 from .tds_mco import TDSMCODeployStrategy

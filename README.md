@@ -5,7 +5,7 @@
 Kenneth Lareau, Karandeep Nagra
 
 ## Description
-TDS is a deployment system developed at Tagged with a database backend
+TDS is a deployment system developed at if(we) with a database backend
 and a command line frontend.
 The primary application is written in Python and integrates with several
 other applications.
