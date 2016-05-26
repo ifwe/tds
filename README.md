@@ -13,7 +13,7 @@ MySQL was used as the database engine,
 and SQLAlchemy as the object-relational mapper,
 with Alembic used for SQLAlchemy schema migrations.
 
-**\*\*WARNING\*\***: Consider this code **EXPERIMENTAL**.  It has
+**WARNING**: Consider this code **EXPERIMENTAL**.  It has
 not been fully prepared for use outside If(we) though we will be
 working on this.  If you have any questions or suggestions, please
 email <tds@ifwe.co>
