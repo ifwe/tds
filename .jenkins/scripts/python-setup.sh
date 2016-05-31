@@ -43,6 +43,8 @@ if ! [[ -d "$SITEOPS_VIRTUALENV" && -f "$SITEOPS_VIRTUALENV/bin/activate" ]] ; t
     if [ -d virtualenv-1.9.1 ] ; then
         rm -rf virtualenv-1.9.1
     fi
+    echo "import coverage; coverage.process_startup()" > $SITEOPS_VIRTUALENV/lib/python2.7/site-packages.coverage.pth
+    export COVERAGE_PROCESS_START="$WORKSPACE/coverage.rc"
 fi
 
 export PATH=$PATH:$SITEOPS_VIRTUALENV/bin

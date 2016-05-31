@@ -1,3 +1,5 @@
 [run]
 branch = True
 omit = tds/scripts/unvalidated_deploy_check.py
+parallel = True
+source = ./tds

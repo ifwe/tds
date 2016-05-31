@@ -60,7 +60,7 @@ def before_all(context):
     context.coverage_cmd = lambda c: [
         "coverage",
         c,
-        '--rcfile="%s"' % os.path.join(context.PROJECT_ROOT, 'coverage.rc'),
+        '--rcfile=%s' % os.path.join(context.PROJECT_ROOT, 'coverage.rc'),
     ]
 
     processes.run(context.coverage_cmd('erase'), expect_return_code=None)
