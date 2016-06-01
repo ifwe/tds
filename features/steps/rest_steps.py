@@ -41,7 +41,9 @@ def _set_cookie(context, username, password, query_dict=None):
         data=json.dumps(query_dict),
     )
     assert 'session' in response.cookies, (
-        "Authentication failed: {resp}".format(resp=response)
+        "Authentication failed: {resp.status_code}, {resp.text}".format(
+            resp=response
+        )
     )
     context.cookie = response.cookies['session']
 
