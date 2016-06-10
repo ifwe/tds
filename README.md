@@ -5,7 +5,7 @@
 Kenneth Lareau, Karandeep Nagra
 
 ## Description
-TDS is a deployment system developed at Tagged with a database backend
+TDS is a deployment system developed at if(we) with a database backend
 and a command line frontend.
 The primary application is written in Python and integrates with several
 other applications.
@@ -13,6 +13,10 @@ MySQL was used as the database engine,
 and SQLAlchemy as the object-relational mapper,
 with Alembic used for SQLAlchemy schema migrations.
 
+**WARNING**: Consider this code **EXPERIMENTAL**.  It has
+not been fully prepared for use outside If(we) though we will be
+working on this.  If you have any questions or suggestions, please
+email <tds@ifwe.co>
 
 ## License
 <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>

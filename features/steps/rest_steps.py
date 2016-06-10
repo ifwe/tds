@@ -16,6 +16,8 @@
 Steps for the REST API.
 """
 
+import os
+
 from os.path import join as opj
 
 import json
@@ -24,8 +26,40 @@ import yaml
 
 from behave import given, then, when
 
-from tds.views.rest import utils
+import tds.utils
+
 from .model_steps import parse_properties
+
+
+def _get_adminuser_info(context):
+    testconf_path = None
+    local_path = opj(context.PROJECT_ROOT, 'features', 'testconf.yml')
+    global_path = opj(tds.utils.config.TDSConfig.default_conf_dir,
+                      'testconf.yml')
+    if os.path.exists(local_path):
+        testconf_path = local_path
+    elif os.path.exists(global_path):
+        testconf_path = global_path
+    else:
+        raise IOError(
+            "Could not find test configuration file at {local_path} "
+            "or {global_path}.".format(local_path=local_path,
+                                       global_path=global_path)
+        )
+
+    with open(testconf_path) as testconf_file:
+        testconf = yaml.load(testconf_file)
+        if ('adminuser' in testconf and 'username' in testconf['adminuser']
+                and 'password' in testconf['adminuser']):
+            username = testconf['adminuser']['username']
+            password = testconf['adminuser']['password']
+        else:
+            raise KeyError('Test admin username and password not found '
+                           'in {testconf_file}'.format(
+                testconf_file=testconf_file
+            ))
+
+    return username, password
 
 
 def _set_cookie(context, username, password, query_dict=None):
@@ -54,7 +88,8 @@ def given_i_have_a_cookie_with_permissions(context, perm_type):
     if perm_type == 'user':
         _set_cookie(context, 'testuser', 'secret')
     elif perm_type == 'admin':
-        _set_cookie(context, 'testadmin', 'removed')
+        admin_name, admin_pw = _get_adminuser_info(context)
+        _set_cookie(context, admin_name, admin_pw)
     else:
         assert False, ("Unknown permission type: {p}. "
                        "Valid options: user, admin.".format(p=perm_type))
@@ -136,8 +171,9 @@ def when_i_query(context, method, path):
 
 
 @when(u'I POST "{body}" to "{path}"')
-def when_i_query_with_body(context, path, body):
+def when_i_query_with_body(context, body, path):
     _execute_query(context, 'POST', path, body)
+
 
 def _execute_query(context, method, path, body=None):
     """
@@ -258,7 +294,7 @@ def then_the_response_list_contains_id_range(context, minimum, maximum):
     minimum = int(minimum)
     maximum = int(maximum)
     assert all(any(obj['id'] == x for obj in context.response.json()) for
-               x in range(minimum, maximum+1))
+               x in range(minimum, maximum + 1))
 
 
 @then(u'the response contains errors')

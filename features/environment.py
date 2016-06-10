@@ -259,6 +259,7 @@ def setup_rest_server(context):
     context.rest_server = make_server('0.0.0.0', 0, app)
     context.rest_process = Process(target=rest_server, args=(context,))
     context.rest_process.start()
+
     with open(opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
                   'settings.yml'), 'w') as f:
         jenkins_url = 'http://example.org'

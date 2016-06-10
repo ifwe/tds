@@ -22,7 +22,7 @@
 #
 # chkconfig: - 97 03
 # description: update_deploy_repo is a daemon for updating \
-#              the Tagged deployment repository.
+#              the if(we) deployment repository.
 # processname: update_deploy_repo
 
 
