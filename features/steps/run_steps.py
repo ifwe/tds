@@ -22,10 +22,13 @@ import subprocess
 
 import tds
 import tds.exceptions
+import tds.scripts.generate_cookie
 import tds.scripts.tds_prog
 import tds.scripts.unvalidated_deploy_check
 import tds.utils.processes as processes
 import tds.apps.repo_updater
+
+from os.path import join as opj
 
 from behave import given, when, then
 
@@ -33,6 +36,7 @@ TDS_SCRIPT = tds.scripts.tds_prog.__file__
 REPO_UPDATE_SCRIPT = tds.apps.repo_updater.__file__
 DEPLOY_DAEMON_SCRIPT = tds.apps.installer.__file__
 UNVALIDATED_CHECK_SCRIPT = tds.scripts.unvalidated_deploy_check.__file__
+GENERATE_COOKIE_SCRIPT = tds.scripts.generate_cookie.__file__
 TRACEBACK_TEXT = 'Traceback (most recent call last)'
 
 
@@ -84,6 +88,16 @@ def when_i_start_to_run(context, command):
             cmd_executable +
             [DEPLOY_DAEMON_SCRIPT] +
             getattr(context, 'extra_run_args', [])
+        )
+    elif cmd_parts[0] == "generate_cookie":
+        cmd_parts = (
+            cmd_executable +
+            [GENERATE_COOKIE_SCRIPT] +
+            cmd_parts[1:] +
+            ["--settings_path={path}".format(
+                path=opj(context.PROJECT_ROOT, 'tds', 'views', 'rest',
+                         'settings.yml')
+            )]
         )
     else:
         cmd_parts = (
