@@ -408,6 +408,13 @@ def given_i_change_cookie_life_to(context, val):
         )
 
 
+@when(u'I use the generated cookie')
+def when_i_use_the_generated_cookie(context):
+    cookie_obj = json.loads(context.process.stdout.strip())
+    assert 'cookie' in cookie_obj
+    context.cookie = cookie_obj['cookie']
+
+
 @then(u'the response object conforms to the bystander expectation')
 def then_the_test_conforms_to_the_bystander_expectation(context):
     obj = context.response.json()
