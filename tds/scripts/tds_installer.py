@@ -114,6 +114,11 @@ class TDSInstallerDaemon(Daemon):
         if (datetime.now() - self.heartbeat_time).seconds >= 300:
             self.heartbeat_time = datetime.now()
             log.info('HEARTBEAT - Deployment search result: %r', deployment)
+            log.info("There {verb} {num_proc} ongoing process{mult}.".format(
+                verb='is' if len(self.ongoing_processes) == 1 else 'are',
+                num_proc=len(self.ongoing_processes),
+                mult='' if len(self.ongoing_processes) == 1 else 'es',
+            ))
 
         if deployment is None:
             return
