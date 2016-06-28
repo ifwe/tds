@@ -260,8 +260,9 @@ class DeploymentView(BaseView):
                     package_id=tier_dep.package_id,
                     status="validated",
                 )
-                if not previous_tier_dep and not getattr(self, 'forced_queue',
-                                                        False):
+                if not previous_tier_dep and not getattr(
+                    self, 'forced_queue', False
+                ):
                     self.request.errors.add(
                         'query', 'status',
                         'Package with ID {id} has not been validated in the '
