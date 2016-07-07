@@ -111,7 +111,7 @@ class TDSInstallerDaemon(Daemon):
         deployment = self.app.find_deployment()
 
         # Heartbeat test to see if daemon is 'stuck'
-        if (datetime.now() - self.heartbeat_time).seconds >= 300:
+        if (datetime.now() - self.heartbeat_time).seconds >= 900:
             self.heartbeat_time = datetime.now()
             log.info('HEARTBEAT - Deployment search result: %r', deployment)
             log.info("There {verb} {num_proc} ongoing process{mult}.".format(
