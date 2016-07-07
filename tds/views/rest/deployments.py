@@ -239,7 +239,7 @@ class DeploymentView(BaseView):
                 self.request.errors.status = 403
 
         if tier_deployments:
-            env_map = {'dev': None, 'staging': 'dev', 'prod': 'staging'}
+            env_map = {'dev': None, 'stage': 'dev', 'prod': 'stage'}
             for tier_dep in tier_deployments:
                 previous_env_short = env_map[tier_dep.environment_obj.env]
                 if previous_env_short is None:
@@ -260,8 +260,9 @@ class DeploymentView(BaseView):
                     package_id=tier_dep.package_id,
                     status="validated",
                 )
-                if not previous_tier_dep and not getattr(self, 'forced_queue',
-                                                        False):
+                if not previous_tier_dep and not getattr(
+                    self, 'forced_queue', False
+                ):
                     self.request.errors.add(
                         'query', 'status',
                         'Package with ID {id} has not been validated in the '
