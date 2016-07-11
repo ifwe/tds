@@ -20,7 +20,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: POST tier deployment to unauthorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -51,7 +51,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: POST tier deployment to authorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -80,7 +80,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: PUT tier deployment to unauthorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -114,7 +114,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario: PUT tier deployment to authorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -141,7 +141,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: POST host deployment to unauthorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -175,7 +175,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: POST host deployment to authorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -207,7 +207,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: PUT host deployment to unauthorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -245,7 +245,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario: PUT host deployment to authorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -276,7 +276,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: PUT deployment with host deployments in unauthorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -314,7 +314,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: PUT deployment with host deployments in authorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -350,7 +350,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: PUT deployment tier deployments in unauthorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:
@@ -384,7 +384,7 @@ Feature: Restrictions on cookie
     @rest
     Scenario Outline: PUT deployment tier deployments in unauthorized environment
         Given there is an environment with name="dev"
-        And there is an environment with name="staging"
+        And there is an environment with name="stage"
         And there is an environment with name="prod"
         And there is a project with name="proj1"
         And there are deployments:

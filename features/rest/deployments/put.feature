@@ -136,7 +136,7 @@ Feature: PUT deployment(s) from the REST API
 
     @rest
     Scenario Outline: attempt to queue a deployment whose package hasn't been validated in the previous environment
-        Given there is an environment with name="staging"
+        Given there is an environment with name="stage"
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
         And there are deployments:
@@ -163,7 +163,7 @@ Feature: PUT deployment(s) from the REST API
 
     @rest
     Scenario Outline: force deployment with validation in previous environment
-        Given there is an environment with name="staging"
+        Given there is an environment with name="stage"
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
         And there are deployments:
@@ -187,7 +187,7 @@ Feature: PUT deployment(s) from the REST API
 
     @rest
     Scenario: pass a non-Boolean for force
-        Given there is an environment with name="staging"
+        Given there is an environment with name="stage"
         And there is a deploy target with name="tier1"
         And there is a deploy target with name="tier2"
         And there are deployments:
