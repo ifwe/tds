@@ -151,7 +151,7 @@ class TDSInstallerDaemon(Daemon):
         for dep_id in self.ongoing_processes.keys():
             dep = self.app.get_deployment(dep_id=dep_id)
             self.app._refresh(dep)
-            self.ongoing_processes[dep_id][0].join()
+            self.ongoing_processes[dep_id][0].terminate()
             if dep.status in ('complete', 'failed', 'stopped'):
                 to_delete.append(dep_id)
         for done_dep_id in to_delete:
