@@ -263,7 +263,7 @@ Feature: Restrictions on cookie
         And there are hosts:
             | name  | app_id    | env       |
             | host1 | 2         | dev       |
-            | host2 | 2         | staging   |
+            | host2 | 2         | stage     |
         And there are host deployments:
             | id    | deployment_id | host_id   | status    | user  | package_id    |
             | 1     | 1             | 1         | pending   | foo   | 1             |
