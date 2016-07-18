@@ -111,7 +111,7 @@ class TDSInstallerDaemon(Daemon):
         deployment = self.app.find_deployment()
 
         # Heartbeat test to see if daemon is 'stuck'
-        if (datetime.now() - self.heartbeat_time).seconds >= 300:
+        if (datetime.now() - self.heartbeat_time).seconds >= 900:
             self.heartbeat_time = datetime.now()
             log.info('HEARTBEAT - Deployment search result: %r', deployment)
             log.info("There {verb} {num_proc} ongoing process{mult}.".format(
@@ -151,10 +151,10 @@ class TDSInstallerDaemon(Daemon):
         for dep_id in self.ongoing_processes.keys():
             dep = self.app.get_deployment(dep_id=dep_id)
             self.app._refresh(dep)
-            self.ongoing_processes[dep_id][0].join()
             if dep.status in ('complete', 'failed', 'stopped'):
                 to_delete.append(dep_id)
         for done_dep_id in to_delete:
+            self.ongoing_processes[dep_id][0].terminate()
             del self.ongoing_processes[done_dep_id]
 
         # Halt all deployments taking too long.

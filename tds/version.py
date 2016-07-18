@@ -14,4 +14,4 @@
 
 'TDS version'
 # Update this file for version changes
-__version__ = '3.0.12'
+__version__ = '3.0.15'

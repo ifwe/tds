@@ -71,7 +71,6 @@ class DottedDict(dict):
 class Config(DottedDict):
     """Base configuration class"""
 
-    @debug
     def load(self):
         """Abstract method, must be defined in subclasses"""
 
@@ -87,7 +86,6 @@ class FileConfig(Config):
         super(FileConfig, self).__init__()
         self.filename = filename
 
-    @debug
     def load(self):
         """Read information from configuration file and update"""
 
@@ -102,7 +100,6 @@ class FileConfig(Config):
 
         self.update(self.parse(data))
 
-    @debug
     def parse(self, data):
         """Abstract method, must be defined in subclasses"""
 
@@ -112,7 +109,6 @@ class FileConfig(Config):
 class YAMLConfig(FileConfig):
     """YAML configuration file handling"""
 
-    @debug
     def parse(self, data):
         """Parse YAML data and ensure it's valid"""
 
@@ -135,12 +131,10 @@ class VerifyingConfig(Config):
 
     schema = {}
 
-    @debug
     def load(self):
         super(VerifyingConfig, self).load()
         self.verify()
 
-    @debug
     def verify(self):
         """Verify data, loading it in first if necessary"""
 
@@ -150,7 +144,6 @@ class VerifyingConfig(Config):
         self._verify(self, self.schema)
 
     @staticmethod
-    @debug
     def _verify(data, schema):
         """Data verification - ensure all entries are correct
         and complete
