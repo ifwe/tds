@@ -88,7 +88,7 @@ class ArgException(Exception):
     def __init__(self, output, *args, **kwargs):
         usage_text = (
             "Usage:\n"
-            "\tpython save_cookie.py <username> <address> "
+            "\tpython generate_cookie.py <username> <address> "
             "[--environment_ids=<environment_ids>] [--methods=<methods>] "
             "[--eternal] [--settings_path=<settings_path>]\n\n"
             "Arguments:\n"
