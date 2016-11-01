@@ -40,12 +40,20 @@ class SlackNotifier(Notifier):
         """
         Send a Slack notification for a given action.
         """
+        print deployment
         log.debug("Seding Slack notification")
+
+        message = self.message_for_deployment(deployment)
         payload = {
             "username": "tds",
-            "icon-emoji": "",
-            "text": self.message_for_deployment(deployment)
+            "icon-emoji": ":bell:",
+            "text": "*{subject}*\n{body}".format(
+                subject=message['subject'],
+                body=message['body'],
+            ),
         }
+
+        headers = {'Content-type': 'application/json'}
 
         try:
             resp = requests.post(
