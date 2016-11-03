@@ -57,8 +57,8 @@ Feature: Slack notifications
         When I run "deploy promote myapp 124 --hosts sprojhost01 --detach"
         And I run "deploy promote myapp 124 --hosts sprojhost02 --detach"
         And I run "deploy promote myapp 124 --hosts sother01 --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "promote","of+version+124+of+myapp+on+hosts+sprojhost01"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "promote","of version 124 of myapp on hosts sprojhost01"
         And there are 3 slack notifications
 
     @slack_server
@@ -68,8 +68,8 @@ Feature: Slack notifications
         And the package has been validated in the "development" environment
         And slack notifications are enabled
         When I run "deploy promote myapp 124 --all-apptypes --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "promote","of+version+124+of+myapp+on+app+tier","the-apptype+in+stage"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "promote","of version 124 of myapp on app tier","the-apptype in stage"
         And there are 1 slack notifications
 
     @slack_server
@@ -79,8 +79,8 @@ Feature: Slack notifications
         And the package has been validated in the "development" environment
         And slack notifications are enabled
         When I run "deploy promote myapp 124 --apptypes the-apptype --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "promote","of+version+124+of+myapp+on+app+tier","the-apptype+in+stage"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "promote","of version 124 of myapp on app tier","the-apptype in stage"
         And there are 1 slack notifications
 
     @slack_server
@@ -93,8 +93,8 @@ Feature: Slack notifications
         And the package failed to deploy on the host with name="anotherhost01"
         And slack notifications are enabled
         When I run "deploy fix myapp --all-apptypes --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "fix","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "fix","of version 123 of myapp on app tier","another-apptype","in stage"
         And there are 1 slack notifications
 
     @slack_server
@@ -107,8 +107,8 @@ Feature: Slack notifications
         And the package failed to deploy on the host with name="anotherhost01"
         And slack notifications are enabled
         When I run "deploy fix myapp --apptypes another-apptype --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "fix","of+version+123+of+myapp+on+app+tier","another-apptype","in+stage"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "fix","of version 123 of myapp on app tier","another-apptype","in stage"
         And there are 1 slack notifications
 
     @slack_server
@@ -121,8 +121,8 @@ Feature: Slack notifications
         And the package failed to deploy on the host with name="anotherhost01"
         And slack notifications are enabled
         When I run "deploy fix myapp --hosts anotherhost01 --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "fix","of+version+123+of+myapp+on+hosts+anotherhost01","in+stage"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "fix","of version 123 of myapp on hosts anotherhost01","in stage"
         And there are 1 slack notifications
 
     @slack_server
@@ -143,8 +143,8 @@ Feature: Slack notifications
         And slack notifications are enabled
 
         When I run "deploy rollback myapp --apptype the-apptype --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "rollback","of+version+121+of+myapp+on+app+tier","the-apptype","in+stage"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "rollback","of version 121 of myapp on app tier","the-apptype","in stage"
         And there are 1 slack notifications
 
     @slack_server
@@ -165,8 +165,8 @@ Feature: Slack notifications
         And slack notifications are enabled
 
         When I run "deploy rollback myapp --all-apptypes --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "rollback","of+version+121+of+myapp+on+app+tier","the-apptype","in+stage"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "rollback","of version 121 of myapp on app tier","the-apptype","in stage"
         And there are 1 slack notifications
 
     @slack_server
@@ -187,8 +187,8 @@ Feature: Slack notifications
         And slack notifications are enabled
 
         When I run "deploy rollback myapp --hosts sprojhost01 --detach"
-        Then there was a slack notification with room_id="fakeroom",auth_token="deadbeef"
-        And a slack notification message contains "rollback","of+version+124+of+myapp+on+hosts","sprojhost01","in+stage"
+        Then there was a slack notification with username="tds",icon-emoji=":bell:"
+        And a slack notification message contains "rollback","of version 124 of myapp on hosts","sprojhost01","in stage"
         And there are 1 slack notifications
 
     @slack_server
@@ -210,7 +210,7 @@ Feature: Slack notifications
 
         When I run "deploy rollback myapp --hosts sprojhost01 --detach"
         Then there is a slack failure
-        And the output has "Deployment was successful. However, notification to slack failed, status code is: 403"
+        And the output has "Deployment successful, but failed to send Slack notification. Got status code 403."
 
     @slack_server
     Scenario: no slack response
@@ -221,4 +221,4 @@ Feature: Slack notifications
         And slack notifications are enabled
 
         When I run "deploy promote myapp 500 --all-apptypes --detach"
-        Then the output has "Deployment was successful. However, notification to slack failed, message is: "
+        Then the output has "Deployment successful, but failed to send Slack notification. Got exception: "

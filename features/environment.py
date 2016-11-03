@@ -229,7 +229,7 @@ def setup_slack_server(context):
     add_config_val(
         context,
         'notifications.slack',
-        dict(url="127.0.0.1:{port}".format(port=context.slack_server.address))
+        dict(url=context.slack_server.address),
     )
 
 

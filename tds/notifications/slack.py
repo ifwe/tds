@@ -15,6 +15,8 @@
 """
 Support for Slack notifications
 """
+
+import json
 import requests
 
 import logging
@@ -40,7 +42,6 @@ class SlackNotifier(Notifier):
         """
         Send a Slack notification for a given action.
         """
-        print deployment
         log.debug("Seding Slack notification")
 
         message = self.message_for_deployment(deployment)
@@ -59,7 +60,7 @@ class SlackNotifier(Notifier):
             resp = requests.post(
                 self.slack_url,
                 headers=headers,
-                data=payload,
+                data=json.dumps(payload),
             )
             if resp.status_code != requests.codes.ok:
                 log.error("Deployment successful, but failed to send Slack "

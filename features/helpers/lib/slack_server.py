@@ -31,7 +31,9 @@ class SlackHandler(BaseHTTPRequestHandler):
         """
         Parse the post path into a dictionary and return it.
         """
-        return json.loads(self.rfile.read())
+        content_len = int(self.headers.getheader('content-length', 0))
+        content = self.rfile.read(content_len)
+        return json.loads(content)
 
     def determine_response(self, form=None):
         """
