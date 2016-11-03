@@ -41,6 +41,7 @@ sys.path.insert(
 
 from hipchat_server import HipChatServer
 from graphite_server import GraphiteServer
+from slack_server import SlackServer
 
 DB_HOSTS = (
     'dopsdbtds01.tag-dev.com',
@@ -213,6 +214,35 @@ def teardown_hipchat_server(context):
 
     if 'wip' in context.tags:
         print 'hipchat notifications:', notifications
+
+
+def setup_slack_server(context):
+    """
+    Set up the mock Slack server.
+    """
+    server_name = ''
+    server_port = 0
+
+    context.slack_server = SlackServer((server_name, server_port))
+    context.slack_server.start()
+
+    add_config_val(
+        context,
+        'notifications.slack',
+        dict(url=context.slack_server.address),
+    )
+
+
+def teardown_slack_server(context):
+    """
+    Halt server and print out info if @wip tagged.
+    """
+    notifications = context.slack_server.get_notifications()
+
+    context.slack_server.halt()
+
+    if 'wip' in context.tags:
+        print "slack notifications:", notifications
 
 
 def setup_graphite_server(context):
@@ -398,6 +428,9 @@ def before_scenario(context, scenario):
     if 'graphite_server' in context.tags:
         setup_graphite_server(context)
 
+    if 'slack_server' in context.tags:
+        setup_slack_server(context)
+
     setup_temp_db(context)
 
     if 'rest' in context.tags:
@@ -446,6 +479,9 @@ def after_scenario(context, scenario):
 
     if 'graphite_server' in context.tags:
         teardown_graphite_server(context)
+
+    if 'slack_server' in context.tags:
+        teardown_slack_server(context)
 
     if 'rest' in context.tags:
         teardown_rest_server(context)
