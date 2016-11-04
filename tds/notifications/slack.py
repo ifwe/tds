@@ -38,6 +38,19 @@ class SlackNotifier(Notifier):
         super(SlackNotifier, self).__init__(app_config, config)
         self.slack_url = config['url']
 
+    @property
+    def proxies(self):
+        """
+        Determine proxies for request.
+        """
+        proxies = {}
+        config_proxies = self.app_config.get('proxy', {})
+        for proto in ('http', 'https'):
+            if proto in config_proxies:
+                proxies[proto] = config_proxies[proto]
+
+        return proxies
+
     def notify(self, deployment):
         """
         Send a Slack notification for a given action.
@@ -61,6 +74,7 @@ class SlackNotifier(Notifier):
                 self.slack_url,
                 headers=headers,
                 data=json.dumps(payload),
+                proxies=self.proxies,
             )
             if resp.status_code != requests.codes.ok:
                 log.error("Deployment successful, but failed to send Slack "
