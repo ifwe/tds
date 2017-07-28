@@ -42,6 +42,7 @@ sys.path.insert(
 from hipchat_server import HipChatServer
 from graphite_server import GraphiteServer
 from slack_server import SlackServer
+from signalfx_server import SignalfxServer
 
 DB_HOSTS = (
     'dopsdbtds01.tag-dev.com',
@@ -244,6 +245,33 @@ def teardown_slack_server(context):
     if 'wip' in context.tags:
         print "slack notifications:", notifications
 
+def setup_signalfx_server(context):
+    """
+    Set up the mock Signalfx server.
+    """
+    server_name = ''
+    server_port = 0
+
+    context.signalfx_server = SignalfxServer((server_name, server_port))
+    context.signalfx_server.start()
+
+    add_config_val(
+        context,
+        'notifications.signalfx',
+        dict(url=context.signalfx_server.address),
+    )
+
+
+def teardown_signalfx_server(context):
+    """
+    Halt server and print out info if @wip tagged.
+    """
+    notifications = context.signalfx_server.get_notifications()
+
+    context.signalfx_server.halt()
+
+    if 'wip' in context.tags:
+        print "signalfx notifications:", notifications
 
 def setup_graphite_server(context):
     """
@@ -428,6 +456,9 @@ def before_scenario(context, scenario):
     if 'graphite_server' in context.tags:
         setup_graphite_server(context)
 
+    if 'signalfx_server' in context.tags:
+        setup_signalfx_server(context)
+
     if 'slack_server' in context.tags:
         setup_slack_server(context)
 
@@ -479,6 +510,9 @@ def after_scenario(context, scenario):
 
     if 'graphite_server' in context.tags:
         teardown_graphite_server(context)
+
+    if 'signalfx_server' in context.tags:
+        teardown_signalfx_server(context)
 
     if 'slack_server' in context.tags:
         teardown_slack_server(context)

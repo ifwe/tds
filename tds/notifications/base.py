@@ -179,3 +179,46 @@ class Notifier(object):
                    'in %s:\n    %s' % msg_args
 
         return dict(subject=msg_subject, body=msg_text)
+
+    def factors_for_deployment(self, deployment):
+        'Collecting factors for deployment'
+        log.debug('Collecting factors for deployment')
+
+        dep_type = deployment.action['subcommand'].capitalize()
+
+        package = deployment.package
+
+        # Determine version
+        version = package.version
+
+        package_name = package.name
+
+        if deployment.target.get('hosts', None):
+            app = False
+            destinations = ', '.join(
+                sorted(x.name for x in deployment.target['hosts'])
+            )
+        elif deployment.target.get('apptypes', None):
+            app = True
+            destinations = ', '.join(
+                sorted(x.name for x in deployment.target['apptypes'])
+            )
+        else:
+            app = True
+            targets = deployment.target.get('apptypes', [])
+            destinations = ', '.join(sorted(x.name for x in targets))
+
+
+        env = self.app_config['env.environment']
+
+        deployer = deployment.actor.name
+
+        return dict(
+            app=app,
+            dep_type=dep_type,
+            deployer=deployer,
+            destinations=destinations,
+            env=env,
+            package_name=package_name,
+            version=version,
+        )

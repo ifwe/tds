@@ -19,9 +19,11 @@ from .mail import EmailNotifier
 from .hipchat import HipchatNotifier
 from .graphite import GraphiteNotifier
 from .slack import SlackNotifier
+from .signalfx import SignalfxNotifier
 
 __all__ = [
     'Notifications', 'Notifier',
     'EmailNotifier', 'HipchatNotifier',
     'GraphiteNotifier', 'SlackNotifier',
+    'SignalfxNotifier',
 ]
