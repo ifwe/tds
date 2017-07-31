@@ -41,6 +41,34 @@ def then_there_is_a_signalfx_notification_with(context, properties):
     except KeyError as e:
         assert False, e
 
+@then(u'a signalfx notification message contains dimensions {properties}')
+def then_there_is_a_signalfx_notification_with_message_that_contains_dimensions(context, properties):
+    notifications = context.signalfx_server.get_notifications()
+    assert notifications is not None
+    assert len(notifications) > 0
+
+    attrs = parse_properties(properties)
+
+    try:
+        assert any(all(req['dimensions'][attr] == attrs[attr] for attr in attrs)
+                   for (req, _resp) in notifications)
+    except KeyError as e:
+        assert False, e
+
+@then(u'a signalfx notification message contains properties {properties}')
+def then_there_is_a_signalfx_notification_with_message_that_contains_properties(context, properties):
+    notifications = context.signalfx_server.get_notifications()
+    assert notifications is not None
+    assert len(notifications) > 0
+
+    attrs = parse_properties(properties)
+
+    try:
+        assert any(all(req['properties'][attr] == attrs[attr] for attr in attrs)
+                   for (req, _resp) in notifications)
+    except KeyError as e:
+        assert False, e
+
 @then(u'there are {number} signalfx notifications')
 def then_there_are_signalfx_notifications(context, number):
     number = int(number)
