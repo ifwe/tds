@@ -18,7 +18,7 @@ from behave import given, then
 
 from .model_steps import parse_properties
 from ..environment import add_config_val
-
+import ast
 
 @given(u'signalfx notifications are enabled')
 def given_signalfx_notifications_are_enabled(context):
@@ -36,7 +36,7 @@ def then_there_is_a_signalfx_notification_with(context, properties):
     attrs = parse_properties(properties)
 
     try:
-        assert any(all(req[attr] == attrs[attr] for attr in attrs)
+        assert any(all(ast.literal_eval(str(req).strip('[]'))[attr] == attrs[attr] for attr in attrs)
                    for (req, _resp) in notifications)
     except KeyError as e:
         assert False, e
@@ -50,7 +50,7 @@ def then_there_is_a_signalfx_notification_with_message_that_contains_dimensions(
     attrs = parse_properties(properties)
 
     try:
-        assert any(all(req['dimensions'][attr] == attrs[attr] for attr in attrs)
+        assert any(all(ast.literal_eval(str(req).strip('[]'))['dimensions'][attr] == attrs[attr] for attr in attrs)
                    for (req, _resp) in notifications)
     except KeyError as e:
         assert False, e
@@ -64,7 +64,7 @@ def then_there_is_a_signalfx_notification_with_message_that_contains_properties(
     attrs = parse_properties(properties)
 
     try:
-        assert any(all(req['properties'][attr] == attrs[attr] for attr in attrs)
+        assert any(all(ast.literal_eval(str(req).strip('[]'))['properties'][attr] == attrs[attr] for attr in attrs)
                    for (req, _resp) in notifications)
     except KeyError as e:
         assert False, e

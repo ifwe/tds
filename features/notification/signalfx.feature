@@ -98,7 +98,7 @@ Feature: Signalfx notifications
         When I run "deploy fix myapp --all-apptypes --detach"
         Then there was a signalfx notification with eventType="software change"
         And a signalfx notification message contains dimensions application="another-apptype",env="stage"
-        And a signalfx notification message contains properties deploy_type="Fix",release_version"123",artifact_name="myapp"
+        And a signalfx notification message contains properties deploy_type="Fix",release_version="123",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -113,7 +113,7 @@ Feature: Signalfx notifications
         When I run "deploy fix myapp --apptypes another-apptype --detach"
         Then there was a signalfx notification with eventType="software change"
         And a signalfx notification message contains dimensions application="another-apptype",env="stage"
-        And a signalfx notification message contains properties deploy_type="Fix",release_version"123",artifact_name="myapp"
+        And a signalfx notification message contains properties deploy_type="Fix",release_version="123",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -128,7 +128,7 @@ Feature: Signalfx notifications
         When I run "deploy fix myapp --hosts anotherhost01 --detach"
         Then there was a signalfx notification with eventType="software change"
         And a signalfx notification message contains dimensions node="anotherhost01",env="stage"
-        And a signalfx notification message contains properties deploy_type="Fix",release_version"123",artifact_name="myapp"
+        And a signalfx notification message contains properties deploy_type="Fix",release_version="123",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server

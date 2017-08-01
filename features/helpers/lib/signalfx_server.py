@@ -17,6 +17,7 @@
 import os
 import json
 import requests
+import ast
 
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from multiprocessing import Process, Manager
@@ -41,10 +42,12 @@ class SignalfxHandler(BaseHTTPRequestHandler):
         the fields and values stored in form.
         """
         # TODO: url unquoting
-        if form and '200' in form['properties']['release_version'] and 'myapp' in form['properties']['artifact_name']:
-            return 403
-        if form and '500' in form['properties']['release_version'] and 'myapp' in form['properties']['artifact_name']:
-            return 'No response'
+        if form:
+            form = ast.literal_eval(str(form).strip('[]'))
+            if form['properties']['release_version'] == '200' and form['properties']['artifact_name'] == 'myapp':
+                return 403
+            if form['properties']['release_version'] == '500' and form['properties']['artifact_name'] == 'myapp':
+                return 'No response'
         return 200
 
     def do_POST(self):
