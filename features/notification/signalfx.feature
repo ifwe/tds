@@ -58,8 +58,8 @@ Feature: Signalfx notifications
         And I run "deploy promote myapp 124 --hosts sprojhost02 --detach"
         And I run "deploy promote myapp 124 --hosts sother01 --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions node="sprojhost01",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="promote",release_version="124",artifact_name="myapp"
+        And a signalfx notification message contains dimensions node="sprojhost01",env="stage"
+        And a signalfx notification message contains properties deploy_type="Promote",release_version="124",artifact_name="myapp"
         And there are 3 signalfx notifications
 
     @signalfx_server
@@ -70,8 +70,8 @@ Feature: Signalfx notifications
         And signalfx notifications are enabled
         When I run "deploy promote myapp 124 --all-apptypes --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions application="the-apptype",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="promote",release_version="124",artifact_name="myapp"
+        And a signalfx notification message contains dimensions application="the-apptype",env="stage"
+        And a signalfx notification message contains properties deploy_type="Promote",release_version="124",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -82,8 +82,8 @@ Feature: Signalfx notifications
         And signalfx notifications are enabled
         When I run "deploy promote myapp 124 --apptypes the-apptype --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions application="the-apptype",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="promote",release_version="124",artifact_name="myapp"
+        And a signalfx notification message contains dimensions application="the-apptype",env="stage"
+        And a signalfx notification message contains properties deploy_type="Promote",release_version="124",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -97,8 +97,8 @@ Feature: Signalfx notifications
         And signalfx notifications are enabled
         When I run "deploy fix myapp --all-apptypes --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions application="another-apptype",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="fix",release_version"123",artifact_name="myapp"
+        And a signalfx notification message contains dimensions application="another-apptype",env="stage"
+        And a signalfx notification message contains properties deploy_type="Fix",release_version"123",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -112,8 +112,8 @@ Feature: Signalfx notifications
         And signalfx notifications are enabled
         When I run "deploy fix myapp --apptypes another-apptype --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions application="another-apptype",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="fix",release_version"123",artifact_name="myapp"
+        And a signalfx notification message contains dimensions application="another-apptype",env="stage"
+        And a signalfx notification message contains properties deploy_type="Fix",release_version"123",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -127,8 +127,8 @@ Feature: Signalfx notifications
         And signalfx notifications are enabled
         When I run "deploy fix myapp --hosts anotherhost01 --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions node="anotherhost01",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="fix",release_version"123",artifact_name="myapp"
+        And a signalfx notification message contains dimensions node="anotherhost01",env="stage"
+        And a signalfx notification message contains properties deploy_type="Fix",release_version"123",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -150,8 +150,8 @@ Feature: Signalfx notifications
 
         When I run "deploy rollback myapp --apptype the-apptype --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions application="the-apptype",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="rollback",release_version="121",artifact_name="myapp"
+        And a signalfx notification message contains dimensions application="the-apptype",env="stage"
+        And a signalfx notification message contains properties deploy_type="Rollback",release_version="121",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -173,8 +173,8 @@ Feature: Signalfx notifications
 
         When I run "deploy rollback myapp --all-apptypes --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions application="the-apptype",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="rollback",release_version="121",artifact_name="myapp"
+        And a signalfx notification message contains dimensions application="the-apptype",env="stage"
+        And a signalfx notification message contains properties deploy_type="Rollback",release_version="121",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
@@ -196,8 +196,8 @@ Feature: Signalfx notifications
 
         When I run "deploy rollback myapp --hosts sprojhost01 --detach"
         Then there was a signalfx notification with eventType="software change"
-        Then there was a signalfx notification message contains dimensions node="sprojhost01",env="stage"
-        Then there was a signalfx notification message contains properties deploy_type="rollback",release_version="124",artifact_name="myapp"
+        And a signalfx notification message contains dimensions node="sprojhost01",env="stage"
+        And a signalfx notification message contains properties deploy_type="Rollback",release_version="124",artifact_name="myapp"
         And there are 1 signalfx notifications
 
     @signalfx_server
