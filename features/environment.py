@@ -258,7 +258,7 @@ def setup_signalfx_server(context):
     add_config_val(
         context,
         'notifications.signalfx',
-        dict(url=context.signalfx_server.address),
+        dict(url=context.signalfx_server.address, key='foobar'),
     )
 
 
