@@ -57,7 +57,7 @@ def verify_email_contents(context, attrs):
 
     original_data = dict(
         sender=curr_user,
-        receiver=[curr_user + '@ifwe.co', curr_receiver],
+        receiver=[curr_user + '@themeetgroup.com', curr_receiver],
     )
 
     for email_data in email_data_list:
