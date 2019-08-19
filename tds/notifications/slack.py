@@ -70,10 +70,13 @@ class SlackNotifier(Notifier):
         headers = {'Content-type': 'application/json'}
 
         try:
+            # Slack (or the proxy) can take up to a minute until responding with an HTTP 504 "Gateway timeout".
+            # Limit this - we still send emails
             resp = requests.post(
                 self.slack_url,
                 headers=headers,
                 data=json.dumps(payload),
+                timeout=10.0,
                 proxies=self.proxies,
             )
             if resp.status_code != requests.codes.ok:

@@ -397,7 +397,7 @@ class RepoUpdater(TDSProgramBase):
         Update the repo with the given RPMs.
         """
         log.info('Updating repo...')
-        old_umask = os.umask(0002)
+        old_umask = os.umask(0o002)
         final_status = 'completed'
 
         try:

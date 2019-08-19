@@ -89,10 +89,12 @@ class SignalfxNotifier(Notifier):
         }
 
         try:
+            # Limit this to 10 seconds - If it takes longer than that, we'll probably hit an HTTP 504 "Gateway timeout" and wait over a minute.
             resp = requests.post(
                 self.signalfx_url,
                 headers=headers,
                 data=json.dumps([payload]),
+                timeout=10.0,
                 proxies=self.proxies,
             )
             if resp.status_code != requests.codes.ok:
