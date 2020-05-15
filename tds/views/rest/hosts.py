@@ -46,7 +46,7 @@ class HostView(BaseView):
         'name': 'hostname',
         'cage': 'cage_location',
         'cab': 'cab_location',
-        'rack': 'rack_location',
+        'elevation': 'elevation',
         'tier_id': 'app_id',
     }
 

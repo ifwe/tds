@@ -37,7 +37,7 @@ Feature: POST host(s) from the REST API
             | params                | props                     |
             |                       |                           |
             | cage=1&cab=foo&rack=3 | ,cage=1,cab="foo",rack=3  |
-            | console_port=foo      | ,console_port="foo"       |
+            | elevation=foo         | ,elevation="foo"          |
 
     @rest
     Scenario Outline: omit required fields
@@ -61,7 +61,7 @@ Feature: POST host(s) from the REST API
         Then the response code is 422
         And the response contains errors:
             | location  | name  | description                                                                                                                                       |
-            | query     | foo   | Unsupported query: foo. Valid parameters: ['cab', 'cage', 'console_port', 'distribution', 'environment_id', 'name', 'rack', 'state', 'tier_id'].  |
+            | query     | foo   | Unsupported query: foo. Valid parameters: ['cab', 'cage', 'elevation', 'distribution', 'environment_id', 'name', 'rack', 'state', 'tier_id'].  |
         And there is no host with name="host3"
         And there is no host with id=3
 

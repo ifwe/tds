@@ -477,9 +477,9 @@ objects in Python.
             <td>'3.19.0-15-generic'</td>
         </tr>
         <tr>
-            <td>'console_port'</td>
-            <td>String</td>
-            <td>Port for the console to this host</td>
+            <td>'elevation'</td>
+            <td>Integer</td>
+            <td>Elevation within rack</td>
             <td>'some_port'</td>
         </tr>
         <tr>

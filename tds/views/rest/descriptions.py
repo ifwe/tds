@@ -72,7 +72,7 @@ HOST_DESCRIPTIONS = {
     'cage': 'Cage location',
     'cab': 'Cab location',
     'rack': 'Rack location',
-    'console_port': 'Console port used',
+    'elevation': 'Elevation within rack',
     'state': 'Current state',
     'distribution': 'Distribution used',
     'environment_id': 'ID of environment of residence',

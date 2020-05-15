@@ -94,8 +94,7 @@ def host_factory(context, name, env=None, **kwargs):
         ),
         cage_location=len(tagopsdb.Host.all()),
         cab_location=name[:10],
-        rack_location=1,
-        console_port='abcdef',
+        elevation=8,
         environment_id=env_id,
     )
 

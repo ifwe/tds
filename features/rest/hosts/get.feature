@@ -67,7 +67,7 @@ Feature: GET host(s) from the REST API
             | name  |
             | host1 |
             | host2 |
-        And the response list objects do not contain attributes id,cage,environment_id,dc_id,rack,state,console_port,cab,distribution,tier_id,spec_id
+        And the response list objects do not contain attributes id,cage,environment_id,dc_id,rack,state,elevation,cab,distribution,tier_id,spec_id
 
     @rest
     Scenario Outline: get a single host
@@ -95,7 +95,7 @@ Feature: GET host(s) from the REST API
         When I query GET "/hosts/<host>?select=name"
         Then the response code is 200
         And the response is an object with name="<name>"
-        And the response list objects do not contain attributes id,cage,environment_id,dc_id,rack,state,console_port,cab,distribution,tier_id,spec_id
+        And the response list objects do not contain attributes id,cage,environment_id,dc_id,rack,state,elevation,cab,distribution,tier_id,spec_id
 
         Examples:
             | host  | name  |

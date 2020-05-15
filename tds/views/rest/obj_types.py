@@ -72,7 +72,7 @@ HOST_TYPES = {
     'cage': 'integer',
     'cab': 'string',
     'rack': 'integer',
-    'console_port': 'string',
+    'elevation': 'integer',
     'state': 'choice',
     'distribution': 'string',
     'environment_id': 'integer',
