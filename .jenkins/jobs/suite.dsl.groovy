@@ -135,7 +135,7 @@ def matrixRPMs = project.pythonFPMMatrixJob([
 
 def gauntlet = project.gauntlet([
 //    ['Gauntlet', [pylint, pyunit, features]],
-    ['Gauntlet', [pylint, features]],
+//    ['Gauntlet', [pylint, features]],
     ['Build', [matrixRPMs]],
 ])
 
