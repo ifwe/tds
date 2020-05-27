@@ -14,21 +14,16 @@
 
 import com.tagged.build.scm.*
 import com.tagged.build.common.*
-import com.tagged.build.fpm.FPMPython
-import com.tagged.build.fpm.FPMArg
-import com.tagged.build.fpm.FPMCommonArgs
-import com.tagged.build.fpm.FPMPythonArgs
-import com.tagged.build.fpm.FPMPythonScripts
 
-def project = new PythonFPMMatrixProject(
+def project = new Project(
     jobFactory,
     [
         scm: new StashSCM(project: "tds", name: "tds", defaultRef: "origin/master"),
-        hipchatRoom: 'Tagged Deployment System',
-        email: 'devtools@tagged.com',
-        interpreters:['python27'],
+        notifyEmail: 'siteops@tagged.com',
     ]
 )
+
+// TODO: convert these test jobs to docker and centos 7.
 
 // Report pylint warnings and go 'unstable' when over the threshold
 def pylint = project.downstreamJob {
@@ -66,69 +61,71 @@ def features = project.downstreamJob {
     }
 }
 
-def tds_installer = new FPMPython([
-    FPMCommonArgs.verbose,
-    new FPMArg('-s', 'dir'),
-    FPMCommonArgs.type,
-    new FPMArg('-a', 'noarch'),
-    new FPMArg('-C', './etc/installer'),
-    new FPMArg('--prefix','/etc/init.d'),
-    new FPMArg('--name', 'tds-installer'),
-    new FPMArg('--template-scripts'),
-    new FPMArg('--template-value', 'update_init=tds_installer'),
-    new FPMArg('--after-install', 'pkg/rpm/after_install.sh'),
-    new FPMArg('--before-remove', 'pkg/rpm/before_remove.sh'),
-    new FPMArg('--depends',
-    '"$FPM_PYPREFIX_PREFIX$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_ITERATION"',
-    [
-        FPMPythonScripts.fpm_interpreter,
-        FPMPythonScripts.fpm_version_iteration,
-        FPMPythonScripts.fpm_python_tagged_iteration,
-    ]),
-    new FPMArg('--description',
-    "'Daemon to manage installations for deployment application'"),
-    FPMPythonArgs.version,
-    FPMPythonArgs.iteration,
-    new FPMArg('$FPM_EXTRAS'),
-    FPMCommonArgs.current_dir
-])
+daemon_common_build = '''\
+docker_build/run.sh -s dir --depends-same-version python-tds \\
+    --version-py --iteration "$PARENT_BUILD_NUMBER" \\
+    -- \\
+    -a noarch --prefix /etc/init.d --template-scripts \\
+    --after-install pkg/rpm/after_install.sh \\
+    --before-remove pkg/rpm/before_remove.sh \\
+    --no-rpm-auto-add-directories \\
+'''
 
-def tds_update_repo = new FPMPython([
-    FPMCommonArgs.verbose,
-    new FPMArg('-s', 'dir'),
-    FPMCommonArgs.type,
-    new FPMArg('-a', 'noarch'),
-    new FPMArg('-C', './etc/update_repo'),
-    new FPMArg('--prefix','/etc/init.d'),
-    new FPMArg('--name', 'tds-update-yum-repo'),
-    new FPMArg('--template-scripts'),
-    new FPMArg('--template-value', 'update_init=update_deploy_repo'),
-    new FPMArg('--after-install', 'pkg/rpm/after_install.sh'),
-    new FPMArg('--before-remove', 'pkg/rpm/before_remove.sh'),
-    new FPMArg('--depends',
-    '"$FPM_PYPREFIX_PREFIX$FPM_PYPREFIX-tds = $FPM_PYPKG_VERSION-$FPM_ITERATION"',
-    [
-        FPMPythonScripts.fpm_interpreter,
-        FPMPythonScripts.fpm_version_iteration,
-        FPMPythonScripts.fpm_python_tagged_iteration,
-    ]),
-    new FPMArg('--description',
-    "'Daemon to update repository for deployment application'"),
-    FPMPythonArgs.version,
-    FPMPythonArgs.iteration,
-    new FPMArg('$FPM_EXTRAS'),
-    FPMCommonArgs.current_dir
-])
+def tds_installer = project.downstreamJob {
+    name 'tds_installer'
+    label 'docker'
 
-def matrixRPMs = project.pythonFPMMatrixJob([
-    'fpmsteps': [tds_installer, tds_update_repo]
-]) {
-    name 'build'
-    logRotator(-1, 50)
+    configure { j ->
+        resetScmTriggers(j)
+    }
 
     steps {
+        shell daemon_common_build + '''\
+            -C etc/installer \\
+            --template-value update_init=tds_installer \\
+            --name tds-installer \\
+            --description 'Daemon to manage installations for deployment application'
+        '''
         publishers {
-            archiveArtifacts('*.rpm')
+            archiveArtifacts('docker_build/pkgs/*.rpm')
+        }
+    }
+}
+
+def tds_update_repo = project.downstreamJob {
+    name 'tds_update_repo'
+    label 'docker'
+
+    configure { j ->
+        resetScmTriggers(j)
+    }
+
+    steps {
+        shell daemon_common_build + '''\
+            -C etc/update_repo \\
+            --template-value update_init=update_deploy_repo \\
+            --name tds-update-yum-repo \\
+            --description 'Daemon to update repository for deployment application'
+        '''
+        publishers {
+            archiveArtifacts('docker_build/pkgs/*.rpm')
+        }
+    }
+}
+
+
+def python_tds = project.downstreamJob {
+    name 'python_tds'
+    label 'docker'
+
+    configure { j ->
+        resetScmTriggers(j)
+    }
+
+    steps {
+        shell 'docker_build/run.sh -- --iteration "$PARENT_BUILD_NUMBER"'
+        publishers {
+            archiveArtifacts('docker_build/pkgs/*.rpm')
         }
     }
 }
@@ -136,7 +133,7 @@ def matrixRPMs = project.pythonFPMMatrixJob([
 def gauntlet = project.gauntlet([
 //    ['Gauntlet', [pylint, pyunit, features]],
 //    ['Gauntlet', [pylint, features]],
-    ['Build', [matrixRPMs]],
+    ['Build', [tds_installer, tds_update_repo, python_tds]],
 ])
 
 def (tds, branches) = project.branchBuilders(gauntlet.name)

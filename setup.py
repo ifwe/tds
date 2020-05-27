@@ -54,7 +54,7 @@ def discover_packages(base):
             yield '.'.join(os.path.relpath(root).split(os.sep))
 
 
-REQ_BLACKLIST = ['tagopsdb']
+REQ_BLACKLIST = []
 
 if sys.version_info > (2, 7) or sys.version_info > (3, 2):
     REQ_BLACKLIST.extend(['argparse', 'ordereddict'])
@@ -82,7 +82,6 @@ def load_requirements(fname):
 
 REQUIREMENTS = {}
 REQUIREMENTS['install'] = load_requirements('requirements.txt')
-REQUIREMENTS['install'].append('tagopsdb>=0.9.22')
 REQUIREMENTS['tests'] = load_requirements('requirements-dev.txt')
 
 def load_github_dependency_links(fname):
