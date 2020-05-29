@@ -31,6 +31,7 @@ class TestGraphiteNotifier(unittest.TestCase):
             self.graphite_config
         )
 
+        raise NotImplementedError("needs to be converted to 'graphitesend'")
         self.graphite = patch('graphiteudp.GraphiteUDPClient').start()
 
     def tearDown(self):

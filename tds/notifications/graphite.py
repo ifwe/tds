@@ -15,7 +15,7 @@
 '''
 Notifier and helpers for sending notifications via graphite
 '''
-import graphiteudp
+import graphitesend
 
 from .base import Notifications, Notifier
 
@@ -39,9 +39,9 @@ class GraphiteNotifier(Notifier):
         if event not in self.active_events:
             return
 
-        graphite = graphiteudp.GraphiteUDPClient(
-            host=self.config['host'],
-            port=self.config['port'],
+        graphite = graphitesend.init(
+            graphite_server=self.config['host'],
+            graphite_port=self.config['port'],
             prefix=self.config['prefix']
         )
 
