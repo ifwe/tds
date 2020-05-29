@@ -136,8 +136,6 @@ def gauntlet = project.gauntlet([
     ['Build', [tds_installer, tds_update_repo, python_tds]],
 ])
 
-def (tds, branches) = project.branchBuilders(gauntlet.name)
-
 // Override default 30m timeout
 jobFactory.referencedJobs.each {
     it.with() {
