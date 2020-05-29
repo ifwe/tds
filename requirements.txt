@@ -1,19 +1,18 @@
-PyYAML==3.10
+PyYAML>=3.10
 argcomplete>=0.3.7
 argparse==1.2.1
 graphiteudp==0.0.2
-jenkinsapi==0.2.18
-kazoo==1.3.1
-lxml>=3.4.0
+jenkinsapi>=0.2.18
+kazoo>=1.3.1
+lxml>=3.2.1
 ordereddict==1.1
 progressbar==2.3
 psutil>=0.6.1
 pytz>=2012j
-requests==1.2.3
-socketcache==0.1.0
-tabulate==0.7.2
+requests>=1.2.3
+tabulate>=0.7.2
 cornice==1.1.0
-python-ldap==2.4.20
+python-ldap>=2.4.15
 
 # The following will not work with old python due to lack of PEP 508 support in
 # setuptools. Oddly, setup.py somehow parses them even when commented, though.
