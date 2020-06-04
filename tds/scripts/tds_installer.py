@@ -31,7 +31,6 @@ import traceback
 from datetime import datetime, timedelta
 
 from kazoo.client import KazooClient, KazooState
-from simpledaemon import Daemon
 
 import tagopsdb
 import tds.apps
@@ -42,7 +41,7 @@ import tds.utils.processes
 log = logging.getLogger('tds_installer')
 
 
-class TDSInstallerDaemon(Daemon):
+class TDSInstallerDaemon:
     """Daemon to manage updating the deploy repository with new packages."""
 
     should_stop = False
@@ -56,7 +55,6 @@ class TDSInstallerDaemon(Daemon):
             else timedelta(minutes=30)
         self.app = app
         self.heartbeat_time = datetime.now()
-        super(TDSInstallerDaemon, self).__init__(*args, **kwargs)
 
     def sigterm_handler(self, signum, frame):
         """
@@ -211,7 +209,6 @@ class TDSInstallerDaemon(Daemon):
 
 def daemon_main():
     """Prepare logging then initialize daemon."""
-    pid = '/var/run/tds_installer.pid'
     logfile = '/var/log/tds_installer.log'
 
     # 'logger' set at top of program
@@ -229,35 +226,11 @@ def daemon_main():
         user_level='admin',
     ))
 
-    daemon = TDSInstallerDaemon(
-        app,
-        pid,
-        stdout='/tmp/tds_installer.out',
-        stderr='/tmp/tds_installer.err'
-    )
+    daemon = TDSInstallerDaemon(app)
 
     signal.signal(signal.SIGTERM, daemon.sigterm_handler)
 
-    if len(sys.argv) == 2:
-        cmd, arg = sys.argv
-
-        if arg == 'start':
-            log.info('Starting %s daemon', cmd)
-            daemon.start()
-        elif arg == 'stop':
-            log.info('Stopping %s daemon', cmd)
-            daemon.stop()
-        elif arg == 'restart':
-            log.info('Restarting %s daemon', cmd)
-            daemon.restart()
-        else:
-            print 'Invalid argument'
-            sys.exit(2)
-
-        sys.exit(0)
-    else:
-        print 'Usage: %s {start|stop|restart}' % sys.argv[0]
-        sys.exit(0)
+    daemon.run()
 
 if __name__ == '__main__':
     daemon_main()

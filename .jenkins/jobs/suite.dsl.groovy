@@ -65,9 +65,10 @@ daemon_common_build = '''\
 docker_build/run.sh -s dir --depends-same-version python-tds \\
     --version-py --iteration "$PARENT_BUILD_NUMBER" \\
     -- \\
-    -a noarch --prefix /etc/init.d --template-scripts \\
-    --after-install pkg/rpm/after_install.sh \\
-    --before-remove pkg/rpm/before_remove.sh \\
+    -a noarch --template-scripts \\
+    --after-install pkg/rpm/after_install.sh.erb \\
+    --before-remove pkg/rpm/before_remove.sh.erb \\
+    --after-remove pkg/rpm/after_remove.sh.erb \\
     --no-rpm-auto-add-directories \\
 '''
 
@@ -81,8 +82,8 @@ def tds_installer = project.downstreamJob {
 
     steps {
         shell daemon_common_build + '''\
-            -C etc/installer \\
-            --template-value update_init=tds_installer \\
+            --prefix /lib/systemd/system -C systemd/tds_installer \\
+            --template-value unit=tds_installer.service \\
             --name tds-installer \\
             --description 'Daemon to manage installations for deployment application'
         '''
@@ -102,8 +103,8 @@ def tds_update_repo = project.downstreamJob {
 
     steps {
         shell daemon_common_build + '''\
-            -C etc/update_repo \\
-            --template-value update_init=update_deploy_repo \\
+            --prefix /etc/init.d -C etc/update_repo \\
+            --template-value unit=update_deploy_repo.service \\
             --name tds-update-yum-repo \\
             --description 'Daemon to update repository for deployment application'
         '''

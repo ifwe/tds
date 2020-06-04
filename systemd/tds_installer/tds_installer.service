@@ -1,0 +1,20 @@
+[Unit]
+Description=Daemon for managing installations for TDS
+After=salt-minion.service
+Wants=salt-minion.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/tds_installer
+LimitNOFILE=1024
+# This will send a TERM to the main process, which then has the opportunity to
+# kill its children, clean up, and exit before the limit of TimeoutStopSec.
+KillMode=mixed
+# This should be large in order to avoid killing an active deployment.
+PrivateTmp=true
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=3min
+
+[Install]
+WantedBy=multi-user.target

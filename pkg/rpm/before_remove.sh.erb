@@ -1,0 +1,4 @@
+if [ $1 -eq 0 ] ; then
+    /bin/systemctl --no-reload disable <%= unit %> > /dev/null 2>&1 || :
+    /bin/systemctl stop <%= unit %> > /dev/null 2>&1 || :
+fi
