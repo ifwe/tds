@@ -73,6 +73,9 @@ class TDSInstallerDaemon:
         to process queued deployments if single system or
         zookeeper leader in multi-system configuration.
         """
+        self.exit_timeout = timedelta(
+            seconds=self.app.config.get('exit_timeout', 160)
+        )
         zookeeper_config = self.app.config.get('zookeeper', None)
 
         if zookeeper_config is not None:
@@ -83,25 +86,11 @@ class TDSInstallerDaemon:
 
         while not self.should_stop:
             self.zk_run(self.handle_incoming_deployments)
-            self.clean_up_processes()
+            self.clean_up_processes(wait=self.should_stop)
             time.sleep(0.1)     # Increase probability of other daemons running
 
-        self.halt_all_processes()
+        self.clean_up_processes(wait=True)
         log.info("Stopped.")
-
-    def halt_all_processes(self):
-        to_delete = list()
-        for dep_id in self.ongoing_processes:
-            proc = self.ongoing_processes[dep_id][0]
-            proc.terminate()
-            dep = self.app.get_deployment(dep_id=dep_id)
-            self.app._refresh(dep)
-            if dep.status not in ('complete', 'failed', 'stopped'):
-                dep.status = 'failed'
-            self.app.commit_session()
-            to_delete.append(dep_id)
-        for halted_dep_id in to_delete:
-            del self.ongoing_processes[halted_dep_id]
 
     def handle_incoming_deployments(self):
         """Look for files in 'incoming' directory and handle them."""
@@ -140,31 +129,52 @@ class TDSInstallerDaemon:
                 deployment_process, datetime.now()
             )
 
-    def clean_up_processes(self):
+    def clean_up_processes(self, wait=False):
         """
         Join processes that have finished and terminate stalled processes.
+
+        If wait is true, then loop until the configured timeout.
         """
+        start = datetime.now()
+
         to_delete = list()
-        # Remove entries for all done subprocesses
-        for dep_id in self.ongoing_processes.keys():
-            dep = self.app.get_deployment(dep_id=dep_id)
-            self.app._refresh(dep)
-            if dep.status in ('complete', 'failed', 'stopped'):
-                to_delete.append(dep_id)
-        for done_dep_id in to_delete:
-            self.ongoing_processes[dep_id][0].terminate()
-            del self.ongoing_processes[done_dep_id]
+
+        # No do/while in python. :(
+        while True:
+            # Remove entries for all done subprocesses
+            for dep_id in self.ongoing_processes.keys():
+                dep = self.app.get_deployment(dep_id=dep_id)
+                self.app._refresh(dep)
+                if dep.status in ('complete', 'failed', 'stopped'):
+                    to_delete.append(dep_id)
+            for done_dep_id in to_delete:
+                self.ongoing_processes[dep_id][0].terminate()
+                del self.ongoing_processes[done_dep_id]
+
+            time_left = start + self.exit_timeout - datetime.now()
+            seconds_left = time_left.total_seconds()
+            if not wait or not self.ongoing_processes or seconds_left <= 0:
+                break
+
+            log.debug('Waiting %.1fs for children to finish.' % (seconds_left))
+            # Old python does not provide timeouts for Popen methods.
+            time.sleep(2)
 
         if to_delete:
             log.debug('Cleaned up deployments that finished.')
 
         # Halt all deployments taking too long.
-        to_delete = self.get_stalled_deployments()
+        if wait:
+            to_delete = self.ongoing_processes.keys()
+        else:
+            to_delete = self.get_stalled_deployments()
+
         for stalled_dep_id in to_delete:
             self.ongoing_processes[stalled_dep_id][0].terminate()
             dep = self.app.get_deployment(dep_id=stalled_dep_id)
             self.app._refresh(dep)
-            dep.status = 'failed'
+            if dep.status not in ('complete', 'failed', 'stopped'):
+                dep.status = 'failed'
             self.app.commit_session()
             del self.ongoing_processes[stalled_dep_id]
 
