@@ -155,14 +155,21 @@ class TDSInstallerDaemon:
             self.ongoing_processes[dep_id][0].terminate()
             del self.ongoing_processes[done_dep_id]
 
+        if to_delete:
+            log.debug('Cleaned up deployments that finished.')
+
         # Halt all deployments taking too long.
-        for stalled_dep_id in self.get_stalled_deployments():
+        to_delete = self.get_stalled_deployments()
+        for stalled_dep_id in to_delete:
             self.ongoing_processes[stalled_dep_id][0].terminate()
             dep = self.app.get_deployment(dep_id=stalled_dep_id)
             self.app._refresh(dep)
             dep.status = 'failed'
             self.app.commit_session()
             del self.ongoing_processes[stalled_dep_id]
+
+        if to_delete:
+            log.debug('Cleaned up deployments that stalled.')
 
     def get_stalled_deployments(self):
         """
@@ -192,6 +199,7 @@ class TDSInstallerDaemon:
                 log.info("Connecting to ZooKeeper...")
         self.zoo.add_listener(state_listener)
         self.zoo.start()
+        log.info("Connected to ZooKeeper.")
         return self.zoo.Election('/tdsinstaller', hostname)
 
     def run(self):

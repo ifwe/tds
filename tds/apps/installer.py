@@ -145,6 +145,15 @@ class Installer(TDSProgramBase):
 
         host_deployment.status = 'inprogress'
         tagopsdb.Session.commit()
+
+        log.info(
+            "Starting deployment of %s version %s to host %s..." % (
+                host_deployment.package.name,
+                host_deployment.package.version,
+                host_deployment.host.name,
+            )
+        )
+
         success, host_result = self.deploy_strategy.deploy_to_host(
             host_deployment.host.name,
             host_deployment.package.name,
@@ -160,6 +169,15 @@ class Installer(TDSProgramBase):
 
         host_deployment.deploy_result = host_result
         tagopsdb.Session.commit()
+
+        log.info(
+            "Finished deployment of %s version %s to host %s, status: %s" % (
+                host_deployment.package.name,
+                host_deployment.package.version,
+                host_deployment.host.name,
+                host_deployment.status,
+            )
+        )
 
         return host_deployment.status
 
@@ -201,6 +219,14 @@ class Installer(TDSProgramBase):
         elif not canceled:
             tier_deployment.status = 'complete'
         self._set_duration(tier_deployment, now)
+
+        log.info(
+            "Finished deployment of %s to tier %s, status: %s" % (
+                tier_deployment.package.name,
+                tier_deployment.target.name,
+                tier_deployment.status,
+            )
+        )
 
         tagopsdb.Session.commit()
         return done_host_dep_ids
