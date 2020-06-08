@@ -21,6 +21,7 @@ from tds.apps.installer.
 """
 
 import logging
+import os
 import os.path
 import socket
 import signal
@@ -29,7 +30,6 @@ import time
 import traceback
 
 from datetime import datetime, timedelta
-
 from kazoo.client import KazooClient, KazooState
 
 import tagopsdb
@@ -75,6 +75,9 @@ class TDSInstallerDaemon:
         """
         self.exit_timeout = timedelta(
             seconds=self.app.config.get('exit_timeout', 160)
+        )
+        self.deploy_exit_timeout = timedelta(
+            seconds=self.app.config.get('deploy_exit_timeout', 5)
         )
         zookeeper_config = self.app.config.get('zookeeper', None)
 
@@ -131,65 +134,96 @@ class TDSInstallerDaemon:
 
     def clean_up_processes(self, wait=False):
         """
-        Join processes that have finished and terminate stalled processes.
+        Check processes that have finished, terminate stalled processes, and
+        reap all such processes.
 
-        If wait is true, then loop until the configured timeout.
+        If wait is true, then do not exit until done (or timed out).
         """
-        start = datetime.now()
-
-        to_delete = list()
-
-        # No do/while in python. :(
+        cleanup_start = datetime.now()
+        terminated = {}
+        killed = {}
         while True:
-            # Remove entries for all done subprocesses
+            now = datetime.now()
             for dep_id in self.ongoing_processes.keys():
-                dep = self.app.get_deployment(dep_id=dep_id)
-                self.app._refresh(dep)
-                if dep.status in ('complete', 'failed', 'stopped'):
-                    to_delete.append(dep_id)
-            for done_dep_id in to_delete:
-                self.ongoing_processes[dep_id][0].terminate()
-                del self.ongoing_processes[done_dep_id]
+                (proc, process_start) = self.ongoing_processes[dep_id];
+                term_time = process_start + self.threshold
+                if wait:
+                    # If we're waiting for all processes here, then we probably
+                    # need to kill this process earlier than its normal timeout.
+                    term_time = min(
+                        term_time,
+                        # Give a 2-second fudge factor to allow reaping killed
+                        # processes.
+                        cleanup_start + self.exit_timeout - \
+                            self.deploy_exit_timeout - timedelta(seconds=2)
+                    )
 
-            time_left = start + self.exit_timeout - datetime.now()
-            seconds_left = time_left.total_seconds()
-            if not wait or not self.ongoing_processes or seconds_left <= 0:
+                # 1. Kill terminated processes that should have exited by now.
+                if proc in terminated and proc not in killed:
+                    kill_time = terminated[proc] + self.deploy_exit_timeout
+                    if now >= kill_time:
+                        log.warning('Killing deployment ID %d.' % (dep_id))
+                        proc.kill()
+                        killed[proc] = now
+
+                # 2. Terminate processes that have timed out.
+                if now >= term_time and proc not in terminated:
+                    log.warning('Terminating deployment ID %d.' % (dep_id))
+                    proc.terminate()
+                    terminated[proc] = now
+
+                # 3. Check for processes that have exited and verify status.
+                if self.waitproc(dep_id=dep_id, proc=proc):
+                    dep = self.app.get_deployment(dep_id=dep_id)
+                    self.app._refresh(dep)
+                    log.debug(
+                        'Deployment ID %d finished, status: %s.' % \
+                            (dep_id, dep.status)
+                    )
+
+                    if dep.status not in ('complete', 'failed', 'stopped'):
+                        # If it finished with a non-finished status, then
+                        # something is wrong.
+                        log.debug(
+                            'Deployment ID %d forcing status to "failed".' % \
+                                (dep_id)
+                        )
+                        # Note: this only sets the top-level deployments table
+                        # entry to 'failed'; if the child process crashes or is
+                        # killed, then the host_deployments and app_deployments
+                        # entries will remain 'inprogress'. This is probably a
+                        # deficiency here, but on the other hand, code
+                        # elsewhere needs to be able to handle that situation
+                        # anyway, should e.g. the entire host crash.
+                        dep.status = 'failed'
+                        self.app.commit_session()
+
+                    del self.ongoing_processes[dep_id]
+
+                    if proc in terminated:
+                        del(terminated[proc])
+
+                    if proc in killed:
+                        del(killed[proc])
+
+            # If we signalled any processes, then we generally want to keep
+            # looping in order to not lose track of them. Only give up if we
+            # are waiting on processes prior to exit anyway.
+            busy = terminated or killed
+            if wait:
+                busy = busy or self.ongoing_processes
+
+            give_up_time = cleanup_start + self.exit_timeout
+            give_up = wait and now >= give_up_time
+
+            if not busy or give_up:
                 break
 
+            time_left = give_up_time - now
+            seconds_left = time_left.total_seconds()
             log.debug('Waiting %.1fs for children to finish.' % (seconds_left))
             # Old python does not provide timeouts for Popen methods.
-            time.sleep(2)
-
-        if to_delete:
-            log.debug('Cleaned up deployments that finished.')
-
-        # Halt all deployments taking too long.
-        if wait:
-            to_delete = self.ongoing_processes.keys()
-        else:
-            to_delete = self.get_stalled_deployments()
-
-        for stalled_dep_id in to_delete:
-            self.ongoing_processes[stalled_dep_id][0].terminate()
-            dep = self.app.get_deployment(dep_id=stalled_dep_id)
-            self.app._refresh(dep)
-            if dep.status not in ('complete', 'failed', 'stopped'):
-                dep.status = 'failed'
-            self.app.commit_session()
-            del self.ongoing_processes[stalled_dep_id]
-
-        if to_delete:
-            log.debug('Cleaned up deployments that stalled.')
-
-    def get_stalled_deployments(self):
-        """
-        Return the list of ongoing deployments that were started more than
-        self.threshold ago.
-        """
-        return [
-            dep_id for dep_id in self.ongoing_processes if datetime.now() >
-            self.ongoing_processes[dep_id][1] + self.threshold
-        ]
+            time.sleep(1)
 
     def create_zoo(self, zoo_config):
         """
@@ -224,6 +258,48 @@ class TDSInstallerDaemon:
             log.error(msg)
             sys.exit(1)
 
+    def waitproc(self, dep_id, proc):
+        """
+        Do a nonblocking waitpid() on the PID of the supplied process. Check
+        exit status and log information. Return True if the process has exited
+        and False if not.
+        """
+        (pid, status) = os.waitpid(proc.pid, os.WNOHANG)
+        if pid == proc.pid:
+            # child exited
+            # check exit status for logging
+            log.debug('Deployment ID %d raw exit status: 0x%04X' % (dep_id, status))
+            if os.WIFEXITED(status):
+                exit_status = os.WEXITSTATUS(status)
+                if exit_status == 0:
+                    log.debug('Deployment ID %d exited successfully.' % (dep_id))
+                else:
+                    log.warning(
+                        'Deployment ID %d exited with error status %d' % \
+                            (dep_id, exit_status)
+                    )
+            elif os.WIFSIGNALED(status):
+                log.warning(
+                    'Deployment ID %d exited from signal %d' % \
+                        (dep_id, os.WTERMSIG(status))
+                )
+            else:
+                log.warning(
+                    'Deployment ID %d exited for unknown reason' % (dep_id)
+                )
+
+            return True
+
+        elif pid == 0:
+            return False
+
+        # should not happen
+        log.error(
+            'Deployment ID: %d unexpected waitpid; expected %d, got %d.' % \
+                (dep_id, proc.pid, pid)
+            )
+        # don't trust further execution
+        sys.exit(2)
 
 def daemon_main():
     """Prepare logging then initialize daemon."""
