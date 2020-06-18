@@ -25,6 +25,7 @@ import re
 
 import sqlalchemy.orm.query
 import tds.exceptions
+from sqlalchemy.orm.exc import NoResultFound
 from . import utils
 from .json_validators import JSONValidatedView
 
@@ -46,13 +47,17 @@ class ValidatedView(JSONValidatedView):
         except:
             query = self.session.query(model.delegate)
             has_delegate = True
+
         def get(query, *args, **kwargs):
-            if not has_delegate:
-                return query.filter_by(*args, **kwargs).one_or_none()
-            delegate = query.filter_by(*args, **kwargs).one_or_none()
-            if delegate is not None:
-                return model(delegate=delegate)
-            return delegate
+            try:
+                obj = query.filter_by(*args, **kwargs).one()
+            except NoResultFound:
+                return None
+            if has_delegate:
+                return model(delegate=obj)
+            else:
+                return obj
+
         query.get = types.MethodType(get, query, sqlalchemy.orm.query.Query)
         def find(query, *args, **kwargs):
             if not has_delegate:
