@@ -600,7 +600,6 @@ def setup_temp_db(context):
             host=db_info['db']['hostname'],
             database=db_info['db']['db_name'],
         ),
-        pool_recycle=3600,
         create=True,
     )
 

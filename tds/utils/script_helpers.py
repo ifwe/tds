@@ -69,7 +69,6 @@ class TagopsdbDeploymentProvider(object):
                 host=dbconf['hostname'],
                 database=dbconf['db_name'],
             ),
-            pool_recycle=3600
         )
 
     @staticmethod

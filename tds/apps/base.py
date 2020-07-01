@@ -119,5 +119,4 @@ class TDSProgramBase(object):
                 port=self.dbconfig['db.port'],
                 database=self.dbconfig['db.db_name'],
             ),
-            pool_recycle=3600
         )
