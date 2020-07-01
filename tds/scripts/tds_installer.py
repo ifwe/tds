@@ -239,11 +239,13 @@ class TDSInstallerDaemon:
                 self.zk_run = self.election.run
             elif state == KazooState.LOST:
                 log.warning("ZooKeeper connection lost.")
+            elif state == KazooState.CONNECTED:
+                log.info("Connected to ZooKeeper.")
             else:
-                log.info("Connecting to ZooKeeper...")
+                log.error("Unrecognized ZooKeeper state: %s" % (state))
+
         self.zoo.add_listener(state_listener)
         self.zoo.start()
-        log.info("Connected to ZooKeeper.")
         return self.zoo.Election('/tdsinstaller', hostname)
 
     def run(self):
