@@ -243,10 +243,14 @@ class TDSInstallerDaemon:
             # callback
             interrupt=self.should_stop,
         )
+        kzlog = log.getChild('kazoo')
+        # debug is too verbose
+        kzlog.setLevel(logging.INFO)
         self.zoo = KazooClient(
             hosts=','.join(zoo_config),
             connection_retry=retry,
             command_retry=retry,
+            logger=kzlog,
         )
         def state_listener(state):
             if state == KazooState.SUSPENDED:
