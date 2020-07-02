@@ -31,6 +31,7 @@ import traceback
 
 from datetime import datetime, timedelta
 from kazoo.client import KazooClient, KazooState
+from kazoo.exceptions import ConnectionClosedError
 from kazoo.retry import KazooRetry
 
 import tagopsdb
@@ -65,11 +66,11 @@ class TDSInstallerDaemon:
         Shut down the daemon.
         """
         log.fatal('Received SIGTERM. Beginning shutdown...')
+        self._should_stop = True
         if self.election is not None:
             self.election.cancel()
             self.election = None
-
-        self._should_stop = True
+            self.zoo.stop()
 
     def main(self):
         """
@@ -92,7 +93,14 @@ class TDSInstallerDaemon:
             self.zk_run = lambda f, *a, **k: f(*a, **k)
 
         while not self.should_stop():
-            self.zk_run(self.handle_incoming_deployments)
+            try:
+                self.zk_run(self.handle_incoming_deployments)
+            except ConnectionClosedError, TimeoutError:
+                if not self.should_stop():
+                    # Ignore errors raised by kazoo when it is having
+                    # connection trouble; we're shutting down anyway.
+                    raise
+
             self.clean_up_processes(wait=self.should_stop())
             time.sleep(0.1)     # Increase probability of other daemons running
 
@@ -235,12 +243,18 @@ class TDSInstallerDaemon:
         """
         hostname = socket.gethostname()
 
-        # Set up our own KazooRetry class in order to override default
+        # Set up our own KazooRetry classes in order to override default
         # parameters.
-        retry = KazooRetry(
+        command_retry = KazooRetry(
             # Old default is 3600; modern default is 60; we should be ok at 10.
             max_delay=10,
             # callback
+            interrupt=self.should_stop,
+        )
+        connection_retry = KazooRetry(
+            max_delay=10,
+            # Retry forever (unless interrupted).
+            max_tries=-1,
             interrupt=self.should_stop,
         )
         kzlog = log.getChild('kazoo')
@@ -248,21 +262,24 @@ class TDSInstallerDaemon:
         kzlog.setLevel(logging.INFO)
         self.zoo = KazooClient(
             hosts=','.join(zoo_config),
-            connection_retry=retry,
-            command_retry=retry,
+            # This sets the timeout on connections (and reconnections).
+            timeout=3,
+            connection_retry=connection_retry,
+            command_retry=command_retry,
             logger=kzlog,
         )
         def state_listener(state):
-            if state == KazooState.SUSPENDED:
-                log.warning("ZooKeeper connection suspended. Reconnecting...")
-                self.election = self.create_zoo(zoo_config)
-                self.zk_run = self.election.run
-            elif state == KazooState.LOST:
-                log.warning("ZooKeeper connection lost.")
-            elif state == KazooState.CONNECTED:
-                log.info("Connected to ZooKeeper.")
-            else:
-                log.error("Unrecognized ZooKeeper state: %s" % (state))
+            if not self.should_stop():
+                # Trust in KazooClient to reconnect as needed, but log messages
+                # when changing state.
+                if state == KazooState.SUSPENDED:
+                    log.warning("ZooKeeper connection suspended.")
+                elif state == KazooState.LOST:
+                    log.warning("ZooKeeper connection lost.")
+                elif state == KazooState.CONNECTED:
+                    log.info("Connected to ZooKeeper.")
+                else:
+                    log.error("Unrecognized ZooKeeper state: %s" % (state))
 
         self.zoo.add_listener(state_listener)
         self.zoo.start()
