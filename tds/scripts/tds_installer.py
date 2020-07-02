@@ -31,6 +31,7 @@ import traceback
 
 from datetime import datetime, timedelta
 from kazoo.client import KazooClient, KazooState
+from kazoo.retry import KazooRetry
 
 import tagopsdb
 import tds.apps
@@ -44,10 +45,10 @@ log = logging.getLogger('tds_installer')
 class TDSInstallerDaemon:
     """Daemon to manage updating the deploy repository with new packages."""
 
-    should_stop = False
     election = None
 
     def __init__(self, app, *args, **kwargs):
+        self._should_stop = False
         # ongoing_processes is a dict with deployment ID keys and values:
         # (subprocess_popen_instance, start_time)
         self.ongoing_processes = dict()
@@ -55,6 +56,9 @@ class TDSInstallerDaemon:
             else timedelta(minutes=30)
         self.app = app
         self.heartbeat_time = datetime.now()
+
+    def should_stop(self):
+        return self._should_stop
 
     def sigterm_handler(self, signum, frame):
         """
@@ -65,7 +69,7 @@ class TDSInstallerDaemon:
             self.election.cancel()
             self.election = None
 
-        self.should_stop = True
+        self._should_stop = True
 
     def main(self):
         """
@@ -87,9 +91,9 @@ class TDSInstallerDaemon:
         else:
             self.zk_run = lambda f, *a, **k: f(*a, **k)
 
-        while not self.should_stop:
+        while not self.should_stop():
             self.zk_run(self.handle_incoming_deployments)
-            self.clean_up_processes(wait=self.should_stop)
+            self.clean_up_processes(wait=self.should_stop())
             time.sleep(0.1)     # Increase probability of other daemons running
 
         self.clean_up_processes(wait=True)
@@ -231,7 +235,19 @@ class TDSInstallerDaemon:
         """
         hostname = socket.gethostname()
 
-        self.zoo = KazooClient(','.join(zoo_config))
+        # Set up our own KazooRetry class in order to override default
+        # parameters.
+        retry = KazooRetry(
+            # Old default is 3600; modern default is 60; we should be ok at 10.
+            max_delay=10,
+            # callback
+            interrupt=self.should_stop,
+        )
+        self.zoo = KazooClient(
+            hosts=','.join(zoo_config),
+            connection_retry=retry,
+            command_retry=retry,
+        )
         def state_listener(state):
             if state == KazooState.SUSPENDED:
                 log.warning("ZooKeeper connection suspended. Reconnecting...")
