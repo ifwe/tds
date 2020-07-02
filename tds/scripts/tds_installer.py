@@ -31,7 +31,7 @@ import traceback
 
 from datetime import datetime, timedelta
 from kazoo.client import KazooClient, KazooState
-from kazoo.exceptions import ConnectionClosedError
+from kazoo.exceptions import CancelledError, ConnectionClosedError, LockTimeout
 from kazoo.retry import KazooRetry
 
 import tagopsdb
@@ -46,8 +46,6 @@ log = logging.getLogger('tds_installer')
 class TDSInstallerDaemon:
     """Daemon to manage updating the deploy repository with new packages."""
 
-    election = None
-
     def __init__(self, app, *args, **kwargs):
         self._should_stop = False
         # ongoing_processes is a dict with deployment ID keys and values:
@@ -57,6 +55,8 @@ class TDSInstallerDaemon:
             else timedelta(minutes=30)
         self.app = app
         self.heartbeat_time = datetime.now()
+        self.has_lock = False
+        self.lock = None
 
     def should_stop(self):
         return self._should_stop
@@ -67,9 +67,10 @@ class TDSInstallerDaemon:
         """
         log.fatal('Received SIGTERM. Beginning shutdown...')
         self._should_stop = True
-        if self.election is not None:
-            self.election.cancel()
-            self.election = None
+        if self.lock is not None:
+            self.release_lock()
+
+        if self.zoo is not None:
             self.zoo.stop()
 
     def main(self):
@@ -87,8 +88,8 @@ class TDSInstallerDaemon:
         zookeeper_config = self.app.config.get('zookeeper', None)
 
         if zookeeper_config is not None:
-            self.election = self.create_zoo(zookeeper_config)
-            self.zk_run = self.election.run
+            self.lock = self.create_zoo(zookeeper_config)
+            self.zk_run = self.lock_run
         else:
             self.zk_run = lambda f, *a, **k: f(*a, **k)
 
@@ -271,20 +272,76 @@ class TDSInstallerDaemon:
         )
         def state_listener(state):
             if not self.should_stop():
-                # Trust in KazooClient to reconnect as needed, but log messages
-                # when changing state.
-                if state == KazooState.SUSPENDED:
-                    log.warning("ZooKeeper connection suspended.")
-                elif state == KazooState.LOST:
-                    log.warning("ZooKeeper connection lost.")
-                elif state == KazooState.CONNECTED:
+                if state == KazooState.CONNECTED:
                     log.info("Connected to ZooKeeper.")
                 else:
-                    log.error("Unrecognized ZooKeeper state: %s" % (state))
+                    if state == KazooState.SUSPENDED:
+                        log.warning("ZooKeeper connection suspended.")
+                    elif state == KazooState.LOST:
+                        log.warning("ZooKeeper connection lost.")
+                    else:
+                        log.error("Unrecognized ZooKeeper state: %s" % (state))
+
+                    # Trust in KazooClient to reconnect as needed, but release
+                    # the lock, since it is probably invalid.
+                    self.release_lock()
 
         self.zoo.add_listener(state_listener)
         self.zoo.start()
-        return self.zoo.Election('/tdsinstaller', hostname)
+        return self.zoo.Lock('/tdsinstaller', hostname)
+
+    def lock_run(self, func, *args, **kwargs):
+        """
+        Run the specified function, with the specified arguments, under a
+        zookeeper lock. This will block until the lock is acquired or
+        shutdown is initiated. Once done, the lock is not released, such that
+        it may be re-used by subsequent runs. Lock release is handled
+        elsewhere:
+        1. During shutdown.
+        2. When there is zookeeper connection trouble, which likely just
+           updates client state, since zookeeper will automatically remove the
+           lock when the client disconnects.
+        """
+        while not self.has_lock and not self.should_stop():
+            try:
+                # If no timeout is specified here, then kazoo will block on a
+                # threading wait, which blocks the signal handler (at least on
+                # python < 3.3).
+                # If any timeout is specified, then kazoo will run an internal
+                # check-sleep loop which does not block the signal handler. Do
+                # not specify too low a timeout or else there will be a high
+                # turnover of ephemeral zookeeper nodes, leading to overflow of
+                # the (apparently) signed 32-bit int counter on the parent node.
+                # A timeout of 60 should give us a zookeer node lifetime of
+                # 4085 years.
+                self.has_lock = self.lock.acquire(timeout=60)
+            except CancelledError:
+                log.debug("ZooKeeper lock acquisition cancelled")
+            except LockTimeout:
+                pass
+
+            if self.has_lock:
+                log.debug("Acquired ZooKeeper lock")
+
+        # Once execution reaches this point, then we either got a lock, so run
+        # the supplied function, or we are in shutdown (see loop conditions
+        # above).
+        if self.has_lock:
+            func(*args, **kwargs)
+        elif self.should_stop():
+            log.debug("Aborted acquiring ZooKeeper lock due to shutdown")
+
+    def release_lock(self):
+        """
+        Release any acquired locks and cancel any pending ones.
+        """
+        if self.has_lock:
+            self.lock.release()
+            self.has_lock = False
+
+        if self.lock is not None:
+            # This is idempotent; no need to set self.lock to None.
+            self.lock.cancel()
 
     def run(self):
         """A wrapper for the main process to ensure any unhandled
