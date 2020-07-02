@@ -231,7 +231,7 @@ class TDSInstallerDaemon:
         """
         hostname = socket.gethostname()
 
-        self.zoo = KazooClient('hosts=%s' % ','.join(zoo_config))
+        self.zoo = KazooClient(','.join(zoo_config))
         def state_listener(state):
             if state == KazooState.SUSPENDED:
                 log.warning("ZooKeeper connection suspended. Reconnecting...")
