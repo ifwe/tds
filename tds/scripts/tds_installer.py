@@ -105,6 +105,7 @@ class TDSInstallerDaemon:
             time.sleep(0.1)     # Increase probability of other daemons running
 
         self.clean_up_processes(wait=True)
+        self.zoo.close();
         log.info("Stopped.")
 
     def handle_incoming_deployments(self):
