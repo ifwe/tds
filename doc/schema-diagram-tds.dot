@@ -299,11 +299,7 @@ digraph G {
         ></TD><TD ALIGN="LEFT"
         ><FONT FACE="Bitstream Vera Sans">VARCHAR</FONT
         ></TD></TR> <TR><TD ALIGN="LEFT" BORDER="0"
-        ><FONT FACE="Bitstream Vera Sans">rackLocation</FONT
-        ></TD><TD ALIGN="LEFT"
-        ><FONT FACE="Bitstream Vera Sans">INTEGER</FONT
-        ></TD></TR> <TR><TD ALIGN="LEFT" BORDER="0"
-        ><FONT FACE="Bitstream Vera Sans">consolePort</FONT
+        ><FONT FACE="Bitstream Vera Sans">elevation</FONT
         ></TD><TD ALIGN="LEFT"
         ><FONT FACE="Bitstream Vera Sans">VARCHAR</FONT
         ></TD></TR> <TR><TD ALIGN="LEFT" BORDER="0"
