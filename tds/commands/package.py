@@ -182,7 +182,7 @@ class PackageController(BaseController):
             log.info(
                 "WARNING: Fingerprinting is not enabled, your RPM "
                 "will not be validated first.  Please see:\n"
-                "https://wiki.ifwe.co/display/siteops/Enabling+"
+                "https://confluence.meetmecorp.com/display/SO/Enabling+"
                 "fingerprinting+for+archived+files+in+Jenkins\n"
                 "for information on how to enable it. Continuing..."
             )
