@@ -25,7 +25,7 @@ email <tds@ifwe.co>
 To install all necessary dependencies and TDS:
 
 ```bash
-$ ./setup.py
+$ ./setup.py install
 ```
 
 ## Dependencies
