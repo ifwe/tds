@@ -54,10 +54,14 @@ class TDS(TDSProgramBase):
         self.params['user'] = pwd.getpwuid(os.getuid()).pw_name
         log.log(5, 'User is: %s', self.params['user'])
 
-        self.params['user_level'] = self.authconfig.get_access_level(
+        user_level = self.authconfig.get_access_level(
             LocalActor()
         )
-        log.log(5, 'User level is: %s', self.params['user_level'])
+        if user_level is None:
+            log.log(5, 'Could not determine user level.')
+        else:
+            self.params['user_level'] = user_level
+            log.log(5, 'User level is: %s', self.params['user_level'])
 
         self.params['env'] = self.config['env.environment']
         log.log(5, 'Environment is: %s', self.params['env'])
