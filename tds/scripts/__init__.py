@@ -13,3 +13,9 @@
 # limitations under the License.
 
 'Entry points (executables) of TDS'
+
+from .daemon import TDSDaemon
+
+__all__ = [
+    'TDSDaemon'
+]
