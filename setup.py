@@ -1,3 +1,5 @@
+#!/usr/bin/env python2.7
+
 # Copyright 2016 Ifwe Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
