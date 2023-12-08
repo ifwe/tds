@@ -201,11 +201,12 @@ class TDSDaemon(object):
     def should_stop(self):
         return self._should_stop
 
-    def sigterm_handler(self, signum, frame):
+    def shutdown_handler(self, signum, frame):
         """
         Shut down the daemon.
         """
-        log.fatal('Received SIGTERM. Beginning shutdown...')
+        # Python < 3.5 doesn't have an easy number-->name translation.
+        log.fatal('Received signal %d. Beginning shutdown...' % (signum))
         self._should_stop = True
         if self.lock is not None:
             self.release_lock()

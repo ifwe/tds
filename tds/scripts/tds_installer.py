@@ -276,7 +276,8 @@ def daemon_main():
 
     daemon = TDSInstallerDaemon(app)
 
-    signal.signal(signal.SIGTERM, daemon.sigterm_handler)
+    signal.signal(signal.SIGINT, daemon.shutdown_handler)
+    signal.signal(signal.SIGTERM, daemon.shutdown_handler)
 
     daemon.run()
 
