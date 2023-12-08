@@ -1,0 +1,19 @@
+[Unit]
+Description=Daemon for updating the deployment RPM repository.
+After=remote-fs.target
+Wants=remote-fs.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/update_deploy_repo
+# This will send a TERM to the main process, which then has the opportunity to
+# kill its children, clean up, and exit before the limit of TimeoutStopSec.
+KillMode=mixed
+PrivateTmp=true
+Restart=on-failure
+RestartSec=3
+# This should be large in order to avoid killing an active update.
+TimeoutStopSec=3min
+
+[Install]
+WantedBy=multi-user.target

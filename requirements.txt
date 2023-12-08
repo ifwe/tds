@@ -17,4 +17,3 @@ python-ldap>=2.4.15, <3.4.0
 # The following will not work with old python due to lack of PEP 508 support in
 # setuptools. Oddly, setup.py somehow parses them even when commented, though.
 # tagopsdb @ git+ssh://git@code.tagged.com/tagopsdb/tagopsdb.git@master#egg=tagopsdb-0.9.22
-# simpledaemon @ git+ssh://git@code.tagged.com/lib-python/python-simpledaemon.git@master#egg=simpledaemon-1.0

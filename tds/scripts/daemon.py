@@ -148,6 +148,9 @@ class TDSDaemon(object):
         Read configuration file and get relevant information; if zookeeper is
         in use, wait for a zookeper lock. Once operating, run callbacks.
         """
+        if hasattr(self.app, 'initialize'):
+            self.app.initialize()
+
         self.configure()
         zookeeper_config = self.app.config.get('zookeeper', None)
 
