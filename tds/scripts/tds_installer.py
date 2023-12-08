@@ -28,7 +28,6 @@ import time
 import sys
 
 from datetime import datetime, timedelta
-from kazoo.exceptions import ConnectionClosedError
 
 import tagopsdb
 import tds.apps
@@ -54,44 +53,20 @@ class TDSInstallerDaemon(TDSDaemon):
         self.heartbeat_time = datetime.now()
         self.zookeeper_path = '/tdsinstaller'
 
-    def main(self):
-        """
-        Read configuration file and get relevant information, then try
-        to process queued deployments if single system or
-        zookeeper leader in multi-system configuration.
-        """
-        self.exit_timeout = timedelta(
-            seconds=self.app.config.get('exit_timeout', 160)
-        )
-        self.deploy_exit_timeout = timedelta(
-            seconds=self.app.config.get('deploy_exit_timeout', 5)
-        )
-        zookeeper_config = self.app.config.get('zookeeper', None)
+        # Set up callbacks.
+        def end_callback():
+            self.clean_up_processes(True)
 
-        if zookeeper_config is not None:
-            self.lock = self.create_zoo(zookeeper_config)
-            self.zk_run = self.lock_run
-        else:
-            self.zk_run = lambda f, *a, **k: f(*a, **k)
-
-        while not self.should_stop():
-            try:
-                self.zk_run(self.handle_incoming_deployments)
-            except ConnectionClosedError:
-                if not self.should_stop():
-                    # Ignore errors raised by kazoo when it is having
-                    # connection trouble; we're shutting down anyway.
-                    raise
-
+        def loop_callback():
             self.clean_up_processes(wait=self.should_stop())
-            # When operating with a lock, wait this long before trying again.
-            # Any polling necessary to determine if action needs to be taken
-            # (database queries, etc.) will happen approximately this often.
             time.sleep(0.1)
 
-        self.clean_up_processes(wait=True)
-        self.zoo.close()
-        log.info("Stopped.")
+        def run_callback():
+            self.handle_incoming_deployments()
+
+        self.end_callback = end_callback
+        self.loop_callback = loop_callback
+        self.run_callback = run_callback
 
     def handle_incoming_deployments(self):
         """Look for files in 'incoming' directory and handle them."""
@@ -220,6 +195,17 @@ class TDSInstallerDaemon(TDSDaemon):
             log.debug('Waiting %.1fs for children to finish.' % (seconds_left))
             # Old python does not provide timeouts for Popen methods.
             time.sleep(1)
+
+    def configure(self):
+        """
+        Set configuration specific to tds_installer.
+        """
+        self.exit_timeout = timedelta(
+            seconds=self.app.config.get('exit_timeout', 160)
+        )
+        self.deploy_exit_timeout = timedelta(
+            seconds=self.app.config.get('deploy_exit_timeout', 5)
+        )
 
     def waitproc(self, dep_id, proc):
         """

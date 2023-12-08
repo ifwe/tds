@@ -22,7 +22,7 @@ import traceback
 import sys
 
 from kazoo.client import KazooClient, KazooState
-from kazoo.exceptions import CancelledError, LockTimeout
+from kazoo.exceptions import CancelledError, ConnectionClosedError, LockTimeout
 from kazoo.retry import KazooRetry
 
 log = logging.getLogger('tds.scripts.daemon')
@@ -38,6 +38,9 @@ class TDSDaemon(object):
         self._should_stop = False
         self.has_lock = False
         self.lock = None
+        # These optional callbacks may be overriden by a child class.
+        self.end_callback = None
+        self.loop_callback = None
 
     def create_zoo(self, zoo_config):
         """
@@ -91,6 +94,12 @@ class TDSDaemon(object):
         self.zoo.start()
         return self.zoo.Lock(self.zookeeper_path, hostname)
 
+    def configure(self):
+        """
+        Child classes may override this for daemon-specific configuration.
+        """
+        pass
+
     def lock_run(self, func, *args, **kwargs):
         """
         Run the specified function, with the specified arguments, under a
@@ -132,6 +141,38 @@ class TDSDaemon(object):
             func(*args, **kwargs)
         elif self.should_stop():
             log.debug("Aborted acquiring ZooKeeper lock due to shutdown")
+
+    def main(self):
+        """
+        Read configuration file and get relevant information; if zookeeper is
+        in use, wait for a zookeper lock. Once operating, run callbacks.
+        """
+        self.configure()
+        zookeeper_config = self.app.config.get('zookeeper', None)
+
+        if zookeeper_config is not None:
+            self.lock = self.create_zoo(zookeeper_config)
+            self.zk_run = self.lock_run
+        else:
+            self.zk_run = lambda f, *a, **k: f(*a, **k)
+
+        while not self.should_stop():
+            try:
+                self.zk_run(self.run_callback)
+            except ConnectionClosedError:
+                if not self.should_stop():
+                    # Ignore errors raised by kazoo when it is having
+                    # connection trouble; we're shutting down anyway.
+                    raise
+
+            if self.loop_callback:
+                self.loop_callback()
+
+        if self.end_callback:
+            self.end_callback()
+
+        self.zoo.close()
+        log.info("Stopped.")
 
     def release_lock(self):
         """
