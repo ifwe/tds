@@ -17,6 +17,7 @@ Base class for TDS Daemons. Handle common zookeeper operations, etc.
 '''
 
 import logging
+import signal
 import socket
 import traceback
 import sys
@@ -207,6 +208,9 @@ class TDSDaemon(object):
         """
         # Python < 3.5 doesn't have an easy number-->name translation.
         log.fatal('Received signal %d. Beginning shutdown...' % (signum))
+        # Reset handler so that repeated signals cause immediate shutdown.
+        signal.signal(signum, signal.SIG_DFL)
+
         self._should_stop = True
         if self.lock is not None:
             self.release_lock()
