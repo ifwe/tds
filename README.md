@@ -54,6 +54,10 @@ $ pip install -r requirements-dev.txt
 ```
 
 ### Unit tests
+
+Note: many unit tests currently fail; unit testing does not seem to have kept
+up with development.
+
 The following command will run all unit tests:
 
 ```bash
@@ -61,6 +65,11 @@ $ ./run_tests.py
 ```
 
 ### Feature tests
+
+Note: feature tests depend on infrastructure that no longer exists. To run
+feature tests, the test environment needs to be modified to (at least) run a
+local mysql server on demand.
+
 The following command will run all
 <a href="//pythonhosted.org/behave/">Behave</a> tests:
 
