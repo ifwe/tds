@@ -15,13 +15,28 @@
 import contextlib
 import mock
 import unittest
+import sys
 
 from tests.factories.utils.config import (
     DeployConfigFactory,
     DatabaseTestConfigFactory
 )
 
-import tds.apps.main
+from py._io.capture import DontReadFromInput
+
+
+# Monkey-patch pytest's io class--otherwise, salt tries to read the encoding
+# and fails. This is fixed in much newer pytest than we can use:
+# https://github.com/pytest-dev/pytest/commit/a3693ce50396e05910c9602443a825831d97a214
+@property
+def encoding(self):
+    return sys.__stdin__.encoding
+
+
+DontReadFromInput.encoding = encoding
+
+
+import tds.apps.main  # noqa: E402
 
 
 class TestTDS(unittest.TestCase):
