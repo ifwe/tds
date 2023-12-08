@@ -77,7 +77,7 @@ class TDSInstallerDaemon(TDSDaemon):
         while not self.should_stop():
             try:
                 self.zk_run(self.handle_incoming_deployments)
-            except ConnectionClosedError, TimeoutError:
+            except ConnectionClosedError:
                 if not self.should_stop():
                     # Ignore errors raised by kazoo when it is having
                     # connection trouble; we're shutting down anyway.
@@ -90,7 +90,7 @@ class TDSInstallerDaemon(TDSDaemon):
             time.sleep(0.1)
 
         self.clean_up_processes(wait=True)
-        self.zoo.close();
+        self.zoo.close()
         log.info("Stopped.")
 
     def handle_incoming_deployments(self):
@@ -143,18 +143,16 @@ class TDSInstallerDaemon(TDSDaemon):
         while True:
             now = datetime.now()
             for dep_id in self.ongoing_processes.keys():
-                (proc, process_start) = self.ongoing_processes[dep_id];
+                (proc, process_start) = self.ongoing_processes[dep_id]
                 term_time = process_start + self.threshold
                 if wait:
                     # If we're waiting for all processes here, then we probably
-                    # need to kill this process earlier than its normal timeout.
-                    term_time = min(
-                        term_time,
-                        # Give a 2-second fudge factor to allow reaping killed
-                        # processes.
-                        cleanup_start + self.exit_timeout - \
-                            self.deploy_exit_timeout - timedelta(seconds=2)
-                    )
+                    # need to kill this process earlier than its normal
+                    # timeout. Give a 2-second fudge factor to allow reaping
+                    # killed processes.
+                    early_term_time = cleanup_start + self.exit_timeout - \
+                        self.deploy_exit_timeout - timedelta(seconds=2)
+                    term_time = min(early_term_time, term_time)
 
                 # 1. Kill terminated processes that should have exited by now.
                 if proc in terminated and proc not in killed:
@@ -175,16 +173,16 @@ class TDSInstallerDaemon(TDSDaemon):
                     dep = self.app.get_deployment(dep_id=dep_id)
                     self.app._refresh(dep)
                     log.debug(
-                        'Deployment ID %d finished, status: %s.' % \
-                            (dep_id, dep.status)
+                        'Deployment ID %d finished, status: %s.' %
+                        (dep_id, dep.status)
                     )
 
                     if dep.status not in ('complete', 'failed', 'stopped'):
                         # If it finished with a non-finished status, then
                         # something is wrong.
                         log.debug(
-                            'Deployment ID %d forcing status to "failed".' % \
-                                (dep_id)
+                            'Deployment ID %d forcing status to "failed".' %
+                            (dep_id)
                         )
                         # Note: this only sets the top-level deployments table
                         # entry to 'failed'; if the child process crashes or is
@@ -233,20 +231,24 @@ class TDSInstallerDaemon(TDSDaemon):
         if pid == proc.pid:
             # child exited
             # check exit status for logging
-            log.debug('Deployment ID %d raw exit status: 0x%04X' % (dep_id, status))
+            log.debug(
+                'Deployment ID %d raw exit status: 0x%04X' % (dep_id, status)
+            )
             if os.WIFEXITED(status):
                 exit_status = os.WEXITSTATUS(status)
                 if exit_status == 0:
-                    log.debug('Deployment ID %d exited successfully.' % (dep_id))
+                    log.debug(
+                        'Deployment ID %d exited successfully.' % (dep_id)
+                    )
                 else:
                     log.warning(
-                        'Deployment ID %d exited with error status %d' % \
-                            (dep_id, exit_status)
+                        'Deployment ID %d exited with error status %d' %
+                        (dep_id, exit_status)
                     )
             elif os.WIFSIGNALED(status):
                 log.warning(
-                    'Deployment ID %d exited from signal %d' % \
-                        (dep_id, os.WTERMSIG(status))
+                    'Deployment ID %d exited from signal %d' %
+                    (dep_id, os.WTERMSIG(status))
                 )
             else:
                 log.warning(
@@ -260,11 +262,12 @@ class TDSInstallerDaemon(TDSDaemon):
 
         # should not happen
         log.error(
-            'Deployment ID: %d unexpected waitpid; expected %d, got %d.' % \
-                (dep_id, proc.pid, pid)
+            'Deployment ID: %d unexpected waitpid; expected %d, got %d.' %
+            (dep_id, proc.pid, pid)
             )
         # don't trust further execution
         sys.exit(2)
+
 
 def daemon_main():
     """Prepare logging then initialize daemon."""
