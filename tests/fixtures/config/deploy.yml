@@ -19,9 +19,7 @@ jenkins:
 logging:
   syslog_facility: fakelocal3
   syslog_priority: fakedebug
-deploy_strategy: mco
-mco:
-  bin: 'mco'
+deploy_strategy: salt
 salt:
   c_dir: /etc/salt
 notifications:

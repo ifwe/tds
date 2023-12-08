@@ -62,7 +62,6 @@ Feature: deploy daemon
         Examples:
             | strategy  |
             | salt      |
-            | mco       |
 
     Scenario Outline: run daemon with a deployment queued with a tier deployment in a different environment
         Given there are deployments:
@@ -80,7 +79,6 @@ Feature: deploy daemon
         Examples:
             | strategy  |
             | salt      |
-            | mco       |
 
     Scenario Outline: run daemon with a deployment queued with a tier deployment in a different environment
         Given there are deployments:
@@ -101,7 +99,6 @@ Feature: deploy daemon
         Examples:
             | strategy  |
             | salt      |
-            | mco       |
 
     Scenario Outline: run daemon with a deployment queued with a tier deployment in a different environment
         Given there are deployments:
@@ -126,7 +123,6 @@ Feature: deploy daemon
         Examples:
             | strategy  |
             | salt      |
-            | mco       |
 
     Scenario Outline: run daemon with a tier deployment with no hosts
         Given there is a deploy target with name="tier2"
@@ -147,8 +143,6 @@ Feature: deploy daemon
             | strategy  | tier_st       |
             | salt      | pending       |
             | salt      | incomplete    |
-            | mco       | pending       |
-            | mco       | incomplete    |
 
     Scenario Outline: run daemon with a tier deployment with hosts
         Given there are deployments:
@@ -175,9 +169,6 @@ Feature: deploy daemon
             | salt      | pending       | pending   |
             | salt      | incomplete    | failed    |
             | salt      | incomplete    | pending   |
-            | mco       | pending       | pending   |
-            | mco       | incomplete    | failed    |
-            | mco       | incomplete    | pending   |
 
     Scenario Outline: run daemon with multiple tier & host deployments
         Given there is a deploy target with name="tier2"
@@ -219,9 +210,6 @@ Feature: deploy daemon
             | salt      | pending       | pending   |
             | salt      | incomplete    | failed    |
             | salt      | incomplete    | pending   |
-            | mco       | pending       | pending   |
-            | mco       | incomplete    | failed    |
-            | mco       | incomplete    | pending   |
 
     Scenario Outline: run daemon with a tier & host deployment each, with one host missing
         Given there is a deploy target with name="tier2"
@@ -261,9 +249,6 @@ Feature: deploy daemon
             | salt      | pending       | pending   |
             | salt      | incomplete    | failed    |
             | salt      | incomplete    | pending   |
-            | mco       | pending       | pending   |
-            | mco       | incomplete    | failed    |
-            | mco       | incomplete    | pending   |
 
     Scenario Outline: cancel tier and host deployment partway through
         Given there is a deploy target with name="tier2"
@@ -307,9 +292,6 @@ Feature: deploy daemon
             | salt      | pending       | pending   |
             | salt      | incomplete    | failed    |
             | salt      | incomplete    | pending   |
-            | mco       | pending       | pending   |
-            | mco       | incomplete    | failed    |
-            | mco       | incomplete    | pending   |
 
     Scenario Outline: cancel host deployments partway through
         Given there is a deploy target with name="tier2"
@@ -345,5 +327,3 @@ Feature: deploy daemon
             | strategy  | host_st   |
             | salt      | pending   |
             | salt      | failed    |
-            | mco       | pending   |
-            | mco       | failed    |

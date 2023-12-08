@@ -71,8 +71,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | option            | strategy |
-        |                   | mco      |
-        | --apptypes appfoo | mco      |
         |                   | salt     |
         | --apptypes appfoo | salt     |
 
@@ -85,7 +83,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart an application with multiple apptypes with apptypes option
@@ -101,7 +98,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart an application with multiple apptypes with all-apptypes option
@@ -124,7 +120,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart an application with a single target in the hosts option
@@ -135,7 +130,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart an application with multiple targets in the hosts option
@@ -147,7 +141,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     # Note: the delay option actually will wait after the final host as well;
@@ -163,7 +156,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart an application with an invalid delay option involving a single target
@@ -173,7 +165,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart an application with an invalid delay option involving mulitple targets
@@ -183,7 +174,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     @delay
@@ -197,7 +187,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart an application where at least one of the targets fails when restarting a tier
@@ -210,7 +199,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart an application where at least one of the targets fails when restarting a target or targets
@@ -223,7 +211,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart on a tier with no hosts
@@ -237,7 +224,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart all tiers, including a tier with no hosts
@@ -254,7 +240,6 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy |
-        | mco      |
         | salt     |
 
     Scenario Outline: restart on hosts with just a host deployment
@@ -274,5 +259,4 @@ Feature: deploy restart application [--delay] [--hosts|--apptypes|--all-apptypes
 
         Examples:
         | strategy  |
-        | mco       |
         | salt      |

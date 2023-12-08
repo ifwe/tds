@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""MCollective/salt configuration and management for feature tests"""
+"""salt configuration and management for feature tests"""
 
 import os.path
 import json
@@ -84,29 +84,22 @@ class DeployStrategyHelper(object):
             json.dump(data, fobj)
 
 
-class MCOHelper(DeployStrategyHelper):
-    INPUT_FILE = 'mco-input.json'
-    RESULTS_FILE = 'mco-results.json'
-
-
 class SaltHelper(DeployStrategyHelper):
     INPUT_FILE = 'salt-input.json'
     RESULTS_FILE = 'salt-results.json'
 
 
 def set_strat_helper(context, strategy):
-    assert strategy in ('mco', 'salt'), "invalid helper: %s" % strategy
+    assert strategy in ('salt'), "invalid helper: %s" % strategy
 
     context.strategy_helper_type = strategy
     add_config_val(context, 'deploy_strategy', strategy)
 
 def get_strat_helper(context):
     helper = context.strategy_helper_type
-    assert helper in ('mco', 'salt'), "invalid helper: %s" % helper
+    assert helper in ('salt'), "invalid helper: %s" % helper
 
-    if helper == 'mco':
-        return MCOHelper(context)
-    elif helper == 'salt':
+    if helper == 'salt':
         return SaltHelper(context)
 
 

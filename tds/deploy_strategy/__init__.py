@@ -15,7 +15,6 @@
 'Different ways to deploy things to if(we) infrastructure'
 
 from .base import DeployStrategy
-from .tds_mco import TDSMCODeployStrategy
 from .tds_salt import TDSSaltDeployStrategy
 
-__all__ = ['DeployStrategy', 'TDSMCODeployStrategy', 'TDSSaltDeployStrategy']
+__all__ = ['DeployStrategy', 'TDSSaltDeployStrategy']

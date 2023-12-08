@@ -68,8 +68,6 @@ class TDS(TDSProgramBase):
 
         self.params['jenkins_url'] = self.config['jenkins.url']
 
-        self.params['mco_bin'] = self.config['mco.bin']
-
     @tds.utils.debug
     def execute_command(self):
         """Run the requested command for TDS"""

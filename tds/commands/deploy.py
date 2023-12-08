@@ -115,9 +115,7 @@ class DeployController(BaseController):
         Create a deploy strategy and set it to self.deploy_strategy for use by
         restart command.
         """
-        if deploy_strat_name == 'mco':
-            cls = tds.deploy_strategy.TDSMCODeployStrategy
-        elif deploy_strat_name == 'salt':
+        if deploy_strat_name == 'salt':
             cls = tds.deploy_strategy.TDSSaltDeployStrategy
         else:
             raise tds.exceptions.ConfigurationError(

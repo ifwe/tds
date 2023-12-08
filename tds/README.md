@@ -8,7 +8,7 @@ Client and server applications for TDS.
 * [./commands/](./commands/) -
 Controllers for database models.
 * [./deploy_strategy/](./deploy_strategy/) -
-Enforcement methods (Salt, MCO).
+Enforcement methods (Salt).
 * [./model/](./model/) -
 Model definitions.
 * [./notifications/](./notifications/) -
