@@ -30,6 +30,11 @@ $ ./setup.py install
 
 ## Dependencies
 
+## Python
+
+TDS requires python 2.7. Operation under python 3.x would be nice, but that is
+not attempted yet.
+
 ### PyPI packages
 See `requirements.txt`. To install (NOTE: `setup.py` will do this for you):
 
