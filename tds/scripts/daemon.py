@@ -43,6 +43,18 @@ class TDSDaemon(object):
         self.end_callback = None
         self.loop_callback = None
 
+    def cancel_lock(self):
+        """
+        Tell kazoo to cancel any pending lock. Any lock acquisition in progress
+        will raise a CancelledError exception the next time kazoo is allowed to
+        run.
+        """
+        if self.lock is not None:
+            log.debug("Cancelling pending ZooKeeper lock (if any).")
+            # This is idempotent; no need to set self.lock to None.
+            self.lock.cancel()
+            log.debug("Cancelled pending ZooKeeper lock (if any).")
+
     def create_zoo(self, zoo_config):
         """
         Create and return a new zoo.
@@ -94,9 +106,9 @@ class TDSDaemon(object):
                     else:
                         log.error("Unrecognized ZooKeeper state: %s" % (state))
 
-                    # Trust in KazooClient to reconnect as needed, but release
-                    # the lock, since it is probably invalid.
-                    self.release_lock()
+                    # Trust in KazooClient to reconnect as needed, but drop the
+                    # lock, since it is probably invalid.
+                    self.drop_lock()
 
         self.zoo.add_listener(state_listener)
         self.zoo.start()
@@ -107,6 +119,15 @@ class TDSDaemon(object):
         Child classes may override this for daemon-specific configuration.
         """
         pass
+
+    def drop_lock(self):
+        """
+        Drop the zookeeper lock. Use this only if either:
+        * We've told zookeeper to release the lock.
+        * The zookeeper connection is not in a good state.
+        """
+        self.has_lock = False
+        log.debug("Zookeeper lock now considered to be gone.")
 
     def lock_run(self, func, *args, **kwargs):
         """
@@ -121,6 +142,11 @@ class TDSDaemon(object):
            lock when the client disconnects.
         """
         if not self.has_lock:
+            # Release the lock just to make sure, in case any lock exists
+            # already due to prior connection troubles. This call is
+            # idempotent.
+            log.debug("Clearing out any existing ZooKeeper lock.")
+            self.release_lock()
             log.debug("Waiting to acquire ZooKeeper lock.")
 
         while not self.has_lock and not self.should_stop():
@@ -190,19 +216,14 @@ class TDSDaemon(object):
 
     def release_lock(self):
         """
-        Release any acquired locks and cancel any pending ones.
+        Release any acquired lock; this needs to be able to communicate with
+        zookeeper.
         """
         if self.has_lock:
             log.debug("Releasing ZooKeeper lock.")
             self.lock.release()
             log.debug("Released ZooKeeper lock.")
-            self.has_lock = False
-
-        if self.lock is not None:
-            log.debug("Cancelling pending ZooKeeper lock (if any).")
-            # This is idempotent; no need to set self.lock to None.
-            self.lock.cancel()
-            log.debug("Cancelled pending ZooKeeper lock (if any).")
+            self.drop_lock()
 
     def run(self):
         """A wrapper for the main process to ensure any unhandled
@@ -231,6 +252,7 @@ class TDSDaemon(object):
         self._should_stop = True
         if self.lock is not None:
             self.release_lock()
+            self.cancel_lock()
 
         if self.zoo is not None:
             self.zoo.stop()
