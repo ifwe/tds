@@ -76,14 +76,21 @@ class TDSDaemon(object):
         )
 
         def state_listener(state):
+            """
+            Handle callbacks run when kazoo's internal state changes.
+            """
+            prefix = "Detected new Kazoo state: "
             if not self.should_stop():
                 if state == KazooState.CONNECTED:
-                    log.info("Connected to ZooKeeper.")
+                    log.info(prefix + "Connected to ZooKeeper.")
                 else:
                     if state == KazooState.SUSPENDED:
-                        log.warning("ZooKeeper connection suspended.")
+                        # Note: kazoo itself logs that the connection is
+                        # "lost", before setting its own internal state to
+                        # SUSPENDED.
+                        log.warning(prefix + "ZooKeeper connection suspended.")
                     elif state == KazooState.LOST:
-                        log.warning("ZooKeeper connection lost.")
+                        log.warning(prefix + "ZooKeeper connection lost.")
                     else:
                         log.error("Unrecognized ZooKeeper state: %s" % (state))
 
