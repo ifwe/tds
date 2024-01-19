@@ -164,9 +164,9 @@ class TDSDaemon(object):
             try:
                 self.zk_run(self.run_callback)
             except ConnectionClosedError:
+                # Only raise error when we are not stopping. If we're stopping
+                # anyway, we don't care if kazoo is having trouble.
                 if not self.should_stop():
-                    # Ignore errors raised by kazoo when it is having
-                    # connection trouble; we're shutting down anyway.
                     raise
 
             if self.loop_callback:
