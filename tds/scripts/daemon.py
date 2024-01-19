@@ -113,6 +113,9 @@ class TDSDaemon(object):
            updates client state, since zookeeper will automatically remove the
            lock when the client disconnects.
         """
+        if not self.has_lock:
+            log.debug("Waiting to acquire ZooKeeper lock.")
+
         while not self.has_lock and not self.should_stop():
             try:
                 # If no timeout is specified here, then kazoo will block on a
@@ -183,12 +186,16 @@ class TDSDaemon(object):
         Release any acquired locks and cancel any pending ones.
         """
         if self.has_lock:
+            log.debug("Releasing ZooKeeper lock.")
             self.lock.release()
+            log.debug("Released ZooKeeper lock.")
             self.has_lock = False
 
         if self.lock is not None:
+            log.debug("Cancelling pending ZooKeeper lock (if any).")
             # This is idempotent; no need to set self.lock to None.
             self.lock.cancel()
+            log.debug("Cancelled pending ZooKeeper lock (if any).")
 
     def run(self):
         """A wrapper for the main process to ensure any unhandled
