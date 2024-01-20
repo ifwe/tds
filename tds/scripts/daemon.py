@@ -221,6 +221,10 @@ class TDSDaemon(object):
         """
         if self.has_lock:
             log.debug("Releasing ZooKeeper lock.")
+            # Tell kazoo that it has a lock in order to force kazoo to attempt
+            # to remove the corresponding node, even if kazoo doesn't think
+            # there is one.
+            self.lock.is_acquired = True
             self.lock.release()
             log.debug("Released ZooKeeper lock.")
             self.drop_lock()
