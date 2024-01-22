@@ -211,7 +211,13 @@ class TDSDaemon(object):
         if self.end_callback:
             self.end_callback()
 
-        self.zoo.close()
+        if self.zoo is not None:
+            if self.lock is not None:
+                self.release_lock()
+
+            self.zoo.stop()
+            self.zoo.close()
+
         log.info("Stopped.")
 
     def release_lock(self):
@@ -255,8 +261,6 @@ class TDSDaemon(object):
 
         self._should_stop = True
         if self.lock is not None:
-            self.release_lock()
+            # Cancel any pending lock acquisition. This will cause kazoo to
+            # raise a CancelledError, which we catch.
             self.cancel_lock()
-
-        if self.zoo is not None:
-            self.zoo.stop()
