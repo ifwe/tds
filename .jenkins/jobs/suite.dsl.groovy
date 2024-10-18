@@ -61,18 +61,6 @@ def features = project.downstreamJob {
     }
 }
 
-daemon_common_build = '''\
-docker_build/run.sh -s dir --depends-same-version python-tds \\
-    --version-py --iteration "$PARENT_BUILD_NUMBER" \\
-    -- \\
-    -a noarch --template-scripts \\
-    --after-install pkg/rpm/after_install.sh.erb \\
-    --before-remove pkg/rpm/before_remove.sh.erb \\
-    --after-remove pkg/rpm/after_remove.sh.erb \\
-    --no-rpm-auto-add-directories \\
-    --prefix /lib/systemd/system \\
-'''
-
 def tds_installer = project.downstreamJob {
     name 'tds_installer'
     label 'docker'
@@ -82,12 +70,7 @@ def tds_installer = project.downstreamJob {
     }
 
     steps {
-        shell daemon_common_build + '''\
-            -C systemd/tds_installer \\
-            --template-value unit=tds_installer.service \\
-            --name tds-installer \\
-            --description 'Daemon to manage installations for deployment application'
-        '''
+        shell './build.sh tds-installer'
         publishers {
             archiveArtifacts('docker_build/pkgs/*.rpm')
         }
@@ -103,12 +86,7 @@ def tds_update_repo = project.downstreamJob {
     }
 
     steps {
-        shell daemon_common_build + '''\
-            -C systemd/update_deploy_repo \\
-            --template-value unit=update_deploy_repo.service \\
-            --name tds-update-yum-repo \\
-            --description 'Daemon to update repository for deployment application'
-        '''
+        shell './build.sh tds-update-yum-repo'
         publishers {
             archiveArtifacts('docker_build/pkgs/*.rpm')
         }
@@ -125,7 +103,7 @@ def python_tds = project.downstreamJob {
     }
 
     steps {
-        shell 'docker_build/run.sh -- --iteration "$PARENT_BUILD_NUMBER"'
+        shell './build.sh python-tds'
         publishers {
             archiveArtifacts('docker_build/pkgs/*.rpm')
         }
