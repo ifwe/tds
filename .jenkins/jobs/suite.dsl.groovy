@@ -103,7 +103,7 @@ def python_tds = project.downstreamJob {
     }
 
     steps {
-        shell './build.sh python-tds'
+        shell './build.sh python2-tds'
         publishers {
             archiveArtifacts('docker_build/pkgs/*.rpm')
         }

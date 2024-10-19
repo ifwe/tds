@@ -7,7 +7,7 @@ if [ "$#" -lt 1 ] ; then
 usage: $0 [package]
 
 available package names:
-* python-tds
+* python2-tds
 * tds-installer
 * tds-update-yum-repo
 EOF
@@ -27,7 +27,7 @@ declare -a COMMON_CMD=(\
 declare -a DAEMON_CMD=(\
     "${COMMON_CMD[@]}" \
     -s dir \
-    --depends-same-version python-tds \
+    --depends-same-version python2-tds \
     --version-py \
     -- \
     -a noarch \
@@ -42,7 +42,7 @@ declare -a DAEMON_CMD=(\
 
 declare -a CMD
 case "$PACKAGE" in
-    python-tds )
+    python2-tds )
         CMD=("${COMMON_CMD[@]}")
     ;;
     tds-installer )
