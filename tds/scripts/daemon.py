@@ -39,6 +39,7 @@ class TDSDaemon(object):
         self._should_stop = False
         self.has_lock = False
         self.lock = None
+        self.lock_is_stale = False
         # These optional callbacks may be overriden by a child class.
         self.end_callback = None
         self.loop_callback = None
@@ -106,9 +107,14 @@ class TDSDaemon(object):
                     else:
                         log.error("Unrecognized ZooKeeper state: %s" % (state))
 
-                    # Trust in KazooClient to reconnect as needed, but drop the
-                    # lock, since it is probably invalid.
-                    self.drop_lock()
+                    # Trust in KazooClient to reconnect as needed, but don't
+                    # trust the state of the lock. The lock may or may not
+                    # still exist. We need to release the lock (if it exists),
+                    # but we can't do that here, since calling back into kazoo
+                    # code from within the kazoo-called callback causes
+                    # trouble.
+                    log.debug("Marking zookeeper lock as stale.")
+                    self.lock_is_stale = True
 
         self.zoo.add_listener(state_listener)
         self.zoo.start()
@@ -120,36 +126,30 @@ class TDSDaemon(object):
         """
         pass
 
-    def drop_lock(self):
-        """
-        Drop the zookeeper lock. Use this only if either:
-        * We've told zookeeper to release the lock.
-        * The zookeeper connection is not in a good state.
-        """
-        self.has_lock = False
-        log.debug("Zookeeper lock now considered to be gone.")
-
     def lock_run(self, func, *args, **kwargs):
         """
         Run the specified function, with the specified arguments, under a
         zookeeper lock. This will block until the lock is acquired or
         shutdown is initiated. Once done, the lock is not released, such that
-        it may be re-used by subsequent runs. Lock release is handled
-        elsewhere:
+        it may be re-used by subsequent runs. Lock release is handled:
         1. During shutdown.
-        2. When there is zookeeper connection trouble, which likely just
-           updates client state, since zookeeper will automatically remove the
-           lock when the client disconnects.
+        2. In the code within the loop below, if zookeeper connection trouble
+           indicates that we can't trust whether or not we have a lock.
         """
         if not self.has_lock:
-            # Release the lock just to make sure, in case any lock exists
-            # already due to prior connection troubles. This call is
-            # idempotent.
-            log.debug("Clearing out any existing ZooKeeper lock.")
-            self.release_lock()
-            log.debug("Waiting to acquire ZooKeeper lock.")
+            # Trigger a lock removal below, just to be sure.
+            self.lock_is_stale = True
 
         while not self.has_lock and not self.should_stop():
+            # self.lock_is_stale may become True due to a kazoo callback.
+            if self.lock_is_stale:
+                # If a lock _does_ exist, then attempting to get a lock will
+                # block, so we need to be certain there is none.
+                # This call is idempotent.
+                log.debug("Clearing out any existing ZooKeeper lock.")
+                self.release_lock()
+                self.lock_is_stale = False
+                log.debug("Waiting to acquire ZooKeeper lock.")
             try:
                 # If no timeout is specified here, then kazoo will block on a
                 # threading wait, which blocks the signal handler (at least on
@@ -233,7 +233,7 @@ class TDSDaemon(object):
             self.lock.is_acquired = True
             self.lock.release()
             log.debug("Released ZooKeeper lock.")
-            self.drop_lock()
+            self.has_lock = False
 
     def run(self):
         """A wrapper for the main process to ensure any unhandled
