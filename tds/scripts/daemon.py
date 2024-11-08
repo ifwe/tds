@@ -57,7 +57,7 @@ class TDSDaemon(object):
 
     def create_zoo(self, zoo_config):
         """
-        Create and return a new zoo.
+        Create a new zookeeper object as self.zoo; return a zookeeper lock.
         """
         hostname = socket.gethostname()
 
