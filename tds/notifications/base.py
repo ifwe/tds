@@ -123,9 +123,9 @@ class Notifier(object):
             )
         )
         body = (
-            r'Version %s of package %s in %s app tier\n'
-            r'has not been validated. Please validate it.\n'
-            r'Without this, Puppet cannot manage the tier correctly.' % (
+            "Version %s of package %s in %s app tier\n"
+            "has not been validated. Please validate it.\n"
+            "Without this, Puppet cannot manage the tier correctly." % (
                 package['version'],
                 package['name'],
                 ', '.join(x.name for x in deployment.target['apptypes']),
