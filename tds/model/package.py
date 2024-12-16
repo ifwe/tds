@@ -40,18 +40,6 @@ class Package(Base):
 
         return False
 
-    # Note: this is currently not used but is left here for possible
-    # inclusion or future reference - KEL 20150825
-    def find_app_deployments(self, tier, environment):
-        """Find app deployments for a given tier and environment"""
-
-        from .deployment import AppDeployment
-
-        for app_dep in self.delegate.app_deployments:
-            if (app_dep.target == tier.delegate and
-                app_dep.environment_obj == environment):
-                yield AppDeployment(delegate=app_dep)
-
     def get_current_app_deployment(self, tier_id, environment_id, query=None):
         if query is None:
             query = tagopsdb.Session.query(tagopsdb.model.AppDeployment)
