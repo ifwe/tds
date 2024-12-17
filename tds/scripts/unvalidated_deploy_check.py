@@ -15,6 +15,7 @@
 """Notify about unvalidated deployments."""
 
 import argparse
+import logging
 import sys
 
 import tds.utils.config
@@ -26,6 +27,9 @@ from tds.utils.script_helpers import (
     ValidationMonitor
 )
 
+logging.basicConfig()
+log = logging.getLogger('tds')
+
 
 def parse_command_line(sysargs):
     """Parse the command line and return the parser to the main program."""
@@ -35,7 +39,7 @@ def parse_command_line(sysargs):
     parser.add_argument('-V', '--version', action='version',
                         version='TDS Unvalidated Check %s'
                         % tds.version.__version__)
-    parser.add_argument('-v', '--verbose', action='count',
+    parser.add_argument('-v', '--verbose', action='count', default=0,
                         help='Show more information (more used shows greater '
                              'information)')
     parser.add_argument('--auth-config',
@@ -54,6 +58,14 @@ def main():
     """
 
     args = parse_command_line(sys.argv[1:])
+
+    log_levels = [
+        logging.INFO,
+        logging.WARNING,
+        logging.DEBUG,
+    ]
+    log_level_idx = min(args.verbose, len(log_levels) - 1)
+    log.setLevel(log_levels[log_level_idx])
 
     config = tds.utils.config.TDSDeployConfig(conf_dir=args.config_dir)
     db_config = tds.utils.config.TDSDatabaseConfig('admin', 'tagopsdb',
