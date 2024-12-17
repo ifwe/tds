@@ -16,10 +16,11 @@
 Base class and functionality for notifications sent from TDS
 '''
 import logging
-log = logging.getLogger('tds')
 
 import tds.utils
 import tds.model
+
+log = logging.getLogger('tds')
 
 __all__ = ['Notifications', 'Notifier']
 
@@ -211,7 +212,6 @@ class Notifier(object):
             app = True
             targets = deployment.target.get('apptypes', [])
             destinations = ', '.join(sorted(x.name for x in targets))
-
 
         env = self.app_config['env.environment']
 

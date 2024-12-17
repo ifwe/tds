@@ -20,9 +20,10 @@ import json
 import requests
 
 import logging
-log = logging.getLogger('tds')
 
 from .base import Notifications, Notifier
+
+log = logging.getLogger('tds')
 
 
 @Notifications.add('signalfx')
@@ -89,7 +90,9 @@ class SignalfxNotifier(Notifier):
         }
 
         try:
-            # Limit this to 10 seconds - If it takes longer than that, we'll probably hit an HTTP 504 "Gateway timeout" and wait over a minute.
+            # Limit this to 10 seconds - If it takes longer than that, we'll
+            # probably hit an HTTP 504 "Gateway timeout" and wait over a
+            # minute.
             resp = requests.post(
                 self.signalfx_url,
                 headers=headers,

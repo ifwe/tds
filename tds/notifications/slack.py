@@ -20,9 +20,10 @@ import json
 import requests
 
 import logging
-log = logging.getLogger('tds')
 
 from .base import Notifications, Notifier
+
+log = logging.getLogger('tds')
 
 
 @Notifications.add('slack')
@@ -70,8 +71,9 @@ class SlackNotifier(Notifier):
         headers = {'Content-type': 'application/json'}
 
         try:
-            # Slack (or the proxy) can take up to a minute until responding with an HTTP 504 "Gateway timeout".
-            # Limit this - we still send emails
+            # Slack (or the proxy) can take up to a minute until responding
+            # with an HTTP 504 "Gateway timeout". Limit this - we still send
+            # emails
             resp = requests.post(
                 self.slack_url,
                 headers=headers,
