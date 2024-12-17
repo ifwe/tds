@@ -57,8 +57,12 @@ class SignalfxNotifier(Notifier):
         """
         Send a Signalfx notification for a given action.
         """
-        log.debug("Sending Signalfx notification")
         factors = self.factors_for_deployment(deployment)
+        if factors is None:
+            log.debug("Skipping Signalfx notification")
+            return
+
+        log.debug("Sending Signalfx notification")
         if factors['app']:
             applications = factors['destinations']
             nodes = ''

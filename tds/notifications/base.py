@@ -186,7 +186,16 @@ class Notifier(object):
         return dict(subject=msg_subject, body=msg_text)
 
     def factors_for_deployment(self, deployment):
-        'Collecting factors for deployment'
+        """
+        Collect basic info about a deployment and return a dict of strings. If
+        the deployment lacks a subcommand, though, then this is presumed to not
+        be an actual deployment, but rather something else which is using the
+        same notification framework; in that case, return None.
+        """
+        if 'subcommand' not in deployment.action:
+            log.debug('This seems to be a notification but not an actual deployment.')
+            return None
+
         log.debug('Collecting factors for deployment')
 
         dep_type = deployment.action['subcommand'].capitalize()
