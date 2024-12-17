@@ -55,7 +55,7 @@ class SlackNotifier(Notifier):
         """
         Send a Slack notification for a given action.
         """
-        log.debug("Seding Slack notification")
+        log.debug("Sending Slack notification")
 
         message = self.message_for_deployment(deployment)
         payload = {

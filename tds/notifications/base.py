@@ -65,7 +65,11 @@ class Notifications(object):
     def notify(self, deployment):
         """Send out various enabled notifications for a given action"""
 
-        log.debug('Sending out enabled notifications')
+        log.debug(
+            "Sending notification(s) for package: %s, version: %s" % (
+                deployment.package['name'], deployment.package['version']
+            )
+        )
         notifiers = self._notifiers or {}
 
         for method in self.enabled_methods:

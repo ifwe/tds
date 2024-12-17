@@ -16,8 +16,11 @@
 Notifier and helpers for sending notifications via graphite
 '''
 import graphitesend
+import logging
 
 from .base import Notifications, Notifier
+
+log = logging.getLogger('tds')
 
 
 @Notifications.add('graphite')
@@ -37,7 +40,10 @@ class GraphiteNotifier(Notifier):
             deployment.action.get('subcommand')
         )
         if event not in self.active_events:
+            log.debug("Skipping Graphite notification")
             return
+
+        log.debug("Sending Graphite notification")
 
         graphite = graphitesend.init(
             graphite_server=self.config['host'],
