@@ -38,14 +38,11 @@ class UnvalidatedDeploymentNotifier(tds.notifications.Notifications):
                 # TODO: deployments should be for projects, not packages
                 name=package.name,
             ),
-            package=dict(
-                name=package.name,
-                version=package.version,
-            ),
+            package=package,
             target=dict(
                 environment=app_deployment.environment,
                 apptypes=[app_deployment.target],
-            )
+            ),
         )
 
     def notify(self, app_deployments):

@@ -68,8 +68,8 @@ class Notifications(object):
 
         log.debug(
             "Sending notification(s) for package: %s, version: %s" % (
-                deployment.package['name'], deployment.package['version']
-            )
+                deployment.package.name, deployment.package.version
+            ),
         )
         notifiers = self._notifiers or {}
 
@@ -122,7 +122,7 @@ class Notifier(object):
         package = deployment.package
         subject = (
             'ATTENTION: %s in %s for %s app tier needs validation!' % (
-                package['name'],
+                package.name,
                 deployment.target['environment'],
                 ','.join(x.name for x in deployment.target['apptypes'])
             )
@@ -131,8 +131,8 @@ class Notifier(object):
             "Version %s of package %s in %s app tier\n"
             "has not been validated. Please validate it.\n"
             "Without this, Puppet cannot manage the tier correctly." % (
-                package['version'],
-                package['name'],
+                package.version,
+                package.name,
                 ', '.join(x.name for x in deployment.target['apptypes']),
             )
         )
