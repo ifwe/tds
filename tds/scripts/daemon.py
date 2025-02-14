@@ -140,7 +140,7 @@ class TDSDaemon(object):
             # Trigger a lock removal below, just to be sure.
             self.lock_is_stale = True
 
-        while not self.has_lock and not self.should_stop():
+        while (self.lock_is_stale or not self.has_lock) and not self.should_stop():
             # self.lock_is_stale may become True due to a kazoo callback.
             if self.lock_is_stale:
                 # If a lock _does_ exist, then attempting to get a lock will
