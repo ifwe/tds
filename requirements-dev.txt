@@ -4,7 +4,7 @@ coverage==3.7.1
 factory-boy==2.4.1
 flake8==2.1.0
 logilab-astng==0.24.3
-logilab-common==0.59.1
+logilab-common==0.61.0
 mccabe==0.2.1
 mock==1.0.1
 pep8==1.4.6
