@@ -69,7 +69,7 @@ class TDSInstallerDaemon(TDSDaemon):
         self.run_callback = run_callback
 
     def handle_incoming_deployments(self):
-        """Look for files in 'incoming' directory and handle them."""
+        """Look for new deployments added to TagOpsDB and handle them."""
         tagopsdb.Session.close()
         deployment = self.app.find_deployment()
 
