@@ -174,10 +174,10 @@ class TDSDaemon(object):
         # Once execution reaches this point, then we either got a lock, so run
         # the supplied function, or we are in shutdown (see loop conditions
         # above).
-        if self.has_lock:
-            func(*args, **kwargs)
-        elif self.should_stop():
+        if self.should_stop():
             log.debug("Aborted acquiring ZooKeeper lock due to shutdown")
+        elif self.has_lock:
+            func(*args, **kwargs)
 
     def main(self):
         """
