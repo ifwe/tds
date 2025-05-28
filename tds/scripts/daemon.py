@@ -145,8 +145,8 @@ class TDSDaemon(object):
             if self.lock_is_stale:
                 # If a lock _does_ exist, then attempting to get a lock will
                 # block, so we need to be certain there is none.
-                # This call is idempotent.
                 log.debug("Clearing out any existing ZooKeeper lock.")
+                # This call is idempotent.
                 self.release_lock()
                 self.lock_is_stale = False
                 log.debug("Waiting to acquire ZooKeeper lock.")
